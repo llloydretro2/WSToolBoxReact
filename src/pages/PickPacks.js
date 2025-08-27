@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import seedrandom from 'seedrandom';
 
 
@@ -8,7 +8,17 @@ function PickPacks() {
     const [openPacks, setOpenPacks] = useState('');
     const [seed, setSeed] = useState('');
     const [results, setResults] = useState([]);
-    
+
+    useEffect(() => {
+        const saved = localStorage.getItem('pickpacks');
+        if (saved) {
+            const { total, open, seed, results } = JSON.parse(saved);
+            setTotalPacks(total);
+            setOpenPacks(open);
+            setSeed(seed);
+            setResults(results);
+        }
+    }, []);
 
     const randomGeneratePacks = () => {
         const total = parseInt(totalPacks);
@@ -37,6 +47,12 @@ function PickPacks() {
 
         selected.sort((a, b) => a - b);
         setResults(selected);
+        localStorage.setItem('pickpacks', JSON.stringify({
+            total: totalPacks,
+            open: openPacks,
+            seed,
+            results: selected,
+        }));
     };
 
     return (
