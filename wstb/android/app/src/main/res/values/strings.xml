@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">wstb</string>
+    <string name="title_activity_main">wstb</string>
+    <string name="package_name">com.example.wstoolbox</string>
+    <string name="custom_url_scheme">com.example.wstoolbox</string>
+</resources>

@@ -1,0 +1,13 @@
+.custom-navbar {
+  background-color: black;
+  color: white;
+  padding: 1rem;
+}
+
+.custom-navbar .nav-link {
+  color: white;
+}
+
+.custom-navbar .nav-link:hover {
+  border-bottom: 2px solid white;
+}
