@@ -49,14 +49,14 @@ function PickPacks() {
             <div className='d-flex justify-content-center align-items-center mb-4 gap-3'>
                 <input
                     type="number"
-                    className="form-control w-auto"
+                    className="form-control w-100"
                     placeholder="开启包数"
                     value={openPacks}
                     onChange={(e) => setOpenPacks(e.target.value)}
                 />
                 <input
                     type="number"
-                    className="form-control w-auto"
+                    className="form-control w-100"
                     placeholder="总包数"
                     value={totalPacks}
                     onChange={(e) => setTotalPacks(e.target.value)}
