@@ -1,27 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 function FirstSecond() {
 	const [order, setOrder] = useState("");
-
-	useEffect(() => {
-		const saved = localStorage.getItem("firstsecond");
-		if (saved) {
-			const { order } = JSON.parse(saved);
-			setOrder(order);
-		}
-	}, []);
 
 	const decideOrder = () => {
 		const randomZeroOne = Math.floor(Math.random() * 2);
 		var result = randomZeroOne === 1 ? "先攻" : "後攻";
 		setOrder(result);
-		localStorage.setItem("firstsecond", JSON.stringify({ order: result }));
 	};
 
 	return (
 		<div className="container-fluid">
 			<div className="d-flex  align-items-center justify-content-center m-5 flex-column">
 				<h1>先后攻</h1>
+				<p1>点击生成先攻或者后攻</p1>
 
 				{order && (
 					<h1
