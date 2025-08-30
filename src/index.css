@@ -11,3 +11,39 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.preview-container {
+  transform: scale(1);
+  transform-origin: top center;
+}
+
+@media (max-width: 576px) {
+  .preview-container {
+    transform: scale(0.7);
+    transform-origin: top center;
+  }
+}
+
+
+@font-face {
+  font-family: 'agfa_rotis_semi_serif';
+  src: url('./assets/fonts/agfa_rotis_semi_serif.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'BIZUDPMincho-Bold';
+  src: url('./assets/fonts/BIZUDPMincho-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'BIZUDPMincho-Regular';
+  src: url('./assets/fonts/BIZUDPMincho-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'name_font';
+  src: url('./assets/fonts/NotoSansJP-VariableFont_wght.ttf') format('truetype');
+}
+
+
+

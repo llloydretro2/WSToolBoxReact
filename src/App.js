@@ -7,6 +7,7 @@ import Tracker from "./pages/Tracker";
 import PickPacks from "./pages/PickPacks";
 import FirstSecond from "./pages/FirstSecond";
 import ChessClock from "./pages/ChessClock";
+import DIY from "./pages/DIY";
 
 function App() {
 	return (
@@ -20,6 +21,7 @@ function App() {
 				<Route path="/first_second" element={<FirstSecond />} />
 				<Route path="*" element={<Home />} />
 				<Route path="/chess_clock" element={<ChessClock />} />
+				<Route path="/diy" element={<DIY />} />
 			</Routes>
 		</Router>
 	);
