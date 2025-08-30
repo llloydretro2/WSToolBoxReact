@@ -12,17 +12,6 @@ code {
     monospace;
 }
 
-.preview-container {
-  transform: scale(1);
-  transform-origin: top center;
-}
-
-@media (max-width: 576px) {
-  .preview-container {
-    transform: scale(0.7);
-    transform-origin: top center;
-  }
-}
 
 
 @font-face {

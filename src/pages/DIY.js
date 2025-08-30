@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import symbolMap from "../symbolMap.json";
+import "./DIY.css";
 
 function DIY() {
 	// 辅助函数：解析文本中的指令为图片
@@ -604,129 +605,152 @@ function DIY() {
 					</div>
 					<div className="col-md-6">
 						<div
-							className="preview-container"
-							style={{ display: "flex", justifyContent: "center" }}
+							style={{
+								display: "flex",
+								justifyContent: "center",
+								width: "100%",
+							}}
 						>
 							<div
-								id="card-preview"
+								className="card-scale-wrapper"
 								style={{
-									width: 448,
-									height: 626,
-									borderRadius: "22px",
-									position: "relative",
-									border: "1px solid #ccc",
-									backgroundColor: "#fff",
-									overflow: "hidden",
+									transform: "scale(1)",
+									transformOrigin: "top center",
 								}}
 							>
-								{cardType === "キャラ" && (
-									<>
-										{image && (
-											<TransformWrapper
-												initialScale={1}
-												minScale={0.5}
-												maxScale={4}
-												wheel={{ step: 0.1 }}
-												doubleClick={{ disabled: true }}
-												pinch={{ step: 5 }}
-												panning={{ velocityDisabled: true }}
-											>
-												<TransformComponent
-													wrapperStyle={{
-														position: "absolute",
-														inset: 0,
-														width: "100%",
-														height: "100%",
-														overflow: "hidden",
-														zIndex: 1,
-													}}
-													contentStyle={{
-														display: "flex",
-														justifyContent: "center",
-														alignItems: "center",
-														width: "100%",
-														height: "100%",
-													}}
+								<div
+									id="card-preview"
+									style={{
+										width: 448,
+										height: 626,
+										borderRadius: "22px",
+										position: "relative",
+										border: "1px solid #ccc",
+										backgroundColor: "#fff",
+										overflow: "hidden",
+									}}
+								>
+									{cardType === "キャラ" && (
+										<>
+											{image && (
+												<TransformWrapper
+													initialScale={1}
+													minScale={0.5}
+													maxScale={4}
+													wheel={{ step: 0.1 }}
+													doubleClick={{ disabled: true }}
+													pinch={{ step: 5 }}
+													panning={{ velocityDisabled: true }}
 												>
+													<TransformComponent
+														wrapperStyle={{
+															position: "absolute",
+															inset: 0,
+															width: "100%",
+															height: "100%",
+															overflow: "hidden",
+															zIndex: 1,
+														}}
+														contentStyle={{
+															display: "flex",
+															justifyContent: "center",
+															alignItems: "center",
+															width: "100%",
+															height: "100%",
+														}}
+													>
+														<img
+															src={image}
+															alt="卡图"
+															style={{
+																maxWidth: "100%",
+																maxHeight: "100%",
+																objectFit: "contain",
+																touchAction: "none",
+																userSelect: "none",
+																pointerEvents: "auto",
+															}}
+														/>
+													</TransformComponent>
+												</TransformWrapper>
+											)}
+											<img
+												src={`assets/${cardBottomBar}`}
+												alt="Character"
+												style={{
+													position: "absolute",
+													top: 0,
+													left: 0,
+													width: "100%",
+													height: "100%",
+													zIndex: 2,
+													pointerEvents: "none",
+												}}
+											/>
+											<img
+												src={`assets/level/${levelMark}`}
+												alt="level"
+												style={{
+													position: "absolute",
+													top: 10,
+													left: 15,
+													zIndex: 2,
+													pointerEvents: "none",
+												}}
+											/>
+											<img
+												src={`assets/cost/${costMark}`}
+												alt="cost"
+												style={{
+													position: "absolute",
+													top: 70,
+													left: 15,
+													zIndex: 2,
+													pointerEvents: "none",
+												}}
+											/>
+											<img
+												src={`assets/backup/${backup}.png`}
+												alt="backup"
+												style={{
+													position: "absolute",
+													top: 120,
+													left: 11,
+													width: 56,
+													height: 56,
+													zIndex: 2,
+													pointerEvents: "none",
+												}}
+											/>
+											{trigger === "soul2" ? (
+												<>
 													<img
-														src={image}
-														alt="卡图"
+														src="assets/triggers/soul.png"
+														alt="trigger1"
 														style={{
-															maxWidth: "100%",
-															maxHeight: "100%",
-															objectFit: "contain",
-															touchAction: "none",
-															userSelect: "none",
-															pointerEvents: "auto",
+															position: "absolute",
+															top: 10,
+															right: 59,
+															zIndex: 2,
+															pointerEvents: "none",
 														}}
 													/>
-												</TransformComponent>
-											</TransformWrapper>
-										)}
-										<img
-											src={`assets/${cardBottomBar}`}
-											alt="Character"
-											style={{
-												position: "absolute",
-												top: 0,
-												left: 0,
-												width: "100%",
-												height: "100%",
-												zIndex: 2,
-												pointerEvents: "none",
-											}}
-										/>
-										<img
-											src={`assets/level/${levelMark}`}
-											alt="level"
-											style={{
-												position: "absolute",
-												top: 10,
-												left: 15,
-												zIndex: 2,
-												pointerEvents: "none",
-											}}
-										/>
-										<img
-											src={`assets/cost/${costMark}`}
-											alt="cost"
-											style={{
-												position: "absolute",
-												top: 70,
-												left: 15,
-												zIndex: 2,
-												pointerEvents: "none",
-											}}
-										/>
-										<img
-											src={`assets/backup/${backup}.png`}
-											alt="backup"
-											style={{
-												position: "absolute",
-												top: 120,
-												left: 11,
-												width: 56,
-												height: 56,
-												zIndex: 2,
-												pointerEvents: "none",
-											}}
-										/>
-										{trigger === "soul2" ? (
-											<>
+													<img
+														src="assets/triggers/soul.png"
+														alt="trigger2"
+														style={{
+															position: "absolute",
+															top: 10,
+															right: 10,
+															zIndex: 2,
+															pointerEvents: "none",
+														}}
+													/>
+												</>
+											) : (
 												<img
-													src="assets/triggers/soul.png"
-													alt="trigger1"
-													style={{
-														position: "absolute",
-														top: 10,
-														right: 59,
-														zIndex: 2,
-														pointerEvents: "none",
-													}}
-												/>
-												<img
-													src="assets/triggers/soul.png"
-													alt="trigger2"
+													src={`assets/triggers/${trigger}.png`}
+													alt="trigger"
 													style={{
 														position: "absolute",
 														top: 10,
@@ -735,157 +759,146 @@ function DIY() {
 														pointerEvents: "none",
 													}}
 												/>
-											</>
-										) : (
-											<img
-												src={`assets/triggers/${trigger}.png`}
-												alt="trigger"
-												style={{
-													position: "absolute",
-													top: 10,
-													right: 10,
-													zIndex: 2,
-													pointerEvents: "none",
-												}}
-											/>
-										)}
+											)}
 
-										<div
-											style={{
-												position: "absolute",
-												top: 554,
-												left: 250,
-												transform: "translateX(-50%)",
-												fontWeight: "bold",
-												color: "white",
-												fontSize: 18,
-												whiteSpace: "nowrap",
-												textShadow: "1px 1px 2px black",
-												fontFamily: "name_font",
-												zIndex: 99,
-											}}
-										>
-											{name}
-										</div>
-										<div
-											style={{
-												position: "absolute",
-												fontWeight: "bolder",
-												fontSize: 9,
-												top: 550,
-												left: 47,
-												color: "#000",
-												fontFamily: "name_font",
-												zIndex: 99,
-											}}
-										>
-											{id}
-										</div>
-										<div
-											style={{
-												position: "absolute",
-												bottom: 20,
-												left: 75,
-												fontSize: 30,
-												fontWeight: "light",
-												fontFamily: "Times New Roman",
-												color: "#ffffff",
-												transform: "translateX(-50%)",
-												zIndex: 99,
-											}}
-										>
-											{power}
-										</div>
-										{/* Flavor text box above the main text */}
-										<div
-											style={{
-												position: "absolute",
-												left: "50%",
-												transform: "translateX(-50%)",
-												width: "390px",
-												background:
-													"linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.4) 60%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0))",
-												padding: "2px 5px",
-												fontSize: "16px",
-												lineHeight: "1.4",
-												color: "#000",
-												fontFamily: "name_font",
-												maxHeight: "100px",
-												overflowY: "auto",
-												whiteSpace: "pre-wrap",
-												wordBreak: "break-word",
-												overflowWrap: "break-word",
-												zIndex: 3,
-												bottom: `${80 + textBoxHeight + 5}px`,
-												textAlign: "center",
-											}}
-										>
-											{flavor}
-										</div>
-										{/* Transparent white background text box anchored to bottom */}
-										<div
-											ref={textBoxRef}
-											style={{
-												position: "absolute",
-												bottom: 80,
-												left: 30,
-												width: "390px",
-												backgroundColor: "rgba(255,255,255,0.3)",
-												borderRadius: "4px",
-												padding: "10px",
-												fontSize: "12px",
-												lineHeight: "1.4",
-												color: "#000",
-												fontFamily: "name_font",
-												maxHeight: "300px",
-												overflowY: "auto",
-												whiteSpace: "pre-wrap",
-												wordBreak: "break-word",
-												overflowWrap: "break-word",
-												zIndex: 3,
-											}}
-										>
-											{parseTextWithIcons(text)}
-										</div>
-										{/* Traits at bottom left and right */}
-										{/* 特徴1 */}
-										{traits.length > 0 && traits[0] && (
 											<div
 												style={{
 													position: "absolute",
-													bottom: 22,
-													right: 85,
-													fontSize: "12px",
+													top: 554,
+													left: 250,
+													transform: "translateX(-50%)",
 													fontWeight: "bold",
+													color: "white",
+													fontSize: 18,
+													whiteSpace: "nowrap",
+													textShadow: "1px 1px 2px black",
 													fontFamily: "name_font",
-													transform: "translateX(50%)",
-													color: "#000",
 													zIndex: 99,
 												}}
 											>
-												{traits[0]}
+												{name}
 											</div>
-										)}
-										{/* 特徴2 */}
-										{traits.length > 1 && traits[1] && (
 											<div
 												style={{
 													position: "absolute",
-													bottom: 22,
-													right: 185,
-													fontSize: "12px",
-													fontWeight: "bold",
-													transform: "translateX(50%)",
-													fontFamily: "name_font",
+													fontWeight: "bolder",
+													fontSize: 9,
+													top: 550,
+													left: 47,
 													color: "#000",
+													fontFamily: "name_font",
 													zIndex: 99,
 												}}
 											>
-												{traits[1]}
+												{id}
 											</div>
-										)}
-									</>
-								)}
+											<div
+												style={{
+													position: "absolute",
+													bottom: 20,
+													left: 75,
+													fontSize: 30,
+													fontWeight: "light",
+													fontFamily: "Times New Roman",
+													color: "#ffffff",
+													transform: "translateX(-50%)",
+													zIndex: 99,
+												}}
+											>
+												{power}
+											</div>
+											{/* Flavor text box above the main text */}
+											<div
+												style={{
+													position: "absolute",
+													left: "50%",
+													transform: "translateX(-50%)",
+													width: "390px",
+													background:
+														"linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.4) 60%, rgba(255,255,255,0.4) 60%, rgba(255,255,255,0))",
+													padding: "2px 5px",
+													fontSize: "16px",
+													lineHeight: "1.4",
+													color: "#000",
+													fontFamily: "name_font",
+													maxHeight: "100px",
+													overflowY: "auto",
+													whiteSpace: "pre-wrap",
+													wordBreak: "break-word",
+													overflowWrap: "break-word",
+													zIndex: 3,
+													bottom: `${80 + textBoxHeight + 5}px`,
+													textAlign: "center",
+												}}
+											>
+												{flavor}
+											</div>
+											{/* Transparent white background text box anchored to bottom */}
+											<div
+												ref={textBoxRef}
+												style={{
+													position: "absolute",
+													bottom: 80,
+													left: "50%",
+													transform: "translateX(-50%)",
+													width: "390px",
+													backgroundColor: "rgba(255,255,255,0.3)",
+													borderRadius: "4px",
+													padding: "10px",
+													fontSize: "12px",
+													lineHeight: "1.4",
+													color: "#000",
+													fontFamily: "name_font",
+													maxHeight: "300px",
+													overflowY: "auto",
+													whiteSpace: "pre-wrap",
+													wordBreak: "break-word",
+													overflowWrap: "break-word",
+													zIndex: 3,
+												}}
+											>
+												{parseTextWithIcons(text)}
+											</div>
+											{/* Traits at bottom left and right */}
+											{/* 特徴1 */}
+											{traits.length > 0 && traits[0] && (
+												<div
+													style={{
+														position: "absolute",
+														bottom: 22,
+														right: 85,
+														fontSize: "12px",
+														fontWeight: "bold",
+														fontFamily: "name_font",
+														transform: "translateX(50%)",
+														color: "#000",
+														zIndex: 99,
+													}}
+												>
+													{traits[0]}
+												</div>
+											)}
+											{/* 特徴2 */}
+											{traits.length > 1 && traits[1] && (
+												<div
+													style={{
+														position: "absolute",
+														bottom: 22,
+														right: 185,
+														fontSize: "12px",
+														fontWeight: "bold",
+														transform: "translateX(50%)",
+														fontFamily: "name_font",
+														color: "#000",
+														zIndex: 99,
+													}}
+												>
+													{traits[1]}
+												</div>
+											)}
+										</>
+									)}
+								</div>
 							</div>
 						</div>
 						<div className="mt-3">
