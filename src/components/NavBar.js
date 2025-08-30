@@ -5,7 +5,7 @@ function NavBar() {
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	return (
-		<nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+		<nav className="navbar navbar-expand-lg navbar-dark bg-dark">
 			<div className="container-fluid 10px">
 				<div className="logo navbar-brand">WS工具箱</div>
 
