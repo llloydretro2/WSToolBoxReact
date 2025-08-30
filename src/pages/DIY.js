@@ -152,8 +152,8 @@ function DIY() {
 		{ value: "2t", label: "2个" },
 	];
 	const sideOptions = [
-		{ value: "Weiss", label: "Weiss" },
-		{ value: "Schwarz", label: "Schwarz" },
+		{ value: "weiss", label: "Weiss" },
+		{ value: "schwarz", label: "Schwarz" },
 	];
 	const cardTypeOptions = [
 		{ value: "キャラ", label: "キャラ" },
