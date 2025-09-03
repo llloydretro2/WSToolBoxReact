@@ -148,7 +148,7 @@ function PickPacks() {
 					<Grid container spacing={2} justifyContent="center">
 						{Array.from({ length: parseInt(totalPacks) }, (_, i) => i + 1).map(
 							(pack) => (
-								<Grid item key={pack} xs={4} sm={2.4} md={1.6}>
+								<Grid item key={pack} xs={4} sm={3} md={2}>
 									<Box
 										display="flex"
 										flexDirection="column"
@@ -159,8 +159,9 @@ function PickPacks() {
 											alt={`Pack ${pack}`}
 											style={{
 												width: "100%",
-												maxWidth: "80px",
+												maxWidth: "100%",
 												height: "auto",
+												objectFit: "contain",
 												opacity:
 													results.length > 0 && !results.includes(pack)
 														? 0.3
@@ -270,8 +271,19 @@ function PickPacks() {
 							flexDirection="row"
 							justifyContent="center"
 							gap={2}
+							sx={{ flexWrap: "wrap" }}
 						>
-							<img src={wscollection} alt="WS Collection" height={300} />
+							<Box
+								component="img"
+								src={wscollection}
+								alt="WS Collection"
+								sx={{
+									maxWidth: 500,
+									height: "auto",
+									width: "100%",
+									objectFit: "contain",
+								}}
+							/>
 						</Box>
 						<Typography variant="body1" mt={2}>
 							点击展开即可查看主播的传奇开包历程
@@ -286,9 +298,28 @@ function PickPacks() {
 									flexDirection="row"
 									justifyContent="center"
 									gap={2}
+									sx={{ flexWrap: "wrap" }}
 								>
-									<img src={d4dj} alt="First Pack" height={300} />
-									<img src={d4djsp} alt="First SP" height={300} />
+									<Box
+										component="img"
+										src={d4dj}
+										alt="First Pack"
+										sx={{
+											maxWidth: 250,
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
+									<Box
+										component="img"
+										src={d4djsp}
+										alt="First SP"
+										sx={{
+											maxWidth: 250,
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
 								</Box>
 								<Typography variant="h5" mt={2}>
 									在这之后主播对少女歌剧很有兴趣，但是当时英文剧场版未出，我非常不理智的在tcgplayer上220美元冲动消费买下了少女歌剧TV版的一个残盒
@@ -298,8 +329,19 @@ function PickPacks() {
 									flexDirection="row"
 									justifyContent="center"
 									gap={2}
+									sx={{ flexWrap: "wrap" }}
 								>
-									<img src={revuebox} alt="First Pack" height={300} />
+									<Box
+										component="img"
+										src={revuebox}
+										alt="First Pack"
+										sx={{
+											maxWidth: 500,
+											width: "100%",
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
 								</Box>
 								<Typography variant="h5" mt={2}>
 									结果开出了价值350美元的大場ななSP
@@ -309,8 +351,19 @@ function PickPacks() {
 									flexDirection="row"
 									justifyContent="center"
 									gap={2}
+									sx={{ flexWrap: "wrap" }}
 								>
-									<img src={daibananasp} alt="First SP" height={200} />
+									<Box
+										component="img"
+										src={daibananasp}
+										alt="First SP"
+										sx={{
+											maxWidth: 250,
+											width: "50%",
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
 									<iframe
 										title="daibanana-video"
 										src="https://player.bilibili.com/player.html?bvid=BV1yg4y1V72g&page=1&autoplay=0"
@@ -318,8 +371,8 @@ function PickPacks() {
 										framespacing="0"
 										allowFullScreen
 										style={{
-											width: "auto",
-											height: 200,
+											width: "50%",
+											height: "auto",
 										}}
 									></iframe>
 								</Box>
@@ -333,8 +386,19 @@ function PickPacks() {
 									flexDirection="row"
 									justifyContent="center"
 									gap={2}
+									sx={{ flexWrap: "wrap" }}
 								>
-									<img src={bangdream5thbox} alt="First Pack" height={200} />
+									<Box
+										component="img"
+										src={bangdream5thbox}
+										alt="First Pack"
+										sx={{
+											maxWidth: 500,
+											width: "100%",
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
 								</Box>
 								<Typography variant="h5" mt={2}>
 									战绩如下：
@@ -344,8 +408,19 @@ function PickPacks() {
 									flexDirection="row"
 									justifyContent="center"
 									gap={2}
+									sx={{ flexWrap: "wrap" }}
 								>
-									<img src={yamabukissp} alt="yamabukissp" height={200} />
+									<Box
+										component="img"
+										src={yamabukissp}
+										alt="yamabukissp"
+										sx={{
+											maxWidth: 250,
+											width: "50%",
+											height: "auto",
+											objectFit: "contain",
+										}}
+									/>
 									<iframe
 										title="yamabuki-video"
 										src="https://player.bilibili.com/player.html?bvid=BV13u4y1f7LE&page=1&autoplay=0"
@@ -353,8 +428,8 @@ function PickPacks() {
 										framespacing="0"
 										allowFullScreen
 										style={{
-											width: "auto",
-											height: 200,
+											width: "50%",
+											height: "auto",
 										}}
 									></iframe>
 								</Box>
