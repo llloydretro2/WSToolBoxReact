@@ -31,6 +31,12 @@ function CardList() {
 			)
 		).toString();
 		console.log(params);
+
+		// 本地后端测试地址
+		// http://localhost:4000/api/cards?${params}
+		// 线上后端测试地址
+		// https://wstoolboxbackend-production.up.railway.app/api/cards?${params}
+
 		fetch(
 			`https://wstoolboxbackend-production.up.railway.app/api/cards?${params}`
 		)
@@ -43,6 +49,10 @@ function CardList() {
 					pageSize: res.pageSize,
 				});
 				console.log(res);
+			})
+			.catch((err) => {
+				console.error("搜索失败:", err);
+				setResult({ data: [], total: 0 }); // 清空结果，保持页面正常显示
 			});
 	};
 

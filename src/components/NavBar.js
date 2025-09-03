@@ -16,6 +16,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 const navItems = [
 	{ label: "主页", path: "/" },
 	{ label: "卡片查询", path: "/cardlist" },
+	{ label: "模拟开包", path: "/simulator" },
 	{ label: "选择开包", path: "/pick_packs" },
 	{ label: "先后攻", path: "/first_second" },
 	{ label: "骰子", path: "/dice" },

@@ -9,6 +9,7 @@ import FirstSecond from "./pages/FirstSecond";
 import ChessClock from "./pages/ChessClock";
 import DIY from "./pages/DIY";
 import CardList from "./pages/CardList";
+import Simulator from "./pages/Simulator";
 
 function App() {
 	return (
@@ -24,6 +25,7 @@ function App() {
 				<Route path="/chess_clock" element={<ChessClock />} />
 				<Route path="/diy" element={<DIY />} />
 				<Route path="/cardlist" element={<CardList />} />
+				<Route path="/simulator" element={<Simulator />} />
 			</Routes>
 		</Router>
 	);
