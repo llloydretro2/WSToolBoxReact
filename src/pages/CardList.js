@@ -23,10 +23,11 @@ function CardList() {
 	});
 
 	const [form, setForm] = useState({ page: 1 });
+	const [draftForm, setDraftForm] = useState({ page: 1 });
 
-	const handleSearch = (searchForm) => {
+	const handleSearch = (draftForm) => {
 		const params = new URLSearchParams(
-			Object.entries(searchForm).filter(
+			Object.entries(draftForm).filter(
 				([_, v]) => v !== undefined && v !== "" && v !== null
 			)
 		).toString();
@@ -54,10 +55,12 @@ function CardList() {
 				console.error("搜索失败:", err);
 				setResult({ data: [], total: 0 }); // 清空结果，保持页面正常显示
 			});
+		setForm(draftForm);
 	};
 
 	const handleReset = () => {
 		setForm({ page: 1 });
+		setDraftForm({ page: 1 });
 		setResult({ data: [], total: 0, page: 1, pageSize: 20 });
 	};
 
@@ -87,7 +90,8 @@ function CardList() {
 					component="form"
 					onSubmit={(e) => {
 						e.preventDefault();
-						handleSearch(form);
+						handleSearch({ ...draftForm, page: 1 });
+						setForm((prev) => ({ ...draftForm, page: 1 }));
 					}}
 					sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}
 				>
@@ -96,9 +100,9 @@ function CardList() {
 							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.series_number.slice().sort()}
 							size="small"
-							value={form.series_number || ""}
+							value={draftForm.series_number || ""}
 							onChange={(_, newValue) =>
-								setForm((prev) => ({ ...prev, series_number: newValue }))
+								setDraftForm((prev) => ({ ...prev, series_number: newValue }))
 							}
 							renderInput={(params) => (
 								<TextField
@@ -116,9 +120,9 @@ function CardList() {
 							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.series.slice().sort()}
 							size="small"
-							value={form.series || ""}
+							value={draftForm.series || ""}
 							onChange={(_, newValue) =>
-								setForm((prev) => ({ ...prev, series: newValue }))
+								setDraftForm((prev) => ({ ...prev, series: newValue }))
 							}
 							renderInput={(params) => (
 								<TextField
@@ -136,9 +140,9 @@ function CardList() {
 							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.product_name.slice().sort()}
 							size="small"
-							value={form.product_name || ""}
+							value={draftForm.product_name || ""}
 							onChange={(_, newValue) =>
-								setForm((prev) => ({ ...prev, product_name: newValue }))
+								setDraftForm((prev) => ({ ...prev, product_name: newValue }))
 							}
 							renderInput={(params) => (
 								<TextField
@@ -156,9 +160,9 @@ function CardList() {
 							options={productList.side.slice().sort()}
 							size="small"
 							sx={{ maxWidth: 300, mx: "auto" }}
-							value={form.side || ""}
+							value={draftForm.side || ""}
 							onChange={(_, newValue) =>
-								setForm((prev) => ({ ...prev, side: newValue }))
+								setDraftForm((prev) => ({ ...prev, side: newValue }))
 							}
 							renderInput={(params) => (
 								<TextField
@@ -179,9 +183,9 @@ function CardList() {
 							fullWidth
 							size="small"
 							sx={{ maxWidth: 300 }}
-							value={form.search || ""}
+							value={draftForm.search || ""}
 							onChange={(e) =>
-								setForm((prev) => ({ ...prev, search: e.target.value }))
+								setDraftForm((prev) => ({ ...prev, search: e.target.value }))
 							}
 						/>
 					</Box>
@@ -200,9 +204,9 @@ function CardList() {
 							<Autocomplete
 								options={productList.color.slice().sort()}
 								size="small"
-								value={form.color || ""}
+								value={draftForm.color || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, color: newValue }))
+									setDraftForm((prev) => ({ ...prev, color: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -221,9 +225,9 @@ function CardList() {
 									.slice()
 									.sort((a, b) => Number(a) - Number(b))}
 								size="small"
-								value={form.level || ""}
+								value={draftForm.level || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, level: newValue }))
+									setDraftForm((prev) => ({ ...prev, level: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -240,9 +244,9 @@ function CardList() {
 							<Autocomplete
 								options={productList.rarity.slice().sort()}
 								size="small"
-								value={form.rarity || ""}
+								value={draftForm.rarity || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, rarity: newValue }))
+									setDraftForm((prev) => ({ ...prev, rarity: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -259,9 +263,9 @@ function CardList() {
 							<Autocomplete
 								options={productList.card_type.slice().sort()}
 								size="small"
-								value={form.card_type || ""}
+								value={draftForm.card_type || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, card_type: newValue }))
+									setDraftForm((prev) => ({ ...prev, card_type: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -291,9 +295,9 @@ function CardList() {
 									.slice()
 									.sort((a, b) => Number(a) - Number(b))}
 								size="small"
-								value={form.power || ""}
+								value={draftForm.power || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, power: newValue }))
+									setDraftForm((prev) => ({ ...prev, power: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -312,9 +316,9 @@ function CardList() {
 									.slice()
 									.sort((a, b) => Number(a) - Number(b))}
 								size="small"
-								value={form.cost || ""}
+								value={draftForm.cost || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, cost: newValue }))
+									setDraftForm((prev) => ({ ...prev, cost: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -331,9 +335,9 @@ function CardList() {
 							<Autocomplete
 								options={productList.soul.slice().sort()}
 								size="small"
-								value={form.soul || ""}
+								value={draftForm.soul || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, soul: newValue }))
+									setDraftForm((prev) => ({ ...prev, soul: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -350,9 +354,9 @@ function CardList() {
 							<Autocomplete
 								options={productList.trigger.slice().sort()}
 								size="small"
-								value={form.trigger || ""}
+								value={draftForm.trigger || ""}
 								onChange={(_, newValue) =>
-									setForm((prev) => ({ ...prev, trigger: newValue }))
+									setDraftForm((prev) => ({ ...prev, trigger: newValue }))
 								}
 								renderInput={(params) => (
 									<TextField
@@ -479,6 +483,22 @@ function CardList() {
 						/>
 					</Box>
 				)}
+			</Box>
+			<Box display="flex" justifyContent="center" mb={4}>
+				<Button
+					variant="outlined"
+					onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+					sx={{
+						color: "#4b4b4b",
+						borderColor: "#a6ceb6",
+						"&:hover": {
+							borderColor: "#95bfa5",
+							backgroundColor: "#f5f5f5",
+						},
+					}}
+				>
+					回到顶部
+				</Button>
 			</Box>
 		</Container>
 	);
