@@ -496,7 +496,7 @@ function CardList() {
 								/>
 								<CardContent>
 									<Typography variant="h6">{card.name}</Typography>
-									<Typography variant="h6">{card.zh_name}</Typography>s
+									<Typography variant="h6">{card.zh_name}</Typography>
 									<Typography variant="body2" color="text.secondary">
 										<strong>编号:</strong> {card.cardno}
 									</Typography>
