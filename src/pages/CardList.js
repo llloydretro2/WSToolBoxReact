@@ -13,6 +13,7 @@ import {
 	Pagination,
 } from "@mui/material";
 import productList from "../data/productList.json";
+import translationMap from "../data/filter_translations.json";
 
 function CardList() {
 	const [result, setResult] = useState({
@@ -98,12 +99,35 @@ function CardList() {
 					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
 							sx={{ maxWidth: 300, mx: "auto" }}
-							options={productList.series_number.slice().sort()}
+							options={productList.series_number
+								.slice()
+								.sort()
+								.map(
+									(s) =>
+										`${s}${
+											translationMap.series_number?.[s]
+												? `（${translationMap.series_number?.[s]}）`
+												: ""
+										}`
+								)}
 							size="small"
-							value={draftForm.series_number || ""}
-							onChange={(_, newValue) =>
-								setDraftForm((prev) => ({ ...prev, series_number: newValue }))
+							value={
+								draftForm.series_number
+									? `${draftForm.series_number}${
+											translationMap.series_number?.[draftForm.series_number]
+												? `（${
+														translationMap.series_number?.[
+															draftForm.series_number
+														]
+												  }）`
+												: ""
+									  }`
+									: ""
 							}
+							onChange={(_, newValue) => {
+								const key = newValue?.split("（")[0];
+								setDraftForm((prev) => ({ ...prev, series_number: key }));
+							}}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -118,12 +142,31 @@ function CardList() {
 					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
 							sx={{ maxWidth: 300, mx: "auto" }}
-							options={productList.series.slice().sort()}
+							options={productList.series
+								.slice()
+								.sort()
+								.map(
+									(s) =>
+										`${s}${
+											translationMap.series?.[s]
+												? `（${translationMap.series?.[s]}）`
+												: ""
+										}`
+								)}
 							size="small"
-							value={draftForm.series || ""}
-							onChange={(_, newValue) =>
-								setDraftForm((prev) => ({ ...prev, series: newValue }))
+							value={
+								draftForm.series
+									? `${draftForm.series}${
+											translationMap.series?.[draftForm.series]
+												? `（${translationMap.series?.[draftForm.series]}）`
+												: ""
+									  }`
+									: ""
 							}
+							onChange={(_, newValue) => {
+								const key = newValue?.split("（")[0];
+								setDraftForm((prev) => ({ ...prev, series: key }));
+							}}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -138,12 +181,35 @@ function CardList() {
 					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
 							sx={{ maxWidth: 300, mx: "auto" }}
-							options={productList.product_name.slice().sort()}
+							options={productList.product_name
+								.slice()
+								.sort()
+								.map(
+									(p) =>
+										`${p}${
+											translationMap.product_name?.[p]
+												? `（${translationMap.product_name?.[p]}）`
+												: ""
+										}`
+								)}
 							size="small"
-							value={draftForm.product_name || ""}
-							onChange={(_, newValue) =>
-								setDraftForm((prev) => ({ ...prev, product_name: newValue }))
+							value={
+								draftForm.product_name
+									? `${draftForm.product_name}${
+											translationMap.product_name?.[draftForm.product_name]
+												? `（${
+														translationMap.product_name?.[
+															draftForm.product_name
+														]
+												  }）`
+												: ""
+									  }`
+									: ""
 							}
+							onChange={(_, newValue) => {
+								const key = newValue?.split("（")[0];
+								setDraftForm((prev) => ({ ...prev, product_name: key }));
+							}}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -430,29 +496,42 @@ function CardList() {
 								/>
 								<CardContent>
 									<Typography variant="h6">{card.name}</Typography>
+									<Typography variant="h6">{card.zh_name}</Typography>s
 									<Typography variant="body2" color="text.secondary">
-										No: {card.cardno}
+										<strong>编号:</strong> {card.cardno}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										Color: {card.color}
+										<strong>颜色:</strong> {card.color}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										Rarity: {card.rarity}
+										<strong>稀有度:</strong> {card.rarity}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										Level: {card.level}
+										<strong>等级:</strong> {card.level}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										Power: {card.power}
+										<strong>费用:</strong> {card.cost}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										{card.product_name} - {card.series}
+										<strong>力量:</strong> {card.power}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										{card.flavor}
+										<strong>产品名：</strong> {card.product_name}
 									</Typography>
 									<Typography variant="body2" color="text.secondary">
-										{card.effect}
+										<strong>系列：</strong> {card.series}
+									</Typography>
+									<Typography variant="body2" color="text.secondary">
+										<strong>风味：</strong> {card.flavor}
+									</Typography>
+									<Typography variant="body2" color="text.secondary">
+										<strong>风味（中文）：</strong> {card.zh_flavor}
+									</Typography>
+									<Typography variant="body2" color="text.secondary">
+										<strong>效果：</strong> {card.effect}
+									</Typography>
+									<Typography variant="body2" color="text.secondary">
+										<strong>效果（中文）：</strong> {card.zh_effect}
 									</Typography>
 								</CardContent>
 							</Card>
