@@ -81,7 +81,23 @@ function NavBar() {
 				</Toolbar>
 			</AppBar>
 			<Toolbar />
-			<Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+			<Drawer
+				anchor="left"
+				open={drawerOpen}
+				onClose={toggleDrawer(false)}
+				sx={{
+					"& .MuiDrawer-paper": {
+						backgroundColor: "rgba(166, 206, 182)", // 自定义背景色
+						color: "white", // 自定义文字颜色
+					},
+					"& .MuiListItemText-root": {
+						color: "white",
+					},
+					"& .MuiButtonBase-root": {
+						color: "white",
+					},
+				}}
+			>
 				{drawer}
 			</Drawer>
 		</>

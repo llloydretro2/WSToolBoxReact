@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from "react";
+import {
+	Container,
+	Typography,
+	Button,
+	TextField,
+	Box,
+	Grid,
+	Paper,
+} from "@mui/material";
 
 function Dice() {
 	const [diceInputs, setDiceInputs] = useState([{ sides: 6, count: 1 }]);
@@ -49,90 +58,99 @@ function Dice() {
 	};
 
 	return (
-		<div className="container-fluid">
-			<div className="d-flex justify-content-center align-items-center flex-column mb-4">
-				<h1>Dice Roller</h1>
-				{diceInputs.map((input, index) => (
-					<div key={index} className="row mb-2">
-						<div className="row justify-content-center align-items-center">
-							<div className="col-1">
-								<strong className="bg-info text-white px-2 py-1 rounded">
-									{index + 1}
-								</strong>{" "}
-							</div>
-							<div className="col-3">
-								<input
-									type="number"
-									className="form-control"
-									placeholder="数量"
-									value={input.count}
-									onChange={(e) => handleChange(index, "count", e.target.value)}
-								/>
-							</div>
-							<div className="col-1">
-								<strong>D</strong>
-							</div>
-							<div className="col-3">
-								<input
-									type="number"
-									className="form-control"
-									placeholder="面数"
-									value={input.sides}
-									onChange={(e) => handleChange(index, "sides", e.target.value)}
-								/>
-							</div>
-						</div>
-					</div>
-				))}
-				<div className="container">
-					<div className="row mt-3 justify-content-center">
-						<div className="col-4">
-							<button
-								className="btn btn-success btn-lg w-100"
-								onClick={addDiceInput}
-							>
-								添加骰子
-							</button>
-						</div>
-						<div className="col-4">
-							<button
-								className="btn btn-danger btn-lg w-100"
-								onClick={resetDiceInputs}
-							>
-								重置
-							</button>
-						</div>
-					</div>
-					<div className="row mt-3 justify-content-center">
-						<div className="col-4">
-							<button
-								className="btn btn-primary btn-lg w-100"
-								onClick={rollDice}
-							>
-								投掷骰子
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
+		<Container maxWidth="md" sx={{ mt: 4 }}>
+			<Typography variant="h4" align="center" gutterBottom>
+				Dice Roller
+			</Typography>
+			{diceInputs.map((input, index) => (
+				<Paper
+					key={index}
+					sx={{
+						p: 2,
+						mb: 2,
+						display: "flex",
+						justifyContent: "center",
+						backgroundColor: "rgba(166, 206, 182, 0.6)",
+					}}
+				>
+					<Grid container spacing={1} alignItems="center" wrap="nowrap">
+						<Grid item>
+							<Typography variant="body1">{index + 1}</Typography>
+						</Grid>
+						<Grid item xs={5} sm={3}>
+							<TextField
+								label="数量"
+								type="number"
+								size="small"
+								value={input.count}
+								onChange={(e) => handleChange(index, "count", e.target.value)}
+							/>
+						</Grid>
+						<Grid item>
+							<Typography variant="h6">D</Typography>
+						</Grid>
+						<Grid item xs={5} sm={3}>
+							<TextField
+								label="面数"
+								type="number"
+								size="small"
+								value={input.sides}
+								onChange={(e) => handleChange(index, "sides", e.target.value)}
+							/>
+						</Grid>
+					</Grid>
+				</Paper>
+			))}
+
+			<Grid container spacing={2} justifyContent="center" sx={{ mb: 3 }}>
+				<Grid item xs={12} sm={4}>
+					<Button
+						variant="contained"
+						color="success"
+						fullWidth
+						onClick={addDiceInput}
+					>
+						添加骰子
+					</Button>
+				</Grid>
+				<Grid item xs={12} sm={4}>
+					<Button
+						variant="contained"
+						color="error"
+						fullWidth
+						onClick={resetDiceInputs}
+					>
+						重置
+					</Button>
+				</Grid>
+				<Grid item xs={12} sm={4}>
+					<Button
+						variant="contained"
+						color="primary"
+						fullWidth
+						onClick={rollDice}
+					>
+						投掷骰子
+					</Button>
+				</Grid>
+			</Grid>
+
 			{results.length > 0 && (
-				<div className="container-fluid">
-					<div className="row justify-content-center text-center">
-						<div className="col-8">
-							<h2 className="mb-4">结果</h2>
-							{results.map((rolls, idx) => (
-								<div key={idx} className="mb-2">
-									第{idx + 1}组: {rolls.join(", ")}
-								</div>
-							))}
-							<h4 className="mb-5">
-								总计: {results.flat().reduce((a, b) => a + b, 0)}
-							</h4>
-						</div>
-					</div>
-				</div>
+				<Box sx={{ mt: 4, textAlign: "center" }}>
+					<Typography variant="h5" gutterBottom>
+						结果
+					</Typography>
+					{results.map((rolls, idx) => (
+						<Typography key={idx} variant="body1" sx={{ mb: 1 }}>
+							第{idx + 1}组: {rolls.join(", ")}
+						</Typography>
+					))}
+					<Typography variant="h6" sx={{ mt: 2 }}>
+						总计: {results.flat().reduce((a, b) => a + b, 0)}
+					</Typography>
+				</Box>
 			)}
-		</div>
+		</Container>
 	);
 }
 

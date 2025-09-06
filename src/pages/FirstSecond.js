@@ -1,3 +1,4 @@
+import { Container, Typography, Button, Box } from "@mui/material";
 import React, { useState } from "react";
 
 function FirstSecond() {
@@ -10,30 +11,43 @@ function FirstSecond() {
 	};
 
 	return (
-		<div className="container-fluid">
-			<div className="d-flex  align-items-center justify-content-center m-5 flex-column">
-				<h1>先后攻</h1>
-				<p1>点击生成先攻或者后攻</p1>
+		<Container maxWidth="sm" sx={{ mt: 8, textAlign: "center" }}>
+			<Typography variant="h4" gutterBottom>
+				先后攻
+			</Typography>
+			<Typography variant="body1" gutterBottom>
+				点击生成先攻或者后攻
+			</Typography>
 
-				{order && (
-					<h1
-						className="display-1 mt-5 mb-5"
-						style={{
-							backgroundColor: order === "先攻" ? "red" : "blue",
-							color: "white",
-							padding: "20px",
-							borderRadius: "10px",
-						}}
-					>
-						{order}
-					</h1>
-				)}
+			{order && (
+				<Box
+					sx={{
+						mt: 5,
+						mb: 5,
+						bgcolor: order === "先攻" ? "red" : "blue",
+						color: "white",
+						p: 3,
+						borderRadius: 2,
+					}}
+				>
+					<Typography variant="h2">{order}</Typography>
+				</Box>
+			)}
 
-				<button className="btn btn-primary btn-lg col-3" onClick={decideOrder}>
-					决定
-				</button>
-			</div>
-		</div>
+			<Button
+				variant="contained"
+				size="large"
+				onClick={decideOrder}
+				sx={{
+					px: 6,
+					py: 1.5,
+					backgroundColor: "#a6ceb6",
+					"&:hover": { backgroundColor: "#95bfa5" },
+				}}
+			>
+				决定
+			</Button>
+		</Container>
 	);
 }
 
