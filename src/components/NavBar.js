@@ -28,7 +28,7 @@ const navItems = [
 
 function NavBar() {
 	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [isLoggedIn, setIsLoggedIn] = useState(false); // 模拟登录状态
+	const [isLoggedIn] = useState(false); // 模拟登录状态
 
 	const toggleDrawer = (open) => (event) => {
 		if (

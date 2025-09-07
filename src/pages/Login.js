@@ -4,7 +4,7 @@ import { Dialog } from "@mui/material";
 
 const RAILWAY_BACKEND_URL =
 	"https://wstoolboxbackend-production.up.railway.app";
-const LOCAL_BACKEND_URL = "http://localhost:4000";
+// const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 function LoginPage({ onLogin }) {
 	const [username, setUsername] = useState("");

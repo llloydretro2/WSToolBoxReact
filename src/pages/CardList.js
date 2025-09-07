@@ -17,7 +17,7 @@ import translationMap from "../data/filter_translations.json";
 
 const RAILWAY_BACKEND_URL =
 	"https://wstoolboxbackend-production.up.railway.app";
-const LOCAL_BACKEND_URL = "http://localhost:4000";
+// const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 function CardList() {
 	const [result, setResult] = useState({
