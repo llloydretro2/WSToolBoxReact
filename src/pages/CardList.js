@@ -15,6 +15,10 @@ import {
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
 
+const RAILWAY_BACKEND_URL =
+	"https://wstoolboxbackend-production.up.railway.app";
+const LOCAL_BACKEND_URL = "http://localhost:4000";
+
 function CardList() {
 	const [result, setResult] = useState({
 		data: [],
@@ -39,9 +43,7 @@ function CardList() {
 		// 线上后端测试地址
 		// https://wstoolboxbackend-production.up.railway.app/api/cards?${params}
 
-		fetch(
-			`https://wstoolboxbackend-production.up.railway.app/api/cards?${params}`
-		)
+		fetch(`${RAILWAY_BACKEND_URL}/api/cards?${params}`)
 			.then((res) => res.json())
 			.then((res) => {
 				setResult({

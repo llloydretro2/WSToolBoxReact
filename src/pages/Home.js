@@ -81,7 +81,6 @@ function Home() {
 					待办事项
 				</Typography>
 				<Typography variant="body1" color="text.secondary">
-					<br />- 随机洗牌生成
 					<br />- 卡组制作功能（搞登录好麻烦）
 					<br />- 卡组翻译一键全部导出成PNG或者PDF
 					<br />- 战绩记录？（也需要和登录功能绑定）

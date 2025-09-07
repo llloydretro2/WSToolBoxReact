@@ -10,6 +10,8 @@ import ChessClock from "./pages/ChessClock";
 import DIY from "./pages/DIY";
 import CardList from "./pages/CardList";
 import Simulator from "./pages/Simulator";
+import LoginPage from "./pages/Login";
+import RandomShuffle from "./pages/RandomShuffle";
 
 function App() {
 	return (
@@ -26,6 +28,8 @@ function App() {
 				<Route path="/diy" element={<DIY />} />
 				<Route path="/cardlist" element={<CardList />} />
 				<Route path="/simulator" element={<Simulator />} />
+				<Route path="/shuffle" element={<RandomShuffle />} />
+				<Route path="/login" element={<LoginPage />} />
 			</Routes>
 		</Router>
 	);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Avatar from "@mui/material/Avatar";
 import {
 	AppBar,
 	Toolbar,
@@ -22,11 +23,12 @@ const navItems = [
 	{ label: "骰子", path: "/dice" },
 	{ label: "棋钟", path: "/chess_clock" },
 	{ label: "随机洗牌", path: "/shuffle" },
-	{ label: "卡片DIY", path: "/diy" },
+	// { label: "卡片DIY", path: "/diy" },
 ];
 
 function NavBar() {
 	const [drawerOpen, setDrawerOpen] = useState(false);
+	const [isLoggedIn, setIsLoggedIn] = useState(false); // 模拟登录状态
 
 	const toggleDrawer = (open) => (event) => {
 		if (
@@ -78,6 +80,21 @@ function NavBar() {
 							<MenuIcon />
 						</IconButton>
 					</Box>
+					{isLoggedIn ? (
+						<Avatar
+							alt="User"
+							src="/static/images/avatar/1.jpg"
+							sx={{ ml: 2 }}
+						/>
+					) : (
+						<Button
+							color="inherit"
+							sx={{ ml: 2 }}
+							onClick={() => (window.location.href = "/login")}
+						>
+							登录
+						</Button>
+					)}
 				</Toolbar>
 			</AppBar>
 			<Toolbar />

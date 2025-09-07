@@ -90,7 +90,7 @@ function ChessClock() {
 								setSide(side === 1 ? 2 : 1);
 							}}
 							sx={{
-								backgroundColor: "#a6ceb6",
+								backgroundColor: "rgba(166, 206, 182, 0.7)",
 								"&:hover": { backgroundColor: "#95bfa5" },
 							}}
 						>
@@ -102,7 +102,7 @@ function ChessClock() {
 							size="large"
 							onClick={() => setShowResetConfirm(true)}
 							sx={{
-								backgroundColor: "#760f10",
+								backgroundColor: "rgba(118, 15, 16, 0.7)",
 								"&:hover": {
 									backgroundColor: "#5c0f10",
 								},

@@ -129,7 +129,10 @@ function PickPacks() {
 					variant="contained"
 					size="large"
 					onClick={randomGeneratePacks}
-					sx={{ bgcolor: "#a6ceb6", "&:hover": { bgcolor: "#8fbf9f" } }}
+					sx={{
+						backgroundColor: "rgba(166, 206, 182, 0.7)",
+						"&:hover": { backgroundColor: "#95bfa5" },
+					}}
 				>
 					开包
 				</Button>
@@ -138,7 +141,12 @@ function PickPacks() {
 					variant="contained"
 					size="large"
 					onClick={clearPage}
-					sx={{ bgcolor: "#a6ceb6", "&:hover": { bgcolor: "#8fbf9f" } }}
+					sx={{
+						backgroundColor: "rgba(118, 15, 16, 0.7)",
+						"&:hover": {
+							backgroundColor: "#5c0f10",
+						},
+					}}
 				>
 					重置
 				</Button>
