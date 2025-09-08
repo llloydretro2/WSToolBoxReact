@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import Avatar from "@mui/material/Avatar";
 import {
 	AppBar,
@@ -11,8 +12,13 @@ import {
 	ListItemText,
 	Box,
 	Button,
+	Snackbar,
 } from "@mui/material";
+import Divider from "@mui/material/Divider";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const navItems = [
 	{ label: "主页", path: "/" },
@@ -23,12 +29,36 @@ const navItems = [
 	{ label: "骰子", path: "/dice" },
 	{ label: "棋钟", path: "/chess_clock" },
 	{ label: "随机洗牌", path: "/shuffle" },
-	// { label: "卡片DIY", path: "/diy" },
+	{ label: "卡组", path: "/deck" },
 ];
+
+function getAvatarIndexFromUsername(username) {
+	const hash = [...username].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+	return (hash % 29) + 1;
+}
 
 function NavBar() {
 	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [isLoggedIn] = useState(false); // 模拟登录状态
+	const { user, logout } = useAuth();
+	const isLoggedIn = !!user;
+
+	const navigate = useNavigate();
+	const location = useLocation();
+
+	const [showLoginSnackbar, setShowLoginSnackbar] = useState(false);
+
+	// Avatar menu state and handlers
+	const [anchorEl, setAnchorEl] = useState(null);
+	const handleAvatarClick = (event) => {
+		setAnchorEl(event.currentTarget);
+	};
+	const handleCloseMenu = () => {
+		setAnchorEl(null);
+	};
+	const handleLogout = () => {
+		logout();
+		handleCloseMenu();
+	};
 
 	const toggleDrawer = (open) => (event) => {
 		if (
@@ -40,6 +70,14 @@ function NavBar() {
 		setDrawerOpen(open);
 	};
 
+	useEffect(() => {
+		if (location.state?.fromDeck) {
+			setShowLoginSnackbar(true);
+			// 清除状态，避免返回上一页仍然触发
+			window.history.replaceState({}, document.title);
+		}
+	}, [location]);
+
 	const drawer = (
 		<Box
 			sx={{ maxWidth: 300, width: "50vw" }}
@@ -49,9 +87,23 @@ function NavBar() {
 		>
 			<List>
 				{navItems.map((item) => (
-					<ListItem button key={item.label} component="a" href={item.path}>
-						<ListItemText primary={item.label} />
-					</ListItem>
+					<React.Fragment key={item.label || "divider"}>
+						{item.divider && <Divider sx={{ my: 1 }} />}
+						{item.label && (
+							<ListItem
+								button
+								onClick={() => {
+									if (item.label === "卡组" && !isLoggedIn) {
+										navigate("/login", { state: { fromDeck: true } });
+									} else {
+										window.location.href = item.path;
+									}
+								}}
+							>
+								<ListItemText primary={item.label} />
+							</ListItem>
+						)}
+					</React.Fragment>
 				))}
 			</List>
 		</Box>
@@ -66,7 +118,17 @@ function NavBar() {
 					</Typography>
 					<Box sx={{ display: { xs: "none", md: "flex" } }}>
 						{navItems.map((item) => (
-							<Button key={item.label} color="inherit" href={item.path}>
+							<Button
+								key={item.label}
+								color="inherit"
+								onClick={() => {
+									if (item.label === "卡组" && !isLoggedIn) {
+										navigate("/login", { state: { fromDeck: true } });
+									} else {
+										window.location.href = item.path;
+									}
+								}}
+							>
 								{item.label}
 							</Button>
 						))}
@@ -81,11 +143,38 @@ function NavBar() {
 						</IconButton>
 					</Box>
 					{isLoggedIn ? (
-						<Avatar
-							alt="User"
-							src="/static/images/avatar/1.jpg"
-							sx={{ ml: 2 }}
-						/>
+						<Box
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								ml: 2,
+							}}
+						>
+							<Avatar
+								alt={user.username}
+								src={`/assets/283/${getAvatarIndexFromUsername(
+									user.username
+								)}.png`}
+								onClick={handleAvatarClick}
+								sx={{ cursor: "pointer", width: 32, height: 32 }}
+							/>
+							<Menu
+								anchorEl={anchorEl}
+								open={Boolean(anchorEl)}
+								onClose={handleCloseMenu}
+								anchorOrigin={{
+									vertical: "bottom",
+									horizontal: "center",
+								}}
+								transformOrigin={{
+									vertical: "top",
+									horizontal: "center",
+								}}
+							>
+								<MenuItem onClick={handleLogout}>退出登录</MenuItem>
+							</Menu>
+						</Box>
 					) : (
 						<Button
 							color="inherit"
@@ -117,6 +206,13 @@ function NavBar() {
 			>
 				{drawer}
 			</Drawer>
+			<Snackbar
+				open={showLoginSnackbar}
+				autoHideDuration={3000}
+				onClose={() => setShowLoginSnackbar(false)}
+				message="请先登录后编辑卡组"
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			/>
 		</>
 	);
 }

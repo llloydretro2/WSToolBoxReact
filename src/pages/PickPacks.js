@@ -153,10 +153,10 @@ function PickPacks() {
 			</Box>
 			{totalPacks > 0 && (
 				<Box display="flex" flexDirection="column" alignItems="center" mb={4}>
-					<Grid container spacing={2} justifyContent="center">
+					<Grid container spacing={2} justifyContent="center" columns={20}>
 						{Array.from({ length: parseInt(totalPacks) }, (_, i) => i + 1).map(
 							(pack) => (
-								<Grid item key={pack} xs={4} sm={3} md={2}>
+								<Grid item xs={3} key={pack} size={4}>
 									<Box
 										display="flex"
 										flexDirection="column"

@@ -1,22 +1,26 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext.js";
 import { Box, Button, TextField, Typography, Container } from "@mui/material";
-import { Dialog } from "@mui/material";
+import { Snackbar, Alert } from "@mui/material";
 
 const RAILWAY_BACKEND_URL =
 	"https://wstoolboxbackend-production.up.railway.app";
 // const LOCAL_BACKEND_URL = "http://localhost:4000";
 
-function LoginPage({ onLogin }) {
+function LoginPage() {
+	const { login } = useAuth();
+	const navigate = useNavigate();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [isRegister, setIsRegister] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
-	const [showDialog, setShowDialog] = useState(false);
+	const [successMessage, setSuccessMessage] = useState("");
 
 	const handleSubmit = async () => {
 		if (!username || !password) {
 			setErrorMessage("请输入用户名和密码");
-			setShowDialog(true);
+			// removed
 			return;
 		}
 
@@ -42,28 +46,52 @@ function LoginPage({ onLogin }) {
 			if (!isRegister) {
 				localStorage.setItem("token", data.token);
 				localStorage.setItem("username", data.user.username);
-				onLogin();
+				setSuccessMessage("登录成功！跳转到首页...");
+				setTimeout(() => {
+					navigate("/");
+				}, 1000);
+				login({ token: data.token, username: data.user.username });
 			} else {
 				setErrorMessage("注册成功，请登录！");
-				setShowDialog(true);
+				// removed
 				setIsRegister(false);
 			}
 		} catch (error) {
 			setErrorMessage(error.message);
-			setShowDialog(true);
+			// removed
 		}
 	};
 
 	return (
 		<>
-			<Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-				<Box p={3}>
-					<Typography variant="h6">{errorMessage}</Typography>
-					<Box mt={2} display="flex" justifyContent="flex-end">
-						<Button onClick={() => setShowDialog(false)}>关闭</Button>
-					</Box>
-				</Box>
-			</Dialog>
+			<Snackbar
+				open={Boolean(errorMessage)}
+				autoHideDuration={4000}
+				onClose={() => setErrorMessage("")}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setErrorMessage("")}
+					severity="info"
+					sx={{ width: "100%" }}
+				>
+					{errorMessage}
+				</Alert>
+			</Snackbar>
+			<Snackbar
+				open={Boolean(successMessage)}
+				autoHideDuration={3000}
+				onClose={() => setSuccessMessage("")}
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}
+			>
+				<Alert
+					onClose={() => setSuccessMessage("")}
+					severity="success"
+					sx={{ width: "100%" }}
+				>
+					{successMessage}
+				</Alert>
+			</Snackbar>
 			<Container maxWidth="sm">
 				<Box sx={{ p: 4, mt: 8 }}>
 					<Typography variant="h2" align="center" gutterBottom>
