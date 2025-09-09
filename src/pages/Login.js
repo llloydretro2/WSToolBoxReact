@@ -43,17 +43,21 @@ function LoginPage() {
 			}
 
 			const data = await response.json();
+			// localStorage.setItem("token", data.token);
+			// localStorage.setItem("username", data.user.username);
+
 			if (!isRegister) {
-				localStorage.setItem("token", data.token);
-				localStorage.setItem("username", data.user.username);
 				setSuccessMessage("登录成功！跳转到首页...");
 				setTimeout(() => {
 					navigate("/");
 				}, 1000);
-				login({ token: data.token, username: data.user.username });
+				login({
+					token: data.token,
+					username: data.user.username,
+					userData: data.user,
+				});
 			} else {
 				setErrorMessage("注册成功，请登录！");
-				// removed
 				setIsRegister(false);
 			}
 		} catch (error) {

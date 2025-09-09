@@ -14,6 +14,7 @@ import Simulator from "./pages/Simulator";
 import LoginPage from "./pages/Login";
 import RandomShuffle from "./pages/RandomShuffle";
 import DeckPage from "./pages/Deck";
+import Record from "./pages/Record";
 
 function App() {
 	return (
@@ -34,6 +35,7 @@ function App() {
 					<Route path="/shuffle" element={<RandomShuffle />} />
 					<Route path="/login" element={<LoginPage />} />
 					<Route path="/deck" element={<DeckPage />} />
+                    <Route path='/record' element={<Record />} />
 				</Routes>
 			</Router>
 		</AuthProvider>

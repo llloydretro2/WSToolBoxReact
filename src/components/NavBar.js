@@ -14,13 +14,12 @@ import {
 	Button,
 	Snackbar,
 } from "@mui/material";
-import Divider from "@mui/material/Divider";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const navItems = [
+const baseNavItems = [
 	{ label: "主页", path: "/" },
 	{ label: "卡片查询", path: "/cardlist" },
 	{ label: "模拟开包", path: "/simulator" },
@@ -29,6 +28,10 @@ const navItems = [
 	{ label: "骰子", path: "/dice" },
 	{ label: "棋钟", path: "/chess_clock" },
 	{ label: "随机洗牌", path: "/shuffle" },
+];
+
+const loggedInNavItems = [
+	{ label: "记录", path: "/record" },
 	{ label: "卡组", path: "/deck" },
 ];
 
@@ -41,6 +44,10 @@ function NavBar() {
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	const { user, logout } = useAuth();
 	const isLoggedIn = !!user;
+
+	const navItems = isLoggedIn
+		? [...baseNavItems, ...loggedInNavItems]
+		: baseNavItems;
 
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -87,8 +94,7 @@ function NavBar() {
 		>
 			<List>
 				{navItems.map((item) => (
-					<React.Fragment key={item.label || "divider"}>
-						{item.divider && <Divider sx={{ my: 1 }} />}
+					<React.Fragment key={item.label}>
 						{item.label && (
 							<ListItem
 								button

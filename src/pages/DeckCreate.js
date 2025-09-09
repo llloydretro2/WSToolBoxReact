@@ -12,7 +12,6 @@ import translationMap from "../data/filter_translations.json";
 
 const DeckCreate = () => {
 	const [deckName, setDeckName] = useState("");
-	// const [series, setSeries] = useState("");
 	const [form, setForm] = useState({
 		series: "",
 		search: "",
@@ -25,10 +24,10 @@ const DeckCreate = () => {
 		soul: "",
 		trigger: "",
 	});
+	const [seriesInput, setSeriesInput] = useState("");
 
 	// const handleCreate = () => {
 	// 	console.log("创建卡组：", deckName);
-	// 	// 后续可以添加 API 调用
 	// };
 
 	const handleFilterChange = (e) => {
@@ -100,40 +99,32 @@ const DeckCreate = () => {
 								}`
 						)}
 					value={
-						form.series
-							? `${form.series}${
-									translationMap.series?.[form.series]
-										? `（${translationMap.series[form.series]}）`
+						seriesInput
+							? `${seriesInput}${
+									translationMap.series?.[seriesInput]
+										? `（${translationMap.series[seriesInput]}）`
 										: ""
 							  }`
 							: ""
 					}
-					onChange={(_, newValue) => {
-						const key = newValue?.split("（")[0];
-						setForm((prev) => ({ ...prev, series: key }));
-					}}
 					sx={{ flex: 1 }}
 					size="small"
+					onChange={(_, newValue) => {
+						const key = newValue?.split("（")[0];
+						setSeriesInput(key || "");
+					}}
 					renderInput={(params) => (
 						<TextField {...params} label="系列" variant="outlined" />
 					)}
 					clearOnEscape
 					freeSolo={false}
 					disableClearable={false}
-					getOptionLabel={(option) => {
-						if (option === "") return "";
-						return option;
-					}}
-					renderOption={(props, option) => (
-						<li {...props}>{option === "" ? "" : option}</li>
-					)}
 				/>
 				<Button
 					variant="contained"
 					color="primary"
 					onClick={() => {
-						// 可以自定义一个 handleSeriesConfirm 逻辑，暂时执行 handleFilterSearch
-						handleFilterSearch();
+						setForm((prev) => ({ ...prev, series: seriesInput }));
 					}}
 				>
 					确定
@@ -186,7 +177,7 @@ const DeckCreate = () => {
 				>
 					<Grid item xs={12} sm={6} md={3} size={4}>
 						<Autocomplete
-							options={["yellow", "green", "red", "blue"]}
+							options={productList.color.slice().sort()}
 							value={form.color || null}
 							onChange={handleAutocompleteChange("color")}
 							renderInput={(params) => (
@@ -201,7 +192,9 @@ const DeckCreate = () => {
 					</Grid>
 					<Grid item xs={12} sm={6} md={3} size={4}>
 						<Autocomplete
-							options={["0", "1", "2", "3"]}
+							options={productList.level
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
 							value={form.level || null}
 							onChange={handleAutocompleteChange("level")}
 							renderInput={(params) => (
@@ -216,7 +209,7 @@ const DeckCreate = () => {
 					</Grid>
 					<Grid item xs={12} sm={6} md={3} size={4}>
 						<Autocomplete
-							options={["C", "U", "R", "RR", "RRR", "SR", "SP", "TD"]}
+							options={productList.rarity.slice().sort()}
 							value={form.rarity || null}
 							onChange={handleAutocompleteChange("rarity")}
 							renderInput={(params) => (
@@ -231,7 +224,7 @@ const DeckCreate = () => {
 					</Grid>
 					<Grid item xs={12} sm={6} md={3} size={4}>
 						<Autocomplete
-							options={["character", "event", "climax"]}
+							options={productList.card_type.slice().sort()}
 							value={form.card_type || null}
 							onChange={handleAutocompleteChange("card_type")}
 							renderInput={(params) => (
@@ -245,55 +238,60 @@ const DeckCreate = () => {
 						/>
 					</Grid>
 					<Grid item xs={12} sm={6} md={3} size={4}>
-						<TextField
-							label="力量"
-							name="power"
-							value={form.power}
-							onChange={handleFilterChange}
-							variant="outlined"
+						<Autocomplete
+							options={productList.power
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
 							size="small"
-							type="number"
-							fullWidth
-						/>
-					</Grid>
-					<Grid item xs={12} sm={6} md={3} size={4}>
-						<TextField
-							label="费用"
-							name="cost"
-							value={form.cost}
-							onChange={handleFilterChange}
-							variant="outlined"
-							size="small"
-							type="number"
-							fullWidth
-						/>
-					</Grid>
-					<Grid item xs={12} sm={6} md={3} size={4}>
-						<TextField
-							label="灵魂"
-							name="soul"
-							value={form.soul}
-							onChange={handleFilterChange}
-							variant="outlined"
-							size="small"
-							type="number"
-							fullWidth
+							value={form.power || null}
+							onChange={handleAutocompleteChange("power")}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="攻击力"
+									variant="outlined"
+									fullWidth
+								/>
+							)}
 						/>
 					</Grid>
 					<Grid item xs={12} sm={6} md={3} size={4}>
 						<Autocomplete
-							options={[
-								"soul",
-								"draw",
-								"treasure",
-								"shot",
-								"bounce",
-								"standby",
-								"gate",
-								"choice",
-								"book",
-								"pool",
-							]}
+							options={productList.cost
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
+							size="small"
+							value={form.cost || null}
+							onChange={handleAutocompleteChange("cost")}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="费用"
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
+					</Grid>
+					<Grid item xs={12} sm={6} md={3} size={4}>
+						<Autocomplete
+							options={productList.soul.slice().sort()}
+							size="small"
+							value={form.soul || null}
+							onChange={handleAutocompleteChange("soul")}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="灵魂"
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
+					</Grid>
+					<Grid item xs={12} sm={6} md={3} size={4}>
+						<Autocomplete
+							options={productList.trigger.slice().sort()}
 							value={form.trigger || null}
 							onChange={handleAutocompleteChange("trigger")}
 							renderInput={(params) => (
@@ -343,6 +341,23 @@ const DeckCreate = () => {
 			>
 				创建
 			</Button>
+			<Box
+				sx={{
+					mt: 4,
+					p: 2,
+					width: "80%",
+					maxWidth: 800,
+					backgroundColor: "#f5f5f5",
+					border: "1px solid #ccc",
+					borderRadius: "8px",
+					fontFamily: "monospace",
+					fontSize: "0.85rem",
+					whiteSpace: "pre-wrap",
+					wordBreak: "break-word",
+				}}
+			>
+				{JSON.stringify(form, null, 2)}
+			</Box>
 		</Box>
 	);
 };
