@@ -441,12 +441,12 @@ function CardList() {
 						flex
 						row
 						sx={{
-							display: "flex", // 必须显式写出来
-							flexDirection: "row", // 默认为 row，也可以省略
+							display: "flex",
+							flexDirection: "row",
 							width: "100%",
 							textAlign: "center",
 							m: 3,
-							gap: 2, // 现在生效了
+							gap: 2,
 							justifyContent: "center",
 						}}
 						gap={2}

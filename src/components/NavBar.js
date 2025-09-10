@@ -159,9 +159,13 @@ function NavBar() {
 						>
 							<Avatar
 								alt={user.username}
-								src={`/assets/283/${getAvatarIndexFromUsername(
-									user.username
-								)}.png`}
+								src={
+									user.username === "Amon"
+										? "/assets/283/6.png"
+										: `/assets/283/${getAvatarIndexFromUsername(
+												user.username
+										  )}.png`
+								}
 								onClick={handleAvatarClick}
 								sx={{ cursor: "pointer", width: 32, height: 32 }}
 							/>

@@ -10,6 +10,11 @@ import {
 	MenuItem,
 	Button,
 	Autocomplete,
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
 } from "@mui/material";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
@@ -32,10 +37,34 @@ const Record = () => {
 		notes: "",
 		result: "",
 	});
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [recordToDelete, setRecordToDelete] = useState(null);
 
 	const token = localStorage.getItem("token");
 
-	useEffect(() => {
+	const deleteRecord = () => {
+		if (!recordToDelete) return;
+		fetch(
+			`https://wstoolboxbackend-production.up.railway.app/api/matches/delete/${recordToDelete._id}`,
+			{
+				method: "DELETE",
+				headers: {
+					Authorization: `Bearer ${token}`,
+				},
+			}
+		)
+			.then((res) => {
+				if (!res.ok) throw new Error("删除失败");
+				setRecords((prev) =>
+					prev.filter((record) => record._id !== recordToDelete._id)
+				);
+				setRecordToDelete(null);
+				getHistory();
+			})
+			.catch((err) => console.error("删除出错:", err));
+	};
+
+	const getHistory = () => {
 		fetch(
 			"https://wstoolboxbackend-production.up.railway.app/api/matches/history",
 			{
@@ -57,10 +86,25 @@ const Record = () => {
 			.finally(() => {
 				setLoading(false);
 			});
+	};
+
+	useEffect(() => {
+		getHistory();
 	}, []);
 
 	return (
-		<Box sx={{ p: 3, width: "50%", mx: "auto" }}>
+		<Box
+			sx={{
+				p: 3,
+				width: {
+					xs: "100%",
+					sm: "80%",
+					md: "60%",
+					lg: "50%",
+				},
+				mx: "auto",
+			}}
+		>
 			<Typography variant="h4" gutterBottom>
 				对战记录
 			</Typography>
@@ -69,7 +113,12 @@ const Record = () => {
 				<Box sx={{ display: "flex", justifyContent: "center" }}>
 					<Tabs
 						value={tabValue}
-						onChange={(e, newValue) => setTabValue(newValue)}
+						onChange={(e, newValue) => {
+							if (newValue === 1) {
+								getHistory();
+							}
+							setTabValue(newValue);
+						}}
 					>
 						<Tab label="创建记录" />
 						<Tab label="查询记录" />
@@ -234,14 +283,47 @@ const Record = () => {
 						<MenuItem value="lose">失败</MenuItem>
 						<MenuItem value="doubleLose">双败</MenuItem>
 					</TextField>
-					<Button type="submit" variant="contained">
+					<Button
+						type="submit"
+						variant="contained"
+						sx={{
+							px: 6,
+							py: 1.5,
+							backgroundColor: "#a6ceb6",
+							"&:hover": { backgroundColor: "#95bfa5" },
+						}}
+					>
 						提交记录
 					</Button>
 				</Box>
 			)}
 
 			{tabValue === 1 && (
-				<Box>
+				<Box textAlign={"center"}>
+					<Dialog
+						open={deleteDialogOpen}
+						onClose={() => setDeleteDialogOpen(false)}
+					>
+						<DialogTitle>确认删除</DialogTitle>
+						<DialogContent>
+							<DialogContentText>
+								确定要删除该记录吗？此操作不可撤销。
+							</DialogContentText>
+						</DialogContent>
+						<DialogActions>
+							<Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
+							<Button
+								color="error"
+								onClick={() => {
+									console.log("将删除记录:", recordToDelete);
+									deleteRecord();
+									setDeleteDialogOpen(false);
+								}}
+							>
+								确认删除
+							</Button>
+						</DialogActions>
+					</Dialog>
 					{loading ? (
 						<CircularProgress />
 					) : records.length === 0 ? (
@@ -254,21 +336,57 @@ const Record = () => {
 								elevation={2}
 							>
 								<Typography variant="h6">
-									{record.tournamentName || "普通对战"} -{" "}
-									{record.result === "win" ? "胜利" : "失败"}
+									{record.tournamentName || "普通对战"}
 								</Typography>
-								<Typography>我方系列：{record.playerSeries}</Typography>
-								<Typography>我方卡组：{record.playerDeckName}</Typography>
-								<Typography>对手系列：{record.opponentSeries}</Typography>
-								<Typography>对手卡组：{record.opponentDeckName}</Typography>
-								{record.notes && <Typography>备注：{record.notes}</Typography>}
 								<Typography
-									sx={{ mt: 1 }}
-									variant="caption"
-									color="text.secondary"
+									variant="h4"
+									color={
+										record.result === "win"
+											? "green"
+											: record.result === "lose"
+											? "red"
+											: "gray"
+									}
 								>
-									{new Date(record.timestamp).toLocaleString()}
+									{record.result === "win"
+										? "胜利"
+										: record.result === "lose"
+										? "失败"
+										: "双败"}
 								</Typography>
+								<Typography variant="bod1">
+									{record.playerDeckName} - {record.playerSeries}
+								</Typography>
+								<Typography variant="bod2">VS</Typography>
+								<Typography variant="bod1">
+									{record.opponentDeckName} - {record.opponentSeries}
+								</Typography>
+								{record.notes && <Typography>备注：{record.notes}</Typography>}
+								<Box
+									sx={{
+										display: "flex",
+										justifyContent: "space-between",
+										alignItems: "center",
+										mt: 1,
+									}}
+								>
+									<Typography variant="caption" color="text.secondary">
+										{new Date(record.timestamp).toLocaleString()}
+									</Typography>
+									<Typography
+										sx={{
+											color: "red",
+											cursor: "pointer",
+											textDecoration: "underline",
+										}}
+										onClick={() => {
+											setRecordToDelete(record);
+											setDeleteDialogOpen(true);
+										}}
+									>
+										删除
+									</Typography>
+								</Box>
 							</Paper>
 						))
 					)}
