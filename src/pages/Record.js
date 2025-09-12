@@ -15,9 +15,23 @@ import {
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
+	TextField as MuiTextField,
+	Switch,
+	FormControlLabel,
 } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
+import {
+	PieChart,
+	Pie,
+	Cell,
+	Tooltip,
+	Legend,
+	ResponsiveContainer,
+} from "recharts";
 
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
@@ -39,6 +53,13 @@ const Record = () => {
 	});
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [recordToDelete, setRecordToDelete] = useState(null);
+	const [startDate, setStartDate] = useState(null);
+	const [endDate, setEndDate] = useState(null);
+	const [seriesStats, setSeriesStats] = useState([]);
+	const [opponentSeriesStats, setOpponentSeriesStats] = useState([]);
+	const [showPlayerChart, setShowPlayerChart] = useState(false);
+	const [showOpponentChart, setShowOpponentChart] = useState(false);
+	const [showWinRateTable, setShowWinRateTable] = useState(false);
 
 	const token = localStorage.getItem("token");
 
@@ -78,7 +99,37 @@ const Record = () => {
 				return res.json();
 			})
 			.then((data) => {
-				setRecords(data);
+				// 筛选时间范围
+				const filtered = data.filter((record) => {
+					const time = new Date(record.timestamp).getTime();
+					if (startDate && time < new Date(startDate).getTime()) return false;
+					if (endDate && time > new Date(endDate).getTime()) return false;
+					return true;
+				});
+				setRecords(filtered);
+				const countMap = {};
+				filtered.forEach((rec) => {
+					const key = rec.playerSeries || "未知";
+					countMap[key] = (countMap[key] || 0) + 1;
+				});
+				const statsArray = Object.entries(countMap).map(([name, value]) => ({
+					name,
+					value,
+				}));
+				setSeriesStats(statsArray);
+
+				const opponentMap = {};
+				filtered.forEach((rec) => {
+					const key = rec.opponentSeries || "未知";
+					opponentMap[key] = (opponentMap[key] || 0) + 1;
+				});
+				const opponentStatsArray = Object.entries(opponentMap).map(
+					([name, value]) => ({
+						name,
+						value,
+					})
+				);
+				setOpponentSeriesStats(opponentStatsArray);
 			})
 			.catch((err) => {
 				console.error("Error fetching match records:", err);
@@ -296,6 +347,96 @@ const Record = () => {
 
 			{tabValue === 1 && (
 				<Box textAlign={"center"}>
+					<Box
+						sx={{
+							display: "flex",
+							flexDirection: { xs: "column", sm: "row" },
+							justifyContent: "center",
+							alignItems: "center",
+							gap: 2,
+							mb: 2,
+						}}
+					>
+						<LocalizationProvider dateAdapter={AdapterDateFns}>
+							<DatePicker
+								label="起始日期"
+								value={startDate}
+								onChange={(newValue) => setStartDate(newValue)}
+								renderInput={(params) => <MuiTextField {...params} />}
+							/>
+							<DatePicker
+								label="结束日期"
+								value={endDate}
+								onChange={(newValue) => setEndDate(newValue)}
+								renderInput={(params) => <MuiTextField {...params} />}
+							/>
+						</LocalizationProvider>
+						<Button
+							variant="outlined"
+							onClick={() => {
+								setLoading(true);
+								getHistory();
+							}}
+						>
+							筛选
+						</Button>
+					</Box>
+					<Box
+						sx={{ display: "flex", justifyContent: "center", gap: 4, mb: 2 }}
+					>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={showPlayerChart}
+									onChange={(e) => setShowPlayerChart(e.target.checked)}
+									sx={{
+										"& .MuiSwitch-switchBase.Mui-checked": {
+											color: "rgba(166, 206, 182, 1)",
+										},
+										"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+											backgroundColor: "rgba(166, 206, 182, 1)",
+										},
+									}}
+								/>
+							}
+							label="显示我方系列分布"
+						/>
+						<FormControlLabel
+							control={
+								<Switch
+									checked={showOpponentChart}
+									onChange={(e) => setShowOpponentChart(e.target.checked)}
+									sx={{
+										"& .MuiSwitch-switchBase.Mui-checked": {
+											color: "rgba(166, 206, 182, 1)",
+										},
+										"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+											backgroundColor: "rgba(166, 206, 182, 1)",
+										},
+									}}
+								/>
+							}
+							label="显示对手系列分布"
+						/>
+					</Box>
+					<FormControlLabel
+						control={
+							<Switch
+								checked={showWinRateTable}
+								onChange={(e) => setShowWinRateTable(e.target.checked)}
+								sx={{
+									"& .MuiSwitch-switchBase.Mui-checked": {
+										color: "rgba(166, 206, 182, 1)",
+									},
+									"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+										backgroundColor: "rgba(166, 206, 182, 1)",
+									},
+								}}
+							/>
+						}
+						label="显示胜率统计表格"
+						sx={{ mb: 2 }}
+					/>
 					<Dialog
 						open={deleteDialogOpen}
 						onClose={() => setDeleteDialogOpen(false)}
@@ -320,6 +461,128 @@ const Record = () => {
 							</Button>
 						</DialogActions>
 					</Dialog>
+					{(seriesStats.length > 0 || opponentSeriesStats.length > 0) && (
+						<Box
+							sx={{
+								width: "100%",
+								display: "flex",
+								flexDirection: { xs: "column", sm: "row" },
+								justifyContent: "space-around",
+								alignItems: "center",
+								mb: 3,
+								gap: 2,
+							}}
+						>
+							{showPlayerChart && seriesStats.length > 0 && (
+								<Box sx={{ flex: 1, width: "100%" }}>
+									<ResponsiveContainer height={300}>
+										<PieChart>
+											<Pie
+												data={seriesStats}
+												dataKey="value"
+												nameKey="name"
+												cx="50%"
+												cy="50%"
+												outerRadius={80}
+												label
+											>
+												{seriesStats.map((entry, index) => (
+													<Cell
+														key={`cell-player-${index}`}
+														fill={`hsl(${(index * 47) % 360}, 70%, 60%)`}
+													/>
+												))}
+											</Pie>
+											<Tooltip />
+											<Legend />
+										</PieChart>
+									</ResponsiveContainer>
+									<Typography align="center">我方系列分布</Typography>
+								</Box>
+							)}
+							{showOpponentChart && opponentSeriesStats.length > 0 && (
+								<Box sx={{ flex: 1, width: "100%" }}>
+									<ResponsiveContainer height={300}>
+										<PieChart>
+											<Pie
+												data={opponentSeriesStats}
+												dataKey="value"
+												nameKey="name"
+												cx="50%"
+												cy="50%"
+												outerRadius={80}
+												label
+											>
+												{opponentSeriesStats.map((entry, index) => (
+													<Cell
+														key={`cell-opponent-${index}`}
+														fill={`hsl(${(index * 53 + 180) % 360}, 70%, 60%)`}
+													/>
+												))}
+											</Pie>
+											<Tooltip />
+											<Legend />
+										</PieChart>
+									</ResponsiveContainer>
+									<Typography align="center">对手系列分布</Typography>
+								</Box>
+							)}
+						</Box>
+					)}
+					{showWinRateTable && records.length > 0 && (
+						<Box sx={{ m: 4 }}>
+							<Typography variant="h6" gutterBottom align="center">
+								各敌人系列胜率统计
+							</Typography>
+							<Box
+								component="table"
+								sx={{
+									width: "100%",
+									borderCollapse: "collapse",
+									textAlign: "center",
+									mt: 1,
+									"& th, & td": {
+										border: "1px solid #ddd",
+										padding: "8px",
+									},
+									"& th": {
+										backgroundColor: "#f2f2f2",
+									},
+								}}
+							>
+								<thead>
+									<tr>
+										<th>对手系列</th>
+										<th>对战次数</th>
+										<th>胜场</th>
+										<th>胜率</th>
+									</tr>
+								</thead>
+								<tbody>
+									{Object.entries(
+										records.reduce((acc, rec) => {
+											const key = rec.opponentSeries || "未知";
+											if (!acc[key]) acc[key] = { total: 0, wins: 0 };
+											acc[key].total += 1;
+											if (rec.result === "win") acc[key].wins += 1;
+											return acc;
+										}, {})
+									)
+										.sort((a, b) => b[1].total - a[1].total)
+										.map(([series, stats]) => (
+											<tr key={series}>
+												<td>{series}</td>
+												<td>{stats.total}</td>
+												<td>{stats.wins}</td>
+												<td>
+													{((stats.wins / stats.total) * 100).toFixed(1)}%
+												</td>
+											</tr>
+										))}
+								</tbody>
+							</Box>
+						</Box>
+					)}
 					{loading ? (
 						<CircularProgress />
 					) : records.length === 0 ? (

@@ -31,7 +31,7 @@ function CardList() {
 	const [form, setForm] = useState({ page: 1 });
 	const [draftForm, setDraftForm] = useState({ page: 1 });
 	const [showZh, setShowZh] = useState(false);
-	const [showJP, setShowJP] = useState(false);
+	const [showJP, setShowJP] = useState(true);
 
 	const handleSearch = (draftForm) => {
 		const params = new URLSearchParams(
@@ -90,6 +90,14 @@ function CardList() {
 						<Switch
 							checked={showZh}
 							onChange={() => setShowZh((prev) => !prev)}
+							sx={{
+								"& .MuiSwitch-switchBase.Mui-checked": {
+									color: "rgba(166, 206, 182, 1)",
+								},
+								"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+									backgroundColor: "rgba(166, 206, 182, 1)",
+								},
+							}}
 						/>
 					}
 					label={showZh ? "显示中文" : "不显示中文"}
@@ -100,6 +108,14 @@ function CardList() {
 						<Switch
 							checked={showJP}
 							onChange={() => setShowJP((prev) => !prev)}
+							sx={{
+								"& .MuiSwitch-switchBase.Mui-checked": {
+									color: "rgba(166, 206, 182, 1)",
+								},
+								"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+									backgroundColor: "rgba(166, 206, 182, 1)",
+								},
+							}}
 						/>
 					}
 					label={showJP ? "日本語を表す" : "日本語を表示しない"}
