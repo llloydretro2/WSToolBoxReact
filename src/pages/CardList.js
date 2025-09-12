@@ -5,12 +5,13 @@ import {
 	TextField,
 	Button,
 	Typography,
-	Grid,
 	Autocomplete,
 	Card,
 	CardMedia,
 	CardContent,
 	Pagination,
+	FormControlLabel,
+	Switch,
 } from "@mui/material";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
@@ -29,6 +30,8 @@ function CardList() {
 
 	const [form, setForm] = useState({ page: 1 });
 	const [draftForm, setDraftForm] = useState({ page: 1 });
+	const [showZh, setShowZh] = useState(false);
+	const [showJP, setShowJP] = useState(false);
 
 	const handleSearch = (draftForm) => {
 		const params = new URLSearchParams(
@@ -80,6 +83,30 @@ function CardList() {
 			<Typography variant="body1" color="text.secondary">
 				根据关键词和筛选条件查询卡片信息
 			</Typography>
+
+			<Box display="flex" justifyContent="center">
+				<FormControlLabel
+					control={
+						<Switch
+							checked={showZh}
+							onChange={() => setShowZh((prev) => !prev)}
+						/>
+					}
+					label={showZh ? "显示中文" : "不显示中文"}
+				/>
+
+				<FormControlLabel
+					control={
+						<Switch
+							checked={showJP}
+							onChange={() => setShowJP((prev) => !prev)}
+						/>
+					}
+					label={showJP ? "日本語を表す" : "日本語を表示しない"}
+				/>
+			</Box>
+
+			{/* 搜索表单 */}
 			<Box
 				sx={{
 					display: "flex",
@@ -486,60 +513,70 @@ function CardList() {
 			</Box>
 
 			<Box m={4}>
-				<Grid container spacing={2}>
-					{result.data.map((card) => (
-						<Grid item xs={12} sm={6} md={4} lg={3} key={card.cardno}>
-							<Card>
-								<CardMedia
-									component="img"
-									image={card.image_url}
-									alt={card.name}
-									sx={{ height: 300, objectFit: "contain", mt: 2 }}
-								/>
-								<CardContent>
-									<Typography variant="h6">{card.name}</Typography>
-									<Typography variant="h6">{card.zh_name}</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>编号:</strong> {card.cardno}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>颜色:</strong> {card.color}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>稀有度:</strong> {card.rarity}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>等级:</strong> {card.level}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>费用:</strong> {card.cost}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>力量:</strong> {card.power}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>产品名：</strong> {card.product_name}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>系列：</strong> {card.series}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>风味：</strong> {card.flavor}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>风味（中文）：</strong> {card.zh_flavor}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>效果：</strong> {card.effect}
-									</Typography>
-									<Typography variant="body2" color="text.secondary">
-										<strong>效果（中文）：</strong> {card.zh_effect}
-									</Typography>
-								</CardContent>
-							</Card>
-						</Grid>
-					))}
-				</Grid>
+				{result.data.map((card) => (
+					<Card
+						sx={{
+							mb: 2,
+							backgroundColor: "rgba(166, 206, 182, 0.6)",
+							boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+							borderRadius: 2,
+						}}
+						key={card.id}
+					>
+						<CardMedia
+							component="img"
+							image={card.image_url}
+							alt={card.name}
+							sx={{ height: 300, objectFit: "contain", mt: 2 }}
+						/>
+						<CardContent>
+							<Typography variant="h6">{card.name}</Typography>
+							{showZh && <Typography variant="h6">{card.zh_name}</Typography>}
+							<Typography variant="body2" color="text.secondary">
+								<strong>编号:</strong> {card.cardno}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>颜色:</strong> {card.color}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>稀有度:</strong> {card.rarity}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>等级:</strong> {card.level}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>费用:</strong> {card.cost}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>力量:</strong> {card.power}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>产品名：</strong> {card.product_name}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>系列：</strong> {card.series}
+							</Typography>
+							<Typography variant="body2" color="text.secondary">
+								<strong>风味：</strong> {card.flavor}
+							</Typography>
+							{showZh && (
+								<Typography variant="body2" color="text.secondary">
+									<strong>风味（中文）：</strong> {card.zh_flavor}
+								</Typography>
+							)}
+							{showJP && (
+								<Typography variant="body2" color="text.secondary">
+									<strong>効果：</strong> {card.effect}
+								</Typography>
+							)}
+							{showZh && (
+								<Typography variant="body2" color="text.secondary">
+									<strong>效果（中文）：</strong> {card.zh_effect}
+								</Typography>
+							)}
+						</CardContent>
+					</Card>
+				))}
 
 				{result.total > result.pageSize && (
 					<Box mt={4} display="flex" justifyContent="center" mb={4}>
