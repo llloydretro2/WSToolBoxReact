@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { interpolateSpectral } from "d3-scale-chromatic";
 import {
 	Box,
 	Typography,
@@ -24,14 +25,11 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
-import {
-	PieChart,
-	Pie,
-	Cell,
-	Tooltip,
-	Legend,
-	ResponsiveContainer,
-} from "recharts";
+import { Pie } from "react-chartjs-2";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
+ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
@@ -60,6 +58,13 @@ const Record = () => {
 	const [showPlayerChart, setShowPlayerChart] = useState(false);
 	const [showOpponentChart, setShowOpponentChart] = useState(false);
 	const [showWinRateTable, setShowWinRateTable] = useState(false);
+
+	const generateColors = (count) => {
+		if (count === 1) return [interpolateSpectral(0.5)];
+		return Array.from({ length: count }, (_, i) =>
+			interpolateSpectral(i / (count - 1))
+		);
+	};
 
 	const token = localStorage.getItem("token");
 
@@ -144,15 +149,16 @@ const Record = () => {
 			sx={{
 				p: 3,
 				width: {
-					xs: "100%",
+					xs: "80%",
 					sm: "80%",
 					md: "60%",
 					lg: "50%",
 				},
 				mx: "auto",
-			}}
-		>
-			<Typography variant="h4" gutterBottom>
+			}}>
+			<Typography
+				variant="h4"
+				gutterBottom>
 				对战记录
 			</Typography>
 
@@ -165,8 +171,7 @@ const Record = () => {
 								getHistory();
 							}
 							setTabValue(newValue);
-						}}
-					>
+						}}>
 						<Tab label="创建记录" />
 						<Tab label="查询记录" />
 					</Tabs>
@@ -211,8 +216,7 @@ const Record = () => {
 							})
 							.catch((err) => console.error("提交出错:", err));
 					}}
-					sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-				>
+					sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
 					<TextField
 						required
 						label="我方卡组名称"
@@ -251,7 +255,11 @@ const Record = () => {
 							setFormState((prev) => ({ ...prev, playerSeries: key || "" }));
 						}}
 						renderInput={(params) => (
-							<TextField {...params} label="我方系列" required />
+							<TextField
+								{...params}
+								label="我方系列"
+								required
+							/>
 						)}
 					/>
 					<TextField
@@ -292,7 +300,11 @@ const Record = () => {
 							setFormState((prev) => ({ ...prev, opponentSeries: key || "" }));
 						}}
 						renderInput={(params) => (
-							<TextField {...params} label="对手系列" required />
+							<TextField
+								{...params}
+								label="对手系列"
+								required
+							/>
 						)}
 					/>
 					<TextField
@@ -324,8 +336,7 @@ const Record = () => {
 						value={formState.result}
 						onChange={(e) =>
 							setFormState((prev) => ({ ...prev, result: e.target.value }))
-						}
-					>
+						}>
 						<MenuItem value="win">胜利</MenuItem>
 						<MenuItem value="lose">失败</MenuItem>
 						<MenuItem value="doubleLose">双败</MenuItem>
@@ -338,8 +349,7 @@ const Record = () => {
 							py: 1.5,
 							backgroundColor: "#a6ceb6",
 							"&:hover": { backgroundColor: "#95bfa5" },
-						}}
-					>
+						}}>
 						提交记录
 					</Button>
 				</Box>
@@ -355,8 +365,7 @@ const Record = () => {
 							alignItems: "center",
 							gap: 2,
 							mb: 2,
-						}}
-					>
+						}}>
 						<LocalizationProvider dateAdapter={AdapterDateFns}>
 							<DatePicker
 								label="起始日期"
@@ -376,12 +385,15 @@ const Record = () => {
 							onClick={() => {
 								setLoading(true);
 								getHistory();
-							}}
-						>
+							}}>
 							筛选
 						</Button>
 					</Box>
-					<Box display="flex" justifyContent="center" flexDirection='column' alignItems='center'>
+					<Box
+						display="flex"
+						justifyContent="center"
+						flexDirection="column"
+						alignItems="center">
 						<FormControlLabel
 							control={
 								<Switch
@@ -437,8 +449,7 @@ const Record = () => {
 					/>
 					<Dialog
 						open={deleteDialogOpen}
-						onClose={() => setDeleteDialogOpen(false)}
-					>
+						onClose={() => setDeleteDialogOpen(false)}>
 						<DialogTitle>确认删除</DialogTitle>
 						<DialogContent>
 							<DialogContentText>
@@ -453,73 +464,179 @@ const Record = () => {
 									console.log("将删除记录:", recordToDelete);
 									deleteRecord();
 									setDeleteDialogOpen(false);
-								}}
-							>
+								}}>
 								确认删除
 							</Button>
 						</DialogActions>
 					</Dialog>
 					{(seriesStats.length > 0 || opponentSeriesStats.length > 0) && (
-						<Box display="flex" flexDirection="column" gap={4} mb={4}>
-							{showPlayerChart && seriesStats.length > 0 && (
-								<Box sx={{ width: "100%" }}>
-									<ResponsiveContainer height={300}>
-										<PieChart>
-											<Pie
-												data={seriesStats}
-												dataKey="value"
-												nameKey="name"
-												cx="50%"
-												cy="50%"
-												outerRadius={80}
-												label
-											>
-												{seriesStats.map((entry, index) => (
-													<Cell
-														key={`cell-player-${index}`}
-														fill={`hsl(${(index * 47) % 360}, 70%, 60%)`}
-													/>
+						<Box
+							display="flex"
+							flexDirection="column"
+							gap={4}
+							mb={4}>
+							{showPlayerChart &&
+								seriesStats.length > 0 &&
+								(() => {
+									const playerColors = generateColors(seriesStats.length);
+									return (
+										<Box
+											sx={{
+												width: "100%",
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "center",
+											}}>
+											<Typography
+												align="center"
+												sx={{ mt: 1 }}
+												variant="h6">
+												我方系列分布
+											</Typography>
+											<Box sx={{ width: "100%", height: "40vh" }}>
+												<Pie
+													data={{
+														labels: seriesStats.map((s) => s.name),
+														datasets: [
+															{
+																data: seriesStats.map((s) => s.value),
+																backgroundColor: playerColors,
+															},
+														],
+													}}
+													options={{
+														responsive: true,
+														maintainAspectRatio: false,
+														plugins: {
+															legend: { display: false },
+															datalabels: {
+																color: "#fff",
+																font: {
+																	weight: "bold",
+																},
+																formatter: (value, ctx) => {
+																	return value;
+																},
+															},
+														},
+													}}
+												/>
+											</Box>
+											<Box
+												display="flex"
+												justifyContent="center"
+												flexWrap="wrap"
+												mt={1}>
+												{seriesStats.map((s, i) => (
+													<Box
+														key={s.name}
+														display="flex"
+														alignItems="center"
+														mx={1}
+														mb={0.5}>
+														<Box
+															sx={{
+																width: 16,
+																height: 16,
+																backgroundColor: playerColors[i],
+																borderRadius: "50%",
+																mr: 1,
+																border: "1px solid #ccc",
+															}}
+														/>
+														<Typography variant="body2">{s.name}</Typography>
+													</Box>
 												))}
-											</Pie>
-											<Tooltip />
-											<Legend />
-										</PieChart>
-									</ResponsiveContainer>
-									<Typography align="center">我方系列分布</Typography>
-								</Box>
-							)}
-							{showOpponentChart && opponentSeriesStats.length > 0 && (
-								<Box sx={{ width: "100%" }}>
-									<ResponsiveContainer height={300}>
-										<PieChart>
-											<Pie
-												data={opponentSeriesStats}
-												dataKey="value"
-												nameKey="name"
-												cx="50%"
-												cy="50%"
-												outerRadius={80}
-												label
-											>
-												{opponentSeriesStats.map((entry, index) => (
-													<Cell
-														key={`cell-opponent-${index}`}
-														fill={`hsl(${(index * 53 + 180) % 360}, 70%, 60%)`}
-													/>
+											</Box>
+										</Box>
+									);
+								})()}
+							{showOpponentChart &&
+								opponentSeriesStats.length > 0 &&
+								(() => {
+									const opponentColors = generateColors(
+										opponentSeriesStats.length
+									);
+									return (
+										<Box
+											sx={{
+												width: "100%",
+												display: "flex",
+												flexDirection: "column",
+												alignItems: "center",
+											}}>
+											<Typography
+												align="center"
+												sx={{ mt: 1 }}
+												variant="h6">
+												对手系列分布
+											</Typography>
+											<Box sx={{ width: "100%", height: "40vh" }}>
+												<Pie
+													data={{
+														labels: opponentSeriesStats.map((s) => s.name),
+														datasets: [
+															{
+																data: opponentSeriesStats.map((s) => s.value),
+																backgroundColor: opponentColors,
+															},
+														],
+													}}
+													options={{
+														responsive: true,
+														maintainAspectRatio: false,
+														plugins: {
+															legend: { display: false },
+															datalabels: {
+																color: "#fff",
+																font: {
+																	weight: "bold",
+																},
+																formatter: (value, ctx) => {
+																	return value;
+																},
+															},
+														},
+													}}
+												/>
+											</Box>
+											<Box
+												display="flex"
+												justifyContent="center"
+												flexWrap="wrap"
+												mt={1}>
+												{opponentSeriesStats.map((s, i) => (
+													<Box
+														key={s.name}
+														display="flex"
+														alignItems="center"
+														mx={1}
+														mb={0.5}>
+														<Box
+															sx={{
+																width: 16,
+																height: 16,
+																backgroundColor: opponentColors[i],
+																borderRadius: "50%",
+																mr: 1,
+																border: "1px solid #ccc",
+															}}
+														/>
+														<Typography variant="body2">{s.name}</Typography>
+													</Box>
 												))}
-											</Pie>
-											<Tooltip />
-											<Legend />
-										</PieChart>
-									</ResponsiveContainer>
-									<Typography align="center">对手系列分布</Typography>
-								</Box>
-							)}
+											</Box>
+										</Box>
+									);
+								})()}
 						</Box>
 					)}
 					{showWinRateTable && records.length > 0 && (
 						<Box sx={{ m: 4 }}>
-							<Typography variant="h6" gutterBottom align="center">
+							<Typography
+								variant="h6"
+								gutterBottom
+								align="center">
 								各敌人系列胜率统计
 							</Typography>
 							<Box
@@ -536,8 +653,7 @@ const Record = () => {
 									"& th": {
 										backgroundColor: "#f2f2f2",
 									},
-								}}
-							>
+								}}>
 								<thead>
 									<tr>
 										<th>对手系列</th>
@@ -580,8 +696,7 @@ const Record = () => {
 							<Paper
 								key={record._id}
 								sx={{ p: 2, mb: 2, display: "flex", flexDirection: "column" }}
-								elevation={2}
-							>
+								elevation={2}>
 								<Typography variant="h6">
 									{record.tournamentName || "普通对战"}
 								</Typography>
@@ -593,8 +708,7 @@ const Record = () => {
 											: record.result === "lose"
 											? "red"
 											: "gray"
-									}
-								>
+									}>
 									{record.result === "win"
 										? "胜利"
 										: record.result === "lose"
@@ -615,9 +729,10 @@ const Record = () => {
 										justifyContent: "space-between",
 										alignItems: "center",
 										mt: 1,
-									}}
-								>
-									<Typography variant="caption" color="text.secondary">
+									}}>
+									<Typography
+										variant="caption"
+										color="text.secondary">
 										{new Date(record.timestamp).toLocaleString()}
 									</Typography>
 									<Typography
@@ -629,8 +744,7 @@ const Record = () => {
 										onClick={() => {
 											setRecordToDelete(record);
 											setDeleteDialogOpen(true);
-										}}
-									>
+										}}>
 										删除
 									</Typography>
 								</Box>
