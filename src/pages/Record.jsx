@@ -381,9 +381,7 @@ const Record = () => {
 							筛选
 						</Button>
 					</Box>
-					<Box
-						sx={{ display: "flex", justifyContent: "center", gap: 4, mb: 2 }}
-					>
+					<Box display="flex" justifyContent="center" flexDirection='column' alignItems='center'>
 						<FormControlLabel
 							control={
 								<Switch
@@ -462,19 +460,9 @@ const Record = () => {
 						</DialogActions>
 					</Dialog>
 					{(seriesStats.length > 0 || opponentSeriesStats.length > 0) && (
-						<Box
-							sx={{
-								width: "100%",
-								display: "flex",
-								flexDirection: { xs: "column", sm: "row" },
-								justifyContent: "space-around",
-								alignItems: "center",
-								mb: 3,
-								gap: 2,
-							}}
-						>
+						<Box display="flex" flexDirection="column" gap={4} mb={4}>
 							{showPlayerChart && seriesStats.length > 0 && (
-								<Box sx={{ flex: 1, width: "100%" }}>
+								<Box sx={{ width: "100%" }}>
 									<ResponsiveContainer height={300}>
 										<PieChart>
 											<Pie
@@ -501,7 +489,7 @@ const Record = () => {
 								</Box>
 							)}
 							{showOpponentChart && opponentSeriesStats.length > 0 && (
-								<Box sx={{ flex: 1, width: "100%" }}>
+								<Box sx={{ width: "100%" }}>
 									<ResponsiveContainer height={300}>
 										<PieChart>
 											<Pie

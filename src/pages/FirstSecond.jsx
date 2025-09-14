@@ -1,5 +1,7 @@
 import { Container, Typography, Button, Box } from "@mui/material";
 import React, { useState } from "react";
+import firstCard from "../assets/ims_s.png";
+import secondCard from "../assets/ims_k.png";
 
 function FirstSecond() {
 	const [order, setOrder] = useState("");
@@ -11,8 +13,9 @@ function FirstSecond() {
 	};
 
 	return (
-		<Container maxWidth="sm" sx={{ mt: 8, textAlign: "center" }}>
-			<Typography variant="h4" gutterBottom>
+		<Container maxWidth="sm" sx={{ mt: 4, textAlign: "center" }} >
+			<Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+				<Typography variant="h4" gutterBottom>
 				先后攻
 			</Typography>
 			<Typography variant="body1" gutterBottom>
@@ -20,18 +23,11 @@ function FirstSecond() {
 			</Typography>
 
 			{order && (
-				<Box
-					sx={{
-						mt: 5,
-						mb: 5,
-						bgcolor: order === "先攻" ? "red" : "blue",
-						color: "white",
-						p: 3,
-						borderRadius: 2,
-					}}
-				>
-					<Typography variant="h2">{order}</Typography>
-				</Box>
+				<img
+					src={order === "先攻" ? firstCard : secondCard}
+					alt={order}
+					style={{ width: "100%", maxWidth: 400 }}
+				/>
 			)}
 
 			<Button
@@ -47,6 +43,8 @@ function FirstSecond() {
 			>
 				决定
 			</Button>
+			</Box>
+			
 		</Container>
 	);
 }
