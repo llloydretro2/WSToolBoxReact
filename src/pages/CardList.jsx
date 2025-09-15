@@ -36,7 +36,7 @@ function CardList() {
 	const handleSearch = (draftForm) => {
 		const params = new URLSearchParams(
 			Object.entries(draftForm).filter(
-				([_, v]) => v !== undefined && v !== "" && v !== null
+				([, v]) => v !== undefined && v !== "" && v !== null
 			)
 		).toString();
 		console.log(params);
@@ -76,15 +76,23 @@ function CardList() {
 	};
 
 	return (
-		<Container maxWidth="sm" sx={{ textAlign: "center", pt: 8 }}>
-			<Typography variant="h5" gutterBottom>
+		<Container
+			maxWidth="sm"
+			sx={{ textAlign: "center", pt: 8 }}>
+			<Typography
+				variant="h5"
+				gutterBottom>
 				卡片查询
 			</Typography>
-			<Typography variant="body1" color="text.secondary">
+			<Typography
+				variant="body1"
+				color="text.secondary">
 				根据关键词和筛选条件查询卡片信息
 			</Typography>
 
-			<Box display="flex" justifyContent="center">
+			<Box
+				display="flex"
+				justifyContent="center">
 				<FormControlLabel
 					control={
 						<Switch
@@ -130,17 +138,15 @@ function CardList() {
 					justifyContent: "center",
 					gap: 2,
 					mt: 4,
-				}}
-			>
+				}}>
 				<Box
 					component="form"
 					onSubmit={(e) => {
 						e.preventDefault();
 						handleSearch({ ...draftForm, page: 1 });
-						setForm((prev) => ({ ...draftForm, page: 1 }));
+						setForm({ ...draftForm, page: 1 });
 					}}
-					sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}
-				>
+					sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
 					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
 							sx={{ maxWidth: 300, mx: "auto" }}
@@ -309,8 +315,7 @@ function CardList() {
 							justifyContent: "space-between",
 							width: "100%",
 							mt: 2,
-						}}
-					>
+						}}>
 						<Box sx={{ flex: 1, minWidth: 120 }}>
 							<Autocomplete
 								options={productList.color.slice().sort()}
@@ -398,8 +403,7 @@ function CardList() {
 							justifyContent: "space-between",
 							width: "100%",
 							mt: 2,
-						}}
-					>
+						}}>
 						<Box sx={{ flex: 1, minWidth: 120 }}>
 							<Autocomplete
 								options={productList.power
@@ -492,8 +496,7 @@ function CardList() {
 							gap: 2,
 							justifyContent: "center",
 						}}
-						gap={2}
-					>
+						gap={2}>
 						<Button
 							type="submit"
 							variant="contained"
@@ -503,8 +506,7 @@ function CardList() {
 								py: 1.5,
 								backgroundColor: "#a6ceb6",
 								"&:hover": { backgroundColor: "#95bfa5" },
-							}}
-						>
+							}}>
 							搜索
 						</Button>
 
@@ -520,8 +522,7 @@ function CardList() {
 								"&:hover": {
 									backgroundColor: "#5c0f10",
 								},
-							}}
-						>
+							}}>
 							重置
 						</Button>
 					</Box>
@@ -537,8 +538,7 @@ function CardList() {
 							boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
 							borderRadius: 2,
 						}}
-						key={card.id}
-					>
+						key={card.id}>
 						<CardMedia
 							component="img"
 							image={card.image_url}
@@ -548,45 +548,69 @@ function CardList() {
 						<CardContent>
 							<Typography variant="h6">{card.name}</Typography>
 							{showZh && <Typography variant="h6">{card.zh_name}</Typography>}
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>编号:</strong> {card.cardno}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>颜色:</strong> {card.color}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>稀有度:</strong> {card.rarity}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>等级:</strong> {card.level}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>费用:</strong> {card.cost}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>力量:</strong> {card.power}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>产品名：</strong> {card.product_name}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>系列：</strong> {card.series}
 							</Typography>
-							<Typography variant="body2" color="text.secondary">
+							<Typography
+								variant="body2"
+								color="text.secondary">
 								<strong>风味：</strong> {card.flavor}
 							</Typography>
 							{showZh && (
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary">
 									<strong>风味（中文）：</strong> {card.zh_flavor}
 								</Typography>
 							)}
 							{showJP && (
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary">
 									<strong>効果：</strong> {card.effect}
 								</Typography>
 							)}
 							{showZh && (
-								<Typography variant="body2" color="text.secondary">
+								<Typography
+									variant="body2"
+									color="text.secondary">
 									<strong>效果（中文）：</strong> {card.zh_effect}
 								</Typography>
 							)}
@@ -595,7 +619,11 @@ function CardList() {
 				))}
 
 				{result.total > result.pageSize && (
-					<Box mt={4} display="flex" justifyContent="center" mb={4}>
+					<Box
+						mt={4}
+						display="flex"
+						justifyContent="center"
+						mb={4}>
 						<Pagination
 							count={Math.ceil(result.total / result.pageSize)}
 							page={result.page}
@@ -618,7 +646,10 @@ function CardList() {
 					</Box>
 				)}
 			</Box>
-			<Box display="flex" justifyContent="center" mb={4}>
+			<Box
+				display="flex"
+				justifyContent="center"
+				mb={4}>
 				<Button
 					variant="outlined"
 					onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -629,8 +660,7 @@ function CardList() {
 							borderColor: "#95bfa5",
 							backgroundColor: "#f5f5f5",
 						},
-					}}
-				>
+					}}>
 					回到顶部
 				</Button>
 			</Box>

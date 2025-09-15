@@ -5,16 +5,24 @@ import EmailIcon from "@mui/icons-material/Email";
 
 function Home() {
 	return (
-		<Container maxWidth="sm" sx={{ textAlign: "center", pt: 8 }}>
-			<Typography variant="h2" gutterBottom>
+		<Container
+			maxWidth="sm"
+			sx={{ textAlign: "center", pt: 8 }}>
+			<Typography
+				variant="h2"
+				gutterBottom>
 				WS工具箱
 			</Typography>
-			<Typography variant="body1" color="text.secondary">
+			<Typography
+				variant="body1"
+				color="text.secondary">
 				提供各种WS相关的小工具和链接合集，开发中
 			</Typography>
 
 			{/* 链接 */}
-			<Box mt={4} sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+			<Box
+				mt={4}
+				sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
 				<Link
 					href="https://github.com/llloydretro2/WSToolBoxReact"
 					target="_blank"
@@ -26,8 +34,7 @@ function Home() {
 						alignItems: "center",
 						justifyContent: "center",
 						gap: 1,
-					}}
-				>
+					}}>
 					<GitHubIcon fontSize="small" />
 					GitHub
 				</Link>
@@ -43,9 +50,13 @@ function Home() {
 						alignItems: "center",
 						justifyContent: "center",
 						gap: 1,
-					}}
-				>
-					<img src="bilibili.svg" alt="Bilibili" width={20} height={20} />
+					}}>
+					<img
+						src="bilibili.svg"
+						alt="Bilibili"
+						width={20}
+						height={20}
+					/>
 					Bilibili
 				</Link>
 
@@ -58,11 +69,33 @@ function Home() {
 						alignItems: "center",
 						justifyContent: "center",
 						gap: 1,
-					}}
-				>
+					}}>
 					<EmailIcon fontSize="small" />
 					Email
 				</Link>
+			</Box>
+
+			{/* 更新内容 */}
+			<Box
+				mt={6}
+				p={3}
+				sx={{
+					backgroundColor: "rgba(166, 206, 182, 0.3)",
+					backdropFilter: "blur(4px)",
+					WebkitBackdropFilter: "blur(4px)",
+					borderRadius: 2,
+					textAlign: "left",
+				}}>
+				<Typography
+					variant="h6"
+					gutterBottom>
+					更新内容
+				</Typography>
+				<Typography
+					variant="body1"
+					color="text.secondary">
+					<br />- 邦多利十周年
+				</Typography>
 			</Box>
 
 			{/* 待办事项 */}
@@ -75,17 +108,17 @@ function Home() {
 					WebkitBackdropFilter: "blur(4px)",
 					borderRadius: 2,
 					textAlign: "left",
-				}}
-			>
-				<Typography variant="h6" gutterBottom>
+				}}>
+				<Typography
+					variant="h6"
+					gutterBottom>
 					待办事项
 				</Typography>
-				<Typography variant="body1" color="text.secondary">
-					<br />- 卡组制作功能（搞登录好麻烦）
+				<Typography
+					variant="body1"
+					color="text.secondary">
+					<br />- 卡组制作功能
 					<br />- 卡组翻译一键全部导出成PNG或者PDF
-					<br />- 战绩记录？（也需要和登录功能绑定）
-					<br />- 英文翻译（可能）
-					<br />- 英文WS数据库（可能）
 				</Typography>
 			</Box>
 		</Container>
