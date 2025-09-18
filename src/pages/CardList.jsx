@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Container,
 	Box,
@@ -10,11 +10,12 @@ import {
 	CardMedia,
 	CardContent,
 	Pagination,
-	FormControlLabel,
-	Switch,
+	Fab,
+	Tooltip,
 } from "@mui/material";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 
 const RAILWAY_BACKEND_URL =
 	"https://wstoolboxbackend-production.up.railway.app";
@@ -32,6 +33,17 @@ function CardList() {
 	const [draftForm, setDraftForm] = useState({ page: 1 });
 	const [showZh, setShowZh] = useState(false);
 	const [showJP, setShowJP] = useState(true);
+	const [showScrollTop, setShowScrollTop] = useState(false);
+
+	useEffect(() => {
+		const handleScroll = () => {
+			setShowScrollTop(window.scrollY > 400);
+		};
+
+		handleScroll();
+		window.addEventListener("scroll", handleScroll);
+		return () => window.removeEventListener("scroll", handleScroll);
+	}, []);
 
 	const handleSearch = (draftForm) => {
 		const params = new URLSearchParams(
@@ -75,6 +87,8 @@ function CardList() {
 		setForm((prev) => ({ ...prev, page: newPage }));
 	};
 
+	const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
 	return (
 		<Container
 			maxWidth="sm"
@@ -89,46 +103,6 @@ function CardList() {
 				color="text.secondary">
 				根据关键词和筛选条件查询卡片信息
 			</Typography>
-
-			<Box
-				display="flex"
-				justifyContent="center">
-				<FormControlLabel
-					control={
-						<Switch
-							checked={showZh}
-							onChange={() => setShowZh((prev) => !prev)}
-							sx={{
-								"& .MuiSwitch-switchBase.Mui-checked": {
-									color: "rgba(166, 206, 182, 1)",
-								},
-								"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-									backgroundColor: "rgba(166, 206, 182, 1)",
-								},
-							}}
-						/>
-					}
-					label={showZh ? "显示中文" : "不显示中文"}
-				/>
-
-				<FormControlLabel
-					control={
-						<Switch
-							checked={showJP}
-							onChange={() => setShowJP((prev) => !prev)}
-							sx={{
-								"& .MuiSwitch-switchBase.Mui-checked": {
-									color: "rgba(166, 206, 182, 1)",
-								},
-								"& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-									backgroundColor: "rgba(166, 206, 182, 1)",
-								},
-							}}
-						/>
-					}
-					label={showJP ? "日本語を表す" : "日本語を表示しない"}
-				/>
-			</Box>
 
 			{/* 搜索表单 */}
 			<Box
@@ -629,6 +603,7 @@ function CardList() {
 							page={result.page}
 							onChange={handlePageChange}
 							color="primary"
+							size="small"
 							sx={{
 								"& .MuiPaginationItem-root": {
 									color: "#4b4b4b",
@@ -647,22 +622,70 @@ function CardList() {
 				)}
 			</Box>
 			<Box
-				display="flex"
-				justifyContent="center"
-				mb={4}>
-				<Button
-					variant="outlined"
-					onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-					sx={{
-						color: "#4b4b4b",
-						borderColor: "#a6ceb6",
-						"&:hover": {
-							borderColor: "#95bfa5",
-							backgroundColor: "#f5f5f5",
-						},
-					}}>
-					回到顶部
-				</Button>
+				sx={{
+					position: "fixed",
+					bottom: 60,
+					left: 24,
+					display: "flex",
+					flexDirection: "column",
+					gap: 2,
+					alignItems: "flex-start",
+					zIndex: 1200,
+				}}>
+				<Tooltip
+					title={showZh ? "隐藏中文" : "显示中文"}
+					placement="left">
+					<Fab
+						variant="extended"
+						size="small"
+						onClick={() => setShowZh((prev) => !prev)}
+						sx={{
+							backgroundColor: showZh ? "#a6ceb6" : "#cfd8dc",
+							color: showZh ? "#fff" : "#4b4b4b",
+							fontSize: 14,
+							"&:hover": {
+								backgroundColor: showZh ? "#95bfa5" : "#b0bec5",
+							},
+						}}>
+						{showZh ? "中" : "中"}
+					</Fab>
+				</Tooltip>
+
+				<Tooltip
+					title={showJP ? "隐藏日语" : "显示日语"}
+					placement="left">
+					<Fab
+						variant="extended"
+						size="small"
+						onClick={() => setShowJP((prev) => !prev)}
+						sx={{
+							backgroundColor: showJP ? "#a6ceb6" : "#cfd8dc",
+							color: showJP ? "#fff" : "#4b4b4b",
+							fontSize: 14,
+							"&:hover": {
+								backgroundColor: showJP ? "#95bfa5" : "#b0bec5",
+							},
+						}}>
+						{showJP ? "日" : "日"}
+					</Fab>
+				</Tooltip>
+
+				{showScrollTop && (
+					<Fab
+						color="primary"
+						aria-label="scroll back to top"
+						onClick={scrollToTop}
+						sx={{
+							backgroundColor: "#a6ceb6",
+							color: "#fff",
+							"&:hover": {
+								backgroundColor: "#95bfa5",
+							},
+						}}
+						size="small">
+						<KeyboardArrowUpIcon />
+					</Fab>
+				)}
 			</Box>
 		</Container>
 	);
