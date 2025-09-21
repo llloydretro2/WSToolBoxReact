@@ -5,13 +5,14 @@ import {
 	Box,
 	Typography,
 	Autocomplete,
-	Grid,
 	Dialog,
 	DialogTitle,
 	DialogContent,
 	Fab,
 	DialogActions,
-	DialogContentText,
+	CircularProgress,
+	Snackbar,
+	Alert,
 } from "@mui/material";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
@@ -28,6 +29,11 @@ const DeckCreate = () => {
 	const [seriesInput, setSeriesInput] = useState("");
 	const [allCards, setAllCards] = useState([]);
 	const [filteredCards, setFilteredCards] = useState([]);
+	const [currentPage, setCurrentPage] = useState(0);
+	const pageSize = 20;
+	const [isLoadingCards, setIsLoadingCards] = useState(false);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
+	const [hasMore, setHasMore] = useState(false);
 	const [searchText, setSearchText] = useState("");
 	const [color, setColor] = useState("");
 	const [level, setLevel] = useState("");
@@ -42,21 +48,118 @@ const DeckCreate = () => {
 	const [deckOpen, setDeckOpen] = useState(false);
 	const [cardDialogOpen, setCardDialogOpen] = useState(false);
 	const [selectedCard, setSelectedCard] = useState(null);
+	const [creatingDeck, setCreatingDeck] = useState(false);
+	const [snackbar, setSnackbar] = useState({
+		open: false,
+		message: "",
+		severity: "success",
+	});
 
-	const fetchSeriesCards = async (series) => {
+	const buildQueryParams = (seriesParam, overrides = {}) => {
+		const params = new URLSearchParams();
+		params.set("series", seriesParam);
+		params.set("pageSize", pageSize.toString());
+
+		const appliedFilters = {
+			color,
+			level,
+			rarity,
+			card_type: cardType,
+			power,
+			cost,
+			soul,
+			trigger,
+			search: searchText.trim(),
+			...overrides,
+		};
+
+		Object.entries(appliedFilters).forEach(([key, value]) => {
+			if (value) {
+				params.set(key, value);
+			}
+		});
+
+		return params;
+	};
+
+	const fetchCards = async ({
+		page = 1,
+		reset = false,
+		seriesParam,
+		filters = {},
+		isLoadMore = false,
+	} = {}) => {
+		const targetSeries = (seriesParam ?? form.series)?.trim();
+		if (!targetSeries) return;
+
+		const params = buildQueryParams(targetSeries, filters);
+		params.set("page", page.toString());
+
+		if (isLoadMore) {
+			setIsLoadingMore(true);
+		} else {
+			setIsLoadingCards(true);
+		}
+
 		try {
-			const url = `${RAILWAY_BACKEND_URL}/api/cards?series=${encodeURIComponent(
-				series
-			)}&page=1&pageSize=9999`;
-			const res = await fetch(url);
-			const data = await res.json();
-			setAllCards(data.data);
-			setFilteredCards(data.data);
+			const response = await fetch(
+				`${RAILWAY_BACKEND_URL}/api/cards?${params.toString()}`
+			);
+			if (!response.ok) {
+				throw new Error("获取卡片数据失败");
+			}
+			const result = await response.json();
+			const incoming = Array.isArray(result.data) ? result.data : [];
+			setAllCards((prev) => (reset ? incoming : [...prev, ...incoming]));
+			setFilteredCards((prev) => (reset ? incoming : [...prev, ...incoming]));
+			setCurrentPage(page);
+			const total = Number(result.total) || incoming.length;
+			setHasMore(page * pageSize < total);
 		} catch (err) {
 			console.error("获取系列数据失败:", err);
-			setAllCards([]);
-			setFilteredCards([]);
+			if (reset) {
+				setAllCards([]);
+				setFilteredCards([]);
+			}
+		} finally {
+			if (isLoadMore) {
+				setIsLoadingMore(false);
+			} else {
+				setIsLoadingCards(false);
+			}
 		}
+	};
+
+	const fetchSeriesCards = async (series) => {
+		setColor("");
+		setLevel("");
+		setRarity("");
+		setCardType("");
+		setPower("");
+		setCost("");
+		setSoul("");
+		setTrigger("");
+		setSearchText("");
+		setAllCards([]);
+		setFilteredCards([]);
+		setCurrentPage(0);
+		setHasMore(false);
+		await fetchCards({
+			page: 1,
+			reset: true,
+			seriesParam: series,
+			filters: {
+				color: "",
+				level: "",
+				rarity: "",
+				card_type: "",
+				power: "",
+				cost: "",
+				soul: "",
+				trigger: "",
+				search: "",
+			},
+		});
 	};
 
 	// Unique dropdown options, excluding falsy and "-" values
@@ -90,33 +193,11 @@ const DeckCreate = () => {
 	// };
 
 	const handleFilterSearch = () => {
-		const result = allCards.filter((card) => {
-			if (color && card.color !== color) return false;
-			if (level && card.level != level) return false;
-			if (rarity && card.rarity !== rarity) return false;
-			if (cardType && card.card_type !== cardType) return false;
-			if (power && card.power != power) return false;
-			if (cost && card.cost != cost) return false;
-			if (soul && card.soul != soul) return false;
-			if (trigger && card.trigger !== trigger) return false;
-
-			if (form.search) {
-				const searchLower = form.search.toLowerCase();
-				if (
-					!card.name.toLowerCase().includes(searchLower) &&
-					!card.effect?.toLowerCase().includes(searchLower) &&
-					!card.flavor?.toLowerCase().includes(searchLower) &&
-					!card.id.toLowerCase().includes(searchLower) &&
-					!card.zh_name.toLowerCase().includes(searchLower) &&
-					!card.zh_flavor.toLowerCase().includes(searchLower) &&
-					!card.zh_effect?.toLowerCase().includes(searchLower)
-				) {
-					return false;
-				}
-			}
-			return true;
-		});
-		setFilteredCards(result);
+		setAllCards([]);
+		setFilteredCards([]);
+		setCurrentPage(0);
+		setHasMore(false);
+		fetchCards({ page: 1, reset: true });
 	};
 
 	const handleFilterReset = () => {
@@ -128,17 +209,31 @@ const DeckCreate = () => {
 		setCost("");
 		setSoul("");
 		setTrigger("");
-		setForm((prev) => ({
-			series: prev.series,
-			search: "",
-		}));
-		setFilteredCards(allCards);
+		setSearchText("");
+		setAllCards([]);
+		setFilteredCards([]);
+		setCurrentPage(0);
+		setHasMore(false);
+		fetchCards({
+			page: 1,
+			reset: true,
+			filters: {
+				color: "",
+				level: "",
+				rarity: "",
+				card_type: "",
+				power: "",
+				cost: "",
+				soul: "",
+				trigger: "",
+				search: "",
+			},
+		});
 	};
 
 	const incrementCount = (cardId) => {
 		setCardCounts((prev) => {
 			const currentCount = prev[cardId] || 0;
-			if (currentCount >= 4) return prev;
 			return {
 				...prev,
 				[cardId]: currentCount + 1,
@@ -146,7 +241,6 @@ const DeckCreate = () => {
 		});
 		setDeck((prevDeck) => {
 			const currentCount = prevDeck[cardId] || 0;
-			if (currentCount >= 4) return prevDeck;
 			return {
 				...prevDeck,
 				[cardId]: currentCount + 1,
@@ -175,6 +269,119 @@ const DeckCreate = () => {
 		});
 	};
 
+	const handleLoadMore = () => {
+		if (hasMore && !isLoadingMore) {
+			fetchCards({ page: currentPage + 1, isLoadMore: true });
+		}
+	};
+
+	const showSnackbar = (message, severity = "success") => {
+		setSnackbar({ open: true, message, severity });
+	};
+
+	const handleSnackbarClose = (_, reason) => {
+		if (reason === "clickaway") return;
+		setSnackbar((prev) => ({ ...prev, open: false }));
+	};
+
+	const handleCreateDeck = async () => {
+		if (creatingDeck) return;
+		const trimmedName = deckName.trim();
+		if (!trimmedName) {
+			showSnackbar("请输入卡组名称", "warning");
+			return;
+		}
+
+		const deckEntries = Object.entries(deck).map(([cardNo, count]) => {
+			const sourceCard =
+				allCards.find((card) => card.cardno === cardNo) ||
+				filteredCards.find((card) => card.cardno === cardNo);
+
+			const info = sourceCard
+				? {
+						cardno: sourceCard.cardno,
+						name: sourceCard.name,
+						product_name: sourceCard.product_name,
+						series: sourceCard.series,
+						series_number: sourceCard.series_number,
+						rarity: sourceCard.rarity,
+						side: sourceCard.side,
+						card_type: sourceCard.card_type,
+						color: sourceCard.color,
+						level: sourceCard.level,
+						cost: sourceCard.cost,
+						power: sourceCard.power,
+						soul: sourceCard.soul,
+						trigger: sourceCard.trigger,
+						feature: sourceCard.feature,
+						effect: sourceCard.effect,
+						flavor: sourceCard.flavor,
+						image_url: sourceCard.image_url,
+						zh_name: sourceCard.zh_name,
+						zh_effect: sourceCard.zh_effect,
+						zh_flavor: sourceCard.zh_flavor,
+				  }
+				: {};
+
+			return {
+				cardNo,
+				count,
+				imageUrl: sourceCard?.image_url || "",
+				info,
+			};
+		});
+
+		if (deckEntries.length === 0) {
+			showSnackbar("请先添加至少一张卡片", "warning");
+			return;
+		}
+
+		const token = localStorage.getItem("token");
+		if (!token) {
+			showSnackbar("请先登录后再创建卡组", "warning");
+			return;
+		}
+
+		setCreatingDeck(true);
+		try {
+			const response = await fetch(`${RAILWAY_BACKEND_URL}/api/decks`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify({
+					name: trimmedName,
+					cards: deckEntries,
+					isPublic: true,
+				}),
+			});
+
+			if (!response.ok) {
+				let errorMessage = "创建卡组失败";
+				try {
+					const errorBody = await response.json();
+					errorMessage = errorBody?.message || errorMessage;
+				} catch (parseErr) {
+					console.error("解析创建卡组错误响应失败:", parseErr);
+				}
+				throw new Error(errorMessage);
+			}
+
+			await response.json();
+			showSnackbar("卡组创建成功", "success");
+			setDeckName("");
+			setDeck({});
+			setCardCounts({});
+			setDeckOpen(false);
+		} catch (err) {
+			console.error("创建卡组失败:", err);
+			showSnackbar(err.message || "创建卡组失败", "error");
+		} finally {
+			setCreatingDeck(false);
+		}
+	};
+
 	return (
 		<Box
 			display={"flex"}
@@ -186,6 +393,7 @@ const DeckCreate = () => {
 				创建新的卡组
 			</Typography>
 			<TextField
+				required
 				label="卡组名称"
 				variant="outlined"
 				value={deckName}
@@ -243,8 +451,10 @@ const DeckCreate = () => {
 					variant="contained"
 					color="primary"
 					onClick={() => {
-						setForm((prev) => ({ ...prev, series: seriesInput }));
-						fetchSeriesCards(seriesInput);
+						const trimmedSeries = seriesInput.trim();
+						if (!trimmedSeries) return;
+						setForm((prev) => ({ ...prev, series: trimmedSeries }));
+						fetchSeriesCards(trimmedSeries);
 					}}>
 					确定
 				</Button>
@@ -279,7 +489,7 @@ const DeckCreate = () => {
 								label="搜索"
 								name="search"
 								value={searchText}
-								onChange={(_, newValue) => setSearchText(newValue || "")}
+								onChange={(event) => setSearchText(event.target.value)}
 								variant="outlined"
 								size="small"
 								fullWidth
@@ -432,16 +642,18 @@ const DeckCreate = () => {
 				</Box>
 			)}
 			<Button
-				type="submit"
+				type="button"
 				variant="contained"
 				size="large"
+				disabled={creatingDeck}
+				onClick={handleCreateDeck}
 				sx={{
 					px: 6,
 					py: 1.5,
 					backgroundColor: "#a6ceb6",
 					"&:hover": { backgroundColor: "#95bfa5" },
 				}}>
-				创建
+				{creatingDeck ? "创建中..." : "创建"}
 			</Button>
 			<Box
 				sx={{
@@ -484,65 +696,93 @@ const DeckCreate = () => {
 					</Typography>
 					{JSON.stringify(deck, null, 2)}
 				</Box> */}
-				<Box
-					sx={{
-						display: "grid",
-						gridTemplateColumns: { xs: "repeat(3, 1fr)", sm: "repeat(5, 1fr)" },
-						gap: 2,
-					}}>
-					{filteredCards.map((card) => (
-						<Box key={card.cardno}>
-							<img
-								src={card.image_url}
-								alt={card.name}
-								style={{
-									width: "100%",
-									height: "auto",
-									borderRadius: 4,
-									cursor: "pointer",
-								}}
-								onClick={() => {
-									setSelectedCard(card);
-									setCardDialogOpen(true);
-								}}
-							/>
-							<Box
-								sx={{
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									mt: 1,
-									gap: 0.5,
-									overflowX: "hidden",
-									flexWrap: "nowrap",
-									maxWidth: "100%",
-								}}>
+				{isLoadingCards && filteredCards.length === 0 ? (
+					<Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+						<CircularProgress />
+					</Box>
+				) : (
+					<>
+						<Box
+							sx={{
+								display: "grid",
+								gridTemplateColumns: {
+									xs: "repeat(3, 1fr)",
+									sm: "repeat(5, 1fr)",
+								},
+								gap: 2,
+							}}>
+							{filteredCards.map((card) => (
+								<Box key={card.cardno}>
+									<img
+										src={card.image_url}
+										alt={card.name}
+										style={{
+											width: "100%",
+											height: "auto",
+											borderRadius: 4,
+											cursor: "pointer",
+										}}
+										onClick={() => {
+											setSelectedCard(card);
+											setCardDialogOpen(true);
+										}}
+									/>
+									<Box
+										sx={{
+											display: "flex",
+											alignItems: "center",
+											justifyContent: "center",
+											mt: 1,
+											gap: 0.5,
+											overflowX: "hidden",
+											flexWrap: "nowrap",
+											maxWidth: "100%",
+										}}>
+										<Button
+											variant="outlined"
+											size="small"
+											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
+											onClick={() => decrementCount(card.cardno)}>
+											-
+										</Button>
+										<Typography
+											sx={{
+												minWidth: 16,
+												textAlign: "center",
+												fontSize: "0.7rem",
+											}}>
+											{cardCounts[card.cardno] || 0}
+										</Typography>
+										<Button
+											variant="outlined"
+											size="small"
+											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
+											onClick={() => incrementCount(card.cardno)}>
+											+
+										</Button>
+									</Box>
+								</Box>
+							))}
+						</Box>
+						{filteredCards.length === 0 && !isLoadingCards && (
+							<Typography
+								align="center"
+								sx={{ mt: 2 }}>
+								没有符合条件的卡片
+							</Typography>
+						)}
+						{hasMore && (
+							<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
 								<Button
 									variant="outlined"
-									size="small"
-									sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
-									onClick={() => decrementCount(card.cardno)}>
-									-
-								</Button>
-								<Typography
-									sx={{
-										minWidth: 16,
-										textAlign: "center",
-										fontSize: "0.7rem",
-									}}>
-									{cardCounts[card.cardno] || 0}
-								</Typography>
-								<Button
-									variant="outlined"
-									size="small"
-									sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
-									onClick={() => incrementCount(card.cardno)}>
-									+
+									disabled={isLoadingMore}
+									onClick={handleLoadMore}>
+									{isLoadingMore ? "加载中..." : "加载更多"}
 								</Button>
 							</Box>
-						</Box>
-					))}
-				</Box>
+						)}
+					</>
+				)}
 			</Box>
 			<Box
 				sx={{
@@ -597,13 +837,50 @@ const DeckCreate = () => {
 										alt={card.name}
 										style={{ width: "100%", height: "auto", borderRadius: 4 }}
 									/>
-									<Typography variant="body2">x{count}</Typography>
+									<Typography
+										variant="body2"
+										sx={{ mt: 1 }}>
+										x{count}
+									</Typography>
+									<Box
+										sx={{
+											display: "flex",
+											justifyContent: "center",
+											alignItems: "center",
+											gap: 1,
+											mt: 1,
+										}}>
+										<Button
+											size="small"
+											variant="outlined"
+											onClick={() => decrementCount(cardId)}>
+											-
+										</Button>
+										<Button
+											size="small"
+											variant="outlined"
+											onClick={() => incrementCount(cardId)}>
+											+
+										</Button>
+									</Box>
 								</Box>
 							);
 						})}
 					</Box>
 				</DialogContent>
 			</Dialog>
+			<Snackbar
+				open={snackbar.open}
+				autoHideDuration={4000}
+				onClose={handleSnackbarClose}
+				anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+				<Alert
+					onClose={handleSnackbarClose}
+					severity={snackbar.severity}
+					sx={{ width: "100%" }}>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 			<Dialog
 				fullScreen
 				open={cardDialogOpen}

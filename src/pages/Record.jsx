@@ -16,7 +16,6 @@ import {
 	DialogContent,
 	DialogContentText,
 	DialogTitle,
-	TextField as MuiTextField,
 	Switch,
 	FormControlLabel,
 } from "@mui/material";
@@ -217,96 +216,131 @@ const Record = () => {
 							.catch((err) => console.error("提交出错:", err));
 					}}
 					sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-					<TextField
-						required
-						label="我方卡组名称"
-						name="playerDeckName"
-						value={formState.playerDeckName}
-						onChange={(e) =>
-							setFormState((prev) => ({
-								...prev,
-								playerDeckName: e.target.value,
-							}))
-						}
-					/>
-					<Autocomplete
-						options={productList.series
-							.slice()
-							.sort()
-							.map(
-								(s) =>
-									`${s}${
-										translationMap.series?.[s]
-											? `（${translationMap.series[s]}）`
-											: ""
-									}`
+					<Box
+						sx={{
+							display: "flex",
+							flexDirection: "column",
+							gap: 2,
+							backgroundColor: "rgba(166, 206, 182, 0.15)",
+							borderRadius: 2,
+							p: 2,
+						}}>
+						<Typography
+							variant="subtitle2"
+							sx={{ fontWeight: 600 }}>
+							我方信息
+						</Typography>
+						<TextField
+							required
+							label="我方卡组名称"
+							name="playerDeckName"
+							value={formState.playerDeckName}
+							onChange={(e) =>
+								setFormState((prev) => ({
+									...prev,
+									playerDeckName: e.target.value,
+								}))
+							}
+						/>
+						<Autocomplete
+							options={productList.series
+								.slice()
+								.sort()
+								.map(
+									(s) =>
+										`${s}${
+											translationMap.series?.[s]
+												? `（${translationMap.series[s]}）`
+												: ""
+										}`
+								)}
+							value={
+								formState.playerSeries
+									? `${formState.playerSeries}${
+											translationMap.series?.[formState.playerSeries]
+												? `（${translationMap.series[formState.playerSeries]}）`
+												: ""
+									  }`
+									: ""
+							}
+							onChange={(_, newValue) => {
+								const key = newValue?.split("（")[0];
+								setFormState((prev) => ({ ...prev, playerSeries: key || "" }));
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="我方系列"
+									required
+								/>
 							)}
-						value={
-							formState.playerSeries
-								? `${formState.playerSeries}${
-										translationMap.series?.[formState.playerSeries]
-											? `（${translationMap.series[formState.playerSeries]}）`
-											: ""
-								  }`
-								: ""
-						}
-						onChange={(_, newValue) => {
-							const key = newValue?.split("（")[0];
-							setFormState((prev) => ({ ...prev, playerSeries: key || "" }));
-						}}
-						renderInput={(params) => (
-							<TextField
-								{...params}
-								label="我方系列"
-								required
-							/>
-						)}
-					/>
-					<TextField
-						required
-						label="对方卡组名称"
-						name="opponentDeckName"
-						value={formState.opponentDeckName}
-						onChange={(e) =>
-							setFormState((prev) => ({
-								...prev,
-								opponentDeckName: e.target.value,
-							}))
-						}
-					/>
-					<Autocomplete
-						options={productList.series
-							.slice()
-							.sort()
-							.map(
-								(s) =>
-									`${s}${
-										translationMap.series?.[s]
-											? `（${translationMap.series[s]}）`
-											: ""
-									}`
+						/>
+					</Box>
+					<Box
+						sx={{
+							display: "flex",
+							flexDirection: "column",
+							gap: 2,
+							backgroundColor: "rgba(255, 205, 210, 0.15)",
+							borderRadius: 2,
+							p: 2,
+						}}>
+						<Typography
+							variant="subtitle2"
+							sx={{ fontWeight: 600 }}>
+							对手信息
+						</Typography>
+						<TextField
+							required
+							label="对方卡组名称"
+							name="opponentDeckName"
+							value={formState.opponentDeckName}
+							onChange={(e) =>
+								setFormState((prev) => ({
+									...prev,
+									opponentDeckName: e.target.value,
+								}))
+							}
+						/>
+						<Autocomplete
+							options={productList.series
+								.slice()
+								.sort()
+								.map(
+									(s) =>
+										`${s}${
+											translationMap.series?.[s]
+												? `（${translationMap.series[s]}）`
+												: ""
+										}`
+								)}
+							value={
+								formState.opponentSeries
+									? `${formState.opponentSeries}${
+											translationMap.series?.[formState.opponentSeries]
+												? `（${
+														translationMap.series[formState.opponentSeries]
+												  }）`
+												: ""
+									  }`
+									: ""
+							}
+							onChange={(_, newValue) => {
+								const key = newValue?.split("（")[0];
+								setFormState((prev) => ({
+									...prev,
+									opponentSeries: key || "",
+								}));
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="对手系列"
+									required
+								/>
 							)}
-						value={
-							formState.opponentSeries
-								? `${formState.opponentSeries}${
-										translationMap.series?.[formState.opponentSeries]
-											? `（${translationMap.series[formState.opponentSeries]}）`
-											: ""
-								  }`
-								: ""
-						}
-						onChange={(_, newValue) => {
-							const key = newValue?.split("（")[0];
-							setFormState((prev) => ({ ...prev, opponentSeries: key || "" }));
-						}}
-						renderInput={(params) => (
-							<TextField
-								{...params}
-								label="对手系列"
-								required
-							/>
-						)}
-					/>
+						/>
+					</Box>
 					<TextField
 						label="比赛名（可选）"
 						name="tournamentName"
@@ -371,13 +405,13 @@ const Record = () => {
 								label="起始日期"
 								value={startDate}
 								onChange={(newValue) => setStartDate(newValue)}
-								renderInput={(params) => <MuiTextField {...params} />}
+								slotProps={{ textField: { id: "startDate", fullWidth: true } }}
 							/>
 							<DatePicker
 								label="结束日期"
 								value={endDate}
 								onChange={(newValue) => setEndDate(newValue)}
-								renderInput={(params) => <MuiTextField {...params} />}
+								slotProps={{ textField: { id: "endDate", fullWidth: true } }}
 							/>
 						</LocalizationProvider>
 						<Button
@@ -514,7 +548,7 @@ const Record = () => {
 																font: {
 																	weight: "bold",
 																},
-																formatter: (value, ctx) => {
+																formatter: (value) => {
 																	return value;
 																},
 															},
@@ -592,7 +626,7 @@ const Record = () => {
 																font: {
 																	weight: "bold",
 																},
-																formatter: (value, ctx) => {
+																formatter: (value) => {
 																	return value;
 																},
 															},
@@ -688,7 +722,15 @@ const Record = () => {
 						</Box>
 					)}
 					{loading ? (
-						<CircularProgress />
+						<Box
+							sx={{
+								width: "100%",
+								display: "flex",
+								justifyContent: "center",
+								mt: 2,
+							}}>
+							<CircularProgress />
+						</Box>
 					) : records.length === 0 ? (
 						<Typography>暂无记录</Typography>
 					) : (

@@ -56,16 +56,29 @@ function ChessClock() {
 
 	return (
 		<Container>
-			<Box display="flex" flexDirection="column" alignItems="center" mb={4}>
-				<Typography variant="h4" gutterBottom>
+			<Box
+				display="flex"
+				flexDirection="column"
+				alignItems="center"
+				m={4}>
+				<Typography
+					variant="h4"
+					gutterBottom>
 					棋钟
 				</Typography>
 				<Typography variant="subtitle1">帮助双方计时自己的回合用时</Typography>
 			</Box>
 
 			<Box height="60vh">
-				<Box display="flex" flexDirection="column" height="100%" width="100%">
-					<Box flex={3} display="flex" justifyContent="center">
+				<Box
+					display="flex"
+					flexDirection="column"
+					height="100%"
+					width="100%">
+					<Box
+						flex={3}
+						display="flex"
+						justifyContent="center">
 						<Button
 							variant="contained"
 							color={isRunning && side === 1 ? "error" : "primary"}
@@ -74,13 +87,17 @@ function ChessClock() {
 							onClick={() => {
 								setIsRunning(true);
 								setSide(1);
-							}}
-						>
+							}}>
 							<Typography variant="h4">{p1Time}</Typography>
 						</Button>
 					</Box>
 
-					<Box flex={1} display="flex" justifyContent="center" m={2} gap={2}>
+					<Box
+						flex={1}
+						display="flex"
+						justifyContent="center"
+						m={2}
+						gap={2}>
 						<Button
 							variant="contained"
 							color="success"
@@ -92,8 +109,7 @@ function ChessClock() {
 							sx={{
 								backgroundColor: "rgba(166, 206, 182, 0.7)",
 								"&:hover": { backgroundColor: "#95bfa5" },
-							}}
-						>
+							}}>
 							开始计时
 						</Button>
 						<Button
@@ -106,13 +122,15 @@ function ChessClock() {
 								"&:hover": {
 									backgroundColor: "#5c0f10",
 								},
-							}}
-						>
+							}}>
 							重置计时
 						</Button>
 					</Box>
 
-					<Box flex={3} display="flex" justifyContent="center">
+					<Box
+						flex={3}
+						display="flex"
+						justifyContent="center">
 						<Button
 							variant="contained"
 							color={isRunning && side === 2 ? "error" : "primary"}
@@ -121,8 +139,7 @@ function ChessClock() {
 							onClick={() => {
 								setIsRunning(true);
 								setSide(2);
-							}}
-						>
+							}}>
 							<Typography variant="h4">{p2Time}</Typography>
 						</Button>
 					</Box>
@@ -131,8 +148,7 @@ function ChessClock() {
 
 			<Dialog
 				open={showResetConfirm}
-				onClose={() => setShowResetConfirm(false)}
-			>
+				onClose={() => setShowResetConfirm(false)}>
 				<DialogTitle>确认重置</DialogTitle>
 				<DialogContent>
 					<Typography>确定要重置计时吗？</Typography>
@@ -148,8 +164,7 @@ function ChessClock() {
 							setP1Time("00:00");
 							setP2Time("00:00");
 							setShowResetConfirm(false);
-						}}
-					>
+						}}>
 						确定重置
 					</Button>
 				</DialogActions>
