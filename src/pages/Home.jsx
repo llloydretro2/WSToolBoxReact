@@ -100,7 +100,8 @@ function Home() {
 
 			{/* 待办事项 */}
 			<Box
-				mt={6}
+				mt={4}
+				mb={6}
 				p={3}
 				sx={{
 					backgroundColor: "rgba(166, 206, 182, 0.3)",
