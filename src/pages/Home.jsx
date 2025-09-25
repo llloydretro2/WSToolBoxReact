@@ -94,7 +94,8 @@ function Home() {
 				<Typography
 					variant="body1"
 					color="text.secondary">
-					<br />- 邦多利十周年
+					<br />- 漫威
+					<br />- 闪耀色彩pb
 				</Typography>
 			</Box>
 
@@ -118,8 +119,7 @@ function Home() {
 				<Typography
 					variant="body1"
 					color="text.secondary">
-					<br />- 卡组制作功能
-					<br />- 卡组翻译一键全部导出成PNG或者PDF
+					<br />- 卡组编辑
 				</Typography>
 			</Box>
 		</Container>
