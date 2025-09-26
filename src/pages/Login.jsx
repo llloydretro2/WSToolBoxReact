@@ -4,8 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Box, Button, TextField, Typography, Container } from "@mui/material";
 import { Snackbar, Alert } from "@mui/material";
 
-const RAILWAY_BACKEND_URL =
-	"https://wstoolboxbackend-production.up.railway.app";
+const BACKEND_URL = "http://38.244.14.142:4000";
 // const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 function LoginPage() {
@@ -27,7 +26,7 @@ function LoginPage() {
 		try {
 			const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
 
-			const response = await fetch(`${RAILWAY_BACKEND_URL}${endpoint}`, {
+			const response = await fetch(`${BACKEND_URL}${endpoint}`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -72,13 +71,11 @@ function LoginPage() {
 				open={Boolean(errorMessage)}
 				autoHideDuration={4000}
 				onClose={() => setErrorMessage("")}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-			>
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}>
 				<Alert
 					onClose={() => setErrorMessage("")}
 					severity="info"
-					sx={{ width: "100%" }}
-				>
+					sx={{ width: "100%" }}>
 					{errorMessage}
 				</Alert>
 			</Snackbar>
@@ -86,22 +83,26 @@ function LoginPage() {
 				open={Boolean(successMessage)}
 				autoHideDuration={3000}
 				onClose={() => setSuccessMessage("")}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-			>
+				anchorOrigin={{ vertical: "top", horizontal: "center" }}>
 				<Alert
 					onClose={() => setSuccessMessage("")}
 					severity="success"
-					sx={{ width: "100%" }}
-				>
+					sx={{ width: "100%" }}>
 					{successMessage}
 				</Alert>
 			</Snackbar>
 			<Container maxWidth="sm">
 				<Box sx={{ p: 4, mt: 8 }}>
-					<Typography variant="h2" align="center" gutterBottom>
+					<Typography
+						variant="h2"
+						align="center"
+						gutterBottom>
 						{isRegister ? "注册" : "登录"}
 					</Typography>
-					<Box display="flex" flexDirection="column" gap={2}>
+					<Box
+						display="flex"
+						flexDirection="column"
+						gap={2}>
 						<TextField
 							label="用户名"
 							variant="outlined"
@@ -123,11 +124,12 @@ function LoginPage() {
 							sx={{
 								backgroundColor: "#a6ceb6",
 								"&:hover": { backgroundColor: "#95bfa5" },
-							}}
-						>
+							}}>
 							{isRegister ? "注册" : "登录"}
 						</Button>
-						<Button variant="text" onClick={() => setIsRegister(!isRegister)}>
+						<Button
+							variant="text"
+							onClick={() => setIsRegister(!isRegister)}>
 							{isRegister ? "已有账号？点击登录" : "没有账号？点击注册"}
 						</Button>
 					</Box>

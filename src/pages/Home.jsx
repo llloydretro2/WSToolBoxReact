@@ -120,6 +120,9 @@ function Home() {
 					variant="body1"
 					color="text.secondary">
 					<br />- 卡组编辑
+					<br />- 导出战绩
+					<br />- 自动打包
+					<br />- 图片形式导出卡组
 				</Typography>
 			</Box>
 		</Container>

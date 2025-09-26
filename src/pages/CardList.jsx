@@ -20,9 +20,8 @@ import translationMap from "../data/filter_translations.json";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-const RAILWAY_BACKEND_URL =
-	"https://wstoolboxbackend-production.up.railway.app";
-// const LOCAL_BACKEND_URL = "http://localhost:4000";
+const BACKEND_URL = "http://38.244.14.142:4000";
+// const BACKEND_URL = "http://localhost:4000";
 
 function CardList() {
 	const [result, setResult] = useState({
@@ -63,10 +62,8 @@ function CardList() {
 
 		// 本地后端测试地址
 		// http://localhost:4000/api/cards?${params}
-		// 线上后端测试地址
-		// https://wstoolboxbackend-production.up.railway.app/api/cards?${params}
 
-		fetch(`${RAILWAY_BACKEND_URL}/api/cards?${params}`)
+		fetch(`${BACKEND_URL}/api/cards?${params}`)
 			.then((res) => res.json())
 			.then((res) => {
 				setResult({

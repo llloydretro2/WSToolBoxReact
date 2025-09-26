@@ -19,8 +19,7 @@ import {
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
-const RAILWAY_BACKEND_URL =
-	"https://wstoolboxbackend-production.up.railway.app";
+const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckSearch = () => {
 	const { token, username } = useAuth();
@@ -51,7 +50,7 @@ const DeckSearch = () => {
 			setLoading(true);
 			setError("");
 			try {
-				const res = await fetch(`${RAILWAY_BACKEND_URL}/api/decks/mine`, {
+				const res = await fetch(`${BACKEND_URL}/api/decks/mine`, {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
@@ -111,7 +110,7 @@ const DeckSearch = () => {
 				fetchedCardNosRef.current.add(cardNo);
 				try {
 					const res = await fetch(
-						`${RAILWAY_BACKEND_URL}/api/cards?search=${encodeURIComponent(
+						`${BACKEND_URL}/api/cards?search=${encodeURIComponent(
 							cardNo
 						)}&page=1&pageSize=1`
 					);

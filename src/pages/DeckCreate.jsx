@@ -17,9 +17,8 @@ import {
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
 
-// Ensure RAILWAY_BACKEND_URL is accessible from environment variables
-const RAILWAY_BACKEND_URL =
-	"https://wstoolboxbackend-production.up.railway.app";
+// Ensure BACKEND_URL is accessible from environment variables
+const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckCreate = () => {
 	const [deckName, setDeckName] = useState("");
@@ -103,7 +102,7 @@ const DeckCreate = () => {
 
 		try {
 			const response = await fetch(
-				`${RAILWAY_BACKEND_URL}/api/cards?${params.toString()}`
+				`${BACKEND_URL}/api/cards?${params.toString()}`
 			);
 			if (!response.ok) {
 				throw new Error("获取卡片数据失败");
@@ -344,7 +343,7 @@ const DeckCreate = () => {
 
 		setCreatingDeck(true);
 		try {
-			const response = await fetch(`${RAILWAY_BACKEND_URL}/api/decks`, {
+			const response = await fetch(`${BACKEND_URL}/api/decks`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

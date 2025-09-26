@@ -22,8 +22,7 @@ function DeckPage() {
 							backgroundColor: "#a6ceb6",
 						},
 					},
-				}}
-			>
+				}}>
 				<Tab
 					label="创建卡组"
 					sx={{

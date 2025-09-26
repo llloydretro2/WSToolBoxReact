@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import productList from "../data/productList.json";
 
+const BACKEND_URL = "http://38.244.14.142:4000";
+
 function Simulator() {
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [cards, setCards] = useState([]);
@@ -44,8 +46,8 @@ function Simulator() {
 		console.log("稀有度保底:", rarityRates);
 
 		const sortedRarities = Object.entries(rarityRates)
-			.filter(([key, val]) => val.pack || val.box || val.case)
-			.sort(([aKey, aVal], [bKey, bVal]) => {
+			.filter(([, val]) => val.pack || val.box || val.case)
+			.sort(([, aVal], [, bVal]) => {
 				const aCase = parseInt(aVal.case);
 				const bCase = parseInt(bVal.case);
 				if (!isNaN(aCase) && !isNaN(bCase)) return bCase - aCase;
@@ -174,14 +176,22 @@ function Simulator() {
 	}, [cards]);
 
 	return (
-		<Container maxWidth="sm" sx={{ textAlign: "center", pt: 8 }}>
-			<Typography variant="h2" gutterBottom>
+		<Container
+			maxWidth="sm"
+			sx={{ textAlign: "center", pt: 8 }}>
+			<Typography
+				variant="h2"
+				gutterBottom>
 				模拟开包
 			</Typography>
-			<Typography variant="body1" color="text.secondary">
+			<Typography
+				variant="body1"
+				color="text.secondary">
 				如果是高稀有的卡请填写保底多少盒出现一次，系统自动计算概率。
 			</Typography>
-			<Typography variant="h6" color="text.secondary">
+			<Typography
+				variant="h6"
+				color="text.secondary">
 				如果不是高稀有度卡请不要设定保底输入。
 			</Typography>
 			<Autocomplete
@@ -190,12 +200,12 @@ function Simulator() {
 				value={selectedProduct}
 				onChange={async (event, newValue) => {
 					setSelectedProduct(newValue);
-					// https://wstoolboxbackend-production.up.railway.app/api/cards?${params}
+
 					// http://localhost:4000/api/cards/by-product?product_name=
 					if (newValue) {
 						try {
 							const res = await fetch(
-								`https://wstoolboxbackend-production.up.railway.app/api/cards/by-product?product_name=${encodeURIComponent(
+								`${BACKEND_URL}/api/cards/by-product?product_name=${encodeURIComponent(
 									newValue
 								)}`
 							);
@@ -231,8 +241,7 @@ function Simulator() {
 				display="grid"
 				gridTemplateColumns={{ xs: "1fr", sm: "repeat(4, 1fr)" }}
 				gap={2}
-				sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}
-			>
+				sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}>
 				<TextField
 					fullWidth
 					label="一包卡片数"
@@ -288,16 +297,16 @@ function Simulator() {
 					m={2}
 					p={2}
 					borderRadius={4}
-					sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}
-				>
-					<Typography variant="h6" gutterBottom>
+					sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}>
+					<Typography
+						variant="h6"
+						gutterBottom>
 						{rarity}
 					</Typography>
 					<Box
 						display="grid"
 						gridTemplateColumns={{ xs: "1fr", sm: "repeat(4, 1fr)" }}
-						gap={2}
-					>
+						gap={2}>
 						<TextField
 							fullWidth
 							label={`保底（包）`}
@@ -369,8 +378,7 @@ function Simulator() {
 									...prev,
 									[rarity]: { pack: "", box: "", case: "" },
 								}))
-							}
-						>
+							}>
 							重置
 						</Button>
 					</Box>
@@ -386,8 +394,7 @@ function Simulator() {
 					m: 2,
 					backgroundColor: "#a6ceb6",
 					"&:hover": { backgroundColor: "#95bfa5" },
-				}}
-			>
+				}}>
 				开始模拟
 			</Button>
 
@@ -402,14 +409,15 @@ function Simulator() {
 					"&:hover": {
 						backgroundColor: "#5c0f10",
 					},
-				}}
-			>
+				}}>
 				清除结果
 			</Button>
 
 			{simulatedResult.length > 0 && (
 				<Box sx={{ mt: 4 }}>
-					<Typography variant="h5" gutterBottom>
+					<Typography
+						variant="h5"
+						gutterBottom>
 						稀有度分类展示（仅展示模拟抽到的卡）
 					</Typography>
 					{sortedRarities
@@ -433,7 +441,9 @@ function Simulator() {
 							const uniqueCards = Object.values(grouped);
 
 							return (
-								<Box key={rarity} sx={{ mb: 3 }}>
+								<Box
+									key={rarity}
+									sx={{ mb: 3 }}>
 									<Typography variant="subtitle1">{rarity}</Typography>
 									<Box
 										sx={{
@@ -444,8 +454,7 @@ function Simulator() {
 											border: "1px solid #ccc",
 											borderRadius: 2,
 											p: 1,
-										}}
-									>
+										}}>
 										{uniqueCards.map(({ card, count }, i) => (
 											<Box
 												key={i}
@@ -461,8 +470,7 @@ function Simulator() {
 													transition: "transform 0.2s",
 													"&:hover": { transform: "scale(1.05)" },
 													textAlign: "center",
-												}}
-											>
+												}}>
 												<Box
 													component="img"
 													src={card.image_url}
@@ -472,7 +480,9 @@ function Simulator() {
 														height: "auto",
 													}}
 												/>
-												<Typography variant="caption" display="block">
+												<Typography
+													variant="caption"
+													display="block">
 													×{count}
 												</Typography>
 											</Box>
@@ -485,11 +495,15 @@ function Simulator() {
 			)}
 			{simulatedResult.length > 0 && (
 				<Box sx={{ mt: 4 }}>
-					<Typography variant="h5" gutterBottom>
+					<Typography
+						variant="h5"
+						gutterBottom>
 						具体模拟结果
 					</Typography>
 					{simulatedResult.map((pack, index) => (
-						<Box key={index} sx={{ mb: 3 }}>
+						<Box
+							key={index}
+							sx={{ mb: 3 }}>
 							<Typography variant="subtitle1">第 {index + 1} 包</Typography>
 							<Box
 								sx={{
@@ -500,8 +514,7 @@ function Simulator() {
 									border: "1px solid #ccc",
 									borderRadius: 2,
 									p: 1,
-								}}
-							>
+								}}>
 								{pack.map((card, i) => (
 									<Box
 										key={i}
@@ -516,8 +529,7 @@ function Simulator() {
 											overflow: "hidden",
 											transition: "transform 0.2s",
 											"&:hover": { transform: "scale(1.05)" },
-										}}
-									>
+										}}>
 										<Box
 											component="img"
 											src={card.image_url}
@@ -538,8 +550,7 @@ function Simulator() {
 				open={dialogOpen}
 				onClose={() => setDialogOpen(false)}
 				maxWidth="sm"
-				fullWidth
-			>
+				fullWidth>
 				<DialogTitle>{selectedCard?.name}</DialogTitle>
 				<DialogContent>
 					<Box

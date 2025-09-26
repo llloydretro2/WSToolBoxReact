@@ -32,8 +32,9 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
-// 线上后端测试地址
-// https://wstoolboxbackend-production.up.railway.app/api/cards?${params}
+
+const BACKEND_URL = "http://38.244.14.142:4000";
+// const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 const Record = () => {
 	const [records, setRecords] = useState([]);
@@ -69,15 +70,12 @@ const Record = () => {
 
 	const deleteRecord = () => {
 		if (!recordToDelete) return;
-		fetch(
-			`https://wstoolboxbackend-production.up.railway.app/api/matches/delete/${recordToDelete._id}`,
-			{
-				method: "DELETE",
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			}
-		)
+		fetch(`${BACKEND_URL}/api/matches/delete/${recordToDelete._id}`, {
+			method: "DELETE",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
 			.then((res) => {
 				if (!res.ok) throw new Error("删除失败");
 				setRecords((prev) =>
@@ -90,14 +88,11 @@ const Record = () => {
 	};
 
 	const getHistory = () => {
-		fetch(
-			"https://wstoolboxbackend-production.up.railway.app/api/matches/history",
-			{
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			}
-		)
+		fetch(`${BACKEND_URL}/api/matches/history`, {
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+		})
 			.then((res) => {
 				if (!res.ok) throw new Error("Network response was not ok");
 				return res.json();
@@ -194,17 +189,14 @@ const Record = () => {
 							data.tournamentName = formState.tournamentName.trim();
 						if (formState.notes.trim()) data.notes = formState.notes.trim();
 						console.log("Submitting match record:", data);
-						fetch(
-							"https://wstoolboxbackend-production.up.railway.app/api/matches/create",
-							{
-								method: "POST",
-								headers: {
-									"Content-Type": "application/json",
-									Authorization: `Bearer ${token}`,
-								},
-								body: JSON.stringify(data),
-							}
-						)
+						fetch(`${BACKEND_URL}/api/matches/create`, {
+							method: "POST",
+							headers: {
+								"Content-Type": "application/json",
+								Authorization: `Bearer ${token}`,
+							},
+							body: JSON.stringify(data),
+						})
 							.then((res) => {
 								if (!res.ok) throw new Error("提交失败");
 								return res.json();
