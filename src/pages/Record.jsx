@@ -33,7 +33,8 @@ ChartJS.register(ArcElement, Tooltip, Legend, ChartDataLabels);
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
 
-const BACKEND_URL = "http://38.244.14.142:4000";
+const BACKEND_URL = "https://api.cardtoolbox.org";
+// const BACKEND_URL = "http://38.244.14.142:4000";
 // const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 const Record = () => {

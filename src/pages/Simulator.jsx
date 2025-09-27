@@ -13,7 +13,8 @@ import {
 } from "@mui/material";
 import productList from "../data/productList.json";
 
-const BACKEND_URL = "http://38.244.14.142:4000";
+const BACKEND_URL = "https://api.cardtoolbox.org";
+// const BACKEND_URL = "http://38.244.14.142:4000";
 
 function Simulator() {
 	const [selectedProduct, setSelectedProduct] = useState(null);

@@ -18,7 +18,8 @@ import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
 
 // Ensure BACKEND_URL is accessible from environment variables
-const BACKEND_URL = "http://38.244.14.142:4000";
+const BACKEND_URL = "https://api.cardtoolbox.org";
+// const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckCreate = () => {
 	const [deckName, setDeckName] = useState("");
