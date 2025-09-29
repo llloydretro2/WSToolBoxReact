@@ -13,6 +13,9 @@ import {
 	Box,
 	Button,
 	Snackbar,
+	Stack,
+	Tooltip,
+	Badge,
 } from "@mui/material";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
@@ -64,6 +67,20 @@ function NavBar() {
 
 	// Avatar menu state and handlers
 	const [anchorEl, setAnchorEl] = useState(null);
+	const [avatarError, setAvatarError] = useState(false);
+	const displayName = user?.username ?? "";
+	const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : "?";
+	const avatarIndex = displayName ? getAvatarIndexFromUsername(displayName) : 1;
+	const avatarSrc = !avatarError && displayName
+		? displayName === "Amon"
+			? "/assets/283/6.png"
+			: `/assets/283/${avatarIndex}.png`
+		: undefined;
+
+	useEffect(() => {
+		setAvatarError(false);
+	}, [displayName]);
+
 	const handleAvatarClick = (event) => {
 		setAnchorEl(event.currentTarget);
 	};
@@ -203,25 +220,56 @@ function NavBar() {
 						</IconButton>
 					</Box>
 					{isLoggedIn ? (
-						<Box
-							sx={{
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "center",
-								ml: 2,
-							}}>
-							<Avatar
-								alt={user.username}
-								src={
-									user.username === "Amon"
-										? "/assets/283/6.png"
-										: `/assets/283/${getAvatarIndexFromUsername(
-												user.username
-										  )}.png`
-								}
-								onClick={handleAvatarClick}
-								sx={{ cursor: "pointer", width: 32, height: 32 }}
-							/>
+						<Stack
+							direction="row"
+							spacing={1.5}
+							alignItems="center"
+							sx={{ ml: 2 }}>
+							<Tooltip title="打开个人菜单" arrow>
+								<IconButton
+									onClick={handleAvatarClick}
+									aria-label="打开个人菜单"
+									sx={{
+										p: 0,
+										borderRadius: "50%",
+										boxShadow: "0 6px 14px -8px rgba(0,0,0,0.45)",
+									}}
+								>
+									<Badge
+										overlap="circular"
+										color="success"
+										variant="dot"
+										anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+										sx={{
+											"& .MuiBadge-badge": {
+												height: 10,
+												minWidth: 10,
+												borderRadius: "50%",
+												boxShadow: "0 0 0 2px rgba(166, 206, 182, 0.4)",
+											},
+										}}
+									>
+										<Avatar
+											alt={displayName}
+											src={avatarSrc}
+											sx={{
+												width: 36,
+												height: 36,
+												backgroundColor: "rgba(166, 206, 182, 0.35)",
+												color: "#1b4332",
+												fontWeight: 600,
+												border: "1px solid rgba(166, 206, 182, 0.6)",
+											}}
+											onError={() => setAvatarError(true)}
+										>
+											{avatarInitial}
+										</Avatar>
+									</Badge>
+								</IconButton>
+							</Tooltip>
+							<Typography variant="body2" fontWeight={600} color="inherit">
+								{displayName}
+							</Typography>
 							<Menu
 								anchorEl={anchorEl}
 								open={Boolean(anchorEl)}
@@ -236,7 +284,7 @@ function NavBar() {
 								}}>
 								<MenuItem onClick={handleLogout}>退出登录</MenuItem>
 							</Menu>
-						</Box>
+						</Stack>
 					) : (
 						<Button
 							color="inherit"
