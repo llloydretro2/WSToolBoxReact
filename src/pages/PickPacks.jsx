@@ -126,11 +126,7 @@ function PickPacks() {
 					spacing={3}
 					justifyContent="center"
 					alignItems="center">
-					<Grid
-						item
-						xs={12}
-						sm={6}
-						md={4}>
+					<Grid size={{ xs: 12, sm: 6, md: 4 }}>
 						<TextField
 							type="number"
 							label={t("pages.pickPacks.openPacks")}
@@ -150,11 +146,7 @@ function PickPacks() {
 							}}
 						/>
 					</Grid>
-					<Grid
-						item
-						xs={12}
-						sm={6}
-						md={4}>
+					<Grid size={{ xs: 12, sm: 6, md: 4 }}>
 						<TextField
 							type="number"
 							label={t("pages.pickPacks.totalPacks")}
@@ -174,10 +166,7 @@ function PickPacks() {
 							}}
 						/>
 					</Grid>
-					<Grid
-						item
-						xs={12}
-						md={4}>
+					<Grid size={{ xs: 12, md: 4 }}>
 						<Box
 							display="flex"
 							justifyContent="center"

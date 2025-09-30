@@ -247,19 +247,9 @@ function Dice() {
 						</Grid>
 						<Grid size={{ xs: 12, sm: 4 }}>
 							<motion.div
-								whileHover={{ scale: 1.05, rotate: 1 }}
-								whileTap={{ scale: 0.95, rotate: -1 }}
-								animate={
-									hasResults
-										? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }
-										: {}
-								}
-								transition={{
-									type: "spring",
-									stiffness: 400,
-									damping: 17,
-									animate: { duration: 0.6, ease: "easeInOut" },
-								}}>
+								whileHover={{ scale: 1.05 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
 								<Button
 									variant="contained"
 									color="primary"
@@ -280,96 +270,90 @@ function Dice() {
 					</Grid>
 
 					{hasResults && (
-						<motion.div
-							initial={{ opacity: 0, y: 30 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, ease: "easeOut" }}>
-							<Box sx={{ mt: { xs: 4, md: 5 }, textAlign: "center" }}>
+						<Box sx={{ mt: { xs: 4, md: 5 }, textAlign: "center" }}>
+							<Typography
+								variant="h5"
+								gutterBottom
+								fontWeight={600}>
+								{t("pages.dice.resultsTitle")}
+							</Typography>
+							<Grid
+								container
+								spacing={2}
+								justifyContent="center">
+								{results.map((rolls, idx) => {
+									const maxRoll = rolls.length > 0 ? Math.max(...rolls) : null;
+									return (
+										<Grid
+											size={{ xs: 12, md: 6 }}
+											key={`result-${idx}`}>
+											<Paper
+												elevation={0}
+												sx={{
+													p: { xs: 2, md: 3 },
+													borderRadius: 3,
+													border: "1px solid rgba(27, 67, 50, 0.2)",
+													backgroundColor: "rgba(27, 67, 50, 0.1)",
+												}}>
+												<Typography
+													variant="subtitle1"
+													gutterBottom>
+													{t("pages.dice.setLabel", { index: idx + 1 })}
+												</Typography>
+												<Stack
+													direction="row"
+													spacing={1}
+													flexWrap="wrap"
+													justifyContent="center">
+													{rolls.map((value, rollIndex) => (
+														<Chip
+															key={`chip-${idx}-${rollIndex}`}
+															label={value}
+															color={
+																maxRoll !== null &&
+																value === maxRoll &&
+																rolls.length > 1
+																	? "primary"
+																	: "default"
+															}
+															variant={
+																maxRoll !== null &&
+																value === maxRoll &&
+																rolls.length > 1
+																	? "filled"
+																	: "outlined"
+															}
+														/>
+													))}
+												</Stack>
+											</Paper>
+										</Grid>
+									);
+								})}
+							</Grid>
+							<Paper
+								elevation={0}
+								sx={{
+									mt: { xs: 3, md: 4 },
+									p: { xs: 2, md: 3 },
+									borderRadius: 3,
+									backgroundColor: "rgba(166, 206, 182, 0.2)",
+									border: "1px solid rgba(166, 206, 182, 0.6)",
+									maxWidth: 420,
+									mx: "auto",
+								}}>
 								<Typography
-									variant="h5"
-									gutterBottom
-									fontWeight={600}>
-									{t("pages.dice.resultsTitle")}
+									variant="subtitle2"
+									color="text.secondary">
+									{t("pages.dice.summaryTitle")}
 								</Typography>
-								<Grid
-									container
-									spacing={2}
-									justifyContent="center">
-									{results.map((rolls, idx) => {
-										const maxRoll =
-											rolls.length > 0 ? Math.max(...rolls) : null;
-										return (
-											<Grid
-												size={{ xs: 12, md: 6 }}
-												key={`result-${idx}`}>
-												<Paper
-													elevation={0}
-													sx={{
-														p: { xs: 2, md: 3 },
-														borderRadius: 3,
-														border: "1px solid rgba(27, 67, 50, 0.2)",
-														backgroundColor: "rgba(27, 67, 50, 0.1)",
-													}}>
-													<Typography
-														variant="subtitle1"
-														gutterBottom>
-														{t("pages.dice.setLabel", { index: idx + 1 })}
-													</Typography>
-													<Stack
-														direction="row"
-														spacing={1}
-														flexWrap="wrap"
-														justifyContent="center">
-														{rolls.map((value, rollIndex) => (
-															<Chip
-																key={`chip-${idx}-${rollIndex}`}
-																label={value}
-																color={
-																	maxRoll !== null &&
-																	value === maxRoll &&
-																	rolls.length > 1
-																		? "primary"
-																		: "default"
-																}
-																variant={
-																	maxRoll !== null &&
-																	value === maxRoll &&
-																	rolls.length > 1
-																		? "filled"
-																		: "outlined"
-																}
-															/>
-														))}
-													</Stack>
-												</Paper>
-											</Grid>
-										);
-									})}
-								</Grid>
-								<Paper
-									elevation={0}
-									sx={{
-										mt: { xs: 3, md: 4 },
-										p: { xs: 2, md: 3 },
-										borderRadius: 3,
-										backgroundColor: "rgba(166, 206, 182, 0.2)",
-										border: "1px solid rgba(166, 206, 182, 0.6)",
-										maxWidth: 420,
-										mx: "auto",
-									}}>
-									<Typography
-										variant="subtitle2"
-										color="text.secondary">
-										{t("pages.dice.summaryTitle")}
-									</Typography>
-									<Typography
-										variant="h6"
-										fontWeight={600}>
-										{t("pages.dice.summaryValue", { total, average })}
-									</Typography>
-								</Paper>
-							</Box>
-						</motion.div>
+								<Typography
+									variant="h6"
+									fontWeight={600}>
+									{t("pages.dice.summaryValue", { total, average })}
+								</Typography>
+							</Paper>
+						</Box>
 					)}
 				</Paper>
 			</Container>
