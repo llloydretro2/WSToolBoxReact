@@ -1,7 +1,14 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+	BrowserRouter as Router,
+	Routes,
+	Route,
+	useLocation,
+} from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import NavBar from "./components/NavBar";
+import PageTransition from "./components/PageTransition";
+import { AnimatePresence } from "framer-motion";
 import Home from "./pages/Home";
 import Dice from "./pages/Dice";
 import Tracker from "./pages/Tracker";
@@ -16,29 +23,148 @@ import RandomShuffle from "./pages/RandomShuffle";
 import DeckPage from "./pages/Deck";
 import Record from "./pages/Record";
 
+function AnimatedRoutes() {
+	const location = useLocation();
+
+	return (
+		<AnimatePresence
+			mode="wait"
+			initial={false}>
+			<Routes
+				location={location}
+				key={location.pathname}>
+				<Route
+					path="/"
+					element={
+						<PageTransition>
+							<Home />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/dice"
+					element={
+						<PageTransition>
+							<Dice />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/tracker"
+					element={
+						<PageTransition>
+							<Tracker />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/pick_packs"
+					element={
+						<PageTransition>
+							<PickPacks />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/first_second"
+					element={
+						<PageTransition>
+							<FirstSecond />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/chess_clock"
+					element={
+						<PageTransition>
+							<ChessClock />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/diy"
+					element={
+						<PageTransition>
+							<DIY />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/cardlist"
+					element={
+						<PageTransition>
+							<CardList />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/simulator"
+					element={
+						<PageTransition>
+							<Simulator />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/shuffle"
+					element={
+						<PageTransition>
+							<RandomShuffle />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/login"
+					element={
+						<PageTransition>
+							<LoginPage />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/deck"
+					element={
+						<PageTransition>
+							<DeckPage />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/record"
+					element={
+						<PageTransition>
+							<Record />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="*"
+					element={
+						<PageTransition>
+							<Home />
+						</PageTransition>
+					}
+				/>
+			</Routes>
+		</AnimatePresence>
+	);
+}
+
 function App() {
 	return (
-		<AuthProvider>
-			<Router>
-				<NavBar />
-				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/dice" element={<Dice />} />
-					<Route path="/tracker" element={<Tracker />} />
-					<Route path="/pick_packs" element={<PickPacks />} />
-					<Route path="/first_second" element={<FirstSecond />} />
-					<Route path="*" element={<Home />} />
-					<Route path="/chess_clock" element={<ChessClock />} />
-					<Route path="/diy" element={<DIY />} />
-					<Route path="/cardlist" element={<CardList />} />
-					<Route path="/simulator" element={<Simulator />} />
-					<Route path="/shuffle" element={<RandomShuffle />} />
-					<Route path="/login" element={<LoginPage />} />
-					<Route path="/deck" element={<DeckPage />} />
-                    <Route path='/record' element={<Record />} />
-				</Routes>
-			</Router>
-		</AuthProvider>
+		<div
+			style={{
+				overflowX: "hidden", // 防止水平滚动条
+				width: "100vw", // 确保宽度不超过视口
+				position: "relative", // 建立定位上下文
+			}}>
+			<AuthProvider>
+				<Router>
+					<NavBar />
+					<AnimatedRoutes />
+				</Router>
+			</AuthProvider>
+		</div>
 	);
 }
 

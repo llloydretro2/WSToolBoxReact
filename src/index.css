@@ -5,6 +5,15 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden; /* 防止水平滚动条 */
+}
+
+html {
+  overflow-x: hidden; /* 在html层面也防止水平滚动 */
+}
+
+#root {
+  overflow-x: hidden; /* 确保根元素也不会出现水平滚动条 */
 }
 
 code {

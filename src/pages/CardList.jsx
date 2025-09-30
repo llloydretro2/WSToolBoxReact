@@ -19,6 +19,7 @@ import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { useLocale } from "../contexts/LocaleContext";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
@@ -38,6 +39,16 @@ function CardList() {
 	const [showJP, setShowJP] = useState(true);
 	const [showScrollTop, setShowScrollTop] = useState(false);
 	const [showScrollBottom, setShowScrollBottom] = useState(false);
+	const { locale, t } = useLocale();
+	const colon = locale === "zh" ? "：" : ": ";
+	const zhToggleTitle = showZh
+		? t("pages.cardList.toggle.hideZh")
+		: t("pages.cardList.toggle.showZh");
+	const jpToggleTitle = showJP
+		? t("pages.cardList.toggle.hideJp")
+		: t("pages.cardList.toggle.showJp");
+	const scrollDownLabel = t("pages.cardList.scroll.down");
+	const scrollUpLabel = t("pages.cardList.scroll.up");
 
 	useEffect(() => {
 		const handleScroll = () => {
@@ -103,26 +114,31 @@ function CardList() {
 	return (
 		<Container
 			maxWidth="md"
-			sx={{ textAlign: "center", pt: 8 }}>
+			sx={{ textAlign: "center", mt: 4 }}>
 			<Typography
-				variant="h5"
+				variant="h4"
+				fontWeight={700}
+				color="#1b4332"
 				gutterBottom>
-				卡片查询
+				{t("pages.cardList.title")}
 			</Typography>
 			<Typography
 				variant="body1"
-				color="text.secondary">
-				根据关键词和筛选条件查询卡片信息
+				color="text.secondary"
+				align="center">
+				{t("pages.cardList.subtitle")}
 			</Typography>
 
 			{/* 搜索表单 */}
 			<Box
 				sx={{
-					display: "flex",
-					flexWrap: "wrap",
-					justifyContent: "center",
-					gap: 2,
 					mt: 4,
+					mb: 4,
+					p: 3,
+					backgroundColor: "rgba(27, 67, 50, 0.1)",
+					borderRadius: 3,
+					boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+					border: "1px solid rgba(27, 67, 50, 0.2)",
 				}}>
 				<Box
 					component="form"
@@ -130,11 +146,25 @@ function CardList() {
 						e.preventDefault();
 						handleSearch({ ...draftForm, page: 1 });
 						setForm({ ...draftForm, page: 1 });
-					}}
-					sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
-					<Box sx={{ flexBasis: "100%" }}>
+					}}>
+					{/* 主要搜索字段 */}
+					<Typography
+						variant="h6"
+						sx={{ mb: 2, textAlign: "left" }}>
+						{t("pages.cardList.sections.primarySearch")}
+					</Typography>
+					<Box
+						sx={{
+							display: "grid",
+							gridTemplateColumns: {
+								xs: "1fr",
+								sm: "1fr 1fr",
+								md: "1fr 1fr 1fr",
+							},
+							gap: 2,
+							mb: 3,
+						}}>
 						<Autocomplete
-							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.series_number
 								.slice()
 								.sort()
@@ -167,17 +197,14 @@ function CardList() {
 							renderInput={(params) => (
 								<TextField
 									{...params}
-									label="系列编号"
+									label={t("pages.cardList.fields.seriesNumber")}
 									variant="outlined"
 									fullWidth
 								/>
 							)}
 						/>
-					</Box>
 
-					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
-							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.series
 								.slice()
 								.sort()
@@ -206,17 +233,14 @@ function CardList() {
 							renderInput={(params) => (
 								<TextField
 									{...params}
-									label="系列名"
+									label={t("pages.cardList.fields.series")}
 									variant="outlined"
 									fullWidth
 								/>
 							)}
 						/>
-					</Box>
 
-					<Box sx={{ flexBasis: "100%" }}>
 						<Autocomplete
-							sx={{ maxWidth: 300, mx: "auto" }}
 							options={productList.product_name
 								.slice()
 								.sort()
@@ -249,7 +273,7 @@ function CardList() {
 							renderInput={(params) => (
 								<TextField
 									{...params}
-									label="产品名"
+									label={t("pages.cardList.fields.product")}
 									variant="outlined"
 									fullWidth
 								/>
@@ -257,11 +281,32 @@ function CardList() {
 						/>
 					</Box>
 
-					<Box sx={{ flexBasis: "100%" }}>
+					{/* 关键词和Side搜索 */}
+					<Box
+						sx={{
+							display: "grid",
+							gridTemplateColumns: {
+								xs: "1fr",
+								sm: "2fr 1fr",
+							},
+							gap: 2,
+							mb: 3,
+						}}>
+						<TextField
+							name="search"
+							label={t("pages.cardList.fields.keyword")}
+							variant="outlined"
+							fullWidth
+							size="small"
+							value={draftForm.search || ""}
+							onChange={(e) =>
+								setDraftForm((prev) => ({ ...prev, search: e.target.value }))
+							}
+						/>
+
 						<Autocomplete
 							options={productList.side.slice().sort()}
 							size="small"
-							sx={{ maxWidth: 300, mx: "auto" }}
 							value={draftForm.side || ""}
 							onChange={(_, newValue) =>
 								setDraftForm((prev) => ({ ...prev, side: newValue }))
@@ -269,7 +314,7 @@ function CardList() {
 							renderInput={(params) => (
 								<TextField
 									{...params}
-									label="Side"
+									label={t("pages.cardList.fields.side")}
 									variant="outlined"
 									fullWidth
 								/>
@@ -277,220 +322,204 @@ function CardList() {
 						/>
 					</Box>
 
-					<Box sx={{ flexBasis: "100%" }}>
-						<TextField
-							name="search"
-							label="搜索关键字"
-							variant="outlined"
-							fullWidth
+					{/* 卡片属性 */}
+					<Typography
+						variant="h6"
+						sx={{ mb: 2, textAlign: "left" }}>
+						{t("pages.cardList.sections.cardAttributes")}
+					</Typography>
+					<Box
+						sx={{
+							display: "grid",
+							gridTemplateColumns: {
+								xs: "1fr 1fr",
+								sm: "1fr 1fr 1fr 1fr",
+								md: "1fr 1fr 1fr 1fr",
+							},
+							gap: 2,
+							mb: 3,
+						}}>
+						<Autocomplete
+							options={productList.color.slice().sort()}
 							size="small"
-							sx={{ maxWidth: 300 }}
-							value={draftForm.search || ""}
-							onChange={(e) =>
-								setDraftForm((prev) => ({ ...prev, search: e.target.value }))
+							value={draftForm.color || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, color: newValue }))
 							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.color")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
+
+						<Autocomplete
+							options={productList.level
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
+							size="small"
+							value={draftForm.level || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, level: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.level")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
+
+						<Autocomplete
+							options={productList.rarity.slice().sort()}
+							size="small"
+							value={draftForm.rarity || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, rarity: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.rarity")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
+
+						<Autocomplete
+							options={productList.card_type.slice().sort()}
+							size="small"
+							value={draftForm.card_type || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, card_type: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.cardType")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
 						/>
 					</Box>
 
+					{/* 数值属性 */}
+					<Typography
+						variant="h6"
+						sx={{ mb: 2, textAlign: "left" }}>
+						{t("pages.cardList.sections.numericAttributes")}
+					</Typography>
 					<Box
 						sx={{
-							display: "flex",
-							flexWrap: "wrap",
+							display: "grid",
+							gridTemplateColumns: {
+								xs: "1fr 1fr",
+								sm: "1fr 1fr 1fr 1fr",
+							},
 							gap: 2,
-							justifyContent: "space-between",
-							width: "100%",
-							mt: 2,
+							mb: 4,
 						}}>
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.color.slice().sort()}
-								size="small"
-								value={draftForm.color || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, color: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="颜色"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
+						<Autocomplete
+							options={productList.power
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
+							size="small"
+							value={draftForm.power || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, power: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.power")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
 
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.level
-									.slice()
-									.sort((a, b) => Number(a) - Number(b))}
-								size="small"
-								value={draftForm.level || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, level: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="等级"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
+						<Autocomplete
+							options={productList.cost
+								.slice()
+								.sort((a, b) => Number(a) - Number(b))}
+							size="small"
+							value={draftForm.cost || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, cost: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.cost")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
 
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.rarity.slice().sort()}
-								size="small"
-								value={draftForm.rarity || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, rarity: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="稀有度"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
+						<Autocomplete
+							options={productList.soul.slice().sort()}
+							size="small"
+							value={draftForm.soul || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, soul: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.soul")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
 
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.card_type.slice().sort()}
-								size="small"
-								value={draftForm.card_type || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, card_type: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="卡片类型"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
+						<Autocomplete
+							options={productList.trigger.slice().sort()}
+							size="small"
+							value={draftForm.trigger || ""}
+							onChange={(_, newValue) =>
+								setDraftForm((prev) => ({ ...prev, trigger: newValue }))
+							}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label={t("pages.cardList.fields.trigger")}
+									variant="outlined"
+									fullWidth
+								/>
+							)}
+						/>
 					</Box>
 
+					{/* 操作按钮 */}
 					<Box
 						sx={{
 							display: "flex",
-							flexWrap: "wrap",
-							gap: 2,
-							justifyContent: "space-between",
-							width: "100%",
-							mt: 2,
-						}}>
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.power
-									.slice()
-									.sort((a, b) => Number(a) - Number(b))}
-								size="small"
-								value={draftForm.power || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, power: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="攻击力"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
-
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.cost
-									.slice()
-									.sort((a, b) => Number(a) - Number(b))}
-								size="small"
-								value={draftForm.cost || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, cost: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="费用"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
-
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.soul.slice().sort()}
-								size="small"
-								value={draftForm.soul || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, soul: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="灵魂"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
-
-						<Box sx={{ flex: 1, minWidth: 120 }}>
-							<Autocomplete
-								options={productList.trigger.slice().sort()}
-								size="small"
-								value={draftForm.trigger || ""}
-								onChange={(_, newValue) =>
-									setDraftForm((prev) => ({ ...prev, trigger: newValue }))
-								}
-								renderInput={(params) => (
-									<TextField
-										{...params}
-										label="触发"
-										variant="outlined"
-										fullWidth
-									/>
-								)}
-							/>
-						</Box>
-					</Box>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "row",
-							width: "100%",
-							textAlign: "center",
-							m: 3,
-							gap: 2,
 							justifyContent: "center",
-						}}
-						gap={2}>
+							gap: 2,
+							pt: 2,
+							borderTop: "1px solid rgba(0, 0, 0, 0.1)",
+						}}>
 						<Button
 							type="submit"
 							variant="contained"
 							size="large"
 							sx={{
-								px: 6,
+								px: 4,
 								py: 1.5,
 								backgroundColor: "#a6ceb6",
+								color: "#1b4332",
 								"&:hover": { backgroundColor: "#95bfa5" },
 							}}>
-							搜索
+							{t("pages.cardList.searchButton")}
 						</Button>
 
 						<Button
@@ -499,14 +528,14 @@ function CardList() {
 							size="large"
 							onClick={handleReset}
 							sx={{
-								px: 6,
+								px: 4,
 								py: 1.5,
 								backgroundColor: "#760f10",
 								"&:hover": {
 									backgroundColor: "#5c0f10",
 								},
 							}}>
-							重置
+							{t("pages.cardList.resetButton")}
 						</Button>
 					</Box>
 				</Box>
@@ -517,11 +546,17 @@ function CardList() {
 					const stats = [
 						card.level && { key: "level", label: `Lv.${card.level}` },
 						card.cost && { key: "cost", label: `Cost ${card.cost}` },
-						card.power && { key: "power", label: `${card.power} Power` },
-						card.soul && { key: "soul", label: `${card.soul} Soul` },
+						card.power && {
+							key: "power",
+							label: `${card.power} ${t("pages.cardList.fields.power")}`,
+						},
+						card.soul && {
+							key: "soul",
+							label: `${card.soul} ${t("pages.cardList.fields.soul")}`,
+						},
 						card.trigger && {
 							key: "trigger",
-							label: `Trigger ${card.trigger}`,
+							label: `${t("pages.cardList.fields.trigger")} ${card.trigger}`,
 						},
 					].filter(Boolean);
 
@@ -680,28 +715,44 @@ function CardList() {
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											<strong>特征：</strong> {card.trait}
+											<strong>
+												{t("pages.cardList.labels.trait")}
+												{colon}
+											</strong>
+											{card.trait}
 										</Typography>
 									)}
 									{showZh && card.zh_trait && (
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											<strong>特征（中文）：</strong> {card.zh_trait}
+											<strong>
+												{t("pages.cardList.labels.traitZh")}
+												{colon}
+											</strong>
+											{card.zh_trait}
 										</Typography>
 									)}
 									{card.flavor && (
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											<strong>风味：</strong> {card.flavor}
+											<strong>
+												{t("pages.cardList.labels.flavor")}
+												{colon}
+											</strong>
+											{card.flavor}
 										</Typography>
 									)}
 									{showZh && card.zh_flavor && (
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											<strong>风味（中文）：</strong> {card.zh_flavor}
+											<strong>
+												{t("pages.cardList.labels.flavorZh")}
+												{colon}
+											</strong>
+											{card.zh_flavor}
 										</Typography>
 									)}
 								</Box>
@@ -717,12 +768,20 @@ function CardList() {
 											<Typography
 												variant="body2"
 												sx={{ mb: showZh && card.zh_effect ? 1 : 0 }}>
-												<strong>効果：</strong> {card.effect}
+												<strong>
+													{t("pages.cardList.labels.effect")}
+													{colon}
+												</strong>
+												{card.effect}
 											</Typography>
 										)}
 										{showZh && card.zh_effect && (
 											<Typography variant="body2">
-												<strong>效果（中文）：</strong> {card.zh_effect}
+												<strong>
+													{t("pages.cardList.labels.effectZh")}
+													{colon}
+												</strong>
+												{card.zh_effect}
 											</Typography>
 										)}
 									</Box>
@@ -774,7 +833,7 @@ function CardList() {
 					zIndex: 1200,
 				}}>
 				<Tooltip
-					title={showZh ? "隐藏中文" : "显示中文"}
+					title={zhToggleTitle}
 					placement="left">
 					<Fab
 						variant="extended"
@@ -793,7 +852,7 @@ function CardList() {
 				</Tooltip>
 
 				<Tooltip
-					title={showJP ? "隐藏日语" : "显示日语"}
+					title={jpToggleTitle}
 					placement="left">
 					<Fab
 						variant="extended"
@@ -814,7 +873,7 @@ function CardList() {
 				{showScrollBottom && (
 					<Fab
 						color="primary"
-						aria-label="scroll to bottom"
+						aria-label={scrollDownLabel}
 						onClick={scrollToBottom}
 						sx={{
 							backgroundColor: "#a6ceb6",
@@ -831,7 +890,7 @@ function CardList() {
 				{showScrollTop && (
 					<Fab
 						color="primary"
-						aria-label="scroll back to top"
+						aria-label={scrollUpLabel}
 						onClick={scrollToTop}
 						sx={{
 							backgroundColor: "#a6ceb6",

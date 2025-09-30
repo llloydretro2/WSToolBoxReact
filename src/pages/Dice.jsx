@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
 	Container,
 	Typography,
@@ -14,10 +15,12 @@ import {
 import CasinoIcon from "@mui/icons-material/Casino";
 import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
 import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import { useLocale } from "../contexts/LocaleContext";
 
 function Dice() {
 	const [diceInputs, setDiceInputs] = useState([{ sides: 6, count: 1 }]);
 	const [results, setResults] = useState([]);
+	const { t } = useLocale();
 
 	useEffect(() => {
 		const savedInputs = localStorage.getItem("diceInputs");
@@ -93,13 +96,37 @@ function Dice() {
 			: "0";
 	const hasResults = results.length > 0 && flattenedResults.length > 0;
 
+	const GREEN_MAIN = "#a6ceb6";
+	const GREEN_DARK = "#95bfa5";
+	const GREEN_TEXT = "#1b4332";
+	const ACCENT_RED = "#760f10";
+	const ACCENT_RED_DARK = "#5c0f10";
+
 	return (
 		<Box
 			sx={{
 				minHeight: "100vh",
-				py: { xs: 4, md: 8 },
+				mt: 4,
 			}}>
 			<Container maxWidth="md">
+				{/* 页面标题和副标题 */}
+				<Box
+					textAlign="center"
+					mb={4}>
+					<Typography
+						variant="h4"
+						fontWeight={700}
+						color="#1b4332"
+						gutterBottom>
+						{t("pages.dice.title")}
+					</Typography>
+					<Typography
+						variant="body1"
+						color="text.secondary">
+						{t("pages.dice.subtitle")}
+					</Typography>
+				</Box>
+
 				<Paper
 					elevation={8}
 					sx={{
@@ -108,33 +135,16 @@ function Dice() {
 						border: "1px solid rgba(166, 206, 182, 0.45)",
 						boxShadow: "0 20px 45px -18px rgba(74, 141, 112, 0.35)",
 					}}>
-					<Box
-						textAlign="center"
-						mb={4}>
-						<CasinoIcon sx={{ fontSize: 48, color: "primary.main", mb: 1 }} />
-						<Typography
-							variant="h4"
-							fontWeight={700}
-							gutterBottom>
-							骰子掷骰器
-						</Typography>
-						<Typography
-							variant="body1"
-							color="text.secondary">
-							快速设置不同数量与面数的骰子，享受随手投掷的随机乐趣。
-						</Typography>
-					</Box>
-
 					<Stack spacing={2}>
 						{diceInputs.map((input, index) => (
 							<Paper
-								key={index}
+								key={`dice-input-${index}`}
 								elevation={3}
 								sx={{
 									p: { xs: 2, md: 3 },
 									borderRadius: 3,
-									border: "1px solid rgba(166, 206, 182, 0.45)",
-									backgroundColor: "rgba(255, 255, 255, 0.9)",
+									border: "1px solid rgba(27, 67, 50, 0.2)",
+									backgroundColor: "rgba(27, 67, 50, 0.1)",
 								}}>
 								<Grid
 									container
@@ -142,23 +152,30 @@ function Dice() {
 									alignItems="center"
 									justifyContent="center"
 									textAlign="center">
-									<Grid
-										size={{ xs: 12, sm: 4, md: 3 }}>
-										<Typography
-											variant="subtitle2"
-											color="text.secondary">
-											第{index + 1}组骰子
-										</Typography>
-										<Typography
-											variant="h6"
-											fontWeight={600}>
-											D{input.sides || "?"}
-										</Typography>
+									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
+										<Stack
+											spacing={0.25}
+											alignItems="center">
+											<Typography
+												variant="subtitle2"
+												color="text.secondary">
+												{t("pages.dice.setLabel", { index: index + 1 })}
+											</Typography>
+											<Typography
+												variant="h6"
+												fontWeight={600}>
+												D{input.sides || "?"}
+											</Typography>
+											<Typography
+												variant="caption"
+												color="text.secondary">
+												{t("pages.dice.facesLabel")}
+											</Typography>
+										</Stack>
 									</Grid>
-									<Grid
-										size={{ xs: 12, sm: 4, md: 3 }}>
+									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
 										<TextField
-											label="数量"
+											label={t("pages.dice.countLabel")}
 											type="number"
 											fullWidth
 											value={input.count}
@@ -168,10 +185,9 @@ function Dice() {
 											inputProps={{ min: 1, style: { textAlign: "center" } }}
 										/>
 									</Grid>
-									<Grid
-										size={{ xs: 12, sm: 4, md: 3 }}>
+									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
 										<TextField
-											label="面数"
+											label={t("pages.dice.facesLabel")}
 											type="number"
 											fullWidth
 											value={input.sides}
@@ -192,130 +208,168 @@ function Dice() {
 						container
 						spacing={2}
 						justifyContent="center">
-						<Grid
-							size={{ xs: 12, sm: 4 }}>
+						<Grid size={{ xs: 12, sm: 4 }}>
 							<Button
 								variant="outlined"
 								color="primary"
 								fullWidth
 								startIcon={<AddCircleOutlineRoundedIcon />}
-								onClick={addDiceInput}>
-								添加骰子
+								onClick={addDiceInput}
+								sx={{
+									borderColor: GREEN_MAIN,
+									color: GREEN_TEXT,
+									"&:hover": {
+										borderColor: GREEN_DARK,
+										backgroundColor: "rgba(149, 191, 165, 0.15)",
+									},
+								}}>
+								{t("pages.dice.addButton")}
 							</Button>
 						</Grid>
-						<Grid
-							size={{ xs: 12, sm: 4 }}>
+						<Grid size={{ xs: 12, sm: 4 }}>
 							<Button
 								variant="outlined"
 								color="secondary"
 								fullWidth
 								startIcon={<RefreshRoundedIcon />}
-								onClick={resetDiceInputs}>
-								重置
+								onClick={resetDiceInputs}
+								sx={{
+									borderColor: ACCENT_RED,
+									color: ACCENT_RED,
+									"&:hover": {
+										borderColor: ACCENT_RED_DARK,
+										color: ACCENT_RED_DARK,
+										backgroundColor: "rgba(118, 15, 16, 0.08)",
+									},
+								}}>
+								{t("pages.dice.resetButton")}
 							</Button>
 						</Grid>
-						<Grid
-							size={{ xs: 12, sm: 4 }}>
-							<Button
-								variant="contained"
-								color="primary"
-								fullWidth
-								startIcon={<CasinoIcon />}
-								onClick={rollDice}>
-								投掷骰子
-							</Button>
+						<Grid size={{ xs: 12, sm: 4 }}>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
+								whileTap={{ scale: 0.95, rotate: -1 }}
+								animate={
+									hasResults
+										? { scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }
+										: {}
+								}
+								transition={{
+									type: "spring",
+									stiffness: 400,
+									damping: 17,
+									animate: { duration: 0.6, ease: "easeInOut" },
+								}}>
+								<Button
+									variant="contained"
+									color="primary"
+									fullWidth
+									startIcon={<CasinoIcon />}
+									onClick={rollDice}
+									sx={{
+										backgroundColor: GREEN_MAIN,
+										color: GREEN_TEXT,
+										"&:hover": {
+											backgroundColor: GREEN_DARK,
+										},
+									}}>
+									{t("pages.dice.rollButton")}
+								</Button>
+							</motion.div>
 						</Grid>
 					</Grid>
 
 					{hasResults && (
-						<Box
-							sx={{
-								mt: { xs: 4, md: 5 },
-								textAlign: "center",
-							}}>
-							<Typography
-								variant="h5"
-								gutterBottom
-								fontWeight={600}>
-								投掷结果
-							</Typography>
-							<Grid
-								container
-								spacing={2}
-								justifyContent="center">
-								{results.map((rolls, idx) => {
-									const maxRoll = rolls.length > 0 ? Math.max(...rolls) : null;
-									return (
-										<Grid
-											size={{ xs: 12, md: 6 }}
-											key={`result-${idx}`}>
-											<Paper
-												elevation={0}
-												sx={{
-													p: { xs: 2, md: 3 },
-													borderRadius: 3,
-													border: "1px solid rgba(166, 206, 182, 0.45)",
-													backgroundColor: "rgba(255, 255, 255, 0.85)",
-												}}>
-												<Typography
-													variant="subtitle1"
-													gutterBottom>
-													第{idx + 1}组
-												</Typography>
-												<Stack
-													direction="row"
-													spacing={1}
-													flexWrap="wrap"
-													justifyContent="center">
-													{rolls.map((value, rollIndex) => (
-														<Chip
-															key={`chip-${idx}-${rollIndex}`}
-															label={value}
-															color={
-																maxRoll !== null &&
-																value === maxRoll &&
-																rolls.length > 1
-																	? "primary"
-																	: "default"
-															}
-															variant={
-																maxRoll !== null &&
-																value === maxRoll &&
-																rolls.length > 1
-																	? "filled"
-																	: "outlined"
-															}
-														/>
-													))}
-												</Stack>
-											</Paper>
-										</Grid>
-									);
-								})}
-							</Grid>
-							<Paper
-								elevation={0}
-								sx={{
-									mt: { xs: 3, md: 4 },
-									p: { xs: 2, md: 3 },
-									borderRadius: 3,
-									backgroundColor: "rgba(166, 206, 182, 0.2)",
-									border: "1px solid rgba(166, 206, 182, 0.6)",
-									maxWidth: 420,
-									mx: "auto",
-								}}>
+						<motion.div
+							initial={{ opacity: 0, y: 30 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.5, ease: "easeOut" }}>
+							<Box sx={{ mt: { xs: 4, md: 5 }, textAlign: "center" }}>
 								<Typography
-									variant="subtitle2"
-									color="text.secondary">
-									汇总
-								</Typography>
-								<Typography
-									variant="h6"
+									variant="h5"
+									gutterBottom
 									fontWeight={600}>
-									总计 {total} · 平均 {average}
+									{t("pages.dice.resultsTitle")}
 								</Typography>
-							</Paper>
-						</Box>
+								<Grid
+									container
+									spacing={2}
+									justifyContent="center">
+									{results.map((rolls, idx) => {
+										const maxRoll =
+											rolls.length > 0 ? Math.max(...rolls) : null;
+										return (
+											<Grid
+												size={{ xs: 12, md: 6 }}
+												key={`result-${idx}`}>
+												<Paper
+													elevation={0}
+													sx={{
+														p: { xs: 2, md: 3 },
+														borderRadius: 3,
+														border: "1px solid rgba(27, 67, 50, 0.2)",
+														backgroundColor: "rgba(27, 67, 50, 0.1)",
+													}}>
+													<Typography
+														variant="subtitle1"
+														gutterBottom>
+														{t("pages.dice.setLabel", { index: idx + 1 })}
+													</Typography>
+													<Stack
+														direction="row"
+														spacing={1}
+														flexWrap="wrap"
+														justifyContent="center">
+														{rolls.map((value, rollIndex) => (
+															<Chip
+																key={`chip-${idx}-${rollIndex}`}
+																label={value}
+																color={
+																	maxRoll !== null &&
+																	value === maxRoll &&
+																	rolls.length > 1
+																		? "primary"
+																		: "default"
+																}
+																variant={
+																	maxRoll !== null &&
+																	value === maxRoll &&
+																	rolls.length > 1
+																		? "filled"
+																		: "outlined"
+																}
+															/>
+														))}
+													</Stack>
+												</Paper>
+											</Grid>
+										);
+									})}
+								</Grid>
+								<Paper
+									elevation={0}
+									sx={{
+										mt: { xs: 3, md: 4 },
+										p: { xs: 2, md: 3 },
+										borderRadius: 3,
+										backgroundColor: "rgba(166, 206, 182, 0.2)",
+										border: "1px solid rgba(166, 206, 182, 0.6)",
+										maxWidth: 420,
+										mx: "auto",
+									}}>
+									<Typography
+										variant="subtitle2"
+										color="text.secondary">
+										{t("pages.dice.summaryTitle")}
+									</Typography>
+									<Typography
+										variant="h6"
+										fontWeight={600}>
+										{t("pages.dice.summaryValue", { total, average })}
+									</Typography>
+								</Paper>
+							</Box>
+						</motion.div>
 					)}
 				</Paper>
 			</Container>

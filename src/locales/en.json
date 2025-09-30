@@ -1,8 +1,183 @@
 {
-  "title": "Weiss Schwarz Toolbox",
+  "title": "WS Toolbox",
   "menu": {
     "home": "Home",
     "tracker": "Tracker",
-    "dice": "Dice"
+    "cardSearch": "Card Search",
+    "simulator": "Pack Simulator",
+    "tools": "More Tools",
+    "pickPacks": "Select Packs",
+    "firstSecond": "First/Second",
+    "dice": "Dice",
+    "chessClock": "Chess Clock",
+    "shuffle": "Shuffle",
+    "record": "Records",
+    "deck": "Deck"
+  },
+  "common": {
+    "language": {
+      "zh": "Chinese",
+      "en": "English"
+    }
+  },
+  "navbar": {
+    "avatarTooltip": "Open profile menu",
+    "clickAvatarHint": "Click avatar for menu",
+    "login": "Log in",
+    "logout": "Sign out",
+    "loginPrompt": "Please log in before editing decks"
+  },
+  "pages": {
+    "home": {
+      "title": "WS Toolbox",
+      "subtitle": "Provides various WS-related tools and link collections, under development",
+      "updateTitle": "Updates",
+      "todoTitle": "To-Do List",
+      "contactTitle": "Contact Me"
+    },
+    "firstSecond": {
+      "title": "First/Second",
+      "subtitle": "Click to determine first attack or second attack",
+      "button": "Decide",
+      "first": "First",
+      "second": "Second"
+    },
+    "pickPacks": {
+      "title": "Pick Packs",
+      "subtitle": "Please enter the total number of packs and the number of packs to open",
+      "openPacks": "Packs to Open",
+      "totalPacks": "Total Packs",
+      "openButton": "Open Packs",
+      "resetButton": "Reset",
+      "expandButton": "Expand",
+      "collapseButton": "Collapse",
+      "errorMessage": "Please enter valid pack numbers"
+    },
+    "simulator": {
+      "title": "Pack Simulator",
+      "subtitle": "For high rarity cards, please enter the guaranteed rate per box, the system will automatically calculate probabilities.",
+      "subtitleNote": "For non-high rarity cards, please don't set guaranteed rates.",
+      "selectProduct": "Select Product",
+      "cardsPerPack": "Cards per Pack",
+      "packsPerBox": "Packs per Box",
+      "boxesPerCase": "Boxes per Case",
+      "simulationPackCount": "Simulation Pack Count",
+      "guaranteedPack": "Guaranteed (Pack)",
+      "guaranteedBox": "Guaranteed (Box)",
+      "guaranteedCase": "Guaranteed (Case)",
+      "resetButton": "Reset",
+      "startSimulation": "Start Simulation",
+      "clearResults": "Clear Results",
+      "rarityDisplay": "Rarity Display (Only showing simulated cards)",
+      "detailedResults": "Detailed Results",
+      "packNumber": "Pack {{number}}",
+      "cardCount": "×{{count}}",
+      "cardDetails": {
+        "cardNumber": "Card No:",
+        "productName": "Product:",
+        "series": "Series:",
+        "rarity": "Rarity:",
+        "cardType": "Card Type:",
+        "color": "Color:",
+        "level": "Level:",
+        "cost": "Cost:",
+        "power": "Power:",
+        "soul": "Soul:",
+        "trigger": "Trigger:",
+        "feature": "Feature:",
+        "effect": "Effect:",
+        "flavor": "Flavor:"
+      }
+    },
+    "cardList": {
+      "title": "Card Search",
+      "subtitle": "Search cards by keywords and refined filters",
+      "searchButton": "Search",
+      "resetButton": "Reset",
+      "sections": {
+        "primarySearch": "Primary Search Criteria",
+        "cardAttributes": "Card Attributes",
+        "numericAttributes": "Numeric Attributes"
+      },
+      "fields": {
+        "seriesNumber": "Series Number",
+        "series": "Series Name",
+        "product": "Product Name",
+        "side": "Side",
+        "keyword": "Keyword",
+        "color": "Color",
+        "level": "Level",
+        "rarity": "Rarity",
+        "cardType": "Card Type",
+        "power": "Power",
+        "cost": "Cost",
+        "soul": "Soul",
+        "trigger": "Trigger"
+      },
+      "toggle": {
+        "showZh": "Show Chinese",
+        "hideZh": "Hide Chinese",
+        "showJp": "Show Japanese",
+        "hideJp": "Hide Japanese"
+      },
+      "labels": {
+        "trait": "Trait",
+        "traitZh": "Trait (Chinese)",
+        "flavor": "Flavor",
+        "flavorZh": "Flavor (Chinese)",
+        "effect": "Effect",
+        "effectZh": "Effect (Chinese)"
+      },
+      "scroll": {
+        "down": "Scroll to bottom",
+        "up": "Back to top"
+      }
+    },
+    "dice": {
+      "title": "Dice Roller",
+      "subtitle": "Configure multiple dice with custom sides and roll them instantly.",
+      "addButton": "Add Dice",
+      "resetButton": "Reset",
+      "rollButton": "Roll",
+      "setLabel": "Set {{index}}",
+      "countLabel": "Count",
+      "facesLabel": "Sides",
+      "resultsTitle": "Roll Results",
+      "summaryTitle": "Summary",
+      "summaryValue": "Total {{total}} · Average {{average}}"
+    },
+    "chessClock": {
+      "title": "Chess Clock",
+      "subtitle": "Tap the active player panel to pass the turn and keep thinking time balanced.",
+      "statusRunning": "{{player}} is counting down",
+      "statusPaused": "Timer paused",
+      "playerLabel": "Player {{index}}",
+      "playerHint": "Tap to end your turn and pass the clock.",
+      "activeChip": "Active",
+      "pauseButton": "Pause",
+      "resumeButton": "Resume",
+      "switchButton": "Switch Turn",
+      "resetButton": "Reset",
+      "totalTime": "Total time {{time}}",
+      "dialogTitle": "Reset timers?",
+      "dialogSubtitle": "Are you sure you want to reset the clock?",
+      "dialogBody": "This will clear every recorded second for both players.",
+      "dialogCancel": "Cancel",
+      "dialogConfirm": "Reset Now"
+    },
+    "shuffle": {
+      "title": "Random Shuffle Helper",
+      "subtitle": "Generates an uneven 6–10 card deck totaling 50 points to mimic shuffled randomness.",
+      "summary": "Total {{deckLength}} cards · Average {{average}}",
+      "summaryEmpty": "No deck yet",
+      "generateButton": "Generate Deck",
+      "clearButton": "Clear",
+      "copyButton": "Copy",
+      "copyTooltip": "Copy result",
+      "copyTooltipSuccess": "Copied",
+      "copyTooltipError": "Copy failed",
+      "generationChip": "Roll #{{count}} · Total 50",
+      "cardCaption": "Count"
+    }
   }
 }

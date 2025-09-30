@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	Container,
 	Typography,
@@ -17,6 +18,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
 
 function Simulator() {
+	const { t } = useLocale();
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [cards, setCards] = useState([]);
 	const [rarityMap, setRarityMap] = useState({});
@@ -179,21 +181,24 @@ function Simulator() {
 	return (
 		<Container
 			maxWidth="sm"
-			sx={{ textAlign: "center", pt: 8 }}>
+			sx={{ textAlign: "center", mt: 4 }}>
 			<Typography
-				variant="h2"
+				variant="h4"
+				fontWeight={700}
+				color="#1b4332"
 				gutterBottom>
-				模拟开包
+				{t("pages.simulator.title")}
 			</Typography>
 			<Typography
 				variant="body1"
-				color="text.secondary">
-				如果是高稀有的卡请填写保底多少盒出现一次，系统自动计算概率。
+				color="text.secondary"
+				align="center">
+				{t("pages.simulator.subtitle")}
 			</Typography>
 			<Typography
 				variant="h6"
 				color="text.secondary">
-				如果不是高稀有度卡请不要设定保底输入。
+				{t("pages.simulator.subtitleNote")}
 			</Typography>
 			<Autocomplete
 				options={productList.product_name.slice().sort()}
@@ -228,7 +233,7 @@ function Simulator() {
 					<TextField
 						{...params}
 						fullWidth
-						label="选择产品"
+						label={t("pages.simulator.selectProduct")}
 						variant="outlined"
 					/>
 				)}
@@ -242,10 +247,13 @@ function Simulator() {
 				display="grid"
 				gridTemplateColumns={{ xs: "1fr", sm: "repeat(4, 1fr)" }}
 				gap={2}
-				sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}>
+				sx={{
+					backgroundColor: "rgba(27, 67, 50, 0.1)",
+					border: "1px solid rgba(27, 67, 50, 0.2)",
+				}}>
 				<TextField
 					fullWidth
-					label="一包卡片数"
+					label={t("pages.simulator.cardsPerPack")}
 					variant="outlined"
 					type="number"
 					value={cardsPerPack}
@@ -257,7 +265,7 @@ function Simulator() {
 				/>
 				<TextField
 					fullWidth
-					label="一盒总包数"
+					label={t("pages.simulator.packsPerBox")}
 					variant="outlined"
 					type="number"
 					value={packsPerBox}
@@ -269,7 +277,7 @@ function Simulator() {
 				/>
 				<TextField
 					fullWidth
-					label="一箱总盒数"
+					label={t("pages.simulator.boxesPerCase")}
 					variant="outlined"
 					type="number"
 					value={boxesPerCase}
@@ -281,7 +289,7 @@ function Simulator() {
 				/>
 				<TextField
 					fullWidth
-					label="模拟开包数"
+					label={t("pages.simulator.simulationPackCount")}
 					variant="outlined"
 					type="number"
 					value={simulationPackCount}
@@ -298,7 +306,10 @@ function Simulator() {
 					m={2}
 					p={2}
 					borderRadius={4}
-					sx={{ bgcolor: "rgba(166, 206, 182, 0.6)" }}>
+					sx={{
+						backgroundColor: "rgba(27, 67, 50, 0.1)",
+						border: "1px solid rgba(27, 67, 50, 0.2)",
+					}}>
 					<Typography
 						variant="h6"
 						gutterBottom>
@@ -310,7 +321,7 @@ function Simulator() {
 						gap={2}>
 						<TextField
 							fullWidth
-							label={`保底（包）`}
+							label={t("pages.simulator.guaranteedPack")}
 							variant="outlined"
 							type="number"
 							value={rarityRates[rarity]?.pack ?? ""}
@@ -329,7 +340,7 @@ function Simulator() {
 						/>
 						<TextField
 							fullWidth
-							label={`保底（盒）`}
+							label={t("pages.simulator.guaranteedBox")}
 							variant="outlined"
 							type="number"
 							value={rarityRates[rarity]?.box ?? ""}
@@ -348,7 +359,7 @@ function Simulator() {
 						/>
 						<TextField
 							fullWidth
-							label={`保底（箱）`}
+							label={t("pages.simulator.guaranteedCase")}
 							variant="outlined"
 							type="number"
 							value={rarityRates[rarity]?.case ?? ""}
@@ -380,7 +391,7 @@ function Simulator() {
 									[rarity]: { pack: "", box: "", case: "" },
 								}))
 							}>
-							重置
+							{t("pages.simulator.resetButton")}
 						</Button>
 					</Box>
 				</Box>
@@ -396,7 +407,7 @@ function Simulator() {
 					backgroundColor: "#a6ceb6",
 					"&:hover": { backgroundColor: "#95bfa5" },
 				}}>
-				开始模拟
+				{t("pages.simulator.startSimulation")}
 			</Button>
 
 			<Button
@@ -411,7 +422,7 @@ function Simulator() {
 						backgroundColor: "#5c0f10",
 					},
 				}}>
-				清除结果
+				{t("pages.simulator.clearResults")}
 			</Button>
 
 			{simulatedResult.length > 0 && (
@@ -419,7 +430,7 @@ function Simulator() {
 					<Typography
 						variant="h5"
 						gutterBottom>
-						稀有度分类展示（仅展示模拟抽到的卡）
+						{t("pages.simulator.rarityDisplay")}
 					</Typography>
 					{sortedRarities
 						.map(([rarity]) => rarity)
@@ -484,7 +495,7 @@ function Simulator() {
 												<Typography
 													variant="caption"
 													display="block">
-													×{count}
+													{t("pages.simulator.cardCount", { count })}
 												</Typography>
 											</Box>
 										))}
@@ -499,13 +510,15 @@ function Simulator() {
 					<Typography
 						variant="h5"
 						gutterBottom>
-						具体模拟结果
+						{t("pages.simulator.detailedResults")}
 					</Typography>
 					{simulatedResult.map((pack, index) => (
 						<Box
 							key={index}
 							sx={{ mb: 3 }}>
-							<Typography variant="subtitle1">第 {index + 1} 包</Typography>
+							<Typography variant="subtitle1">
+								{t("pages.simulator.packNumber", { number: index + 1 })}
+							</Typography>
 							<Box
 								sx={{
 									display: "flex",
@@ -561,33 +574,47 @@ function Simulator() {
 						sx={{ width: "100%", height: "auto", mb: 2 }}
 					/>
 					<DialogContentText>
-						<strong>编号:</strong> {selectedCard?.cardno}
+						<strong>{t("pages.simulator.cardDetails.cardNumber")}</strong>{" "}
+						{selectedCard?.cardno}
 						<br />
-						<strong>产品名:</strong> {selectedCard?.product_name}
+						<strong>{t("pages.simulator.cardDetails.productName")}</strong>{" "}
+						{selectedCard?.product_name}
 						<br />
-						<strong>系列:</strong> {selectedCard?.series}
+						<strong>{t("pages.simulator.cardDetails.series")}</strong>{" "}
+						{selectedCard?.series}
 						<br />
-						<strong>稀有度:</strong> {selectedCard?.rarity}
+						<strong>{t("pages.simulator.cardDetails.rarity")}</strong>{" "}
+						{selectedCard?.rarity}
 						<br />
-						<strong>卡片类型:</strong> {selectedCard?.card_type}
+						<strong>{t("pages.simulator.cardDetails.cardType")}</strong>{" "}
+						{selectedCard?.card_type}
 						<br />
-						<strong>颜色:</strong> {selectedCard?.color}
+						<strong>{t("pages.simulator.cardDetails.color")}</strong>{" "}
+						{selectedCard?.color}
 						<br />
-						<strong>等级:</strong> {selectedCard?.level}
+						<strong>{t("pages.simulator.cardDetails.level")}</strong>{" "}
+						{selectedCard?.level}
 						<br />
-						<strong>费用:</strong> {selectedCard?.cost}
+						<strong>{t("pages.simulator.cardDetails.cost")}</strong>{" "}
+						{selectedCard?.cost}
 						<br />
-						<strong>攻击力:</strong> {selectedCard?.power}
+						<strong>{t("pages.simulator.cardDetails.power")}</strong>{" "}
+						{selectedCard?.power}
 						<br />
-						<strong>灵魂:</strong> {selectedCard?.soul}
+						<strong>{t("pages.simulator.cardDetails.soul")}</strong>{" "}
+						{selectedCard?.soul}
 						<br />
-						<strong>触发:</strong> {selectedCard?.trigger}
+						<strong>{t("pages.simulator.cardDetails.trigger")}</strong>{" "}
+						{selectedCard?.trigger}
 						<br />
-						<strong>特征:</strong> {selectedCard?.feature}
+						<strong>{t("pages.simulator.cardDetails.feature")}</strong>{" "}
+						{selectedCard?.feature}
 						<br />
-						<strong>效果:</strong> {selectedCard?.effect}
+						<strong>{t("pages.simulator.cardDetails.effect")}</strong>{" "}
+						{selectedCard?.effect}
 						<br />
-						<strong>风味文本:</strong> {selectedCard?.flavor}
+						<strong>{t("pages.simulator.cardDetails.flavor")}</strong>{" "}
+						{selectedCard?.flavor}
 					</DialogContentText>
 				</DialogContent>
 			</Dialog>

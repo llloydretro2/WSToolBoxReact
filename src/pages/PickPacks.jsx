@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import seedrandom from "seedrandom";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	Container,
 	Box,
@@ -22,6 +23,7 @@ import yamabukissp from "../assets/yamabukissp.png";
 import wscollection from "../assets/wscollection.png";
 
 function PickPacks() {
+	const { t } = useLocale();
 	const [totalPacks, setTotalPacks] = useState("");
 	const [openPacks, setOpenPacks] = useState("");
 	const [seed, setSeed] = useState("");
@@ -93,125 +95,301 @@ function PickPacks() {
 	};
 
 	return (
-		<Container maxWidth="md">
-			<Box display="flex" flexDirection="column" alignItems="center" my={4}>
-				<Typography variant="h4" gutterBottom>
-					随机开包
+		<Container
+			maxWidth="lg"
+			sx={{ mt: 4 }}>
+			<Box
+				display="flex"
+				flexDirection="column"
+				alignItems="center"
+				mb={4}>
+				<Typography
+					variant="h4"
+					fontWeight={700}
+					color="#1b4332"
+					gutterBottom>
+					{t("pages.pickPacks.title")}
 				</Typography>
-				<Typography variant="body1" color="text.secondary" align="center">
-					请输入总包数和开启的包数
+				<Typography
+					variant="body1"
+					color="text.secondary"
+					align="center">
+					{t("pages.pickPacks.subtitle")}
 				</Typography>
 			</Box>
-			<Grid container spacing={2} justifyContent="center" mb={4}>
-				<Grid item xs={12} sm={6} md={4}>
-					<TextField
-						type="number"
-						label="开启包数"
-						variant="outlined"
-						fullWidth
-						value={openPacks}
-						onChange={(e) => setOpenPacks(e.target.value)}
-					/>
-				</Grid>
-				<Grid item xs={12} sm={6} md={4}>
-					<TextField
-						type="number"
-						label="总包数"
-						variant="outlined"
-						fullWidth
-						value={totalPacks}
-						onChange={(e) => setTotalPacks(e.target.value)}
-					/>
-				</Grid>
-			</Grid>
-			<Box display="flex" justifyContent="center" mb={4} gap={2}>
-				<Button
-					variant="contained"
-					size="large"
-					onClick={randomGeneratePacks}
-					sx={{
-						backgroundColor: "rgba(166, 206, 182, 0.7)",
-						"&:hover": { backgroundColor: "#95bfa5" },
-					}}
-				>
-					开包
-				</Button>
 
-				<Button
-					variant="contained"
-					size="large"
-					onClick={clearPage}
-					sx={{
-						backgroundColor: "rgba(118, 15, 16, 0.7)",
-						"&:hover": {
-							backgroundColor: "#5c0f10",
-						},
-					}}
-				>
-					重置
-				</Button>
+			{/* 输入表单 */}
+			<Box
+				sx={{
+					mb: 4,
+					p: 3,
+					backgroundColor: "rgba(27, 67, 50, 0.1)",
+					borderRadius: 3,
+					boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+					border: "1px solid rgba(27, 67, 50, 0.2)",
+				}}>
+				<Grid
+					container
+					spacing={3}
+					justifyContent="center"
+					alignItems="center">
+					<Grid
+						item
+						xs={12}
+						sm={6}
+						md={4}>
+						<TextField
+							type="number"
+							label={t("pages.pickPacks.openPacks")}
+							variant="outlined"
+							fullWidth
+							value={openPacks}
+							onChange={(e) => setOpenPacks(e.target.value)}
+							sx={{
+								"& .MuiOutlinedInput-root": {
+									"&:hover fieldset": {
+										borderColor: "#a6ceb6",
+									},
+									"&.Mui-focused fieldset": {
+										borderColor: "#a6ceb6",
+									},
+								},
+							}}
+						/>
+					</Grid>
+					<Grid
+						item
+						xs={12}
+						sm={6}
+						md={4}>
+						<TextField
+							type="number"
+							label={t("pages.pickPacks.totalPacks")}
+							variant="outlined"
+							fullWidth
+							value={totalPacks}
+							onChange={(e) => setTotalPacks(e.target.value)}
+							sx={{
+								"& .MuiOutlinedInput-root": {
+									"&:hover fieldset": {
+										borderColor: "#a6ceb6",
+									},
+									"&.Mui-focused fieldset": {
+										borderColor: "#a6ceb6",
+									},
+								},
+							}}
+						/>
+					</Grid>
+					<Grid
+						item
+						xs={12}
+						md={4}>
+						<Box
+							display="flex"
+							justifyContent="center"
+							gap={2}
+							sx={{ height: "100%" }}>
+							<Button
+								variant="contained"
+								size="large"
+								onClick={randomGeneratePacks}
+								sx={{
+									backgroundColor: "#1b4332",
+									color: "white",
+									"&:hover": { backgroundColor: "#2d5a42" },
+									px: 3,
+								}}>
+								{t("pages.pickPacks.openButton")}
+							</Button>
+
+							<Button
+								variant="contained"
+								size="large"
+								onClick={clearPage}
+								sx={{
+									backgroundColor: "#760f10",
+									"&:hover": {
+										backgroundColor: "#5c0f10",
+									},
+									px: 3,
+								}}>
+								{t("pages.pickPacks.resetButton")}
+							</Button>
+						</Box>
+					</Grid>
+				</Grid>
 			</Box>
+
+			{/* 包图标展示区 */}
 			{totalPacks > 0 && (
-				<Box display="flex" flexDirection="column" alignItems="center" mb={4}>
-					<Grid container spacing={2} justifyContent="center" columns={20}>
+				<Box
+					sx={{
+						mb: 4,
+						p: 3,
+						backgroundColor: "rgba(255, 255, 255, 0.95)",
+						borderRadius: 3,
+						boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+					}}>
+					<Typography
+						variant="h6"
+						sx={{ mb: 3, textAlign: "center", color: "#1b4332" }}>
+						包选择结果 (
+						{results.length > 0 ? `已选择 ${results.length} 包` : "等待选择"})
+					</Typography>
+					<Box
+						sx={{
+							display: "grid",
+							gridTemplateColumns: {
+								xs: "repeat(auto-fill, minmax(60px, 1fr))",
+								sm: "repeat(auto-fill, minmax(80px, 1fr))",
+								md: "repeat(auto-fill, minmax(100px, 1fr))",
+							},
+							gap: 2,
+							justifyItems: "center",
+						}}>
 						{Array.from({ length: parseInt(totalPacks) }, (_, i) => i + 1).map(
-							(pack) => (
-								<Grid item xs={3} key={pack} size={4}>
+							(pack) => {
+								const isSelected = results.includes(pack);
+								const isUnselected = results.length > 0 && !isSelected;
+
+								return (
 									<Box
-										display="flex"
-										flexDirection="column"
-										alignItems="center"
-									>
-										<img
-											src={packImage}
-											alt={`Pack ${pack}`}
-											style={{
-												width: "100%",
-												maxWidth: "100%",
-												height: "auto",
-												objectFit: "contain",
-												opacity:
-													results.length > 0 && !results.includes(pack)
-														? 0.3
-														: 1,
-											}}
-										/>
+										key={pack}
+										sx={{
+											position: "relative",
+											display: "flex",
+											flexDirection: "column",
+											alignItems: "center",
+											transition: "all 0.3s ease",
+											transform: isSelected ? "scale(1.1)" : "scale(1)",
+											opacity: isUnselected ? 0.3 : 1,
+											"&:hover": {
+												transform: isSelected ? "scale(1.15)" : "scale(1.05)",
+											},
+										}}>
+										{/* 包图片 */}
 										<Box
 											sx={{
-												backgroundColor: "#a6ceb6",
-												color: "white",
-												borderRadius: "50%",
-												width: 24,
-												height: 24,
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "center",
-												mt: 1,
-												opacity:
-													results.length > 0 && !results.includes(pack) ? 0 : 1,
-											}}
-										>
-											<Typography variant="caption">{pack}</Typography>
+												position: "relative",
+												width: { xs: 50, sm: 70, md: 90 },
+												height: { xs: 50, sm: 70, md: 90 },
+												borderRadius: 2,
+												overflow: "hidden",
+												boxShadow: isSelected
+													? "0 8px 25px rgba(27, 67, 50, 0.4)"
+													: "0 2px 10px rgba(0, 0, 0, 0.1)",
+												border: isSelected
+													? "3px solid #1b4332"
+													: "2px solid transparent",
+											}}>
+											<img
+												src={packImage}
+												alt={`Pack ${pack}`}
+												style={{
+													width: "100%",
+													height: "100%",
+													objectFit: "cover",
+												}}
+											/>
+											{isSelected && (
+												<Box
+													sx={{
+														position: "absolute",
+														top: 0,
+														left: 0,
+														width: "100%",
+														height: "100%",
+														backgroundColor: "rgba(27, 67, 50, 0.15)",
+														display: "flex",
+														alignItems: "center",
+														justifyContent: "center",
+													}}>
+													<Box
+														sx={{
+															backgroundColor: "#1b4332",
+															color: "white",
+															borderRadius: "50%",
+															width: 24,
+															height: 24,
+															display: "flex",
+															alignItems: "center",
+															justifyContent: "center",
+															fontSize: "0.8rem",
+															fontWeight: "bold",
+														}}>
+														✓
+													</Box>
+												</Box>
+											)}
 										</Box>
+
+										{/* 包编号 */}
+										<Typography
+											variant="caption"
+											sx={{
+												mt: 1,
+												px: 1,
+												py: 0.5,
+												backgroundColor: isSelected ? "#1b4332" : "#f5f5f5",
+												color: isSelected ? "white" : "#666",
+												borderRadius: 1,
+												fontWeight: isSelected ? "bold" : "normal",
+												fontSize: { xs: "0.7rem", sm: "0.75rem" },
+											}}>
+											{pack}
+										</Typography>
 									</Box>
-								</Grid>
-							)
+								);
+							}
 						)}
-					</Grid>
+					</Box>
+
+					{/* 结果统计 */}
+					{results.length > 0 && (
+						<Box
+							sx={{
+								mt: 3,
+								p: 2,
+								backgroundColor: "rgba(27, 67, 50, 0.08)",
+								borderRadius: 2,
+								textAlign: "center",
+							}}>
+							<Typography
+								variant="body1"
+								sx={{ color: "#1b4332" }}>
+								<strong>选中的包：</strong>
+								{results.map((pack, index) => (
+									<span key={pack}>
+										{pack}
+										{index < results.length - 1 ? ", " : ""}
+									</span>
+								))}
+							</Typography>
+						</Box>
+					)}
 				</Box>
 			)}
 
 			{/* 小记 */}
-			<Box display="flex" justifyContent="center" mb={4}>
+			<Box
+				sx={{
+					display: "flex",
+					justifyContent: "center",
+					mb: 4,
+				}}>
 				<Box
 					sx={{
+						maxWidth: { xs: "100%", sm: "90%", md: "800px" },
+						width: "100%",
+						p: 4,
+						backgroundColor: "rgba(255, 255, 255, 0.95)",
+						borderRadius: 3,
+						boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
 						position: "relative",
-						borderRadius: 4,
-						padding: 2,
-						textAlign: "center",
 						overflow: "hidden",
-					}}
-				>
+					}}>
+					{/* 背景装饰 */}
 					<Box
 						sx={{
 							position: "absolute",
@@ -219,95 +397,196 @@ function PickPacks() {
 							left: 0,
 							width: "100%",
 							height: "100%",
-							backgroundColor: "#a6ceb6",
-							opacity: 0.6,
+							background:
+								"linear-gradient(135deg, rgba(166,206,182,0.1) 0%, rgba(255,255,255,0.1) 100%)",
 							zIndex: 0,
 						}}
 					/>
+
 					<Box sx={{ position: "relative", zIndex: 1 }}>
+						{/* 标题对话 */}
 						<Box
-							display="flex"
-							flexDirection="row"
-							alignItems="center"
-							alignContent="center"
-							justifyContent="center"
-						>
-							<img src={temari} alt="Temari" style={{ height: "1.5rem" }} />
-							<Typography variant="h5">
-								这个随机开包器有什么特别的吗？
-							</Typography>
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								gap: 3,
+								mb: 4,
+							}}>
+							<Box
+								sx={{
+									display: "flex",
+									alignItems: "center",
+									gap: 2,
+									p: 2,
+									backgroundColor: "rgba(166, 206, 182, 0.1)",
+									borderRadius: 2,
+									borderLeft: "4px solid #a6ceb6",
+								}}>
+								<img
+									src={temari}
+									alt="Temari"
+									style={{ height: "2rem", flexShrink: 0 }}
+								/>
+								<Typography
+									variant="h6"
+									sx={{ color: "#1b4332" }}>
+									这个随机开包器有什么特别的吗？
+								</Typography>
+							</Box>
+
+							<Box
+								sx={{
+									display: "flex",
+									alignItems: "center",
+									gap: 2,
+									p: 2,
+									backgroundColor: "rgba(118, 15, 16, 0.1)",
+									borderRadius: 2,
+									borderLeft: "4px solid #760f10",
+								}}>
+								<img
+									src={lilja}
+									alt="Lilja"
+									style={{ height: "3rem", flexShrink: 0 }}
+								/>
+								<Typography
+									variant="h5"
+									sx={{ color: "#760f10", fontWeight: "bold" }}>
+									完全没有！
+								</Typography>
+							</Box>
 						</Box>
-						<Box
-							display="flex"
-							flexDirection="row"
-							alignItems="center"
-							alignContent="center"
-							justifyContent="center"
-						>
-							<img src={lilja} alt="Lilja" style={{ height: "3rem" }} />
-							<Typography variant="h3">完全没有！</Typography>
-						</Box>
-						<Typography variant="body1" mb={4}>
+
+						{/* 说明文本 */}
+						<Typography
+							variant="body1"
+							sx={{
+								mb: 4,
+								p: 3,
+								backgroundColor: "rgba(0, 0, 0, 0.02)",
+								borderRadius: 2,
+								lineHeight: 1.8,
+								textAlign: "center",
+							}}>
 							就是普通的随机数生成器只不过我设定了一个和我有关的会随着时间会变化的种子
 						</Typography>
+
+						{/* 第二轮对话 */}
 						<Box
-							display="flex"
-							flexDirection="row"
-							alignItems="center"
-							alignContent="center"
-							justifyContent="center"
-						>
-							<img src={temari} alt="Temari" style={{ height: "1.5rem" }} />
-							<Typography variant="h5">
-								那我为什么应该用这个随机开包器？
-							</Typography>
-						</Box>
-						<Box
-							display="flex"
-							flexDirection="row"
-							alignItems="center"
-							alignContent="center"
-							justifyContent="center"
-						>
-							<img src={lilja} alt="Lilja" style={{ height: "3rem" }} />
-							<Typography variant="body1">
-								这个话自己来说可能有点奇怪，但是主播的开包运气是中美好友一致认证的逆天，以下为截止2025年8月的战绩，除了个别为和好友交换和花钱收的之外（SIR确实开不出来），开包平均3盒一个SP/SSP
-							</Typography>
-						</Box>
-						<Box
-							display="flex"
-							flexDirection="row"
-							justifyContent="center"
-							gap={2}
-							sx={{ flexWrap: "wrap" }}
-						>
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								gap: 3,
+								mb: 4,
+							}}>
 							<Box
-								component="img"
-								src={wscollection}
-								alt="WS Collection"
 								sx={{
-									maxWidth: 500,
-									height: "auto",
-									width: "100%",
-									objectFit: "contain",
-								}}
-							/>
+									display: "flex",
+									alignItems: "center",
+									gap: 2,
+									p: 2,
+									backgroundColor: "rgba(166, 206, 182, 0.1)",
+									borderRadius: 2,
+									borderLeft: "4px solid #a6ceb6",
+								}}>
+								<img
+									src={temari}
+									alt="Temari"
+									style={{ height: "2rem", flexShrink: 0 }}
+								/>
+								<Typography
+									variant="h6"
+									sx={{ color: "#1b4332" }}>
+									那我为什么应该用这个随机开包器？
+								</Typography>
+							</Box>
+
+							<Box
+								sx={{
+									p: 3,
+									backgroundColor: "rgba(118, 15, 16, 0.05)",
+									borderRadius: 2,
+									border: "1px solid rgba(118, 15, 16, 0.1)",
+								}}>
+								<Box
+									sx={{
+										display: "flex",
+										alignItems: "flex-start",
+										gap: 2,
+										mb: 3,
+									}}>
+									<img
+										src={lilja}
+										alt="Lilja"
+										style={{
+											height: "3rem",
+											flexShrink: 0,
+											marginTop: "0.5rem",
+										}}
+									/>
+									<Typography
+										variant="body1"
+										sx={{ lineHeight: 1.6 }}>
+										这个话自己来说可能有点奇怪，但是主播的开包运气是中美好友一致认证的逆天，以下为截止2025年8月的战绩，除了个别为和好友交换和花钱收的之外（SIR确实开不出来），开包平均3盒一个SP/SSP
+									</Typography>
+								</Box>
+
+								{/* 收藏图片 */}
+								<Box
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										mb: 3,
+									}}>
+									<Box
+										component="img"
+										src={wscollection}
+										alt="WS Collection"
+										sx={{
+											maxWidth: "100%",
+											height: "auto",
+											borderRadius: 2,
+											boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+										}}
+									/>
+								</Box>
+
+								<Typography
+									variant="body2"
+									sx={{
+										textAlign: "center",
+										color: "text.secondary",
+										fontStyle: "italic",
+									}}>
+									点击展开即可查看主播的传奇开包历程
+								</Typography>
+							</Box>
 						</Box>
-						<Typography variant="body1" mt={2}>
-							点击展开即可查看主播的传奇开包历程
-						</Typography>
+
+						{/* 展开详情内容 */}
 						{showDetails && (
-							<>
-								<Typography variant="h5" mt={2}>
+							<Box
+								sx={{
+									mt: 4,
+									p: 3,
+									backgroundColor: "rgba(0, 0, 0, 0.02)",
+									borderRadius: 2,
+									border: "1px solid rgba(0, 0, 0, 0.1)",
+								}}>
+								<Typography
+									variant="body1"
+									sx={{ mb: 3, lineHeight: 1.6 }}>
 									故事从2023年5月3日开始，主播在朋友的推荐下入坑了WS，从ebay的一个随机商家买下了我人生中的第一个D4DJ预组并开出了第一个SP从此开始了罪恶的开包生涯
 								</Typography>
+
 								<Box
-									display="flex"
-									flexDirection="row"
-									justifyContent="center"
-									gap={2}
-									sx={{ flexWrap: "wrap" }}
-								>
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										gap: 2,
+										mb: 4,
+										flexWrap: "wrap",
+									}}>
 									<Box
 										component="img"
 										src={d4dj}
@@ -316,6 +595,7 @@ function PickPacks() {
 											maxWidth: 250,
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
 									<Box
@@ -326,149 +606,206 @@ function PickPacks() {
 											maxWidth: 250,
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
 								</Box>
-								<Typography variant="h5" mt={2}>
+
+								<Typography
+									variant="body1"
+									sx={{ mb: 3, lineHeight: 1.6 }}>
 									在这之后主播对少女歌剧很有兴趣，但是当时英文剧场版未出，我非常不理智的在tcgplayer上220美元冲动消费买下了少女歌剧TV版的一个残盒
 								</Typography>
+
 								<Box
-									display="flex"
-									flexDirection="row"
-									justifyContent="center"
-									gap={2}
-									sx={{ flexWrap: "wrap" }}
-								>
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										mb: 3,
+									}}>
 									<Box
 										component="img"
 										src={revuebox}
-										alt="First Pack"
+										alt="Revue Box"
 										sx={{
 											maxWidth: 500,
 											width: "100%",
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
 								</Box>
-								<Typography variant="h5" mt={2}>
+
+								<Typography
+									variant="body1"
+									sx={{ mb: 3, lineHeight: 1.6 }}>
 									结果开出了价值350美元的大場ななSP
 								</Typography>
+
 								<Box
-									display="flex"
-									flexDirection="row"
-									justifyContent="center"
-									gap={2}
-									sx={{ flexWrap: "wrap" }}
-								>
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										gap: 2,
+										mb: 4,
+										flexWrap: "wrap",
+									}}>
 									<Box
 										component="img"
 										src={daibananasp}
-										alt="First SP"
+										alt="Daibanana SP"
 										sx={{
 											maxWidth: 250,
-											width: "50%",
+											width: "48%",
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
-									<iframe
-										title="daibanana-video"
-										src="https://player.bilibili.com/player.html?bvid=BV1yg4y1V72g&page=1&autoplay=0"
-										border="0"
-										framespacing="0"
-										allowFullScreen
-										style={{
-											width: "50%",
-											height: "auto",
-										}}
-									></iframe>
+									<Box
+										sx={{
+											width: "48%",
+											minHeight: 200,
+											borderRadius: 2,
+											overflow: "hidden",
+										}}>
+										<iframe
+											title="daibanana-video"
+											src="https://player.bilibili.com/player.html?bvid=BV1yg4y1V72g&page=1&autoplay=0"
+											style={{
+												width: "100%",
+												height: "200px",
+												border: "none",
+											}}
+											allowFullScreen
+										/>
+									</Box>
 								</Box>
-								<Typography variant="h5" mt={2}>
+
+								<Typography
+									variant="body1"
+									sx={{ mb: 3, lineHeight: 1.6 }}>
 									这个确实很逆天，我都不知道自己当时到底怎么想的，但是还没有结束
 									<br />
 									当时正好是邦邦五周年，为了能有一个有点强度的卡组，我购入了两盒五周年
 								</Typography>
+
 								<Box
-									display="flex"
-									flexDirection="row"
-									justifyContent="center"
-									gap={2}
-									sx={{ flexWrap: "wrap" }}
-								>
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										mb: 3,
+									}}>
 									<Box
 										component="img"
 										src={bangdream5thbox}
-										alt="First Pack"
+										alt="Bangdream 5th Box"
 										sx={{
 											maxWidth: 500,
 											width: "100%",
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
 								</Box>
-								<Typography variant="h5" mt={2}>
+
+								<Typography
+									variant="body1"
+									sx={{
+										mb: 3,
+										lineHeight: 1.6,
+										textAlign: "center",
+										fontWeight: "bold",
+									}}>
 									战绩如下：
 								</Typography>
+
 								<Box
-									display="flex"
-									flexDirection="row"
-									justifyContent="center"
-									gap={2}
-									sx={{ flexWrap: "wrap" }}
-								>
+									sx={{
+										display: "flex",
+										justifyContent: "center",
+										gap: 2,
+										mb: 3,
+										flexWrap: "wrap",
+									}}>
 									<Box
 										component="img"
 										src={yamabukissp}
-										alt="yamabukissp"
+										alt="Yamabuki SSP"
 										sx={{
 											maxWidth: 250,
-											width: "50%",
+											width: "48%",
 											height: "auto",
 											objectFit: "contain",
+											borderRadius: 2,
 										}}
 									/>
-									<iframe
-										title="yamabuki-video"
-										src="https://player.bilibili.com/player.html?bvid=BV13u4y1f7LE&page=1&autoplay=0"
-										border="0"
-										framespacing="0"
-										allowFullScreen
-										style={{
-											width: "50%",
-											height: "auto",
-										}}
-									></iframe>
+									<Box
+										sx={{
+											width: "48%",
+											minHeight: 200,
+											borderRadius: 2,
+											overflow: "hidden",
+										}}>
+										<iframe
+											title="yamabuki-video"
+											src="https://player.bilibili.com/player.html?bvid=BV13u4y1f7LE&page=1&autoplay=0"
+											style={{
+												width: "100%",
+												height: "200px",
+												border: "none",
+											}}
+											allowFullScreen
+										/>
+									</Box>
 								</Box>
-								<Typography variant="h5" mt={2}>
+
+								<Typography
+									variant="body1"
+									sx={{ lineHeight: 1.6, textAlign: "center" }}>
 									这张卡价格多少现在我不清楚，不过开到的时候查到是450美元，我最后一次看到成交纪录是500美元
 								</Typography>
-							</>
+							</Box>
 						)}
 
-						<Box textAlign="center" mt={2}>
+						{/* 展开/收起按钮 */}
+						<Box
+							sx={{
+								textAlign: "center",
+								mt: 3,
+							}}>
 							<Button
 								variant="outlined"
 								onClick={() => setShowDetails(!showDetails)}
-							>
-								{showDetails ? "收起" : "展开"}
+								sx={{
+									borderColor: "#1b4332",
+									color: "#1b4332",
+									"&:hover": {
+										borderColor: "#2d5a42",
+										backgroundColor: "rgba(27, 67, 50, 0.08)",
+									},
+								}}>
+								{showDetails
+									? t("pages.pickPacks.collapseButton")
+									: t("pages.pickPacks.expandButton")}
 							</Button>
 						</Box>
 					</Box>
 				</Box>
 			</Box>
+
+			{/* 错误提示 */}
 			<Snackbar
 				open={errorOpen}
 				autoHideDuration={5000}
-				onClose={() => setErrorOpen(false)}
-			>
+				onClose={() => setErrorOpen(false)}>
 				<MuiAlert
 					onClose={() => setErrorOpen(false)}
 					severity="error"
-					sx={{ width: "100%" }}
-				>
-					请输入有效的包数
+					sx={{ width: "100%" }}>
+					{t("pages.pickPacks.errorMessage")}
 				</MuiAlert>
 			</Snackbar>
 		</Container>

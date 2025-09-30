@@ -142,6 +142,7 @@ const Record = () => {
 	return (
 		<Box
 			sx={{
+				mt: 4,
 				p: 3,
 				width: {
 					xs: "80%",
@@ -153,6 +154,8 @@ const Record = () => {
 			}}>
 			<Typography
 				variant="h4"
+				fontWeight={700}
+				color="#1b4332"
 				gutterBottom>
 				对战记录
 			</Typography>

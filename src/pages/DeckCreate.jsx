@@ -386,7 +386,8 @@ const DeckCreate = () => {
 		<Box
 			display={"flex"}
 			flexDirection="column"
-			alignItems="center">
+			alignItems="center"
+			sx={{ mt: 4 }}>
 			<Typography
 				variant="h6"
 				gutterBottom>

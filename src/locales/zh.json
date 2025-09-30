@@ -1,8 +1,183 @@
 {
-  "title": "黑白双翼工具箱",
+  "title": "WS工具箱",
   "menu": {
     "home": "主页",
     "tracker": "记录器",
-    "dice": "骰子"
+    "cardSearch": "卡片查询",
+    "simulator": "模拟开包",
+    "tools": "更多工具",
+    "pickPacks": "选择开包",
+    "firstSecond": "先后攻",
+    "dice": "骰子",
+    "chessClock": "棋钟",
+    "shuffle": "随机洗牌",
+    "record": "记录",
+    "deck": "卡组"
+  },
+  "common": {
+    "language": {
+      "zh": "中文",
+      "en": "English"
+    }
+  },
+  "navbar": {
+    "avatarTooltip": "打开个人菜单",
+    "clickAvatarHint": "点击头像展开菜单",
+    "login": "登录",
+    "logout": "退出登录",
+    "loginPrompt": "请先登录后编辑卡组"
+  },
+  "pages": {
+    "home": {
+      "title": "WS工具箱",
+      "subtitle": "提供各种WS相关的小工具和链接合集，开发中",
+      "updateTitle": "更新内容",
+      "todoTitle": "待办事项",
+      "contactTitle": "联系我"
+    },
+    "firstSecond": {
+      "title": "先后攻",
+      "subtitle": "点击生成先攻或者后攻",
+      "button": "决定",
+      "first": "先攻",
+      "second": "後攻"
+    },
+    "pickPacks": {
+      "title": "随机开包",
+      "subtitle": "请输入总包数和开启的包数",
+      "openPacks": "开启包数",
+      "totalPacks": "总包数",
+      "openButton": "开包",
+      "resetButton": "重置",
+      "expandButton": "展开",
+      "collapseButton": "收起",
+      "errorMessage": "请输入有效的包数"
+    },
+    "simulator": {
+      "title": "模拟开包",
+      "subtitle": "如果是高稀有的卡请填写保底多少盒出现一次，系统自动计算概率。",
+      "subtitleNote": "如果不是高稀有度卡请不要设定保底输入。",
+      "selectProduct": "选择产品",
+      "cardsPerPack": "一包卡片数",
+      "packsPerBox": "一盒总包数",
+      "boxesPerCase": "一箱总盒数",
+      "simulationPackCount": "模拟开包数",
+      "guaranteedPack": "保底（包）",
+      "guaranteedBox": "保底（盒）",
+      "guaranteedCase": "保底（箱）",
+      "resetButton": "重置",
+      "startSimulation": "开始模拟",
+      "clearResults": "清除结果",
+      "rarityDisplay": "稀有度分类展示（仅展示模拟抽到的卡）",
+      "detailedResults": "具体模拟结果",
+      "packNumber": "第 {{number}} 包",
+      "cardCount": "×{{count}}",
+      "cardDetails": {
+        "cardNumber": "编号:",
+        "productName": "产品名:",
+        "series": "系列:",
+        "rarity": "稀有度:",
+        "cardType": "卡片类型:",
+        "color": "颜色:",
+        "level": "等级:",
+        "cost": "费用:",
+        "power": "攻击力:",
+        "soul": "灵魂:",
+        "trigger": "触发:",
+        "feature": "特征:",
+        "effect": "效果:",
+        "flavor": "风味文本:"
+      }
+    },
+    "cardList": {
+      "title": "卡片查询",
+      "subtitle": "根据关键词和筛选条件查询卡片信息",
+      "searchButton": "搜索",
+      "resetButton": "重置",
+      "sections": {
+        "primarySearch": "主要搜索条件",
+        "cardAttributes": "卡片属性",
+        "numericAttributes": "数值属性"
+      },
+      "fields": {
+        "seriesNumber": "系列编号",
+        "series": "系列名",
+        "product": "产品名",
+        "side": "Side",
+        "keyword": "搜索关键字",
+        "color": "颜色",
+        "level": "等级",
+        "rarity": "稀有度",
+        "cardType": "卡片类型",
+        "power": "攻击力",
+        "cost": "费用",
+        "soul": "灵魂",
+        "trigger": "触发"
+      },
+      "toggle": {
+        "showZh": "显示中文",
+        "hideZh": "隐藏中文",
+        "showJp": "显示日语",
+        "hideJp": "隐藏日语"
+      },
+      "labels": {
+        "trait": "特征",
+        "traitZh": "特征（中文）",
+        "flavor": "风味",
+        "flavorZh": "风味（中文）",
+        "effect": "効果",
+        "effectZh": "效果（中文）"
+      },
+      "scroll": {
+        "down": "滚动到底部",
+        "up": "返回顶部"
+      }
+    },
+    "dice": {
+      "title": "骰子掷骰器",
+      "subtitle": "快速设置不同数量与面数的骰子，享受随手投掷的随机乐趣。",
+      "addButton": "添加骰子",
+      "resetButton": "重置",
+      "rollButton": "投掷骰子",
+      "setLabel": "第{{index}}组骰子",
+      "countLabel": "数量",
+      "facesLabel": "面数",
+      "resultsTitle": "投掷结果",
+      "summaryTitle": "汇总",
+      "summaryValue": "总计 {{total}} · 平均 {{average}}"
+    },
+    "chessClock": {
+      "title": "棋钟",
+      "subtitle": "轻触当前回合的玩家按钮即可切换，合理掌控每一次思考时间。",
+      "statusRunning": "{{player}} 正在计时",
+      "statusPaused": "计时已暂停",
+      "playerLabel": "玩家 {{index}}",
+      "playerHint": "点击以宣告回合结束并切换到对手。",
+      "activeChip": "当前行动",
+      "pauseButton": "暂停计时",
+      "resumeButton": "继续计时",
+      "switchButton": "切换行动方",
+      "resetButton": "重置计时",
+      "totalTime": "总用时 {{time}}",
+      "dialogTitle": "确认要重置吗？",
+      "dialogSubtitle": "确定要重置棋钟？",
+      "dialogBody": "这将清空两位玩家的所有计时记录。",
+      "dialogCancel": "取消",
+      "dialogConfirm": "立即重置"
+    },
+    "shuffle": {
+      "title": "随机洗牌工具",
+      "subtitle": "每次生成 50 点总和、6-10 张的不均匀牌堆，模拟洗牌带来的随机性。",
+      "summary": "共 {{deckLength}} 张，平均 {{average}}",
+      "summaryEmpty": "尚未生成牌堆",
+      "generateButton": "生成牌堆",
+      "clearButton": "清空结果",
+      "copyButton": "复制数据",
+      "copyTooltip": "复制结果",
+      "copyTooltipSuccess": "已复制",
+      "copyTooltipError": "复制失败",
+      "generationChip": "第 {{count}} 次生成 · 总点数 50",
+      "cardCaption": "数量"
+    }
   }
 }

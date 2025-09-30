@@ -498,7 +498,7 @@ const DeckSearch = () => {
 			sx={{
 				maxWidth: 960,
 				mx: "auto",
-				mt: 3,
+				mt: 4,
 				mb: 8,
 				px: { xs: 1.5, md: 4 },
 			}}>

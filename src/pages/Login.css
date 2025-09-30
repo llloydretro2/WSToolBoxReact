@@ -1,0 +1,92 @@
+/* 登录页面的自定义样式 */
+
+/* 防止页面滚动 */
+.login-page-body {
+  overflow: hidden !important;
+}
+
+/* 为登录页面添加微妙的动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px 8px !important;
+  }
+  
+  .login-card .MuiPaper-root {
+    margin: 0;
+  }
+  
+  .login-form-container {
+    padding: 24px 20px !important;
+  }
+  
+  .login-title {
+    font-size: 1.8rem !important;
+  }
+  
+  .login-avatar {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  
+  .login-avatar svg {
+    font-size: 30px !important;
+  }
+}
+
+/* 小屏幕设备优化 */
+@media (max-width: 480px) {
+  .login-title {
+    font-size: 1.6rem !important;
+  }
+  
+  .login-form-container {
+    padding: 20px 16px !important;
+  }
+  
+  .login-avatar {
+    width: 50px !important;
+    height: 50px !important;
+  }
+  
+  .login-avatar svg {
+    font-size: 24px !important;
+  }
+}
+
+/* 增强输入框的视觉反馈 */
+.login-input .MuiOutlinedInput-root {
+  transition: all 0.3s ease;
+}
+
+.login-input .MuiOutlinedInput-root:hover {
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.1);
+}
+
+.login-input .MuiOutlinedInput-root.Mui-focused {
+  box-shadow: 0 4px 12px rgba(27, 67, 50, 0.2);
+}
+
+/* 按钮悬浮效果增强 */
+.login-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.login-button:hover {
+  box-shadow: 0 12px 35px rgba(27, 67, 50, 0.4) !important;
+}

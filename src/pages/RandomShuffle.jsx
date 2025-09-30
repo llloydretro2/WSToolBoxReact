@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { motion } from "framer-motion";
 import {
 	Container,
 	Typography,
@@ -13,11 +14,13 @@ import {
 import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import { useLocale } from "../contexts/LocaleContext";
 
 function RandomShuffle() {
 	const [deck, setDeck] = useState([]);
 	const [generatedCount, setGeneratedCount] = useState(0);
 	const [copyState, setCopyState] = useState("idle");
+	const { t } = useLocale();
 
 	const handleGenerate = () => {
 		const targetSum = 50;
@@ -42,6 +45,13 @@ function RandomShuffle() {
 		setCopyState("idle");
 	};
 
+	const totalSum = useMemo(
+		() => deck.reduce((sum, value) => sum + value, 0),
+		[deck]
+	);
+	const averageValue =
+		deck.length > 0 ? (totalSum / deck.length).toFixed(2) : "0";
+
 	const handleCopy = async () => {
 		if (deck.length === 0) {
 			return;
@@ -55,64 +65,107 @@ function RandomShuffle() {
 		}
 	};
 
+	const GREEN_MAIN = "#a6ceb6";
+	const GREEN_DARK = "#95bfa5";
+	const GREEN_TEXT = "#1b4332";
+
 	return (
 		<Container
 			maxWidth="md"
-			sx={{ py: { xs: 4, md: 6 } }}>
+			sx={{ mt: 4 }}>
+			{/* 页面标题和副标题 */}
+			<Stack
+				spacing={1.5}
+				alignItems="center"
+				sx={{ mb: 4 }}>
+				<Typography
+					variant="h4"
+					fontWeight={700}
+					color="#1b4332"
+					gutterBottom
+					align="center">
+					{t("pages.shuffle.title")}
+				</Typography>
+				<Typography
+					variant="body1"
+					color="text.secondary"
+					align="center">
+					{t("pages.shuffle.subtitle")}
+				</Typography>
+				<Chip
+					label={
+						deck.length
+							? t("pages.shuffle.summary", {
+									deckLength: deck.length,
+									average: averageValue,
+							  })
+							: t("pages.shuffle.summaryEmpty")
+					}
+					size="small"
+					sx={{
+						backgroundColor: deck.length
+							? "rgba(166, 206, 182, 0.25)"
+							: "rgba(166, 206, 182, 0.18)",
+						color: "#1b4332",
+					}}
+				/>
+			</Stack>
+
 			<Paper
 				elevation={10}
 				sx={{
 					p: { xs: 3, md: 5 },
 					borderRadius: 4,
-					backgroundColor: "rgba(255, 255, 255, 0.9)",
-					border: "1px solid rgba(166, 206, 182, 0.45)",
+					backgroundColor: "rgba(27, 67, 50, 0.1)",
+					border: "1px solid rgba(27, 67, 50, 0.2)",
 					boxShadow: "0 28px 60px -40px rgba(74, 141, 112, 0.38)",
 				}}>
 				<Stack spacing={{ xs: 3, md: 4 }}>
-					<Stack
-						spacing={1}
-						alignItems="center">
-						<Typography
-							variant="h4"
-							fontWeight={700}
-							color="#1b4332">
-							随机洗牌工具
-						</Typography>
-						<Typography
-							variant="body1"
-							color="text.secondary"
-							align="center">
-							每次生成 50 点总和、6-10 张的不均匀牌堆
-						</Typography>
-					</Stack>
-
-					<Divider flexItem />
-
 					<Stack
 						direction={{ xs: "column", sm: "row" }}
 						spacing={2}
 						justifyContent="center"
 						alignItems="center">
-						<Button
-							variant="contained"
-							startIcon={<ShuffleRoundedIcon />}
-							onClick={handleGenerate}
-							sx={{
-								minWidth: 180,
-								backgroundColor: "rgba(166, 206, 182, 0.85)",
-								"&:hover": { backgroundColor: "#95bfa5" },
-							}}>
-							生成牌堆
-						</Button>
+						<motion.div
+							whileHover={{ scale: 1.05, rotate: 1 }}
+							whileTap={{ scale: 0.95 }}
+							transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+							<Button
+								variant="contained"
+								startIcon={<ShuffleRoundedIcon />}
+								onClick={handleGenerate}
+								sx={{
+									minWidth: 180,
+									backgroundColor: GREEN_MAIN,
+									color: GREEN_TEXT,
+									"&:hover": { backgroundColor: GREEN_DARK },
+								}}>
+								{t("pages.shuffle.generateButton")}
+							</Button>
+						</motion.div>
 						<Button
 							variant="outlined"
 							startIcon={<RestartAltRoundedIcon />}
-							sx={{ minWidth: 160 }}
+							sx={{
+								minWidth: 160,
+								borderColor: GREEN_MAIN,
+								color: GREEN_TEXT,
+								"&:hover": {
+									borderColor: GREEN_DARK,
+									backgroundColor: "rgba(149, 191, 165, 0.12)",
+								},
+							}}
 							onClick={handleReset}>
-							清空结果
+							{t("pages.shuffle.clearButton")}
 						</Button>
 						<Tooltip
-							title={copyState === "success" ? "已复制" : "复制结果"}
+							title={
+								copyState === "success"
+									? t("pages.shuffle.copyTooltipSuccess")
+									: copyState === "error"
+									? t("pages.shuffle.copyTooltipError")
+									: t("pages.shuffle.copyTooltip")
+							}
 							placement="top"
 							arrow>
 							<span>
@@ -120,9 +173,19 @@ function RandomShuffle() {
 									variant="outlined"
 									startIcon={<ContentCopyRoundedIcon />}
 									disabled={deck.length === 0}
-									sx={{ minWidth: 160 }}
+									sx={{
+										minWidth: 160,
+										borderColor: deck.length ? GREEN_MAIN : "rgba(0,0,0,0.12)",
+										color: deck.length ? GREEN_TEXT : "rgba(0,0,0,0.26)",
+										"&:hover": deck.length
+											? {
+													borderColor: GREEN_DARK,
+													backgroundColor: "rgba(149, 191, 165, 0.12)",
+											  }
+											: {},
+									}}
 									onClick={handleCopy}>
-									复制数据
+									{t("pages.shuffle.copyButton")}
 								</Button>
 							</span>
 						</Tooltip>
@@ -130,6 +193,13 @@ function RandomShuffle() {
 
 					{deck.length > 0 && (
 						<Stack spacing={{ xs: 2, md: 3 }}>
+							{" "}
+							<Chip
+								label={t("pages.shuffle.generationChip", {
+									count: generatedCount,
+								})}
+								size="small"
+							/>
 							<Grid
 								container
 								spacing={2}
@@ -148,12 +218,22 @@ function RandomShuffle() {
 												border: "1px solid rgba(166, 206, 182, 0.4)",
 												textAlign: "center",
 											}}>
-											<Typography
-												variant="h5"
-												fontWeight={600}
-												color="#1b4332">
-												{card}
-											</Typography>
+											<Stack
+												spacing={0.5}
+												alignItems="center">
+												<Typography
+													variant="h5"
+													fontWeight={600}
+													color="#1b4332"
+													component="div">
+													{card}
+												</Typography>
+												<Typography
+													variant="caption"
+													color="text.secondary">
+													{t("pages.shuffle.cardCaption")}
+												</Typography>
+											</Stack>
 										</Paper>
 									</Grid>
 								))}

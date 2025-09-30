@@ -17,6 +17,7 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
 import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
+import { useLocale } from "../contexts/LocaleContext";
 
 const formatTime = (seconds) => {
 	const minutes = Math.floor(seconds / 60);
@@ -34,6 +35,7 @@ function ChessClock() {
 	const [p1Seconds, setP1Seconds] = useState(0);
 	const [p2Seconds, setP2Seconds] = useState(0);
 	const [showResetConfirm, setShowResetConfirm] = useState(false);
+	const { t } = useLocale();
 
 	useEffect(() => {
 		const saved = localStorage.getItem("chessclock");
@@ -76,10 +78,8 @@ function ChessClock() {
 	}, [isRunning, side]);
 
 	useEffect(() => {
-		const formattedP1 = formatTime(p1Seconds);
-		const formattedP2 = formatTime(p2Seconds);
-		setP1Time(formattedP1);
-		setP2Time(formattedP2);
+		setP1Time(formatTime(p1Seconds));
+		setP2Time(formatTime(p2Seconds));
 	}, [p1Seconds, p2Seconds]);
 
 	useEffect(() => {
@@ -97,9 +97,16 @@ function ChessClock() {
 	const activeSide = isRunning ? side : null;
 	const totalSeconds = p1Seconds + p2Seconds;
 	const totalTime = formatTime(totalSeconds);
+	const activePlayerLabel = t("pages.chessClock.playerLabel", { index: side });
 	const statusChipLabel = isRunning
-		? `${side === 1 ? "玩家一" : "玩家二"} 正在计时`
-		: "计时已暂停";
+		? t("pages.chessClock.statusRunning", { player: activePlayerLabel })
+		: t("pages.chessClock.statusPaused");
+
+	const GREEN_MAIN = "#a6ceb6";
+	const GREEN_DARK = "#95bfa5";
+	const GREEN_TEXT = "#1b4332";
+	const ACCENT_RED = "#760f10";
+	const ACCENT_RED_DARK = "#5c0f10";
 
 	const handlePlayerTap = (targetSide) => {
 		setSide(targetSide);
@@ -126,13 +133,47 @@ function ChessClock() {
 		localStorage.removeItem("chessclock");
 	};
 
+	const pauseLabel = isRunning
+		? t("pages.chessClock.pauseButton")
+		: t("pages.chessClock.resumeButton");
+
 	return (
 		<Box
 			sx={{
 				minHeight: "100vh",
-				py: { xs: 4, md: 8 },
+				mt: 4,
 			}}>
 			<Container maxWidth="md">
+				{/* 页面标题和副标题 */}
+				<Stack
+					spacing={1.5}
+					alignItems="center"
+					sx={{ mb: 4 }}>
+					<Typography
+						variant="h4"
+						fontWeight={700}
+						color="#1b4332">
+						{t("pages.chessClock.title")}
+					</Typography>
+					<Typography
+						variant="body1"
+						color="text.secondary"
+						align="center">
+						{t("pages.chessClock.subtitle")}
+					</Typography>
+					<Chip
+						label={statusChipLabel}
+						color={isRunning ? "error" : "default"}
+						size="small"
+						sx={{
+							backgroundColor: isRunning
+								? "rgba(118, 15, 16, 0.12)"
+								: "rgba(166, 206, 182, 0.22)",
+							color: isRunning ? "#5c0f10" : "#1b4332",
+						}}
+					/>
+				</Stack>
+
 				<Paper
 					elevation={10}
 					sx={{
@@ -143,51 +184,24 @@ function ChessClock() {
 						boxShadow: "0 32px 80px -48px rgba(74, 141, 112, 0.45)",
 					}}>
 					<Stack spacing={{ xs: 3, md: 4 }}>
-						<Stack
-							spacing={1.5}
-							alignItems="center">
-							<Typography
-								variant="h4"
-								fontWeight={700}
-								color="#1b4332">
-								棋钟
-							</Typography>
-							<Typography
-								variant="body1"
-								color="text.secondary"
-								align="center">
-								轻触当前回合的玩家按钮即可切换，合理掌控每一次思考时间。
-							</Typography>
-							<Chip
-								label={statusChipLabel}
-								color={isRunning ? "error" : "default"}
-								size="small"
-								sx={{
-									backgroundColor: isRunning
-										? "rgba(118, 15, 16, 0.12)"
-										: "rgba(166, 206, 182, 0.22)",
-									color: isRunning ? "#5c0f10" : "#1b4332",
-								}}
-							/>
-						</Stack>
-
 						<Divider
 							flexItem
 							light
 						/>
 
 						<Stack spacing={{ xs: 2, md: 3 }}>
-							{[
-								{ id: 1, label: "玩家一", time: p1Time },
-								{ id: 2, label: "玩家二", time: p2Time },
-							].map((player) => {
-								const isActive = activeSide === player.id;
+							{[1, 2].map((playerId) => {
+								const isActive = activeSide === playerId;
+								const playerLabel = t("pages.chessClock.playerLabel", {
+									index: playerId,
+								});
+								const playerTime = playerId === 1 ? p1Time : p2Time;
 								return (
 									<Paper
-										key={player.id}
+										key={`clock-player-${playerId}`}
 										component="button"
 										type="button"
-										onClick={() => handlePlayerTap(player.id)}
+										onClick={() => handlePlayerTap(playerId)}
 										elevation={isActive ? 8 : 3}
 										sx={{
 											width: "100%",
@@ -222,29 +236,29 @@ function ChessClock() {
 											justifyContent="space-between"
 											alignItems="center"
 											spacing={2}>
-											<Stack spacing={0.75}>
+											<Stack spacing={0.25}>
 												<Typography
 													variant="h6"
 													fontWeight={600}
 													color="#1b4332">
-													{player.label}
+													{playerLabel}
 												</Typography>
 												<Typography
 													variant="body2"
 													color="text.secondary">
-													点击以宣告回合结束并切换到对手
+													{t("pages.chessClock.playerHint")}
 												</Typography>
 											</Stack>
 											<Typography
 												variant="h3"
 												fontWeight={700}
 												color={isActive ? "#5c0f10" : "#1b4332"}>
-												{player.time}
+												{playerTime}
 											</Typography>
 										</Stack>
 										{isActive && (
 											<Chip
-												label="当前行动"
+												label={t("pages.chessClock.activeChip")}
 												color="error"
 												size="small"
 												sx={{ mt: { xs: 2, md: 2.5 } }}
@@ -266,37 +280,50 @@ function ChessClock() {
 							justifyContent="center">
 							<Button
 								variant="contained"
-								color={isRunning ? "warning" : "success"}
 								startIcon={
 									isRunning ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />
 								}
 								sx={{
 									minWidth: 160,
-									backgroundColor: isRunning
-										? "rgba(255, 193, 7, 0.85)"
-										: "rgba(166, 206, 182, 0.8)",
+									backgroundColor: isRunning ? "#f6c756" : GREEN_MAIN,
+									color: GREEN_TEXT,
 									"&:hover": {
-										backgroundColor: isRunning ? "#f5a623" : "#95bfa5",
+										backgroundColor: isRunning ? "#e6b749" : GREEN_DARK,
 									},
 								}}
 								onClick={togglePause}>
-								{isRunning ? "暂停计时" : "继续计时"}
+								{pauseLabel}
 							</Button>
 							<Button
 								variant="outlined"
-								color="primary"
 								startIcon={<SwapVertRoundedIcon />}
-								sx={{ minWidth: 160 }}
+								sx={{
+									minWidth: 160,
+									borderColor: GREEN_MAIN,
+									color: GREEN_TEXT,
+									"&:hover": {
+										borderColor: GREEN_DARK,
+										backgroundColor: "rgba(149, 191, 165, 0.12)",
+									},
+								}}
 								onClick={handleSwitchSide}>
-								切换行动方
+								{t("pages.chessClock.switchButton")}
 							</Button>
 							<Button
 								variant="outlined"
-								color="error"
 								startIcon={<RestartAltRoundedIcon />}
-								sx={{ minWidth: 160 }}
+								sx={{
+									minWidth: 160,
+									borderColor: ACCENT_RED,
+									color: ACCENT_RED,
+									"&:hover": {
+										borderColor: ACCENT_RED_DARK,
+										color: ACCENT_RED_DARK,
+										backgroundColor: "rgba(118, 15, 16, 0.08)",
+									},
+								}}
 								onClick={() => setShowResetConfirm(true)}>
-								重置计时
+								{t("pages.chessClock.resetButton")}
 							</Button>
 						</Stack>
 
@@ -304,7 +331,7 @@ function ChessClock() {
 							direction="row"
 							justifyContent="center">
 							<Chip
-								label={`总用时 ${totalTime}`}
+								label={t("pages.chessClock.totalTime", { time: totalTime })}
 								size="small"
 								sx={{
 									mt: { xs: 2, md: 3 },
@@ -322,17 +349,25 @@ function ChessClock() {
 				open={showResetConfirm}
 				onClose={() => setShowResetConfirm(false)}
 				sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}>
-				<DialogTitle>确认要重置吗？</DialogTitle>
+				<DialogTitle>{t("pages.chessClock.dialogTitle")}</DialogTitle>
 				<DialogContent>
-					<Typography>这将清空两位玩家的所有计时记录。</Typography>
+					<Typography>{t("pages.chessClock.dialogBody")}</Typography>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setShowResetConfirm(false)}>取消</Button>
+					<Button onClick={() => setShowResetConfirm(false)}>
+						{t("pages.chessClock.dialogCancel")}
+					</Button>
 					<Button
-						color="error"
 						onClick={handleResetAll}
-						startIcon={<RestartAltRoundedIcon />}>
-						立即重置
+						startIcon={<RestartAltRoundedIcon />}
+						sx={{
+							backgroundColor: ACCENT_RED,
+							color: "#fff",
+							"&:hover": {
+								backgroundColor: ACCENT_RED_DARK,
+							},
+						}}>
+						{t("pages.chessClock.dialogConfirm")}
 					</Button>
 				</DialogActions>
 			</Dialog>

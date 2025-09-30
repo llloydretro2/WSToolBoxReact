@@ -220,9 +220,8 @@ function DIY() {
 	return (
 		<div
 			className="d-flex justify-content-center align-items-center"
-			style={{ marginTop: "2rem" }}
-		>
-			<div className="container mt-4">
+			style={{ marginTop: "32px" }}>
+			<div className="container">
 				<h1 className="mb-3">DIY卡牌工具</h1>
 				<p className="mb-3">
 					制作自己的WS卡牌并导出为图片,
@@ -269,7 +268,9 @@ function DIY() {
 							<p className="mt-1 small text-muted">
 								可用指令：
 								{Object.entries(symbolMap).map(([cmd, img], i) => (
-									<span key={i} style={{ marginRight: 12 }}>
+									<span
+										key={i}
+										style={{ marginRight: 12 }}>
 										<code>{cmd}</code>
 										<img
 											src={img}
@@ -309,13 +310,11 @@ function DIY() {
 										}}
 										onClick={() =>
 											setSide(side === option.value ? "" : option.value)
-										}
-									>
+										}>
 										<span
 											style={{
 												fontWeight: side === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -344,8 +343,7 @@ function DIY() {
 											style={{
 												fontWeight:
 													cardType === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -367,13 +365,11 @@ function DIY() {
 										}}
 										onClick={() =>
 											setColor(color === option.value ? "" : option.value)
-										}
-									>
+										}>
 										<span
 											style={{
 												fontWeight: color === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -398,14 +394,12 @@ function DIY() {
 											setCardLevel(
 												cardLevel === option.value ? "" : option.value
 											)
-										}
-									>
+										}>
 										<span
 											style={{
 												fontWeight:
 													cardLevel === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -427,13 +421,11 @@ function DIY() {
 										}}
 										onClick={() =>
 											setCost(cost === option.value ? "" : option.value)
-										}
-									>
+										}>
 										<span
 											style={{
 												fontWeight: cost === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -456,13 +448,11 @@ function DIY() {
 										}}
 										onClick={() =>
 											setSoul(soul === option.value ? "" : option.value)
-										}
-									>
+										}>
 										<span
 											style={{
 												fontWeight: soul === option.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{option.label}
 										</span>
 									</div>
@@ -484,8 +474,7 @@ function DIY() {
 										}}
 										onClick={() =>
 											setTrigger(trigger === opt.value ? "" : opt.value)
-										}
-									>
+										}>
 										{opt.img && (
 											<img
 												src={opt.img}
@@ -526,14 +515,12 @@ function DIY() {
 												setNumberTraits(value);
 												setTraits(Array(count).fill(""));
 											}
-										}}
-									>
+										}}>
 										<span
 											style={{
 												fontWeight:
 													numberTraits === opt.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{opt.label}
 										</span>
 									</div>
@@ -570,13 +557,11 @@ function DIY() {
 											backgroundColor:
 												backup === opt.value ? "#e9f5ff" : "#fff",
 										}}
-										onClick={() => setBackup(opt.value)}
-									>
+										onClick={() => setBackup(opt.value)}>
 										<span
 											style={{
 												fontWeight: backup === opt.value ? "bold" : "normal",
-											}}
-										>
+											}}>
 											{opt.label}
 										</span>
 									</div>
@@ -598,8 +583,7 @@ function DIY() {
 
 						<button
 							className="btn btn-primary mt-2 mb-4"
-							onClick={handleExport}
-						>
+							onClick={handleExport}>
 							导出卡牌
 						</button>
 					</div>
@@ -609,15 +593,13 @@ function DIY() {
 								display: "flex",
 								justifyContent: "center",
 								width: "100%",
-							}}
-						>
+							}}>
 							<div
 								className="card-scale-wrapper"
 								style={{
 									transform: "scale(1)",
 									transformOrigin: "top center",
-								}}
-							>
+								}}>
 								<div
 									id="card-preview"
 									style={{
@@ -628,8 +610,7 @@ function DIY() {
 										border: "1px solid #ccc",
 										backgroundColor: "#fff",
 										overflow: "hidden",
-									}}
-								>
+									}}>
 									{cardType === "キャラ" && (
 										<>
 											{image && (
@@ -640,8 +621,7 @@ function DIY() {
 													wheel={{ step: 0.1 }}
 													doubleClick={{ disabled: true }}
 													pinch={{ step: 5 }}
-													panning={{ velocityDisabled: true }}
-												>
+													panning={{ velocityDisabled: true }}>
 													<TransformComponent
 														wrapperStyle={{
 															position: "absolute",
@@ -657,8 +637,7 @@ function DIY() {
 															alignItems: "center",
 															width: "100%",
 															height: "100%",
-														}}
-													>
+														}}>
 														<img
 															src={image}
 															alt="卡图"
@@ -774,8 +753,7 @@ function DIY() {
 													textShadow: "1px 1px 2px black",
 													fontFamily: "name_font",
 													zIndex: 99,
-												}}
-											>
+												}}>
 												{name}
 											</div>
 											<div
@@ -788,8 +766,7 @@ function DIY() {
 													color: "#000",
 													fontFamily: "name_font",
 													zIndex: 99,
-												}}
-											>
+												}}>
 												{id}
 											</div>
 											<div
@@ -803,8 +780,7 @@ function DIY() {
 													color: "#ffffff",
 													transform: "translateX(-50%)",
 													zIndex: 99,
-												}}
-											>
+												}}>
 												{power}
 											</div>
 											{/* Flavor text box above the main text */}
@@ -829,8 +805,7 @@ function DIY() {
 													zIndex: 3,
 													bottom: `${80 + textBoxHeight + 5}px`,
 													textAlign: "center",
-												}}
-											>
+												}}>
 												{flavor}
 											</div>
 											{/* Transparent white background text box anchored to bottom */}
@@ -855,8 +830,7 @@ function DIY() {
 													wordBreak: "break-word",
 													overflowWrap: "break-word",
 													zIndex: 3,
-												}}
-											>
+												}}>
 												{parseTextWithIcons(text)}
 											</div>
 											{/* Traits at bottom left and right */}
@@ -873,8 +847,7 @@ function DIY() {
 														transform: "translateX(50%)",
 														color: "#000",
 														zIndex: 99,
-													}}
-												>
+													}}>
 													{traits[0]}
 												</div>
 											)}
@@ -891,8 +864,7 @@ function DIY() {
 														fontFamily: "name_font",
 														color: "#000",
 														zIndex: 99,
-													}}
-												>
+													}}>
 													{traits[1]}
 												</div>
 											)}
