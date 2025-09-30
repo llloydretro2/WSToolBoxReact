@@ -14,12 +14,6 @@ import MuiAlert from "@mui/material/Alert";
 import packImage from "../assets/765_box.png";
 import temari from "../assets/tiny_temari.png";
 import lilja from "../assets/tiny_lilja.png";
-import d4dj from "../assets/d4dj.png";
-import d4djsp from "../assets/d4djsp.png";
-import revuebox from "../assets/revuebox.png";
-import daibananasp from "../assets/daibananasp.png";
-import bangdream5thbox from "../assets/bangdream5thbox.png";
-import yamabukissp from "../assets/yamabukissp.png";
 import wscollection from "../assets/wscollection.png";
 
 function PickPacks() {
@@ -29,7 +23,6 @@ function PickPacks() {
 	const [seed, setSeed] = useState("");
 	const [results, setResults] = useState([]);
 	const [errorOpen, setErrorOpen] = useState(false);
-	const [showDetails, setShowDetails] = useState(false);
 
 	useEffect(() => {
 		const saved = localStorage.getItem("pickpacks");
@@ -274,14 +267,7 @@ function PickPacks() {
 												position: "relative",
 												width: { xs: 50, sm: 70, md: 90 },
 												height: { xs: 50, sm: 70, md: 90 },
-												borderRadius: 2,
 												overflow: "hidden",
-												boxShadow: isSelected
-													? "0 8px 25px rgba(27, 67, 50, 0.4)"
-													: "0 2px 10px rgba(0, 0, 0, 0.1)",
-												border: isSelected
-													? "3px solid #1b4332"
-													: "2px solid transparent",
 											}}>
 											<img
 												src={packImage}
@@ -289,7 +275,7 @@ function PickPacks() {
 												style={{
 													width: "100%",
 													height: "100%",
-													objectFit: "cover",
+													objectFit: "contain",
 												}}
 											/>
 											{isSelected && (
@@ -300,7 +286,6 @@ function PickPacks() {
 														left: 0,
 														width: "100%",
 														height: "100%",
-														backgroundColor: "rgba(27, 67, 50, 0.15)",
 														display: "flex",
 														alignItems: "center",
 														justifyContent: "center",
@@ -453,23 +438,11 @@ function PickPacks() {
 									variant="h5"
 									sx={{ color: "#760f10", fontWeight: "bold" }}>
 									完全没有！
+									<br />{" "}
+									就是普通的随机数生成器只不过我设定了一个和我有关的会随着时间会变化的种子
 								</Typography>
 							</Box>
 						</Box>
-
-						{/* 说明文本 */}
-						<Typography
-							variant="body1"
-							sx={{
-								mb: 4,
-								p: 3,
-								backgroundColor: "rgba(0, 0, 0, 0.02)",
-								borderRadius: 2,
-								lineHeight: 1.8,
-								textAlign: "center",
-							}}>
-							就是普通的随机数生成器只不过我设定了一个和我有关的会随着时间会变化的种子
-						</Typography>
 
 						{/* 第二轮对话 */}
 						<Box
@@ -525,9 +498,9 @@ function PickPacks() {
 										}}
 									/>
 									<Typography
-										variant="body1"
+										variant="h6"
 										sx={{ lineHeight: 1.6 }}>
-										这个话自己来说可能有点奇怪，但是主播的开包运气是中美好友一致认证的逆天，以下为截止2025年8月的战绩，除了个别为和好友交换和花钱收的之外（SIR确实开不出来），开包平均3盒一个SP/SSP
+										请看战绩⬇️平均3盒一个SP/SSP，只买散盒
 									</Typography>
 								</Box>
 
@@ -550,247 +523,7 @@ function PickPacks() {
 										}}
 									/>
 								</Box>
-
-								<Typography
-									variant="body2"
-									sx={{
-										textAlign: "center",
-										color: "text.secondary",
-										fontStyle: "italic",
-									}}>
-									点击展开即可查看主播的传奇开包历程
-								</Typography>
 							</Box>
-						</Box>
-
-						{/* 展开详情内容 */}
-						{showDetails && (
-							<Box
-								sx={{
-									mt: 4,
-									p: 3,
-									backgroundColor: "rgba(0, 0, 0, 0.02)",
-									borderRadius: 2,
-									border: "1px solid rgba(0, 0, 0, 0.1)",
-								}}>
-								<Typography
-									variant="body1"
-									sx={{ mb: 3, lineHeight: 1.6 }}>
-									故事从2023年5月3日开始，主播在朋友的推荐下入坑了WS，从ebay的一个随机商家买下了我人生中的第一个D4DJ预组并开出了第一个SP从此开始了罪恶的开包生涯
-								</Typography>
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "center",
-										gap: 2,
-										mb: 4,
-										flexWrap: "wrap",
-									}}>
-									<Box
-										component="img"
-										src={d4dj}
-										alt="First Pack"
-										sx={{
-											maxWidth: 250,
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-									<Box
-										component="img"
-										src={d4djsp}
-										alt="First SP"
-										sx={{
-											maxWidth: 250,
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-								</Box>
-
-								<Typography
-									variant="body1"
-									sx={{ mb: 3, lineHeight: 1.6 }}>
-									在这之后主播对少女歌剧很有兴趣，但是当时英文剧场版未出，我非常不理智的在tcgplayer上220美元冲动消费买下了少女歌剧TV版的一个残盒
-								</Typography>
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "center",
-										mb: 3,
-									}}>
-									<Box
-										component="img"
-										src={revuebox}
-										alt="Revue Box"
-										sx={{
-											maxWidth: 500,
-											width: "100%",
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-								</Box>
-
-								<Typography
-									variant="body1"
-									sx={{ mb: 3, lineHeight: 1.6 }}>
-									结果开出了价值350美元的大場ななSP
-								</Typography>
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "center",
-										gap: 2,
-										mb: 4,
-										flexWrap: "wrap",
-									}}>
-									<Box
-										component="img"
-										src={daibananasp}
-										alt="Daibanana SP"
-										sx={{
-											maxWidth: 250,
-											width: "48%",
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-									<Box
-										sx={{
-											width: "48%",
-											minHeight: 200,
-											borderRadius: 2,
-											overflow: "hidden",
-										}}>
-										<iframe
-											title="daibanana-video"
-											src="https://player.bilibili.com/player.html?bvid=BV1yg4y1V72g&page=1&autoplay=0"
-											style={{
-												width: "100%",
-												height: "200px",
-												border: "none",
-											}}
-											allowFullScreen
-										/>
-									</Box>
-								</Box>
-
-								<Typography
-									variant="body1"
-									sx={{ mb: 3, lineHeight: 1.6 }}>
-									这个确实很逆天，我都不知道自己当时到底怎么想的，但是还没有结束
-									<br />
-									当时正好是邦邦五周年，为了能有一个有点强度的卡组，我购入了两盒五周年
-								</Typography>
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "center",
-										mb: 3,
-									}}>
-									<Box
-										component="img"
-										src={bangdream5thbox}
-										alt="Bangdream 5th Box"
-										sx={{
-											maxWidth: 500,
-											width: "100%",
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-								</Box>
-
-								<Typography
-									variant="body1"
-									sx={{
-										mb: 3,
-										lineHeight: 1.6,
-										textAlign: "center",
-										fontWeight: "bold",
-									}}>
-									战绩如下：
-								</Typography>
-
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "center",
-										gap: 2,
-										mb: 3,
-										flexWrap: "wrap",
-									}}>
-									<Box
-										component="img"
-										src={yamabukissp}
-										alt="Yamabuki SSP"
-										sx={{
-											maxWidth: 250,
-											width: "48%",
-											height: "auto",
-											objectFit: "contain",
-											borderRadius: 2,
-										}}
-									/>
-									<Box
-										sx={{
-											width: "48%",
-											minHeight: 200,
-											borderRadius: 2,
-											overflow: "hidden",
-										}}>
-										<iframe
-											title="yamabuki-video"
-											src="https://player.bilibili.com/player.html?bvid=BV13u4y1f7LE&page=1&autoplay=0"
-											style={{
-												width: "100%",
-												height: "200px",
-												border: "none",
-											}}
-											allowFullScreen
-										/>
-									</Box>
-								</Box>
-
-								<Typography
-									variant="body1"
-									sx={{ lineHeight: 1.6, textAlign: "center" }}>
-									这张卡价格多少现在我不清楚，不过开到的时候查到是450美元，我最后一次看到成交纪录是500美元
-								</Typography>
-							</Box>
-						)}
-
-						{/* 展开/收起按钮 */}
-						<Box
-							sx={{
-								textAlign: "center",
-								mt: 3,
-							}}>
-							<Button
-								variant="outlined"
-								onClick={() => setShowDetails(!showDetails)}
-								sx={{
-									borderColor: "#1b4332",
-									color: "#1b4332",
-									"&:hover": {
-										borderColor: "#2d5a42",
-										backgroundColor: "rgba(27, 67, 50, 0.08)",
-									},
-								}}>
-								{showDetails
-									? t("pages.pickPacks.collapseButton")
-									: t("pages.pickPacks.expandButton")}
-							</Button>
 						</Box>
 					</Box>
 				</Box>
