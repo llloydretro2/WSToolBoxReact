@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { motion, useReducedMotion } from "framer-motion";
 
 // 检测是否为移动设备
@@ -81,6 +82,10 @@ const PageTransition = ({ children }) => {
 			{children}
 		</motion.div>
 	);
+};
+
+PageTransition.propTypes = {
+	children: PropTypes.node.isRequired,
 };
 
 export default PageTransition;

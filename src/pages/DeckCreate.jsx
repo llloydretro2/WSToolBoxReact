@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	TextField,
 	Button,
@@ -13,9 +13,11 @@ import {
 	CircularProgress,
 	Snackbar,
 	Alert,
+	ToggleButtonGroup,
+	ToggleButton,
 } from "@mui/material";
-import productList from "../data/productList.json";
-import translationMap from "../data/filter_translations.json";
+import deckRulesWeiss from "../data/deck_rules_weiss.json";
+import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
 
 // Ensure BACKEND_URL is accessible from environment variables
 const BACKEND_URL = "https://api.cardtoolbox.org";
@@ -23,6 +25,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const DeckCreate = () => {
 	const [deckName, setDeckName] = useState("");
+	const [side, setSide] = useState("weiss"); // "weiss" or "schwarz"
 	const [form, setForm] = useState({
 		series: "",
 	});
@@ -54,6 +57,31 @@ const DeckCreate = () => {
 		message: "",
 		severity: "success",
 	});
+	const [confirmDialog, setConfirmDialog] = useState({
+		open: false,
+		newSeries: "",
+		newSeriesCodes: "",
+	});
+
+	// 当side改变时，重置相关状态
+	useEffect(() => {
+		setSeriesInput("");
+		setForm({ series: "" });
+		setAllCards([]);
+		setFilteredCards([]);
+		setCurrentPage(0);
+		setHasMore(false);
+		// 重置筛选条件
+		setColor("");
+		setLevel("");
+		setRarity("");
+		setCardType("");
+		setPower("");
+		setCost("");
+		setSoul("");
+		setTrigger("");
+		setSearchText("");
+	}, [side]);
 
 	const buildQueryParams = (seriesParam, overrides = {}) => {
 		const params = new URLSearchParams();
@@ -160,6 +188,21 @@ const DeckCreate = () => {
 				search: "",
 			},
 		});
+	};
+
+	// 处理确认切换系列
+	const handleConfirmSeriesChange = () => {
+		const { newSeries, newSeriesCodes } = confirmDialog;
+		setForm((prev) => ({ ...prev, series: newSeries }));
+		fetchSeriesCards(newSeriesCodes);
+		setConfirmDialog({ open: false, newSeries: "", newSeriesCodes: "" });
+	};
+
+	// 取消切换系列
+	const handleCancelSeriesChange = () => {
+		setConfirmDialog({ open: false, newSeries: "", newSeriesCodes: "" });
+		// 重置输入框为当前系列
+		setSeriesInput(form.series);
 	};
 
 	// Unique dropdown options, excluding falsy and "-" values
@@ -382,6 +425,20 @@ const DeckCreate = () => {
 		}
 	};
 
+	// 获取当前side的系列数据
+	const getCurrentSideData = () => {
+		return side === "weiss"
+			? deckRulesWeiss.title_categories
+			: deckRulesSchwarz.title_categories;
+	};
+
+	// 获取当前side的系列选项
+	const getCurrentSeriesOptions = () => {
+		return getCurrentSideData()
+			.map((item) => item.title)
+			.sort();
+	};
+
 	return (
 		<Box
 			display={"flex"}
@@ -401,6 +458,55 @@ const DeckCreate = () => {
 				onChange={(e) => setDeckName(e.target.value)}
 				sx={{ mb: 2, width: { xs: "80%", md: "50%" } }}
 			/>
+
+			{/* Side选择器 */}
+			<Box
+				sx={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					mb: 2,
+					width: { xs: "80%", md: "50%" },
+				}}>
+				<ToggleButtonGroup
+					value={side}
+					exclusive
+					onChange={(_, newSide) => {
+						if (newSide !== null) {
+							setSide(newSide);
+						}
+					}}
+					sx={{
+						"& .MuiToggleButton-root": {
+							border: "1px solid #a6ceb6",
+							color: "#a6ceb6",
+							fontWeight: "bold",
+							px: 3,
+							py: 1,
+							"&.Mui-selected": {
+								backgroundColor: "#a6ceb6",
+								color: "white",
+								"&:hover": {
+									backgroundColor: "#8bb89d",
+								},
+							},
+							"&:hover": {
+								backgroundColor: "rgba(166, 206, 182, 0.1)",
+							},
+						},
+					}}>
+					<ToggleButton
+						value="weiss"
+						aria-label="weiss side">
+						Weiß Side
+					</ToggleButton>
+					<ToggleButton
+						value="schwarz"
+						aria-label="schwarz side">
+						Schwarz Side
+					</ToggleButton>
+				</ToggleButtonGroup>
+			</Box>
 			{/* 筛选器区域 */}
 			<Box
 				sx={{
@@ -411,36 +517,17 @@ const DeckCreate = () => {
 					gap: 2,
 				}}>
 				<Autocomplete
-					options={productList.series
-						.slice()
-						.sort()
-						.map(
-							(s) =>
-								`${s}${
-									translationMap.series?.[s]
-										? `（${translationMap.series[s]}）`
-										: ""
-								}`
-						)}
-					value={
-						seriesInput
-							? `${seriesInput}${
-									translationMap.series?.[seriesInput]
-										? `（${translationMap.series[seriesInput]}）`
-										: ""
-							  }`
-							: ""
-					}
+					options={getCurrentSeriesOptions()}
+					value={seriesInput}
 					sx={{ flex: 1 }}
 					size="small"
 					onChange={(_, newValue) => {
-						const key = newValue?.split("（")[0];
-						setSeriesInput(key || "");
+						setSeriesInput(newValue || "");
 					}}
 					renderInput={(params) => (
 						<TextField
 							{...params}
-							label="系列"
+							label={`系列 (${side === "weiss" ? "Weiß" : "Schwarz"})`}
 							variant="outlined"
 						/>
 					)}
@@ -450,12 +537,41 @@ const DeckCreate = () => {
 				/>
 				<Button
 					variant="contained"
-					color="primary"
+					sx={{
+						backgroundColor: "#a6ceb6",
+						color: "white",
+						fontWeight: "bold",
+						"&:hover": {
+							backgroundColor: "#8bb89d",
+						},
+					}}
 					onClick={() => {
 						const trimmedSeries = seriesInput.trim();
 						if (!trimmedSeries) return;
-						setForm((prev) => ({ ...prev, series: trimmedSeries }));
-						fetchSeriesCards(trimmedSeries);
+
+						// 根据选择的系列标题获取所有系列代码
+						const currentData = getCurrentSideData();
+						const selectedSeriesData = currentData.find(
+							(item) => item.title === trimmedSeries
+						);
+
+						const newSeriesCodes =
+							selectedSeriesData && selectedSeriesData.series_codes
+								? selectedSeriesData.series_codes.join(",")
+								: trimmedSeries;
+
+						// 如果已经有选择的系列且不同于当前选择，显示确认对话框
+						if (form.series && form.series !== trimmedSeries) {
+							setConfirmDialog({
+								open: true,
+								newSeries: trimmedSeries,
+								newSeriesCodes: newSeriesCodes,
+							});
+						} else {
+							// 直接切换系列
+							setForm((prev) => ({ ...prev, series: trimmedSeries }));
+							fetchSeriesCards(newSeriesCodes);
+						}
 					}}>
 					确定
 				</Button>
@@ -883,109 +999,333 @@ const DeckCreate = () => {
 				</Alert>
 			</Snackbar>
 			<Dialog
-				fullScreen
 				open={cardDialogOpen}
-				onClose={() => setCardDialogOpen(false)}>
-				<DialogTitle>{selectedCard?.name || "卡片详情"}</DialogTitle>
-				<DialogContent dividers>
+				onClose={() => setCardDialogOpen(false)}
+				maxWidth="md"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: { xs: "0", sm: "16px" },
+						maxHeight: { xs: "100vh", sm: "90vh" },
+						margin: { xs: "0", sm: "16px" },
+						height: { xs: "100%", sm: "auto" },
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						background: "linear-gradient(135deg, #a6ceb6 0%, #8bb89d 100%)",
+						color: "white",
+						fontWeight: "bold",
+						textAlign: "center",
+						padding: { xs: 1.5, sm: 2 },
+						fontSize: { xs: "1.1rem", sm: "1.25rem" },
+					}}>
+					{selectedCard?.name || "卡片详情"}
+				</DialogTitle>
+				<DialogContent
+					dividers
+					sx={{
+						padding: { xs: 2, sm: 3 },
+						overflowY: "auto",
+						flex: 1,
+					}}>
 					{selectedCard && (
 						<Box
 							sx={{
 								display: "flex",
 								flexDirection: "column",
+								gap: { xs: 2, sm: 3 },
 								alignItems: "center",
-								gap: 2,
 							}}>
-							<img
-								src={selectedCard.image_url}
-								alt={selectedCard.name}
-								style={{ maxWidth: "100%", maxHeight: 400, borderRadius: 8 }}
-							/>
-							<Box sx={{ width: "100%", maxWidth: 600 }}>
+							{/* 卡片图片 */}
+							<Box
+								sx={{
+									display: "flex",
+									justifyContent: "center",
+									width: "100%",
+								}}>
+								<img
+									src={selectedCard.image_url}
+									alt={selectedCard.name}
+									style={{
+										maxWidth: "250px",
+										width: "100%",
+										height: "auto",
+										borderRadius: "12px",
+										boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+									}}
+								/>
+							</Box>
+
+							{/* 卡片信息 */}
+							<Box sx={{ width: "100%" }}>
 								<Typography
 									variant="h6"
-									gutterBottom>
+									gutterBottom
+									sx={{
+										fontWeight: "bold",
+										color: "#1b4332",
+										borderBottom: "2px solid #a6ceb6",
+										paddingBottom: 1,
+										marginBottom: 2,
+										fontSize: { xs: "1.1rem", sm: "1.25rem" },
+									}}>
 									{selectedCard.name}
 								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									稀有度: {selectedCard.rarity || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									类型: {selectedCard.card_type || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									颜色: {selectedCard.color || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									等级: {selectedCard.level || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									费用: {selectedCard.cost || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									攻击力: {selectedCard.power || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									灵魂: {selectedCard.soul || "无"}
-								</Typography>
-								<Typography
-									variant="body1"
-									gutterBottom>
-									触发: {selectedCard.trigger || "无"}
-								</Typography>
-								{selectedCard.flavor && (
-									<Typography
-										variant="body2"
-										gutterBottom
-										sx={{ fontStyle: "italic" }}>
-										风味: {selectedCard.flavor}
-									</Typography>
+
+								{/* 基础信息网格 - 移动端改为单列 */}
+								<Box
+									sx={{
+										display: "grid",
+										gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+										gap: { xs: 1.5, sm: 2 },
+										marginBottom: { xs: 2, sm: 3 },
+									}}>
+									{[
+										{ label: "稀有度", value: selectedCard.rarity, icon: "💎" },
+										{
+											label: "类型",
+											value: selectedCard.card_type,
+											icon: "🎴",
+										},
+										{ label: "颜色", value: selectedCard.color, icon: "🎨" },
+										{ label: "等级", value: selectedCard.level, icon: "⭐" },
+										{ label: "费用", value: selectedCard.cost, icon: "💰" },
+										{ label: "攻击力", value: selectedCard.power, icon: "⚔️" },
+										{ label: "灵魂", value: selectedCard.soul, icon: "👻" },
+										{ label: "触发", value: selectedCard.trigger, icon: "⚡" },
+									].map((item, index) => (
+										<Box
+											key={index}
+											sx={{
+												backgroundColor: "#f8f9fa",
+												padding: { xs: 1, sm: 1.5 },
+												borderRadius: "8px",
+												border: "1px solid #e9ecef",
+												display: "flex",
+												alignItems: "center",
+												gap: 1,
+											}}>
+											<span style={{ fontSize: { xs: "14px", sm: "16px" } }}>
+												{item.icon}
+											</span>
+											<Typography
+												variant="body2"
+												sx={{
+													fontWeight: "600",
+													color: "#495057",
+													fontSize: { xs: "0.8rem", sm: "0.875rem" },
+												}}>
+												{item.label}:
+											</Typography>
+											<Typography
+												variant="body2"
+												sx={{
+													color: "#6c757d",
+													fontSize: { xs: "0.8rem", sm: "0.875rem" },
+												}}>
+												{item.value || "无"}
+											</Typography>
+										</Box>
+									))}
+								</Box>
+
+								{/* 风味文本 - 移动端优化 */}
+								{(selectedCard.flavor || selectedCard.zh_flavor) && (
+									<Box
+										sx={{
+											backgroundColor: "#f0f8f0",
+											padding: { xs: 1.5, sm: 2 },
+											borderRadius: "8px",
+											borderLeft: "4px solid #a6ceb6",
+											marginBottom: { xs: 1.5, sm: 2 },
+										}}>
+										<Typography
+											variant="subtitle2"
+											sx={{
+												fontWeight: "bold",
+												color: "#1b4332",
+												marginBottom: 1,
+												fontSize: { xs: "0.9rem", sm: "0.875rem" },
+											}}>
+											🌸 风味文本
+										</Typography>
+										{selectedCard.zh_flavor && (
+											<Typography
+												variant="body2"
+												sx={{
+													fontStyle: "italic",
+													color: "#495057",
+													marginBottom: 1,
+													fontSize: { xs: "0.8rem", sm: "0.875rem" },
+													lineHeight: 1.4,
+												}}>
+												{selectedCard.zh_flavor}
+											</Typography>
+										)}
+										{selectedCard.flavor && (
+											<Typography
+												variant="body2"
+												sx={{
+													fontStyle: "italic",
+													color: "#6c757d",
+													fontSize: { xs: "0.75rem", sm: "0.8rem" },
+													lineHeight: 1.4,
+												}}>
+												{selectedCard.flavor}
+											</Typography>
+										)}
+									</Box>
 								)}
-								{selectedCard.flavor && (
-									<Typography
-										variant="body2"
-										gutterBottom
-										sx={{ fontStyle: "italic" }}>
-										中文风味: {selectedCard.flavor}
-									</Typography>
-								)}
-								{selectedCard.effect && (
-									<Typography
-										variant="body2"
-										gutterBottom>
-										效果: {selectedCard.effect}
-									</Typography>
-								)}
-								{selectedCard.zh_effect && (
-									<Typography
-										variant="body2"
-										gutterBottom>
-										效果: {selectedCard.zh_effect}
-									</Typography>
+
+								{/* 效果文本 - 移动端优化 */}
+								{(selectedCard.effect || selectedCard.zh_effect) && (
+									<Box
+										sx={{
+											backgroundColor: "#fff3cd",
+											padding: { xs: 1.5, sm: 2 },
+											borderRadius: "8px",
+											borderLeft: "4px solid #ffc107",
+										}}>
+										<Typography
+											variant="subtitle2"
+											sx={{
+												fontWeight: "bold",
+												color: "#856404",
+												marginBottom: 1,
+												fontSize: { xs: "0.9rem", sm: "0.875rem" },
+											}}>
+											⚡ 卡片效果
+										</Typography>
+										{selectedCard.zh_effect && (
+											<Typography
+												variant="body2"
+												sx={{
+													color: "#495057",
+													marginBottom: 1,
+													lineHeight: 1.4,
+													fontSize: { xs: "0.8rem", sm: "0.875rem" },
+												}}>
+												{selectedCard.zh_effect}
+											</Typography>
+										)}
+										{selectedCard.effect && (
+											<Typography
+												variant="body2"
+												sx={{
+													color: "#6c757d",
+													fontSize: { xs: "0.75rem", sm: "0.8rem" },
+													lineHeight: 1.4,
+												}}>
+												{selectedCard.effect}
+											</Typography>
+										)}
+									</Box>
 								)}
 							</Box>
 						</Box>
 					)}
 				</DialogContent>
-				<DialogActions>
+				<DialogActions
+					sx={{
+						padding: { xs: 1.5, sm: 2 },
+						justifyContent: "center",
+						borderTop: "1px solid #e9ecef",
+					}}>
 					<Button
 						onClick={() => setCardDialogOpen(false)}
-						color="primary">
+						variant="contained"
+						sx={{
+							backgroundColor: "#a6ceb6",
+							color: "white",
+							fontWeight: "bold",
+							paddingX: { xs: 3, sm: 4 },
+							paddingY: { xs: 1, sm: 1.5 },
+							borderRadius: "20px",
+							fontSize: { xs: "0.9rem", sm: "1rem" },
+							"&:hover": {
+								backgroundColor: "#8bb89d",
+							},
+						}}>
 						关闭
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* 确认切换系列对话框 */}
+			<Dialog
+				open={confirmDialog.open}
+				onClose={handleCancelSeriesChange}
+				maxWidth="sm"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: "12px",
+						padding: 1,
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						textAlign: "center",
+						color: "#1b4332",
+						fontWeight: "bold",
+						fontSize: "1.2rem",
+					}}>
+					⚠️ 确认切换系列
+				</DialogTitle>
+				<DialogContent sx={{ textAlign: "center", padding: 3 }}>
+					<Typography
+						variant="body1"
+						sx={{ marginBottom: 2 }}>
+						您当前已选择系列：
+						<strong style={{ color: "#1b4332" }}>{form.series}</strong>
+					</Typography>
+					<Typography
+						variant="body1"
+						sx={{ marginBottom: 2 }}>
+						确定要切换到：
+						<strong style={{ color: "#a6ceb6" }}>
+							{confirmDialog.newSeries}
+						</strong>{" "}
+						吗？
+					</Typography>
+					<Typography
+						variant="body2"
+						sx={{ color: "#666", fontStyle: "italic" }}>
+						切换系列将清空当前的筛选条件和搜索结果
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ padding: 2, justifyContent: "center", gap: 2 }}>
+					<Button
+						onClick={handleCancelSeriesChange}
+						variant="outlined"
+						sx={{
+							borderColor: "#a6ceb6",
+							color: "#a6ceb6",
+							fontWeight: "bold",
+							paddingX: 3,
+							borderRadius: "20px",
+							"&:hover": {
+								backgroundColor: "rgba(166, 206, 182, 0.1)",
+								borderColor: "#8bb89d",
+							},
+						}}>
+						取消
+					</Button>
+					<Button
+						onClick={handleConfirmSeriesChange}
+						variant="contained"
+						sx={{
+							backgroundColor: "#a6ceb6",
+							color: "white",
+							fontWeight: "bold",
+							paddingX: 3,
+							borderRadius: "20px",
+							"&:hover": {
+								backgroundColor: "#8bb89d",
+							},
+						}}>
+						确认切换
 					</Button>
 				</DialogActions>
 			</Dialog>

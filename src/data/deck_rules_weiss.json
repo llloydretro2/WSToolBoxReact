@@ -1,0 +1,545 @@
+{
+  "table_type": "weiss_side",
+  "title_categories": [
+    {
+      "title": "ダ・カーポ＆Dal Segno",
+      "series_codes": [
+        "DC",
+        "DC3",
+        "DC4",
+        "DS",
+        "DC5"
+      ]
+    },
+    {
+      "title": "リトルバスターズ！",
+      "series_codes": [
+        "LB",
+        "KW",
+        "Klb"
+      ]
+    },
+    {
+      "title": "ゼロの使い魔",
+      "series_codes": [
+        "ZM"
+      ]
+    },
+    {
+      "title": "魔法少女リリカルなのは",
+      "series_codes": [
+        "NS",
+        "N1",
+        "NV",
+        "NA",
+        "N2",
+        "NR",
+        "ND",
+        "NTA"
+      ]
+    },
+    {
+      "title": "らき☆すた",
+      "series_codes": [
+        "LS"
+      ]
+    },
+    {
+      "title": "宇宙をかける少女／舞-HiME＆舞-乙HiME",
+      "series_codes": [
+        "SK",
+        "MH"
+      ]
+    },
+    {
+      "title": "Phantom -Requiem for the Phantom-",
+      "series_codes": [
+        "PT"
+      ]
+    },
+    {
+      "title": "涼宮ハルヒの憂鬱",
+      "series_codes": [
+        "SY",
+        "Ssy"
+      ]
+    },
+    {
+      "title": "とある魔術の禁書目録／とある科学の超電磁砲",
+      "series_codes": [
+        "ID",
+        "RG",
+        "Gid"
+      ]
+    },
+    {
+      "title": "Angel Beats!／クドわふたー",
+      "series_codes": [
+        "AB",
+        "KW",
+        "Kab",
+        "Hab"
+      ]
+    },
+    {
+      "title": "灼眼のシャナ",
+      "series_codes": [
+        "SS",
+        "Gss"
+      ]
+    },
+    {
+      "title": "Rewrite",
+      "series_codes": [
+        "RW",
+        "Krw"
+      ]
+    },
+    {
+      "title": "ロボティクス・ノーツ",
+      "series_codes": [
+        "RN"
+      ]
+    },
+    {
+      "title": "日常",
+      "series_codes": [
+        "NJ"
+      ]
+    },
+    {
+      "title": "DOG DAYS",
+      "series_codes": [
+        "DD"
+      ]
+    },
+    {
+      "title": "魔法少女まどか☆マギカ",
+      "series_codes": [
+        "MM",
+        "MR"
+      ]
+    },
+    {
+      "title": "戦姫絶唱シンフォギア",
+      "series_codes": [
+        "SG"
+      ]
+    },
+    {
+      "title": "ビジュアルアーツ",
+      "series_codes": [
+        "VA"
+      ]
+    },
+    {
+      "title": "ビビッドレッド・オペレーション",
+      "series_codes": [
+        "VR"
+      ]
+    },
+    {
+      "title": "ラブライブ！",
+      "series_codes": [
+        "LL",
+        "LSF",
+        "SIL"
+      ]
+    },
+    {
+      "title": "幻影ヲ駆ケル太陽",
+      "series_codes": [
+        "GT"
+      ]
+    },
+    {
+      "title": "ニセコイ",
+      "series_codes": [
+        "NK"
+      ]
+    },
+    {
+      "title": "ガールフレンド(仮)",
+      "series_codes": [
+        "GF"
+      ]
+    },
+    {
+      "title": "To LOVEる",
+      "series_codes": [
+        "TL"
+      ]
+    },
+    {
+      "title": "Charlotte",
+      "series_codes": [
+        "CHA",
+        "Kch"
+      ]
+    },
+    {
+      "title": "アイドルマスター シンデレラガールズ",
+      "series_codes": [
+        "IMC"
+      ]
+    },
+    {
+      "title": "ご注文はうさぎですか？？",
+      "series_codes": [
+        "GU"
+      ]
+    },
+    {
+      "title": "ラブライブ！サンシャイン!!",
+      "series_codes": [
+        "LSS",
+        "LSF",
+        "SIS"
+      ]
+    },
+    {
+      "title": "Re:ゼロから始める異世界生活",
+      "series_codes": [
+        "RZ"
+      ]
+    },
+    {
+      "title": "チェインクロニクル ～ヘクセイタスの閃～",
+      "series_codes": [
+        "CC"
+      ]
+    },
+    {
+      "title": "STAR WARS",
+      "series_codes": [
+        "SW",
+        "Dsw"
+      ]
+    },
+    {
+      "title": "天元突破グレンラガン",
+      "series_codes": [
+        "GL"
+      ]
+    },
+    {
+      "title": "Fate/Apocrypha",
+      "series_codes": [
+        "APO"
+      ]
+    },
+    {
+      "title": "ダーリン・イン・ザ・フランキス",
+      "series_codes": [
+        "FXX"
+      ]
+    },
+    {
+      "title": "アニメーション映画『GODZILLA』",
+      "series_codes": [
+        "GZL"
+      ]
+    },
+    {
+      "title": "ソードアート・オンライン オルタナティブ ガンゲイル・オンライン",
+      "series_codes": [
+        "GGO",
+        "Ggg"
+      ]
+    },
+    {
+      "title": "少女☆歌劇 レヴュースタァライト",
+      "series_codes": [
+        "RSL"
+      ]
+    },
+    {
+      "title": "ノーゲーム・ノーライフ",
+      "series_codes": [
+        "NGL"
+      ]
+    },
+    {
+      "title": "アイドルマスター ミリオンライブ！",
+      "series_codes": [
+        "IMS",
+        "IAS"
+      ]
+    },
+    {
+      "title": "STEINS;GATE",
+      "series_codes": [
+        "STG"
+      ]
+    },
+    {
+      "title": "オーバーロード",
+      "series_codes": [
+        "OVL"
+      ]
+    },
+    {
+      "title": "ゴブリンスレイヤー",
+      "series_codes": [
+        "GBS"
+      ]
+    },
+    {
+      "title": "ジョジョの奇妙な冒険",
+      "series_codes": [
+        "JJ"
+      ]
+    },
+    {
+      "title": "転生したらスライムだった件",
+      "series_codes": [
+        "TSK"
+      ]
+    },
+    {
+      "title": "Fate/Grand Order（アニメ）",
+      "series_codes": [
+        "FGO"
+      ]
+    },
+    {
+      "title": "グリザイアシリーズ",
+      "series_codes": [
+        "GRI"
+      ]
+    },
+    {
+      "title": "アサルトリリィ",
+      "series_codes": [
+        "ALL"
+      ]
+    },
+    {
+      "title": "新サクラ大戦",
+      "series_codes": [
+        "SKR"
+      ]
+    },
+    {
+      "title": "ロストディケイド",
+      "series_codes": [
+        "LOD"
+      ]
+    },
+    {
+      "title": "痛いのは嫌なので防御力に極振りしたいと思います。",
+      "series_codes": [
+        "BFR"
+      ]
+    },
+    {
+      "title": "かぐや様は告らせたい～天才たちの恋愛頭脳戦～",
+      "series_codes": [
+        "KGL"
+      ]
+    },
+    {
+      "title": "アイドルマスター シャイニーカラーズ",
+      "series_codes": [
+        "ISC"
+      ]
+    },
+    {
+      "title": "無職転生 ～異世界行ったら本気だす～",
+      "series_codes": [
+        "MTI"
+      ]
+    },
+    {
+      "title": "ワールドトリガー",
+      "series_codes": [
+        "WTR"
+      ]
+    },
+    {
+      "title": "D_CIDE TRAUMEREI",
+      "series_codes": [
+        "DCT"
+      ]
+    },
+    {
+      "title": "ダンジョンに出会いを求めるのは間違っているだろうか",
+      "series_codes": [
+        "DDM"
+      ]
+    },
+    {
+      "title": "プロジェクトセカイ カラフルステージ！ feat. 初音ミク",
+      "series_codes": [
+        "PJS"
+      ]
+    },
+    {
+      "title": "東京リベンジャーズ",
+      "series_codes": [
+        "TRV"
+      ]
+    },
+    {
+      "title": "アズールレーン",
+      "series_codes": [
+        "AZL"
+      ]
+    },
+    {
+      "title": "チェンソーマン",
+      "series_codes": [
+        "CSM"
+      ]
+    },
+    {
+      "title": "ありふれた職業で世界最強",
+      "series_codes": [
+        "ARI"
+      ]
+    },
+    {
+      "title": "Disney100",
+      "series_codes": [
+        "Dmv",
+        "Dsw",
+        "Dpx",
+        "Dds"
+      ]
+    },
+    {
+      "title": "パズル＆ドラゴンズ",
+      "series_codes": [
+        "PAD"
+      ]
+    },
+    {
+      "title": "SPY×FAMILY",
+      "series_codes": [
+        "SPY"
+      ]
+    },
+    {
+      "title": "電撃文庫",
+      "series_codes": [
+        "G86",
+        "Gas",
+        "Gaw",
+        "Gbb",
+        "Gbc",
+        "Gbd",
+        "Gbl",
+        "Gby",
+        "Gc3",
+        "Gdc",
+        "Gdr",
+        "Gds",
+        "Gdy",
+        "Gem",
+        "Gfq",
+        "Gga",
+        "Ggh",
+        "Ggg",
+        "Ggu",
+        "Ghh",
+        "Ghm",
+        "Gid",
+        "Giy",
+        "Gkb",
+        "Gkl",
+        "Gkm",
+        "Glt",
+        "Gmf",
+        "Gmm",
+        "Gmr",
+        "Gms",
+        "Gnh",
+        "Gnm",
+        "Gns",
+        "Gny",
+        "Goi",
+        "Gok",
+        "Gom",
+        "Gos",
+        "Grk",
+        "Gsb",
+        "Gsc",
+        "Gsd",
+        "Gsk",
+        "Gso",
+        "Gsp",
+        "Gsr",
+        "Gss",
+        "Gtd",
+        "Gyf"
+      ]
+    },
+    {
+      "title": "【推しの子】",
+      "series_codes": [
+        "OSK"
+      ]
+    },
+    {
+      "title": "リアセカイ",
+      "series_codes": [
+        "RSK"
+      ]
+    },
+    {
+      "title": "葬送のフリーレン",
+      "series_codes": [
+        "SFN"
+      ]
+    },
+    {
+      "title": "Disney",
+      "series_codes": [
+        "Dds",
+        "MRd"
+      ]
+    },
+    {
+      "title": "ミラー・ウォリアーズ",
+      "series_codes": [
+        "MRd",
+        "MRp"
+      ]
+    },
+    {
+      "title": "るろうに剣心 －明治剣客浪漫譚－",
+      "series_codes": [
+        "RKN"
+      ]
+    },
+    {
+      "title": "勝利の女神：NIKKE",
+      "series_codes": [
+        "NIK"
+      ]
+    },
+    {
+      "title": "ダンダダン",
+      "series_codes": [
+        "DDD"
+      ]
+    },
+    {
+      "title": "ガールズバンドクライ",
+      "series_codes": [
+        "GCR"
+      ]
+    },
+    {
+      "title": "怪獣８号",
+      "series_codes": [
+        "KJ8"
+      ]
+    }
+  ],
+  "crawl_info": {
+    "source_url": "https://ws-tcg.com/rules/deck_rule/",
+    "crawl_time": "2025-10-04",
+    "total_entries": 75
+  }
+}

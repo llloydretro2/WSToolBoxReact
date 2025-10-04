@@ -3,6 +3,9 @@ import { Tabs, Tab, Box } from "@mui/material";
 import DeckCreate from "./DeckCreate";
 import DeckSearch from "./DeckSearch";
 
+// TODO: 更改系列筛选，需要查看neo-standard确定包含的系列
+// TODO: 前端路由需要更改，现在的路由方式太奇怪
+
 function DeckPage() {
 	const [tabIndex, setTabIndex] = useState(0);
 
