@@ -387,17 +387,25 @@ const DeckCreate = () => {
 
 		setCreatingDeck(true);
 		try {
+			const deckPayload = {
+				name: trimmedName,
+				series: form.series,
+				side: side, // 添加 side 字段
+				cards: deckEntries,
+				isPublic: true,
+			};
+
+			console.log("创建卡组请求数据:", deckPayload);
+			console.log("当前选择的边:", side);
+			console.log("当前选择的系列:", form.series);
+
 			const response = await fetch(`${BACKEND_URL}/api/decks`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${token}`,
 				},
-				body: JSON.stringify({
-					name: trimmedName,
-					cards: deckEntries,
-					isPublic: true,
-				}),
+				body: JSON.stringify(deckPayload),
 			});
 
 			if (!response.ok) {
@@ -923,67 +931,203 @@ const DeckCreate = () => {
 				{JSON.stringify(allCards, null, 2)}
 			</Box>
 			<Fab
-				color="primary"
-				sx={{ position: "fixed", bottom: 16, right: 16 }}
+				sx={{
+					position: "fixed",
+					bottom: 16,
+					right: 16,
+					backgroundColor: "#a6ceb6",
+					color: "white",
+					fontSize: "16px",
+					fontWeight: "bold",
+					width: 64,
+					height: 64,
+					boxShadow: "0 8px 24px rgba(166, 206, 182, 0.4)",
+					"&:hover": {
+						backgroundColor: "#8bb89d",
+						boxShadow: "0 12px 32px rgba(166, 206, 182, 0.6)",
+						transform: "scale(1.05)",
+					},
+					transition: "all 0.3s ease",
+				}}
 				onClick={() => setDeckOpen(true)}>
 				卡组
 			</Fab>
 			<Dialog
 				open={deckOpen}
-				onClose={() => setDeckOpen(false)}>
-				<DialogTitle>当前卡组</DialogTitle>
-				<DialogContent>
-					<Box
-						sx={{
-							display: "grid",
-							gridTemplateColumns: {
-								xs: "repeat(3, 1fr)",
-								sm: "repeat(5, 1fr)",
-							},
-							gap: 2,
-						}}>
-						{Object.entries(deck).map(([cardId, count]) => {
-							const card = allCards.find((c) => c.cardno === cardId);
-							if (!card) return null;
-							return (
-								<Box
-									key={cardId}
-									sx={{ textAlign: "center" }}>
-									<img
-										src={card.image_url}
-										alt={card.name}
-										style={{ width: "100%", height: "auto", borderRadius: 4 }}
-									/>
-									<Typography
-										variant="body2"
-										sx={{ mt: 1 }}>
-										x{count}
-									</Typography>
+				onClose={() => setDeckOpen(false)}
+				maxWidth="lg"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: "16px",
+						maxHeight: "90vh",
+						margin: "16px",
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						background: "linear-gradient(135deg, #a6ceb6 0%, #8bb89d 100%)",
+						color: "white",
+						fontWeight: "bold",
+						textAlign: "center",
+						fontSize: "1.3rem",
+						padding: 3,
+					}}>
+					🎴 当前卡组 (
+					{Object.values(deck).reduce((sum, count) => sum + count, 0)} 张卡片)
+				</DialogTitle>
+				<DialogContent sx={{ padding: 3, backgroundColor: "#f8f9fa" }}>
+					{Object.keys(deck).length === 0 ? (
+						<Box
+							sx={{
+								textAlign: "center",
+								padding: 4,
+								color: "#6c757d",
+							}}>
+							<Typography
+								variant="h6"
+								sx={{ marginBottom: 2 }}>
+								📝 卡组为空
+							</Typography>
+							<Typography variant="body2">
+								点击卡片添加到卡组中开始构建吧！
+							</Typography>
+						</Box>
+					) : (
+						<Box
+							sx={{
+								display: "grid",
+								gridTemplateColumns: {
+									xs: "repeat(2, 1fr)",
+									sm: "repeat(3, 1fr)",
+									md: "repeat(4, 1fr)",
+									lg: "repeat(5, 1fr)",
+								},
+								gap: 3,
+							}}>
+							{Object.entries(deck).map(([cardId, count]) => {
+								const card = allCards.find((c) => c.cardno === cardId);
+								if (!card) return null;
+								return (
 									<Box
+										key={cardId}
 										sx={{
-											display: "flex",
-											justifyContent: "center",
-											alignItems: "center",
-											gap: 1,
-											mt: 1,
+											textAlign: "center",
+											backgroundColor: "white",
+											borderRadius: "12px",
+											padding: 2,
+											boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+											transition: "all 0.3s ease",
+											"&:hover": {
+												transform: "translateY(-4px)",
+												boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+											},
 										}}>
-										<Button
-											size="small"
-											variant="outlined"
-											onClick={() => decrementCount(cardId)}>
-											-
-										</Button>
-										<Button
-											size="small"
-											variant="outlined"
-											onClick={() => incrementCount(cardId)}>
-											+
-										</Button>
+										<Box sx={{ position: "relative", marginBottom: 1 }}>
+											<img
+												src={card.image_url}
+												alt={card.name}
+												style={{
+													width: "100%",
+													height: "auto",
+													borderRadius: "8px",
+													boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+												}}
+											/>
+											<Box
+												sx={{
+													position: "absolute",
+													top: -8,
+													right: -8,
+													backgroundColor: "#a6ceb6",
+													color: "white",
+													borderRadius: "50%",
+													width: 32,
+													height: 32,
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
+													fontWeight: "bold",
+													fontSize: "14px",
+													boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+												}}>
+												{count}
+											</Box>
+										</Box>
+										<Typography
+											variant="body2"
+											sx={{
+												fontWeight: "500",
+												color: "#495057",
+												marginBottom: 1,
+												fontSize: "0.85rem",
+												lineHeight: 1.2,
+												display: "-webkit-box",
+												WebkitLineClamp: 2,
+												WebkitBoxOrient: "vertical",
+												overflow: "hidden",
+											}}>
+											{card.name}
+										</Typography>
+										<Box
+											sx={{
+												display: "flex",
+												justifyContent: "center",
+												alignItems: "center",
+												gap: 1,
+											}}>
+											<Button
+												size="small"
+												variant="outlined"
+												sx={{
+													minWidth: 32,
+													width: 32,
+													height: 32,
+													borderRadius: "50%",
+													borderColor: "#dc3545",
+													color: "#dc3545",
+													"&:hover": {
+														backgroundColor: "#dc3545",
+														color: "white",
+													},
+												}}
+												onClick={() => decrementCount(cardId)}>
+												−
+											</Button>
+											<Typography
+												variant="body2"
+												sx={{
+													fontWeight: "bold",
+													color: "#a6ceb6",
+													minWidth: 24,
+													textAlign: "center",
+												}}>
+												{count}
+											</Typography>
+											<Button
+												size="small"
+												variant="outlined"
+												sx={{
+													minWidth: 32,
+													width: 32,
+													height: 32,
+													borderRadius: "50%",
+													borderColor: "#28a745",
+													color: "#28a745",
+													"&:hover": {
+														backgroundColor: "#28a745",
+														color: "white",
+													},
+												}}
+												onClick={() => incrementCount(cardId)}>
+												+
+											</Button>
+										</Box>
 									</Box>
-								</Box>
-							);
-						})}
-					</Box>
+								);
+							})}
+						</Box>
+					)}
 				</DialogContent>
 			</Dialog>
 			<Snackbar

@@ -21,6 +21,9 @@ import Simulator from "./pages/Simulator";
 import LoginPage from "./pages/Login";
 import RandomShuffle from "./pages/RandomShuffle";
 import DeckPage from "./pages/Deck";
+import DeckCreate from "./pages/DeckCreate";
+import DeckSearch from "./pages/DeckSearch";
+import DeckEdit from "./pages/DeckEdit";
 import Record from "./pages/Record";
 
 function AnimatedRoutes() {
@@ -130,18 +133,34 @@ function AnimatedRoutes() {
 					}
 				/>
 				<Route
-					path="/record"
+					path="/deck-create"
 					element={
 						<PageTransition>
-							<Record />
+							<DeckCreate />
 						</PageTransition>
 					}
 				/>
 				<Route
-					path="*"
+					path="/deck-search"
 					element={
 						<PageTransition>
-							<Home />
+							<DeckSearch />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/deck-edit"
+					element={
+						<PageTransition>
+							<DeckEdit />
+						</PageTransition>
+					}
+				/>
+				<Route
+					path="/record"
+					element={
+						<PageTransition>
+							<Record />
 						</PageTransition>
 					}
 				/>

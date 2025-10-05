@@ -12,7 +12,9 @@
     "chessClock": "Chess Clock",
     "shuffle": "Shuffle",
     "record": "Records",
-    "deck": "Deck"
+    "deck": "Deck",
+    "deckCreate": "Create Deck",
+    "deckSearch": "Deck List"
   },
   "common": {
     "language": {

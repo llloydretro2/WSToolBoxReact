@@ -45,7 +45,8 @@ const toolsMenuItems = [
 // 用户相关菜单项
 const userNavItems = [
 	{ labelKey: "menu.record", path: "/record" },
-	{ labelKey: "menu.deck", path: "/deck" },
+	{ labelKey: "menu.deckCreate", path: "/deck-create" },
+	{ labelKey: "menu.deckSearch", path: "/deck-search" },
 ];
 
 function getAvatarIndexFromUsername(username) {

@@ -15,15 +15,21 @@ import {
 	DialogActions,
 	Snackbar,
 	Alert,
+	TextField,
+	Autocomplete,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckSearch = () => {
 	const { token, username } = useAuth();
+	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [decks, setDecks] = useState([]);
@@ -39,6 +45,9 @@ const DeckSearch = () => {
 	const [customDialogOpen, setCustomDialogOpen] = useState(false);
 	const [customDialogDeck, setCustomDialogDeck] = useState(null);
 	const [customDrawnCards, setCustomDrawnCards] = useState([]);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [deletingDeck, setDeletingDeck] = useState(null);
+	const [isDeleting, setIsDeleting] = useState(false);
 
 	useEffect(() => {
 		if (!token) {
@@ -493,6 +502,94 @@ const DeckSearch = () => {
 		setSnackbar((prev) => ({ ...prev, open: false }));
 	};
 
+	// 打开编辑页面
+	const handleEditDeck = (deck) => {
+		console.log("准备编辑卡组:", deck);
+		console.log("卡组ID:", deck._id || deck.id);
+
+		const deckId = deck._id || deck.id;
+		if (!deckId) {
+			console.error("❌ 卡组缺少ID");
+			setSnackbar({
+				open: true,
+				message: "卡组数据异常，缺少ID",
+				severity: "error",
+			});
+			return;
+		}
+
+		console.log("跳转到编辑页面，传递ID:", deckId);
+		navigate("/deck-edit", {
+			state: {
+				deckId: deckId,
+			},
+		});
+	};
+
+	// 打开删除确认对话框
+	const handleDeleteDeck = (deck) => {
+		setDeletingDeck(deck);
+		setDeleteDialogOpen(true);
+	};
+
+	// 执行删除卡组
+	const handleConfirmDelete = async () => {
+		if (!deletingDeck || isDeleting) return;
+
+		console.log(
+			`🗑️ 开始删除卡组: ${deletingDeck.name} (ID: ${deletingDeck.id})`
+		);
+		setIsDeleting(true);
+		try {
+			const response = await fetch(
+				`${BACKEND_URL}/api/decks/${deletingDeck.id}`,
+				{
+					method: "DELETE",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+				}
+			);
+
+			console.log(`📡 删除请求响应状态: ${response.status}`);
+
+			if (!response.ok) {
+				const errorBody = await response.text();
+				console.error(`❌ 删除请求失败: ${response.status} - ${errorBody}`);
+				throw new Error(`删除卡组失败: ${response.status}`);
+			}
+
+			const result = await response.json();
+			console.log(`✅ 删除成功:`, result);
+
+			setSnackbar({
+				open: true,
+				message: "卡组删除成功",
+				severity: "success",
+			});
+
+			// 刷新卡组列表
+			setRefreshIndex((prev) => prev + 1);
+		} catch (error) {
+			console.error("删除卡组失败:", error);
+			setSnackbar({
+				open: true,
+				message: error.message || "删除卡组失败",
+				severity: "error",
+			});
+		} finally {
+			setIsDeleting(false);
+			setDeleteDialogOpen(false);
+			setDeletingDeck(null);
+		}
+	};
+
+	// 取消删除
+	const handleCancelDelete = () => {
+		setDeleteDialogOpen(false);
+		setDeletingDeck(null);
+	};
+
 	return (
 		<Box
 			sx={{
@@ -848,6 +945,38 @@ const DeckSearch = () => {
 										<Button
 											variant="outlined"
 											size="small"
+											onClick={() => handleEditDeck(deck)}
+											startIcon={<EditIcon />}
+											sx={{
+												...BUTTON_STYLES.secondary,
+												borderColor: "#a6ceb6",
+												color: "#a6ceb6",
+												"&:hover": {
+													backgroundColor: "#a6ceb6",
+													color: "white",
+												},
+											}}>
+											编辑
+										</Button>
+										<Button
+											variant="outlined"
+											size="small"
+											onClick={() => handleDeleteDeck(deck)}
+											startIcon={<DeleteIcon />}
+											sx={{
+												...BUTTON_STYLES.secondary,
+												borderColor: "#dc3545",
+												color: "#dc3545",
+												"&:hover": {
+													backgroundColor: "#dc3545",
+													color: "white",
+												},
+											}}>
+											删除
+										</Button>
+										<Button
+											variant="outlined"
+											size="small"
 											onClick={() => {
 												setCustomDialogDeck(deck);
 												setCustomDrawnCards([]);
@@ -1046,6 +1175,92 @@ const DeckSearch = () => {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
+			{/* 删除确认对话框 */}
+			<Dialog
+				open={deleteDialogOpen}
+				onClose={handleCancelDelete}
+				maxWidth="sm"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: "12px",
+						padding: 1,
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						textAlign: "center",
+						color: "#dc3545",
+						fontWeight: "bold",
+						fontSize: "1.2rem",
+					}}>
+					⚠️ 确认删除卡组
+				</DialogTitle>
+				<DialogContent sx={{ textAlign: "center", padding: 3 }}>
+					<Typography
+						variant="body1"
+						sx={{ marginBottom: 2 }}>
+						您确定要删除卡组：
+						<strong style={{ color: "#dc3545" }}>{deletingDeck?.name}</strong>
+						吗？
+					</Typography>
+					<Typography
+						variant="body2"
+						sx={{ color: "#666", fontStyle: "italic" }}>
+						此操作不可撤销，删除后将无法恢复。
+					</Typography>
+				</DialogContent>
+				<DialogActions sx={{ padding: 2, justifyContent: "center", gap: 2 }}>
+					<Button
+						onClick={handleCancelDelete}
+						variant="outlined"
+						sx={{
+							borderColor: "#a6ceb6",
+							color: "#a6ceb6",
+							fontWeight: "bold",
+							paddingX: 3,
+							borderRadius: "20px",
+							"&:hover": {
+								backgroundColor: "rgba(166, 206, 182, 0.1)",
+								borderColor: "#8bb89d",
+							},
+						}}>
+						取消
+					</Button>
+					<Button
+						onClick={handleConfirmDelete}
+						variant="contained"
+						disabled={isDeleting}
+						sx={{
+							backgroundColor: "#dc3545",
+							color: "white",
+							fontWeight: "bold",
+							paddingX: 3,
+							borderRadius: "20px",
+							"&:hover": {
+								backgroundColor: "#c82333",
+							},
+							"&:disabled": {
+								backgroundColor: "#f8d7da",
+								color: "#721c24",
+							},
+						}}>
+						{isDeleting ? (
+							<>
+								<CircularProgress
+									size={20}
+									sx={{ mr: 1 }}
+								/>
+								删除中...
+							</>
+						) : (
+							"确认删除"
+						)}
+					</Button>
+				</DialogActions>
+			</Dialog>
+
 			<Snackbar
 				open={snackbar.open}
 				autoHideDuration={3000}

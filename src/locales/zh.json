@@ -12,7 +12,9 @@
     "chessClock": "棋钟",
     "shuffle": "随机洗牌",
     "record": "记录",
-    "deck": "卡组"
+    "deck": "卡组",
+    "deckCreate": "创建卡组",
+    "deckSearch": "卡组列表"
   },
   "common": {
     "language": {
