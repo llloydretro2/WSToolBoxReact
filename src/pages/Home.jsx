@@ -115,17 +115,7 @@ function Home() {
 									<Box
 										sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
 										<Chip
-											label="漫威"
-											size="medium"
-											sx={{
-												bgcolor: "rgba(27, 67, 50, 0.15)",
-												color: "#1b4332",
-												fontWeight: 600,
-												alignSelf: "flex-start",
-											}}
-										/>
-										<Chip
-											label="闪耀色彩pb"
+											label="约战3"
 											size="medium"
 											sx={{
 												bgcolor: "rgba(27, 67, 50, 0.15)",
@@ -172,7 +162,6 @@ function Home() {
 									<Box
 										sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
 										{[
-											"卡组编辑",
 											"导出战绩",
 											"自动打包",
 											"图片形式导出卡组",
