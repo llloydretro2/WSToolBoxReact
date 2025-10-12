@@ -125,7 +125,8 @@ function PickPacks() {
 					spacing={3}
 					justifyContent="center"
 					alignItems="center">
-					<Grid size={{ xs: 12, sm: 6, md: 4 }}>
+					{/* 第一行：输入框 */}
+					<Grid size={{ xs: 12, sm: 6, md: 6 }}>
 						<TextField
 							type="number"
 							label={t("pages.pickPacks.openPacks")}
@@ -145,7 +146,7 @@ function PickPacks() {
 							}}
 						/>
 					</Grid>
-					<Grid size={{ xs: 12, sm: 6, md: 4 }}>
+					<Grid size={{ xs: 12, sm: 6, md: 6 }}>
 						<TextField
 							type="number"
 							label={t("pages.pickPacks.totalPacks")}
@@ -165,12 +166,15 @@ function PickPacks() {
 							}}
 						/>
 					</Grid>
-					<Grid size={{ xs: 12, md: 4 }}>
+
+					{/* 第二行：按钮 */}
+					<Grid size={{ xs: 12 }}>
 						<Box
 							display="flex"
 							justifyContent="center"
-							gap={2}
-							sx={{ height: "100%" }}>
+							alignItems="center"
+							gap={3}
+							sx={{ mt: 2 }}>
 							<motion.div
 								whileHover={{ scale: 1.05, rotate: 1 }}
 								whileTap={{ scale: 0.95 }}
@@ -183,25 +187,41 @@ function PickPacks() {
 										backgroundColor: "#1b4332",
 										color: "white",
 										"&:hover": { backgroundColor: "#2d5a42" },
-										px: 3,
+										px: 4,
+										py: 1.5,
+										minWidth: 140,
+										width: 140,
+										height: 48,
+										fontSize: "1rem",
 									}}>
 									{t("pages.pickPacks.openButton")}
 								</Button>
 							</motion.div>
 
-							<Button
-								variant="contained"
-								size="large"
-								onClick={clearPage}
-								sx={{
-									backgroundColor: "#760f10",
-									"&:hover": {
-										backgroundColor: "#5c0f10",
-									},
-									px: 3,
-								}}>
-								{t("pages.pickPacks.resetButton")}
-							</Button>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: -1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="contained"
+									size="large"
+									onClick={clearPage}
+									sx={{
+										backgroundColor: "#760f10",
+										color: "white",
+										"&:hover": {
+											backgroundColor: "#5c0f10",
+										},
+										px: 4,
+										py: 1.5,
+										minWidth: 140,
+										width: 140,
+										height: 48,
+										fontSize: "1rem",
+									}}>
+									{t("pages.pickPacks.resetButton")}
+								</Button>
+							</motion.div>
 						</Box>
 					</Grid>
 				</Grid>

@@ -37,7 +37,6 @@
       "updateTitle": "Recent Updates",
       "contactTitle": "Contact Me",
       "todoTitle": "Development Roadmap",
-      "todoItems": ["Export Match Records", "Auto Packaging", "Export Deck as Image", "Damage Calculator"],
       "features": {
         "title": "Key Features",
         "subtitle": "Comprehensive support for your WS journey",
@@ -76,7 +75,7 @@
       "subtitle": "Please enter the total number of packs and the number of packs to open",
       "openPacks": "Packs to Open",
       "totalPacks": "Total Packs",
-      "openButton": "Open Packs",
+      "openButton": "Open",
       "resetButton": "Reset",
       "expandButton": "Expand",
       "collapseButton": "Collapse",

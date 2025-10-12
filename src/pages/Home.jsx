@@ -19,6 +19,9 @@ import {
 } from "@mui/icons-material";
 import { useLocale } from "../contexts/LocaleContext";
 
+// 硬编码的TODO项目列表
+const todoItems = ["导出对战记录", "自动组包", "导出卡组为图片", "伤害计算器"];
+
 function Home() {
 	const { t } = useLocale();
 
@@ -161,7 +164,7 @@ function Home() {
 									</Box>
 									<Box
 										sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-										{t("pages.home.todoItems").map((item, index) => (
+										{todoItems.map((item, index) => (
 											<Typography
 												key={index}
 												variant="body1"
