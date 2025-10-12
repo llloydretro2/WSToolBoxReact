@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	Box,
 	Typography,
@@ -23,6 +24,13 @@ import {
 } from "@mui/material";
 import { Visibility } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
+import {
+	PrimaryButton,
+	SecondaryButton,
+	DangerButton,
+	GenerateButton,
+	SubtleButton,
+} from "../components/ButtonVariants";
 
 // 导入卡组规则数据
 import deckRulesWeiss from "../data/deck_rules_weiss.json";
@@ -31,6 +39,7 @@ import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
 const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const DeckEdit = () => {
+	const { t } = useLocale();
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { token } = useAuth();
@@ -657,12 +666,14 @@ const DeckEdit = () => {
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											边: {deckData.side || "未设置"}
+											{t("pages.deckEdit.sideLabel")}:{" "}
+											{deckData.side || t("pages.deckEdit.notSet")}
 										</Typography>
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											系列: {deckData.series || "未设置"}
+											{t("pages.deckEdit.seriesLabel")}:{" "}
+											{deckData.series || t("pages.deckEdit.notSet")}
 										</Typography>
 										<Typography
 											variant="body2"
@@ -742,14 +753,14 @@ const DeckEdit = () => {
 			)}
 
 			<Box sx={{ mt: 4, display: "flex", gap: 2, justifyContent: "center" }}>
-				<Button
+				<SecondaryButton
 					variant="outlined"
 					onClick={() => navigate("/deck-search")}
 					disabled={saving}>
 					返回卡组列表
-				</Button>
+				</SecondaryButton>
 				{deckData && (
-					<Button
+					<PrimaryButton
 						variant="contained"
 						onClick={handleSave}
 						disabled={saving}
@@ -760,7 +771,7 @@ const DeckEdit = () => {
 							},
 						}}>
 						{saving ? <CircularProgress size={20} /> : "保存卡组"}
-					</Button>
+					</PrimaryButton>
 				)}
 			</Box>
 
@@ -864,7 +875,7 @@ const DeckEdit = () => {
 						freeSolo={false}
 						disableClearable={false}
 					/>
-					<Button
+					<PrimaryButton
 						variant="contained"
 						sx={{
 							backgroundColor: "#a6ceb6",
@@ -903,7 +914,7 @@ const DeckEdit = () => {
 							}
 						}}>
 						确定
-					</Button>
+					</PrimaryButton>
 				</Box>
 
 				{form.series && (
@@ -1067,7 +1078,7 @@ const DeckEdit = () => {
 								width: "100%",
 								mt: 2,
 							}}>
-							<Button
+							<PrimaryButton
 								type="submit"
 								variant="contained"
 								sx={{
@@ -1079,8 +1090,8 @@ const DeckEdit = () => {
 									},
 								}}>
 								搜索
-							</Button>
-							<Button
+							</PrimaryButton>
+							<SecondaryButton
 								type="button"
 								variant="outlined"
 								sx={{
@@ -1094,7 +1105,7 @@ const DeckEdit = () => {
 								}}
 								onClick={handleFilterReset}>
 								重置
-							</Button>
+							</SecondaryButton>
 						</Box>
 					</Box>
 				)}
@@ -1151,7 +1162,7 @@ const DeckEdit = () => {
 												flexWrap: "nowrap",
 												maxWidth: "100%",
 											}}>
-											<Button
+											<DangerButton
 												variant="outlined"
 												size="small"
 												sx={{
@@ -1163,7 +1174,7 @@ const DeckEdit = () => {
 												onClick={() => decrementCount(cardId)}
 												disabled={count === 0}>
 												-
-											</Button>
+											</DangerButton>
 											<Typography
 												sx={{
 													minWidth: 30,
@@ -1178,7 +1189,7 @@ const DeckEdit = () => {
 												}}>
 												{count}
 											</Typography>
-											<Button
+											<PrimaryButton
 												variant="outlined"
 												size="small"
 												sx={{
@@ -1189,7 +1200,7 @@ const DeckEdit = () => {
 												}}
 												onClick={() => incrementCount(cardId)}>
 												+
-											</Button>
+											</PrimaryButton>
 										</Box>
 									</Box>
 								);
@@ -1206,7 +1217,7 @@ const DeckEdit = () => {
 								mt: 3,
 								mb: 2,
 							}}>
-							<Button
+							<SecondaryButton
 								variant="outlined"
 								onClick={handleLoadMore}
 								disabled={isLoadingMore}
@@ -1219,7 +1230,7 @@ const DeckEdit = () => {
 									},
 								}}>
 								{isLoadingMore ? <CircularProgress size={20} /> : "加载更多"}
-							</Button>
+							</SecondaryButton>
 						</Box>
 					)}
 				</Box>
@@ -1233,7 +1244,7 @@ const DeckEdit = () => {
 					mt: 4,
 					mb: 3,
 				}}>
-				<Button
+				<PrimaryButton
 					variant="contained"
 					onClick={handleSaveDeck}
 					disabled={isSaving}
@@ -1246,7 +1257,7 @@ const DeckEdit = () => {
 						minWidth: 120,
 					}}>
 					{isSaving ? <CircularProgress size={20} /> : "保存卡组"}
-				</Button>
+				</PrimaryButton>
 			</Box>
 
 			{/* 确认对话框 */}
@@ -1261,17 +1272,17 @@ const DeckEdit = () => {
 					</Typography>
 				</DialogContent>
 				<DialogActions>
-					<Button
+					<SecondaryButton
 						onClick={handleCancelSeriesChange}
 						color="primary">
 						取消
-					</Button>
-					<Button
+					</SecondaryButton>
+					<PrimaryButton
 						onClick={handleConfirmSeriesChange}
 						color="primary"
 						variant="contained">
 						确定
-					</Button>
+					</PrimaryButton>
 				</DialogActions>
 			</Dialog>
 
@@ -1467,7 +1478,7 @@ const DeckEdit = () => {
 													alignItems: "center",
 													gap: 1,
 												}}>
-												<Button
+												<DangerButton
 													size="small"
 													variant="outlined"
 													sx={{
@@ -1484,7 +1495,7 @@ const DeckEdit = () => {
 													}}
 													onClick={() => decrementCount(cardId)}>
 													−
-												</Button>
+												</DangerButton>
 												<Typography
 													variant="body2"
 													sx={{
@@ -1495,7 +1506,7 @@ const DeckEdit = () => {
 													}}>
 													{count}
 												</Typography>
-												<Button
+												<PrimaryButton
 													size="small"
 													variant="outlined"
 													sx={{
@@ -1512,7 +1523,7 @@ const DeckEdit = () => {
 													}}
 													onClick={() => incrementCount(cardId)}>
 													+
-												</Button>
+												</PrimaryButton>
 											</Box>
 										</Box>
 									);

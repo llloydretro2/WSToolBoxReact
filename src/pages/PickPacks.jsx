@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import seedrandom from "seedrandom";
 import { useLocale } from "../contexts/LocaleContext";
 import {
@@ -88,9 +89,7 @@ function PickPacks() {
 	};
 
 	return (
-		<Container
-			maxWidth="lg"
-			sx={{ mt: 4 }}>
+		<Container maxWidth="lg">
 			<Box
 				display="flex"
 				flexDirection="column"
@@ -172,18 +171,23 @@ function PickPacks() {
 							justifyContent="center"
 							gap={2}
 							sx={{ height: "100%" }}>
-							<Button
-								variant="contained"
-								size="large"
-								onClick={randomGeneratePacks}
-								sx={{
-									backgroundColor: "#1b4332",
-									color: "white",
-									"&:hover": { backgroundColor: "#2d5a42" },
-									px: 3,
-								}}>
-								{t("pages.pickPacks.openButton")}
-							</Button>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="contained"
+									size="large"
+									onClick={randomGeneratePacks}
+									sx={{
+										backgroundColor: "#1b4332",
+										color: "white",
+										"&:hover": { backgroundColor: "#2d5a42" },
+										px: 3,
+									}}>
+									{t("pages.pickPacks.openButton")}
+								</Button>
+							</motion.div>
 
 							<Button
 								variant="contained"

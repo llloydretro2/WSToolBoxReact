@@ -15,6 +15,7 @@ import {
 	Stack,
 	Divider,
 } from "@mui/material";
+import { PrimaryButton, DangerButton } from "../components/ButtonVariants";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -114,7 +115,7 @@ function CardList() {
 	return (
 		<Container
 			maxWidth="md"
-			sx={{ textAlign: "center", mt: 4 }}>
+			sx={{ textAlign: "center" }}>
 			<Typography
 				variant="h4"
 				fontWeight={700}
@@ -508,7 +509,7 @@ function CardList() {
 							pt: 2,
 							borderTop: "1px solid rgba(0, 0, 0, 0.1)",
 						}}>
-						<Button
+						<PrimaryButton
 							type="submit"
 							variant="contained"
 							size="large"
@@ -520,9 +521,9 @@ function CardList() {
 								"&:hover": { backgroundColor: "#95bfa5" },
 							}}>
 							{t("pages.cardList.searchButton")}
-						</Button>
+						</PrimaryButton>
 
-						<Button
+						<DangerButton
 							type="button"
 							variant="contained"
 							size="large"
@@ -536,7 +537,7 @@ function CardList() {
 								},
 							}}>
 							{t("pages.cardList.resetButton")}
-						</Button>
+						</DangerButton>
 					</Box>
 				</Box>
 			</Box>

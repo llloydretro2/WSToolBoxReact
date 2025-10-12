@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	Box,
 	Button,
@@ -22,6 +23,7 @@ import {
 	LoginRounded,
 	PersonAddRounded,
 } from "@mui/icons-material";
+import { PrimaryButton, SecondaryButton } from "../components/ButtonVariants";
 import "./Login.css";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
@@ -29,6 +31,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 // const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 function LoginPage() {
+	const { t } = useLocale();
 	const { login } = useAuth();
 	const navigate = useNavigate();
 	const [username, setUsername] = useState("");
@@ -40,7 +43,7 @@ function LoginPage() {
 
 	const handleSubmit = async () => {
 		if (!username || !password) {
-			setErrorMessage("请输入用户名和密码");
+			setErrorMessage(t("pages.login.error.emptyFields"));
 			// removed
 			return;
 		}
@@ -59,7 +62,10 @@ function LoginPage() {
 			if (!response.ok) {
 				const errorData = await response.json();
 				throw new Error(
-					errorData.message || (isRegister ? "注册失败" : "登录失败")
+					errorData.message ||
+						(isRegister
+							? t("pages.login.error.registerFailed")
+							: t("pages.login.error.loginFailed"))
 				);
 			}
 
@@ -68,7 +74,7 @@ function LoginPage() {
 			// localStorage.setItem("username", data.user.username);
 
 			if (!isRegister) {
-				setSuccessMessage("登录成功！跳转到首页...");
+				setSuccessMessage(t("pages.login.success.login"));
 				setTimeout(() => {
 					navigate("/");
 				}, 1000);
@@ -78,7 +84,7 @@ function LoginPage() {
 					userData: data.user,
 				});
 			} else {
-				setErrorMessage("注册成功，请登录！");
+				setErrorMessage(t("pages.login.success.register"));
 				setIsRegister(false);
 			}
 		} catch (error) {
@@ -128,7 +134,7 @@ function LoginPage() {
 			{/* 主容器 - 正常布局，可滚动 */}
 			<Box
 				sx={{
-					minHeight: "calc(100vh - 64px)",
+					minHeight: "100%", // 使用100%而不是视口高度
 					display: "flex",
 					alignItems: "center",
 					justifyContent: "center",
@@ -155,12 +161,12 @@ function LoginPage() {
 										width: 80,
 										height: 80,
 										borderRadius: "50%",
-										background: "linear-gradient(135deg, #1b4332, #a6ceb6)",
+										background: "#a6ceb6",
 										margin: "0 auto 16px auto",
 										display: "flex",
 										alignItems: "center",
 										justifyContent: "center",
-										boxShadow: "0 8px 25px rgba(27, 67, 50, 0.3)",
+										boxShadow: "0 8px 25px rgba(166, 206, 182, 0.3)",
 									}}>
 									{isRegister ? (
 										<PersonAddRounded sx={{ fontSize: 40, color: "white" }} />
@@ -173,21 +179,12 @@ function LoginPage() {
 									variant="h4"
 									fontWeight={700}
 									sx={{
-										background: "linear-gradient(135deg, #1b4332, #2d5a3d)",
-										backgroundClip: "text",
-										WebkitBackgroundClip: "text",
-										WebkitTextFillColor: "transparent",
+										color: "#a6ceb6",
 										mb: 1,
 									}}>
-									{isRegister ? "创建账户" : "欢迎回来"}
-								</Typography>
-								<Typography
-									variant="body2"
-									color="text.secondary"
-									sx={{ fontSize: "0.95rem" }}>
 									{isRegister
-										? "加入我们，开始您的卡牌工具之旅"
-										: "登录您的账户以继续使用"}
+										? t("pages.login.registerTitle")
+										: t("pages.login.title")}
 								</Typography>
 							</Box>
 
@@ -195,7 +192,7 @@ function LoginPage() {
 							<Box sx={{ mb: 3 }}>
 								<TextField
 									className="login-input"
-									label="用户名"
+									label={t("pages.login.username")}
 									variant="outlined"
 									value={username}
 									onChange={(e) => setUsername(e.target.value)}
@@ -204,7 +201,7 @@ function LoginPage() {
 									InputProps={{
 										startAdornment: (
 											<InputAdornment position="start">
-												<PersonIcon sx={{ color: "#1b4332" }} />
+												<PersonIcon sx={{ color: "#a6ceb6" }} />
 											</InputAdornment>
 										),
 										sx: {
@@ -214,7 +211,7 @@ function LoginPage() {
 													borderColor: "#a6ceb6",
 												},
 												"&.Mui-focused fieldset": {
-													borderColor: "#1b4332",
+													borderColor: "#a6ceb6",
 												},
 											},
 										},
@@ -222,14 +219,14 @@ function LoginPage() {
 									InputLabelProps={{
 										sx: {
 											"&.Mui-focused": {
-												color: "#1b4332",
+												color: "#a6ceb6",
 											},
 										},
 									}}
 								/>
 								<TextField
 									className="login-input"
-									label="密码"
+									label={t("pages.login.password")}
 									type={showPassword ? "text" : "password"}
 									variant="outlined"
 									value={password}
@@ -238,7 +235,7 @@ function LoginPage() {
 									InputProps={{
 										startAdornment: (
 											<InputAdornment position="start">
-												<LockIcon sx={{ color: "#1b4332" }} />
+												<LockIcon sx={{ color: "#a6ceb6" }} />
 											</InputAdornment>
 										),
 										endAdornment: (
@@ -246,7 +243,7 @@ function LoginPage() {
 												<IconButton
 													onClick={() => setShowPassword(!showPassword)}
 													edge="end"
-													sx={{ color: "#1b4332" }}>
+													sx={{ color: "#a6ceb6" }}>
 													{showPassword ? <VisibilityOff /> : <Visibility />}
 												</IconButton>
 											</InputAdornment>
@@ -258,7 +255,7 @@ function LoginPage() {
 													borderColor: "#a6ceb6",
 												},
 												"&.Mui-focused fieldset": {
-													borderColor: "#1b4332",
+													borderColor: "#a6ceb6",
 												},
 											},
 										},
@@ -266,7 +263,7 @@ function LoginPage() {
 									InputLabelProps={{
 										sx: {
 											"&.Mui-focused": {
-												color: "#1b4332",
+												color: "#a6ceb6",
 											},
 										},
 									}}
@@ -274,7 +271,7 @@ function LoginPage() {
 							</Box>
 
 							{/* 主按钮 */}
-							<Button
+							<PrimaryButton
 								className="login-button"
 								variant="contained"
 								onClick={handleSubmit}
@@ -285,25 +282,27 @@ function LoginPage() {
 									py: 1.5,
 									fontSize: "1.1rem",
 									fontWeight: 600,
-									background: "linear-gradient(135deg, #1b4332, #2d5a3d)",
-									boxShadow: "0 8px 25px rgba(27, 67, 50, 0.3)",
+									background: "#a6ceb6",
+									boxShadow: "0 8px 25px rgba(166, 206, 182, 0.3)",
 									"&:hover": {
-										background: "linear-gradient(135deg, #2d5a3d, #1b4332)",
+										background: "#95c4a5",
 										transform: "translateY(-2px)",
 									},
 									mb: 3,
 								}}>
-								{isRegister ? "立即注册" : "登录账户"}
-							</Button>
+								{isRegister
+									? t("pages.login.registerButton")
+									: t("pages.login.loginButton")}
+							</PrimaryButton>
 
 							{/* 分割线 */}
 							<Divider sx={{ my: 3 }}>
 								<Chip
-									label="或者"
+									label={t("pages.login.or")}
 									size="small"
 									sx={{
-										backgroundColor: "rgba(27, 67, 50, 0.1)",
-										color: "#1b4332",
+										backgroundColor: "rgba(166, 206, 182, 0.1)",
+										color: "#a6ceb6",
 										fontWeight: 500,
 									}}
 								/>
@@ -315,24 +314,28 @@ function LoginPage() {
 									variant="body2"
 									color="text.secondary"
 									sx={{ mb: 1 }}>
-									{isRegister ? "已经有账户了？" : "还没有账户？"}
+									{isRegister
+										? t("pages.login.hasAccount")
+										: t("pages.login.noAccount")}
 								</Typography>
-								<Button
+								<SecondaryButton
 									variant="text"
 									onClick={() => setIsRegister(!isRegister)}
 									sx={{
-										color: "#1b4332",
+										color: "#a6ceb6",
 										fontWeight: 600,
 										textTransform: "none",
 										fontSize: "1rem",
 										"&:hover": {
-											backgroundColor: "rgba(27, 67, 50, 0.1)",
+											backgroundColor: "rgba(166, 206, 182, 0.1)",
 											transform: "scale(1.02)",
 										},
 										transition: "all 0.2s ease",
 									}}>
-									{isRegister ? "点击登录" : "创建新账户"}
-								</Button>
+									{isRegister
+										? t("pages.login.switchToLogin")
+										: t("pages.login.switchToRegister")}
+								</SecondaryButton>
 							</Box>
 						</Box>
 					</Paper>

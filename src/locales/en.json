@@ -31,11 +31,38 @@
   },
   "pages": {
     "home": {
-      "title": "WS Toolbox",
-      "subtitle": "Provides various WS-related tools and link collections, under development",
-      "updateTitle": "Updates",
-      "todoTitle": "To-Do List",
-      "contactTitle": "Contact Me"
+      "title": "WSToolBox",
+      "subtitle": "WS(Weiss Schwarz) ToolBox",
+      "description": "Committed to providing simple, user-friendly and humanized game tools for WS card enthusiasts",
+      "updateTitle": "Recent Updates",
+      "contactTitle": "Contact Me",
+      "todoTitle": "Development Roadmap",
+      "todoItems": ["Export Match Records", "Auto Packaging", "Export Deck as Image", "Damage Calculator"],
+      "features": {
+        "title": "Key Features",
+        "subtitle": "Comprehensive support for your WS journey",
+        "cardSearch": {
+          "title": "Card Search",
+          "description": "Quickly find card information with multiple search criteria"
+        },
+        "deckBuilder": {
+          "title": "Deck Builder",
+          "description": "Build and manage your decks online"
+        },
+        "gameTools": {
+          "title": "Game Tools",
+          "description": "Useful tools like dice, coin flip, etc."
+        },
+        "record": {
+          "title": "Match Records",
+          "description": "Record and analyze your battle history"
+        }
+      },
+      "lastUpdate": {
+        "title": "Recent Updates",
+        "data": "Card Database Update",
+        "ui": "UI Optimization"
+      }
     },
     "firstSecond": {
       "title": "First/Second",
@@ -175,11 +202,123 @@
       "generateButton": "Generate Deck",
       "clearButton": "Clear",
       "copyButton": "Copy",
+      "decreaseButton": "All -1",
       "copyTooltip": "Copy result",
       "copyTooltipSuccess": "Copied",
       "copyTooltipError": "Copy failed",
-      "generationChip": "Roll #{{count}} · Total 50",
+      "generationChip": "Generation {{count}} · Total 50 pts",
       "cardCaption": "Count"
+    },
+    "record": {
+      "title": "Match Records",
+      "tabs": {
+        "create": "Create Record",
+        "query": "Query Records"
+      },
+      "form": {
+        "matchName": "Match Name (Optional)",
+        "notes": "Notes (Optional)",
+        "myDeckName": "My Deck Name",
+        "mySeries": "My Series",
+        "opponentDeckName": "Opponent Deck Name",
+        "opponentSeries": "Opponent Series",
+        "resultLabel": "Result",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "filterButton": "Filter",
+        "myInfo": "My Information",
+        "opponentInfo": "Opponent Information",
+        "result": {
+          "win": "Win",
+          "lose": "Lose",
+          "doubleLose": "Double Loss"
+        }
+      },
+      "display": {
+        "noRecords": "No match records",
+        "startFirst": "Start your first match!",
+        "myDeck": "My Deck",
+        "opponentDeck": "Opponent's Deck",
+        "notesLabel": "Notes:",
+        "deleteTooltip": "Delete Record",
+        "unknownSeries": "Unknown Series"
+      },
+      "charts": {
+        "showMySeriesDistribution": "Show My Series Distribution",
+        "showOpponentSeriesDistribution": "Show Opponent Series Distribution",
+        "showWinRateTable": "Show Win Rate Statistics"
+      },
+      "deleteDialog": {
+        "title": "Confirm Delete",
+        "content": "Are you sure you want to delete this record? This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
+      }
+    },
+    "deckEdit": {
+      "sideLabel": "Side",
+      "seriesLabel": "Series",
+      "notSet": "Not Set"
+    },
+    "tracker": {
+      "title": "This is the Tracker Page"
+    },
+    "login": {
+      "title": "Welcome Back!",
+      "subtitle": "Sign in to your account to continue",
+      "registerTitle": "Join Us!",
+      "registerSubtitle": "Create a new account to start your WS journey",
+      "username": "Username",
+      "password": "Password",
+      "loginButton": "Sign In",
+      "registerButton": "Sign Up",
+      "switchToRegister": "Create New Account",
+      "switchToLogin": "Sign In",
+      "or": "Or",
+      "hasAccount": "Already have an account?",
+      "noAccount": "Don't have an account?",
+      "loading": "Processing...",
+      "error": {
+        "emptyFields": "Please enter username and password",
+        "loginFailed": "Login failed",
+        "registerFailed": "Registration failed"
+      },
+      "success": {
+        "login": "Login successful! Redirecting to home...",
+        "register": "Registration successful, please login!"
+      }
+    },
+    "deckCreate": {
+      "title": "Create New Deck",
+      "createButton": "Create",
+      "creating": "Creating...",
+      "cancel": "Cancel",
+      "messages": {
+        "loginRequired": "Please log in to create a deck",
+        "createSuccess": "Deck created successfully",
+        "createFailed": "Failed to create deck"
+      }
+    },
+    "deckSearch": {
+      "title": "Deck Search",
+      "myDecks": "My Decks",
+      "loginRequired": "Please log in to view your decks",
+      "noDecks": "No decks created yet",
+      "unnamed": "Unnamed Deck",
+      "publicDeck": "Public Deck",
+      "privateDeck": "Private Deck", 
+      "customAction": "Custom Action",
+      "messages": {
+        "loadFailed": "Failed to load decks",
+        "fetchFailed": "Failed to fetch decks",
+        "deleteFailed": "Failed to delete deck",
+        "deleteSuccess": "Deck deleted successfully",
+        "dataError": "Deck data error, missing ID"
+      }
+    },
+    "deck": {
+      "createTab": "Create Deck",
+      "searchTab": "Search Decks"
     }
   }
 }

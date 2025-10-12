@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
+import { useLocale } from "../contexts/LocaleContext";
 import DeckCreate from "./DeckCreate";
 import DeckSearch from "./DeckSearch";
 
@@ -7,6 +8,7 @@ import DeckSearch from "./DeckSearch";
 // TODO: 前端路由需要更改，现在的路由方式太奇怪
 
 function DeckPage() {
+	const { t } = useLocale();
 	const [tabIndex, setTabIndex] = useState(0);
 
 	const handleTabChange = (event, newValue) => {
@@ -14,7 +16,7 @@ function DeckPage() {
 	};
 
 	return (
-		<Box sx={{ width: "100%", mt: 4 }}>
+		<Box sx={{ width: "100%" }}>
 			<Tabs
 				value={tabIndex}
 				onChange={handleTabChange}
@@ -27,7 +29,7 @@ function DeckPage() {
 					},
 				}}>
 				<Tab
-					label="创建卡组"
+					label={t("pages.deck.createTab")}
 					sx={{
 						color: "gray",
 						"&.Mui-selected": {
@@ -37,7 +39,7 @@ function DeckPage() {
 					}}
 				/>
 				<Tab
-					label="查询卡组"
+					label={t("pages.deck.searchTab")}
 					sx={{
 						color: "gray",
 						"&.Mui-selected": {

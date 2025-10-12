@@ -15,7 +15,6 @@ import Tracker from "./pages/Tracker";
 import PickPacks from "./pages/PickPacks";
 import FirstSecond from "./pages/FirstSecond";
 import ChessClock from "./pages/ChessClock";
-import DIY from "./pages/DIY";
 import CardList from "./pages/CardList";
 import Simulator from "./pages/Simulator";
 import LoginPage from "./pages/Login";
@@ -81,14 +80,6 @@ function AnimatedRoutes() {
 					element={
 						<PageTransition>
 							<ChessClock />
-						</PageTransition>
-					}
-				/>
-				<Route
-					path="/diy"
-					element={
-						<PageTransition>
-							<DIY />
 						</PageTransition>
 					}
 				/>

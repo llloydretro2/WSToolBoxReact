@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useContext } from "react";
+import PropTypes from "prop-types";
 
 export const AuthContext = createContext();
 
@@ -37,11 +39,28 @@ export const AuthProvider = ({ children }) => {
 		localStorage.removeItem("username");
 	};
 
+	// 检查是否已登录
+	const isAuthenticated = () => {
+		return !!token && !!user;
+	};
+
 	return (
-		<AuthContext.Provider value={{ user, token, username, login, logout }}>
+		<AuthContext.Provider
+			value={{
+				user,
+				token,
+				username,
+				login,
+				logout,
+				isAuthenticated,
+			}}>
 			{children}
 		</AuthContext.Provider>
 	);
+};
+
+AuthProvider.propTypes = {
+	children: PropTypes.node.isRequired,
 };
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,5 +1,6 @@
 import { Container, Typography, Button, Box } from "@mui/material";
 import React, { useState } from "react";
+import { motion } from "framer-motion";
 import { useLocale } from "../contexts/LocaleContext";
 import firstCard from "../assets/ims_s.png";
 import secondCard from "../assets/ims_k.png";
@@ -20,7 +21,7 @@ function FirstSecond() {
 	return (
 		<Container
 			maxWidth="sm"
-			sx={{ mt: 4, textAlign: "center" }}>
+			sx={{ textAlign: "center" }}>
 			<Box
 				sx={{
 					display: "flex",
@@ -53,18 +54,23 @@ function FirstSecond() {
 					/>
 				)}
 
-				<Button
-					variant="contained"
-					size="large"
-					onClick={decideOrder}
-					sx={{
-						px: 6,
-						py: 1.5,
-						backgroundColor: "#a6ceb6",
-						"&:hover": { backgroundColor: "#95bfa5" },
-					}}>
-					{t("pages.firstSecond.button")}
-				</Button>
+				<motion.div
+					whileHover={{ scale: 1.05, rotate: 1 }}
+					whileTap={{ scale: 0.95 }}
+					transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+					<Button
+						variant="contained"
+						size="large"
+						onClick={decideOrder}
+						sx={{
+							px: 6,
+							py: 1.5,
+							backgroundColor: "#a6ceb6",
+							"&:hover": { backgroundColor: "#95bfa5" },
+						}}>
+						{t("pages.firstSecond.button")}
+					</Button>
+				</motion.div>
 			</Box>
 		</Container>
 	);

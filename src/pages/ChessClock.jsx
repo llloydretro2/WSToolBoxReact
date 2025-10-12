@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
 	Box,
 	Button,
@@ -140,8 +141,7 @@ function ChessClock() {
 	return (
 		<Box
 			sx={{
-				minHeight: "100vh",
-				mt: 4,
+				minHeight: "100%", // 使用100%而不是视口高度
 			}}>
 			<Container maxWidth="md">
 				{/* 页面标题和副标题 */}
@@ -278,53 +278,68 @@ function ChessClock() {
 							direction={{ xs: "column", sm: "row" }}
 							spacing={2}
 							justifyContent="center">
-							<Button
-								variant="contained"
-								startIcon={
-									isRunning ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />
-								}
-								sx={{
-									minWidth: 160,
-									backgroundColor: isRunning ? "#f6c756" : GREEN_MAIN,
-									color: GREEN_TEXT,
-									"&:hover": {
-										backgroundColor: isRunning ? "#e6b749" : GREEN_DARK,
-									},
-								}}
-								onClick={togglePause}>
-								{pauseLabel}
-							</Button>
-							<Button
-								variant="outlined"
-								startIcon={<SwapVertRoundedIcon />}
-								sx={{
-									minWidth: 160,
-									borderColor: GREEN_MAIN,
-									color: GREEN_TEXT,
-									"&:hover": {
-										borderColor: GREEN_DARK,
-										backgroundColor: "rgba(149, 191, 165, 0.12)",
-									},
-								}}
-								onClick={handleSwitchSide}>
-								{t("pages.chessClock.switchButton")}
-							</Button>
-							<Button
-								variant="outlined"
-								startIcon={<RestartAltRoundedIcon />}
-								sx={{
-									minWidth: 160,
-									borderColor: ACCENT_RED,
-									color: ACCENT_RED,
-									"&:hover": {
-										borderColor: ACCENT_RED_DARK,
-										color: ACCENT_RED_DARK,
-										backgroundColor: "rgba(118, 15, 16, 0.08)",
-									},
-								}}
-								onClick={() => setShowResetConfirm(true)}>
-								{t("pages.chessClock.resetButton")}
-							</Button>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="contained"
+									startIcon={
+										isRunning ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />
+									}
+									sx={{
+										minWidth: 160,
+										backgroundColor: isRunning ? "#f6c756" : GREEN_MAIN,
+										color: GREEN_TEXT,
+										"&:hover": {
+											backgroundColor: isRunning ? "#e6b749" : GREEN_DARK,
+										},
+									}}
+									onClick={togglePause}>
+									{pauseLabel}
+								</Button>
+							</motion.div>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="outlined"
+									startIcon={<SwapVertRoundedIcon />}
+									sx={{
+										minWidth: 160,
+										borderColor: GREEN_MAIN,
+										color: GREEN_TEXT,
+										"&:hover": {
+											borderColor: GREEN_DARK,
+											backgroundColor: "rgba(149, 191, 165, 0.12)",
+										},
+									}}
+									onClick={handleSwitchSide}>
+									{t("pages.chessClock.switchButton")}
+								</Button>
+							</motion.div>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: -1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="outlined"
+									startIcon={<RestartAltRoundedIcon />}
+									sx={{
+										minWidth: 160,
+										borderColor: ACCENT_RED,
+										color: ACCENT_RED,
+										"&:hover": {
+											borderColor: ACCENT_RED_DARK,
+											color: ACCENT_RED_DARK,
+											backgroundColor: "rgba(118, 15, 16, 0.08)",
+										},
+									}}
+									onClick={() => setShowResetConfirm(true)}>
+									{t("pages.chessClock.resetButton")}
+								</Button>
+							</motion.div>
 						</Stack>
 
 						<Stack

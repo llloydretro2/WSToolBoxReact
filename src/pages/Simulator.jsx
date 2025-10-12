@@ -12,6 +12,11 @@ import {
 	DialogContent,
 	DialogContentText,
 } from "@mui/material";
+import {
+	PrimaryButton,
+	DangerButton,
+	GenerateButton,
+} from "../components/ButtonVariants";
 import productList from "../data/productList.json";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
@@ -23,9 +28,9 @@ function Simulator() {
 	const [cards, setCards] = useState([]);
 	const [rarityMap, setRarityMap] = useState({});
 	const [rarityRates, setRarityRates] = useState({});
-	const [cardsPerPack, setCardsPerPack] = useState(6);
-	const [packsPerBox, setPacksPerBox] = useState(16);
-	const [boxesPerCase, setBoxesPerCase] = useState(20);
+	const [cardsPerPack, setCardsPerPack] = useState(8);
+	const [packsPerBox, setPacksPerBox] = useState(12);
+	const [boxesPerCase, setBoxesPerCase] = useState(24);
 	const [simulationPackCount, setSimulationPackCount] = useState(12);
 	const [simulatedResult, setSimulatedResult] = useState([]);
 	const [selectedCard, setSelectedCard] = useState(null);
@@ -181,7 +186,7 @@ function Simulator() {
 	return (
 		<Container
 			maxWidth="sm"
-			sx={{ textAlign: "center", mt: 4 }}>
+			sx={{ textAlign: "center" }}>
 			<Typography
 				variant="h4"
 				fontWeight={700}
@@ -376,7 +381,7 @@ function Simulator() {
 							slotProps={{ inputProps: { min: 0 } }}
 							inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
 						/>
-						<Button
+						<DangerButton
 							fullWidth
 							variant="contained"
 							sx={{
@@ -392,12 +397,12 @@ function Simulator() {
 								}))
 							}>
 							{t("pages.simulator.resetButton")}
-						</Button>
+						</DangerButton>
 					</Box>
 				</Box>
 			))}
 
-			<Button
+			<GenerateButton
 				variant="contained"
 				color="primary"
 				size="large"
@@ -408,9 +413,9 @@ function Simulator() {
 					"&:hover": { backgroundColor: "#95bfa5" },
 				}}>
 				{t("pages.simulator.startSimulation")}
-			</Button>
+			</GenerateButton>
 
-			<Button
+			<DangerButton
 				variant="contained"
 				color="primary"
 				size="large"
@@ -423,7 +428,7 @@ function Simulator() {
 					},
 				}}>
 				{t("pages.simulator.clearResults")}
-			</Button>
+			</DangerButton>
 
 			{simulatedResult.length > 0 && (
 				<Box sx={{ mt: 4 }}>

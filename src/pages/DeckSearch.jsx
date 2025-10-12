@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	Typography,
 	Box,
@@ -23,11 +24,19 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import {
+	PrimaryButton,
+	SecondaryButton,
+	DangerButton,
+	GenerateButton,
+	SubtleButton,
+} from "../components/ButtonVariants";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckSearch = () => {
+	const { t } = useLocale();
 	const { token, username } = useAuth();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
@@ -66,7 +75,7 @@ const DeckSearch = () => {
 					},
 				});
 				if (!res.ok) {
-					throw new Error("获取卡组失败");
+					throw new Error(t("pages.deckSearch.messages.fetchFailed"));
 				}
 				const data = await res.json();
 				if (isMounted) {
@@ -75,7 +84,7 @@ const DeckSearch = () => {
 			} catch (err) {
 				console.error("加载卡组失败:", err);
 				if (isMounted) {
-					setError(err.message || "加载卡组失败");
+					setError(err.message || t("pages.deckSearch.messages.loadFailed"));
 					setDecks([]);
 				}
 			} finally {
@@ -87,7 +96,7 @@ const DeckSearch = () => {
 		return () => {
 			isMounted = false;
 		};
-	}, [token, refreshIndex]);
+	}, [token, refreshIndex, t]);
 
 	useEffect(() => {
 		if (!token) {
@@ -189,7 +198,7 @@ const DeckSearch = () => {
 
 			return {
 				id: deck._id,
-				name: deck.name || "未命名卡组",
+				name: deck.name || t("pages.deckSearch.unnamed"),
 				totalCards,
 				isPublic: deck.isPublic,
 				cards: Array.isArray(deck.cards)
@@ -252,7 +261,7 @@ const DeckSearch = () => {
 				})(),
 			};
 		});
-	}, [decks, cardDetails]);
+	}, [decks, cardDetails, t]);
 
 	const COLOR_BASE_STYLES = {
 		yellow: {
@@ -512,7 +521,7 @@ const DeckSearch = () => {
 			console.error("❌ 卡组缺少ID");
 			setSnackbar({
 				open: true,
-				message: "卡组数据异常，缺少ID",
+				message: t("pages.deckSearch.messages.dataError"),
 				severity: "error",
 			});
 			return;
@@ -556,7 +565,9 @@ const DeckSearch = () => {
 			if (!response.ok) {
 				const errorBody = await response.text();
 				console.error(`❌ 删除请求失败: ${response.status} - ${errorBody}`);
-				throw new Error(`删除卡组失败: ${response.status}`);
+				throw new Error(
+					`${t("pages.deckSearch.messages.deleteFailed")}: ${response.status}`
+				);
 			}
 
 			const result = await response.json();
@@ -564,7 +575,7 @@ const DeckSearch = () => {
 
 			setSnackbar({
 				open: true,
-				message: "卡组删除成功",
+				message: t("pages.deckSearch.messages.deleteSuccess"),
 				severity: "success",
 			});
 
@@ -574,7 +585,7 @@ const DeckSearch = () => {
 			console.error("删除卡组失败:", error);
 			setSnackbar({
 				open: true,
-				message: error.message || "删除卡组失败",
+				message: error.message || t("pages.deckSearch.messages.deleteFailed"),
 				severity: "error",
 			});
 		} finally {
@@ -608,7 +619,7 @@ const DeckSearch = () => {
 						variant="h5"
 						gutterBottom
 						sx={{ fontWeight: 700, letterSpacing: 0.4 }}>
-						我的卡组
+						{t("pages.deckSearch.myDecks")}
 					</Typography>
 					<Typography
 						variant="body2"
@@ -616,18 +627,18 @@ const DeckSearch = () => {
 						sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}>
 						{token
 							? `当前账号：${username || "未知用户"}`
-							: "请先登录以查看自己的卡组"}
+							: t("pages.deckSearch.loginRequired")}
 					</Typography>
 				</Box>
 				<Box sx={{ display: "flex", gap: 1 }}>
-					<Button
+					<PrimaryButton
 						variant="contained"
 						size="small"
 						disabled={!token || loading}
 						onClick={() => setRefreshIndex((idx) => idx + 1)}
 						sx={{ ...BUTTON_STYLES.primary }}>
 						刷新
-					</Button>
+					</PrimaryButton>
 				</Box>
 			</Stack>
 
@@ -655,7 +666,7 @@ const DeckSearch = () => {
 						align="center"
 						color="text.secondary"
 						sx={{ py: 6 }}>
-						暂时还没有创建卡组
+						{t("pages.deckSearch.noDecks")}
 					</Typography>
 				) : (
 					<Stack spacing={3}>
@@ -712,7 +723,11 @@ const DeckSearch = () => {
 														flexWrap="wrap"
 														sx={{ mt: 1, rowGap: 1 }}>
 														<Chip
-															label={deck.isPublic ? "公开卡组" : "私密卡组"}
+															label={
+																deck.isPublic
+																	? t("pages.deckSearch.publicDeck")
+																	: t("pages.deckSearch.privateDeck")
+															}
 															size="small"
 															sx={{
 																backgroundColor: deck.isPublic
@@ -942,7 +957,7 @@ const DeckSearch = () => {
 											pb: 3,
 											borderTop: "1px solid rgba(118, 15, 16, 0.1)",
 										}}>
-										<Button
+										<PrimaryButton
 											variant="outlined"
 											size="small"
 											onClick={() => handleEditDeck(deck)}
@@ -957,8 +972,8 @@ const DeckSearch = () => {
 												},
 											}}>
 											编辑
-										</Button>
-										<Button
+										</PrimaryButton>
+										<DangerButton
 											variant="outlined"
 											size="small"
 											onClick={() => handleDeleteDeck(deck)}
@@ -973,8 +988,8 @@ const DeckSearch = () => {
 												},
 											}}>
 											删除
-										</Button>
-										<Button
+										</DangerButton>
+										<SecondaryButton
 											variant="outlined"
 											size="small"
 											onClick={() => {
@@ -984,14 +999,14 @@ const DeckSearch = () => {
 											}}
 											sx={{ ...BUTTON_STYLES.secondary }}>
 											模拟起手
-										</Button>
-										<Button
+										</SecondaryButton>
+										<PrimaryButton
 											variant="contained"
 											size="small"
 											onClick={() => setExportingDeck(deck)}
 											sx={{ ...BUTTON_STYLES.accent }}>
 											导出中文效果
-										</Button>
+										</PrimaryButton>
 									</Box>
 								</Card>
 							);
@@ -1026,19 +1041,19 @@ const DeckSearch = () => {
 					)}
 				</DialogContent>
 				<DialogActions>
-					<Button
+					<SecondaryButton
 						variant="text"
 						sx={{ ...BUTTON_STYLES.ghost }}
 						onClick={() => setExportingDeck(null)}>
 						关闭
-					</Button>
-					<Button
+					</SecondaryButton>
+					<PrimaryButton
 						variant="contained"
 						startIcon={<ContentCopyIcon />}
 						onClick={() => exportingDeck && handleCopyEffects(exportingDeck)}
 						sx={{ ...BUTTON_STYLES.accent }}>
 						复制全部
-					</Button>
+					</PrimaryButton>
 				</DialogActions>
 			</Dialog>
 			<Dialog
@@ -1052,7 +1067,9 @@ const DeckSearch = () => {
 				fullWidth>
 				<DialogTitle>
 					{customDialogDeck
-						? `自定义操作 · ${customDialogDeck.name || "未命名卡组"}`
+						? `${t("pages.deckSearch.customAction")} · ${
+								customDialogDeck.name || t("pages.deckSearch.unnamed")
+						  }`
 						: "自定义操作"}
 				</DialogTitle>
 				<DialogContent dividers>
@@ -1071,30 +1088,30 @@ const DeckSearch = () => {
 								py: 1,
 								boxShadow: "0 10px 24px rgba(17, 24, 39, 0.12)",
 							}}>
-							<Button
+							<GenerateButton
 								variant="contained"
 								size="small"
 								onClick={() => drawRandomCards(5)}
 								disabled={!customDialogDeck?.cards?.length}
 								sx={{ ...BUTTON_STYLES.primary }}>
 								抽5张
-							</Button>
-							<Button
+							</GenerateButton>
+							<SecondaryButton
 								variant="outlined"
 								size="small"
 								onClick={() => drawRandomCards(1)}
 								disabled={!customDialogDeck?.cards?.length}
 								sx={{ ...BUTTON_STYLES.secondary }}>
 								抽1张
-							</Button>
-							<Button
+							</SecondaryButton>
+							<DangerButton
 								variant="outlined"
 								size="small"
 								onClick={() => setCustomDrawnCards([])}
 								disabled={customDrawnCards.length === 0}
 								sx={{ ...BUTTON_STYLES.secondary }}>
 								重置
-							</Button>
+							</DangerButton>
 						</Stack>
 						<Box
 							sx={{
@@ -1163,7 +1180,7 @@ const DeckSearch = () => {
 					</Stack>
 				</DialogContent>
 				<DialogActions>
-					<Button
+					<SecondaryButton
 						variant="text"
 						sx={{ ...BUTTON_STYLES.ghost }}
 						onClick={() => {
@@ -1172,7 +1189,7 @@ const DeckSearch = () => {
 							setCustomDrawnCards([]);
 						}}>
 						关闭
-					</Button>
+					</SecondaryButton>
 				</DialogActions>
 			</Dialog>
 
@@ -1212,7 +1229,7 @@ const DeckSearch = () => {
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ padding: 2, justifyContent: "center", gap: 2 }}>
-					<Button
+					<SecondaryButton
 						onClick={handleCancelDelete}
 						variant="outlined"
 						sx={{
@@ -1227,8 +1244,8 @@ const DeckSearch = () => {
 							},
 						}}>
 						取消
-					</Button>
-					<Button
+					</SecondaryButton>
+					<DangerButton
 						onClick={handleConfirmDelete}
 						variant="contained"
 						disabled={isDeleting}
@@ -1257,7 +1274,7 @@ const DeckSearch = () => {
 						) : (
 							"确认删除"
 						)}
-					</Button>
+					</DangerButton>
 				</DialogActions>
 			</Dialog>
 

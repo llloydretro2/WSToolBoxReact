@@ -105,8 +105,7 @@ function Dice() {
 	return (
 		<Box
 			sx={{
-				minHeight: "100vh",
-				mt: 4,
+				minHeight: "100%", // 使用100%而不是视口高度
 			}}>
 			<Container maxWidth="md">
 				{/* 页面标题和副标题 */}
@@ -209,45 +208,55 @@ function Dice() {
 						spacing={2}
 						justifyContent="center">
 						<Grid size={{ xs: 12, sm: 4 }}>
-							<Button
-								variant="outlined"
-								color="primary"
-								fullWidth
-								startIcon={<AddCircleOutlineRoundedIcon />}
-								onClick={addDiceInput}
-								sx={{
-									borderColor: GREEN_MAIN,
-									color: GREEN_TEXT,
-									"&:hover": {
-										borderColor: GREEN_DARK,
-										backgroundColor: "rgba(149, 191, 165, 0.15)",
-									},
-								}}>
-								{t("pages.dice.addButton")}
-							</Button>
-						</Grid>
-						<Grid size={{ xs: 12, sm: 4 }}>
-							<Button
-								variant="outlined"
-								color="secondary"
-								fullWidth
-								startIcon={<RefreshRoundedIcon />}
-								onClick={resetDiceInputs}
-								sx={{
-									borderColor: ACCENT_RED,
-									color: ACCENT_RED,
-									"&:hover": {
-										borderColor: ACCENT_RED_DARK,
-										color: ACCENT_RED_DARK,
-										backgroundColor: "rgba(118, 15, 16, 0.08)",
-									},
-								}}>
-								{t("pages.dice.resetButton")}
-							</Button>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="outlined"
+									color="primary"
+									fullWidth
+									startIcon={<AddCircleOutlineRoundedIcon />}
+									onClick={addDiceInput}
+									sx={{
+										borderColor: GREEN_MAIN,
+										color: GREEN_TEXT,
+										"&:hover": {
+											borderColor: GREEN_DARK,
+											backgroundColor: "rgba(149, 191, 165, 0.15)",
+										},
+									}}>
+									{t("pages.dice.addButton")}
+								</Button>
+							</motion.div>
 						</Grid>
 						<Grid size={{ xs: 12, sm: 4 }}>
 							<motion.div
-								whileHover={{ scale: 1.05 }}
+								whileHover={{ scale: 1.05, rotate: -1 }}
+								whileTap={{ scale: 0.95 }}
+								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
+								<Button
+									variant="outlined"
+									color="secondary"
+									fullWidth
+									startIcon={<RefreshRoundedIcon />}
+									onClick={resetDiceInputs}
+									sx={{
+										borderColor: ACCENT_RED,
+										color: ACCENT_RED,
+										"&:hover": {
+											borderColor: ACCENT_RED_DARK,
+											color: ACCENT_RED_DARK,
+											backgroundColor: "rgba(118, 15, 16, 0.08)",
+										},
+									}}>
+									{t("pages.dice.resetButton")}
+								</Button>
+							</motion.div>
+						</Grid>
+						<Grid size={{ xs: 12, sm: 4 }}>
+							<motion.div
+								whileHover={{ scale: 1.05, rotate: 1 }}
 								whileTap={{ scale: 0.95 }}
 								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
 								<Button

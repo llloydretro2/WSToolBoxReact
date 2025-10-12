@@ -31,11 +31,10 @@
   },
   "pages": {
     "home": {
-      "title": "WS工具箱",
-      "subtitle": "提供各种WS相关的小工具和链接合集，开发中",
-      "updateTitle": "更新内容",
-      "todoTitle": "待办事项",
-      "contactTitle": "联系我"
+      "title": "WSToolBox",
+      "subtitle": "WS(Weiss Schwarz) 工具箱",
+      "description": "致力于为WS卡牌爱好者提供简单易用且人性化的游戏工具",
+      "todoTitle": "开发路线图"
     },
     "firstSecond": {
       "title": "先后攻",
@@ -137,7 +136,7 @@
     },
     "dice": {
       "title": "骰子掷骰器",
-      "subtitle": "快速设置不同数量与面数的骰子，享受随手投掷的随机乐趣。",
+      "subtitle": "快速设置不同数量与面数的骰子",
       "addButton": "添加骰子",
       "resetButton": "重置",
       "rollButton": "投掷骰子",
@@ -150,7 +149,7 @@
     },
     "chessClock": {
       "title": "棋钟",
-      "subtitle": "轻触当前回合的玩家按钮即可切换，合理掌控每一次思考时间。",
+      "subtitle": "轻触当前回合的玩家按钮即可切换。",
       "statusRunning": "{{player}} 正在计时",
       "statusPaused": "计时已暂停",
       "playerLabel": "玩家 {{index}}",
@@ -169,17 +168,127 @@
     },
     "shuffle": {
       "title": "随机洗牌工具",
-      "subtitle": "每次生成 50 点总和、6-10 张的不均匀牌堆，模拟洗牌带来的随机性。",
+      "subtitle": "每次生成 50 点总和，6-10 张的不均匀牌堆",
       "summary": "共 {{deckLength}} 张，平均 {{average}}",
       "summaryEmpty": "尚未生成牌堆",
       "generateButton": "生成牌堆",
       "clearButton": "清空结果",
       "copyButton": "复制数据",
+      "decreaseButton": "全部-1",
       "copyTooltip": "复制结果",
       "copyTooltipSuccess": "已复制",
       "copyTooltipError": "复制失败",
       "generationChip": "第 {{count}} 次生成 · 总点数 50",
       "cardCaption": "数量"
+    },
+    "record": {
+      "title": "战绩管理",
+      "tabs": {
+        "create": "创建记录",
+        "query": "查询记录"
+      },
+      "form": {
+        "matchName": "比赛名（可选）",
+        "notes": "备注（可选）",
+        "myDeckName": "我方卡组名称",
+        "mySeries": "我方系列",
+        "opponentDeckName": "对方卡组名称",
+        "opponentSeries": "对手系列",
+        "resultLabel": "胜负",
+        "startDate": "起始日期",
+        "endDate": "结束日期",
+        "filterButton": "筛选",
+        "myInfo": "我方信息",
+        "opponentInfo": "对手信息",
+        "result": {
+          "win": "胜利",
+          "lose": "失败",
+          "doubleLose": "双败"
+        }
+      },
+      "display": {
+        "noRecords": "暂无比赛记录",
+        "startFirst": "开始你的第一场比赛吧！",
+        "myDeck": "我的牌组",
+        "opponentDeck": "对手牌组",
+        "notesLabel": "备注：",
+        "deleteTooltip": "删除记录",
+        "unknownSeries": "未知系列"
+      },
+      "charts": {
+        "showMySeriesDistribution": "显示我方系列分布",
+        "showOpponentSeriesDistribution": "显示对手系列分布",
+        "showWinRateTable": "显示胜率统计表格"
+      },
+      "deleteDialog": {
+        "title": "确认删除",
+        "content": "确定要删除该记录吗？此操作不可撤销。",
+        "cancel": "取消",
+        "confirm": "删除"
+      }
+    },
+    "deckEdit": {
+      "sideLabel": "边",
+      "seriesLabel": "系列",
+      "notSet": "未设置"
+    },
+    "tracker": {
+      "title": "This is the Tracker Page"
+    },
+    "login": {
+      "title": "登陆",
+      "registerTitle": "注册",
+      "username": "用户名",
+      "password": "密码",
+      "loginButton": "登录账户",
+      "registerButton": "立即注册",
+      "switchToRegister": "创建新账户",
+      "switchToLogin": "点击登录",
+      "or": "或者",
+      "hasAccount": "已经有账户了？",
+      "noAccount": "还没有账户？",
+      "loading": "处理中...",
+      "error": {
+        "emptyFields": "请输入用户名和密码",
+        "loginFailed": "登录失败",
+        "registerFailed": "注册失败"
+      },
+      "success": {
+        "login": "登录成功！跳转到首页",
+        "register": "注册成功，请登录"
+      }
+    },
+    "deckCreate": {
+      "title": "创建新的卡组",
+      "createButton": "创建",
+      "creating": "创建中...",
+      "cancel": "取消",
+      "messages": {
+        "loginRequired": "请先登录后再创建卡组",
+        "createSuccess": "卡组创建成功",
+        "createFailed": "创建卡组失败"
+      }
+    },
+    "deckSearch": {
+      "title": "卡组搜索",
+      "myDecks": "我的卡组",
+      "loginRequired": "请先登录以查看自己的卡组",
+      "noDecks": "暂时还没有创建卡组",
+      "unnamed": "未命名卡组",
+      "publicDeck": "公开卡组",
+      "privateDeck": "私密卡组",
+      "customAction": "自定义操作",
+      "messages": {
+        "loadFailed": "加载卡组失败",
+        "fetchFailed": "获取卡组失败",
+        "deleteFailed": "删除卡组失败",
+        "deleteSuccess": "卡组删除成功",
+        "dataError": "卡组数据异常，缺少ID"
+      }
+    },
+    "deck": {
+      "createTab": "创建卡组",
+      "searchTab": "查询卡组"
     }
   }
 }

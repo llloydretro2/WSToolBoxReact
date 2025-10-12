@@ -1,25 +1,26 @@
 import React, { useState, useMemo } from "react";
-import { motion } from "framer-motion";
 import {
 	Container,
 	Typography,
-	Button,
 	Grid,
 	Paper,
 	Stack,
 	Divider,
 	Chip,
-	Tooltip,
 } from "@mui/material";
 import ShuffleRoundedIcon from "@mui/icons-material/ShuffleRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { useLocale } from "../contexts/LocaleContext";
+import {
+	GenerateButton,
+	SecondaryButton,
+	DangerButton,
+} from "../components/ButtonVariants";
 
 function RandomShuffle() {
 	const [deck, setDeck] = useState([]);
 	const [generatedCount, setGeneratedCount] = useState(0);
-	const [copyState, setCopyState] = useState("idle");
 	const { t } = useLocale();
 
 	const handleGenerate = () => {
@@ -36,13 +37,15 @@ function RandomShuffle() {
 
 		setDeck(nums);
 		setGeneratedCount((prev) => prev + 1);
-		setCopyState("idle");
 	};
 
 	const handleReset = () => {
 		setDeck([]);
 		setGeneratedCount(0);
-		setCopyState("idle");
+	};
+
+	const handleDecrease = () => {
+		setDeck((prevDeck) => prevDeck.map((value) => Math.max(0, value - 1)));
 	};
 
 	const totalSum = useMemo(
@@ -52,27 +55,12 @@ function RandomShuffle() {
 	const averageValue =
 		deck.length > 0 ? (totalSum / deck.length).toFixed(2) : "0";
 
-	const handleCopy = async () => {
-		if (deck.length === 0) {
-			return;
-		}
-		try {
-			await navigator.clipboard.writeText(deck.join(", "));
-			setCopyState("success");
-		} catch (error) {
-			console.error("Copy failed", error);
-			setCopyState("error");
-		}
-	};
-
 	const GREEN_MAIN = "#a6ceb6";
 	const GREEN_DARK = "#95bfa5";
 	const GREEN_TEXT = "#1b4332";
 
 	return (
-		<Container
-			maxWidth="md"
-			sx={{ mt: 4 }}>
+		<Container maxWidth="md">
 			{/* 页面标题和副标题 */}
 			<Stack
 				spacing={1.5}
@@ -125,25 +113,21 @@ function RandomShuffle() {
 						direction={{ xs: "column", sm: "row" }}
 						spacing={2}
 						justifyContent="center"
-						alignItems="center">
-						<motion.div
-							whileHover={{ scale: 1.05, rotate: 1 }}
-							whileTap={{ scale: 0.95 }}
-							transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-							<Button
-								variant="contained"
-								startIcon={<ShuffleRoundedIcon />}
-								onClick={handleGenerate}
-								sx={{
-									minWidth: 180,
-									backgroundColor: GREEN_MAIN,
-									color: GREEN_TEXT,
-									"&:hover": { backgroundColor: GREEN_DARK },
-								}}>
-								{t("pages.shuffle.generateButton")}
-							</Button>
-						</motion.div>
-						<Button
+						alignItems="center"
+						flexWrap="wrap">
+						<GenerateButton
+							variant="contained"
+							startIcon={<ShuffleRoundedIcon />}
+							onClick={handleGenerate}
+							sx={{
+								minWidth: 180,
+								backgroundColor: GREEN_MAIN,
+								color: GREEN_TEXT,
+								"&:hover": { backgroundColor: GREEN_DARK },
+							}}>
+							{t("pages.shuffle.generateButton")}
+						</GenerateButton>
+						<SecondaryButton
 							variant="outlined"
 							startIcon={<RestartAltRoundedIcon />}
 							sx={{
@@ -157,38 +141,24 @@ function RandomShuffle() {
 							}}
 							onClick={handleReset}>
 							{t("pages.shuffle.clearButton")}
-						</Button>
-						<Tooltip
-							title={
-								copyState === "success"
-									? t("pages.shuffle.copyTooltipSuccess")
-									: copyState === "error"
-									? t("pages.shuffle.copyTooltipError")
-									: t("pages.shuffle.copyTooltip")
-							}
-							placement="top"
-							arrow>
-							<span>
-								<Button
-									variant="outlined"
-									startIcon={<ContentCopyRoundedIcon />}
-									disabled={deck.length === 0}
-									sx={{
-										minWidth: 160,
-										borderColor: deck.length ? GREEN_MAIN : "rgba(0,0,0,0.12)",
-										color: deck.length ? GREEN_TEXT : "rgba(0,0,0,0.26)",
-										"&:hover": deck.length
-											? {
-													borderColor: GREEN_DARK,
-													backgroundColor: "rgba(149, 191, 165, 0.12)",
-											  }
-											: {},
-									}}
-									onClick={handleCopy}>
-									{t("pages.shuffle.copyButton")}
-								</Button>
-							</span>
-						</Tooltip>
+						</SecondaryButton>
+						{deck.length > 0 && (
+							<DangerButton
+								variant="outlined"
+								startIcon={<RemoveCircleOutlineIcon />}
+								sx={{
+									minWidth: 160,
+									borderColor: "#d32f2f",
+									color: "#d32f2f",
+									"&:hover": {
+										borderColor: "#b71c1c",
+										backgroundColor: "rgba(211, 47, 47, 0.08)",
+									},
+								}}
+								onClick={handleDecrease}>
+								{t("pages.shuffle.decreaseButton")}
+							</DangerButton>
+						)}
 					</Stack>
 
 					{deck.length > 0 && (
@@ -217,6 +187,8 @@ function RandomShuffle() {
 												backgroundColor: "rgba(166, 206, 182, 0.3)",
 												border: "1px solid rgba(166, 206, 182, 0.4)",
 												textAlign: "center",
+												opacity: card === 0 ? 0.5 : 1,
+												transition: "opacity 0.3s ease",
 											}}>
 											<Stack
 												spacing={0.5}
@@ -225,12 +197,18 @@ function RandomShuffle() {
 													variant="h5"
 													fontWeight={600}
 													color="#1b4332"
-													component="div">
+													component="div"
+													sx={{
+														opacity: card === 0 ? 0.6 : 1,
+													}}>
 													{card}
 												</Typography>
 												<Typography
 													variant="caption"
-													color="text.secondary">
+													color="text.secondary"
+													sx={{
+														opacity: card === 0 ? 0.6 : 1,
+													}}>
 													{t("pages.shuffle.cardCaption")}
 												</Typography>
 											</Stack>

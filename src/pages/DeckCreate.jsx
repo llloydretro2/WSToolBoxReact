@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocale } from "../contexts/LocaleContext";
 import {
 	TextField,
 	Button,
@@ -16,6 +17,11 @@ import {
 	ToggleButtonGroup,
 	ToggleButton,
 } from "@mui/material";
+import {
+	PrimaryButton,
+	SecondaryButton,
+	DangerButton,
+} from "../components/ButtonVariants";
 import deckRulesWeiss from "../data/deck_rules_weiss.json";
 import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
 
@@ -24,6 +30,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
 
 const DeckCreate = () => {
+	const { t } = useLocale();
 	const [deckName, setDeckName] = useState("");
 	const [side, setSide] = useState("weiss"); // "weiss" or "schwarz"
 	const [form, setForm] = useState({
@@ -381,7 +388,7 @@ const DeckCreate = () => {
 
 		const token = localStorage.getItem("token");
 		if (!token) {
-			showSnackbar("请先登录后再创建卡组", "warning");
+			showSnackbar(t("pages.deckCreate.messages.loginRequired"), "warning");
 			return;
 		}
 
@@ -409,7 +416,7 @@ const DeckCreate = () => {
 			});
 
 			if (!response.ok) {
-				let errorMessage = "创建卡组失败";
+				let errorMessage = t("pages.deckCreate.messages.createFailed");
 				try {
 					const errorBody = await response.json();
 					errorMessage = errorBody?.message || errorMessage;
@@ -420,14 +427,17 @@ const DeckCreate = () => {
 			}
 
 			await response.json();
-			showSnackbar("卡组创建成功", "success");
+			showSnackbar(t("pages.deckCreate.messages.createSuccess"), "success");
 			setDeckName("");
 			setDeck({});
 			setCardCounts({});
 			setDeckOpen(false);
 		} catch (err) {
 			console.error("创建卡组失败:", err);
-			showSnackbar(err.message || "创建卡组失败", "error");
+			showSnackbar(
+				err.message || t("pages.deckCreate.messages.createFailed"),
+				"error"
+			);
 		} finally {
 			setCreatingDeck(false);
 		}
@@ -451,12 +461,11 @@ const DeckCreate = () => {
 		<Box
 			display={"flex"}
 			flexDirection="column"
-			alignItems="center"
-			sx={{ mt: 4 }}>
+			alignItems="center">
 			<Typography
 				variant="h6"
 				gutterBottom>
-				创建新的卡组
+				{t("pages.deckCreate.title")}
 			</Typography>
 			<TextField
 				required
@@ -543,7 +552,7 @@ const DeckCreate = () => {
 					freeSolo={false}
 					disableClearable={false}
 				/>
-				<Button
+				<PrimaryButton
 					variant="contained"
 					sx={{
 						backgroundColor: "#a6ceb6",
@@ -582,7 +591,7 @@ const DeckCreate = () => {
 						}
 					}}>
 					确定
-				</Button>
+				</PrimaryButton>
 			</Box>
 			{form.series && (
 				<Box
@@ -747,26 +756,26 @@ const DeckCreate = () => {
 							gap: 2,
 							width: "50%",
 						}}>
-						<Button
+						<PrimaryButton
 							variant="contained"
 							color="primary"
 							onClick={handleFilterSearch}
 							fullWidth
 							size="medium">
 							筛选
-						</Button>
-						<Button
+						</PrimaryButton>
+						<SecondaryButton
 							variant="outlined"
 							color="secondary"
 							onClick={handleFilterReset}
 							fullWidth
 							size="medium">
 							重置
-						</Button>
+						</SecondaryButton>
 					</Box>
 				</Box>
 			)}
-			<Button
+			<PrimaryButton
 				type="button"
 				variant="contained"
 				size="large"
@@ -778,8 +787,10 @@ const DeckCreate = () => {
 					backgroundColor: "#a6ceb6",
 					"&:hover": { backgroundColor: "#95bfa5" },
 				}}>
-				{creatingDeck ? "创建中..." : "创建"}
-			</Button>
+				{creatingDeck
+					? t("pages.deckCreate.creating")
+					: t("pages.deckCreate.createButton")}
+			</PrimaryButton>
 			<Box
 				sx={{
 					mt: 4,
@@ -863,13 +874,13 @@ const DeckCreate = () => {
 											flexWrap: "nowrap",
 											maxWidth: "100%",
 										}}>
-										<Button
+										<DangerButton
 											variant="outlined"
 											size="small"
 											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
 											onClick={() => decrementCount(card.cardno)}>
 											-
-										</Button>
+										</DangerButton>
 										<Typography
 											sx={{
 												minWidth: 16,
@@ -878,13 +889,13 @@ const DeckCreate = () => {
 											}}>
 											{cardCounts[card.cardno] || 0}
 										</Typography>
-										<Button
+										<PrimaryButton
 											variant="outlined"
 											size="small"
 											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
 											onClick={() => incrementCount(card.cardno)}>
 											+
-										</Button>
+										</PrimaryButton>
 									</Box>
 								</Box>
 							))}
@@ -898,12 +909,12 @@ const DeckCreate = () => {
 						)}
 						{hasMore && (
 							<Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-								<Button
+								<SecondaryButton
 									variant="outlined"
 									disabled={isLoadingMore}
 									onClick={handleLoadMore}>
 									{isLoadingMore ? "加载中..." : "加载更多"}
-								</Button>
+								</SecondaryButton>
 							</Box>
 						)}
 					</>
@@ -1076,7 +1087,7 @@ const DeckCreate = () => {
 												alignItems: "center",
 												gap: 1,
 											}}>
-											<Button
+											<DangerButton
 												size="small"
 												variant="outlined"
 												sx={{
@@ -1093,7 +1104,7 @@ const DeckCreate = () => {
 												}}
 												onClick={() => decrementCount(cardId)}>
 												−
-											</Button>
+											</DangerButton>
 											<Typography
 												variant="body2"
 												sx={{
@@ -1104,7 +1115,7 @@ const DeckCreate = () => {
 												}}>
 												{count}
 											</Typography>
-											<Button
+											<PrimaryButton
 												size="small"
 												variant="outlined"
 												sx={{
@@ -1121,7 +1132,7 @@ const DeckCreate = () => {
 												}}
 												onClick={() => incrementCount(cardId)}>
 												+
-											</Button>
+											</PrimaryButton>
 										</Box>
 									</Box>
 								);
@@ -1376,7 +1387,7 @@ const DeckCreate = () => {
 						justifyContent: "center",
 						borderTop: "1px solid #e9ecef",
 					}}>
-					<Button
+					<PrimaryButton
 						onClick={() => setCardDialogOpen(false)}
 						variant="contained"
 						sx={{
@@ -1392,7 +1403,7 @@ const DeckCreate = () => {
 							},
 						}}>
 						关闭
-					</Button>
+					</PrimaryButton>
 				</DialogActions>
 			</Dialog>
 
@@ -1440,7 +1451,7 @@ const DeckCreate = () => {
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ padding: 2, justifyContent: "center", gap: 2 }}>
-					<Button
+					<SecondaryButton
 						onClick={handleCancelSeriesChange}
 						variant="outlined"
 						sx={{
@@ -1454,9 +1465,9 @@ const DeckCreate = () => {
 								borderColor: "#8bb89d",
 							},
 						}}>
-						取消
-					</Button>
-					<Button
+						{t("pages.deckCreate.cancel")}
+					</SecondaryButton>
+					<PrimaryButton
 						onClick={handleConfirmSeriesChange}
 						variant="contained"
 						sx={{
@@ -1470,7 +1481,7 @@ const DeckCreate = () => {
 							},
 						}}>
 						确认切换
-					</Button>
+					</PrimaryButton>
 				</DialogActions>
 			</Dialog>
 		</Box>

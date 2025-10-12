@@ -2,68 +2,35 @@ import React from "react";
 import PropTypes from "prop-types";
 import { motion, useReducedMotion } from "framer-motion";
 
-// 检测是否为移动设备
-const isMobile = () => {
-	return window.innerWidth <= 768;
-};
-
-const getPageVariants = () => {
-	const mobile = isMobile();
-
-	if (mobile) {
-		// 移动端使用纯透明度动画，避免任何布局变化
-		return {
-			initial: {
-				opacity: 0,
-			},
-			in: {
-				opacity: 1,
-			},
-			out: {
-				opacity: 0,
-			},
-		};
-	} else {
-		// 桌面端保持原有动画
-		return {
-			initial: {
-				opacity: 0,
-				y: 100,
-				scale: 0.8,
-			},
-			in: {
-				opacity: 1,
-				y: 0,
-				scale: 1,
-			},
-			out: {
-				opacity: 0,
-				y: -100,
-				scale: 1.2,
-			},
-		};
-	}
+// 简化的页面变换动画 - 只有淡出淡入效果
+const pageVariants = {
+	initial: {
+		opacity: 0,
+	},
+	in: {
+		opacity: 1,
+	},
+	out: {
+		opacity: 0,
+	},
 };
 
 const getPageTransition = (prefersReducedMotion) => {
-	const mobile = isMobile();
-
 	if (prefersReducedMotion) {
 		return {
-			duration: 0.2,
+			duration: 0.1,
 		};
 	}
 
 	return {
 		type: "tween",
-		ease: mobile ? "easeOut" : "anticipate",
-		duration: mobile ? 0.4 : 0.8,
+		ease: "easeInOut",
+		duration: 0.3,
 	};
 };
 
 const PageTransition = ({ children }) => {
 	const prefersReducedMotion = useReducedMotion();
-	const pageVariants = getPageVariants();
 	const pageTransition = getPageTransition(prefersReducedMotion);
 
 	return (
@@ -75,11 +42,18 @@ const PageTransition = ({ children }) => {
 			transition={pageTransition}
 			style={{
 				width: "100%",
-				minHeight: "calc(100vh - 64px)", // 减去导航栏高度
-				overflow: "hidden", // 防止水平滚动条出现
-				position: "relative", // 确保定位上下文
+				height: "calc(100vh - 64px)", // 固定高度而不是最小高度
+				position: "relative",
+				overflow: "hidden", // 防止内容溢出
 			}}>
-			{children}
+			<div
+				style={{
+					height: "100%",
+					overflowY: "auto", // 内容可滚动
+					padding: "32px 0", // 替代页面的 mt: 4
+				}}>
+				{children}
+			</div>
 		</motion.div>
 	);
 };

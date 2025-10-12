@@ -25,7 +25,7 @@ function Home() {
 	return (
 		<Box
 			sx={{
-				minHeight: "calc(100vh - 64px)",
+				minHeight: "100%", // 使用100%而不是视口高度
 			}}>
 			{/* 标题区域 */}
 			<Box
@@ -161,12 +161,7 @@ function Home() {
 									</Box>
 									<Box
 										sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-										{[
-											"导出战绩",
-											"自动打包",
-											"图片形式导出卡组",
-											"伤害计算器",
-										].map((item, index) => (
+										{t("pages.home.todoItems").map((item, index) => (
 											<Typography
 												key={index}
 												variant="body1"
