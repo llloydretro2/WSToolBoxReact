@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -9,21 +9,45 @@ import { AuthProvider } from "./contexts/AuthContext";
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import { AnimatePresence } from "framer-motion";
-import Home from "./pages/Home";
-import Dice from "./pages/Dice";
-import Tracker from "./pages/Tracker";
-import PickPacks from "./pages/PickPacks";
-import FirstSecond from "./pages/FirstSecond";
-import ChessClock from "./pages/ChessClock";
-import CardList from "./pages/CardList";
-import Simulator from "./pages/Simulator";
-import LoginPage from "./pages/Login";
-import RandomShuffle from "./pages/RandomShuffle";
-import DeckPage from "./pages/Deck";
-import DeckCreate from "./pages/DeckCreate";
-import DeckSearch from "./pages/DeckSearch";
-import DeckEdit from "./pages/DeckEdit";
-import Record from "./pages/Record";
+
+const Home = lazy(() => import("./pages/Home.jsx"));
+const Dice = lazy(() => import("./pages/Dice.jsx"));
+const Tracker = lazy(() => import("./pages/Tracker.jsx"));
+const PickPacks = lazy(() => import("./pages/PickPacks.jsx"));
+const FirstSecond = lazy(() => import("./pages/FirstSecond.jsx"));
+const ChessClock = lazy(() => import("./pages/ChessClock.jsx"));
+const CardList = lazy(() => import("./pages/CardList.jsx"));
+const Simulator = lazy(() => import("./pages/Simulator.jsx"));
+const LoginPage = lazy(() => import("./pages/Login.jsx"));
+const RandomShuffle = lazy(() => import("./pages/RandomShuffle.jsx"));
+const DeckPage = lazy(() => import("./pages/Deck.jsx"));
+const DeckCreate = lazy(() => import("./pages/DeckCreate.jsx"));
+const DeckSearch = lazy(() => import("./pages/DeckSearch.jsx"));
+const DeckEdit = lazy(() => import("./pages/DeckEdit.jsx"));
+const Record = lazy(() => import("./pages/Record.jsx"));
+
+const LoadingFallback = () => (
+	<div
+		style={{
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center",
+			minHeight: "40vh",
+			color: "#2a5b46",
+			fontWeight: 600,
+			fontSize: "1rem",
+		}}>
+		正在加载…
+	</div>
+);
+
+const withPageTransition = (Component) => (
+	<PageTransition>
+		<Suspense fallback={<LoadingFallback />}>
+			<Component />
+		</Suspense>
+	</PageTransition>
+);
 
 function AnimatedRoutes() {
 	const location = useLocation();
@@ -37,123 +61,63 @@ function AnimatedRoutes() {
 				key={location.pathname}>
 				<Route
 					path="/"
-					element={
-						<PageTransition>
-							<Home />
-						</PageTransition>
-					}
+					element={withPageTransition(Home)}
 				/>
 				<Route
 					path="/dice"
-					element={
-						<PageTransition>
-							<Dice />
-						</PageTransition>
-					}
+					element={withPageTransition(Dice)}
 				/>
 				<Route
 					path="/tracker"
-					element={
-						<PageTransition>
-							<Tracker />
-						</PageTransition>
-					}
+					element={withPageTransition(Tracker)}
 				/>
 				<Route
 					path="/pick_packs"
-					element={
-						<PageTransition>
-							<PickPacks />
-						</PageTransition>
-					}
+					element={withPageTransition(PickPacks)}
 				/>
 				<Route
 					path="/first_second"
-					element={
-						<PageTransition>
-							<FirstSecond />
-						</PageTransition>
-					}
+					element={withPageTransition(FirstSecond)}
 				/>
 				<Route
 					path="/chess_clock"
-					element={
-						<PageTransition>
-							<ChessClock />
-						</PageTransition>
-					}
+					element={withPageTransition(ChessClock)}
 				/>
 				<Route
 					path="/cardlist"
-					element={
-						<PageTransition>
-							<CardList />
-						</PageTransition>
-					}
+					element={withPageTransition(CardList)}
 				/>
 				<Route
 					path="/simulator"
-					element={
-						<PageTransition>
-							<Simulator />
-						</PageTransition>
-					}
+					element={withPageTransition(Simulator)}
 				/>
 				<Route
 					path="/shuffle"
-					element={
-						<PageTransition>
-							<RandomShuffle />
-						</PageTransition>
-					}
+					element={withPageTransition(RandomShuffle)}
 				/>
 				<Route
 					path="/login"
-					element={
-						<PageTransition>
-							<LoginPage />
-						</PageTransition>
-					}
+					element={withPageTransition(LoginPage)}
 				/>
 				<Route
 					path="/deck"
-					element={
-						<PageTransition>
-							<DeckPage />
-						</PageTransition>
-					}
+					element={withPageTransition(DeckPage)}
 				/>
 				<Route
 					path="/deck-create"
-					element={
-						<PageTransition>
-							<DeckCreate />
-						</PageTransition>
-					}
+					element={withPageTransition(DeckCreate)}
 				/>
 				<Route
 					path="/deck-search"
-					element={
-						<PageTransition>
-							<DeckSearch />
-						</PageTransition>
-					}
+					element={withPageTransition(DeckSearch)}
 				/>
 				<Route
 					path="/deck-edit"
-					element={
-						<PageTransition>
-							<DeckEdit />
-						</PageTransition>
-					}
+					element={withPageTransition(DeckEdit)}
 				/>
 				<Route
 					path="/record"
-					element={
-						<PageTransition>
-							<Record />
-						</PageTransition>
-					}
+					element={withPageTransition(Record)}
 				/>
 			</Routes>
 		</AnimatePresence>
