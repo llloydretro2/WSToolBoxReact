@@ -121,7 +121,9 @@
         "showZh": "显示中文",
         "hideZh": "隐藏中文",
         "showJp": "显示日语",
-        "hideJp": "隐藏日语"
+        "hideJp": "隐藏日语",
+        "mergeVariants": "合并稀有度版本",
+        "splitVariants": "拆分稀有度版本"
       },
       "labels": {
         "trait": "特征",
@@ -129,7 +131,17 @@
         "flavor": "风味",
         "flavorZh": "风味（中文）",
         "effect": "効果",
-        "effectZh": "效果（中文）"
+        "effectZh": "效果（中文）",
+        "variant": "稀有度版本",
+        "related": "相关卡片"
+      },
+      "buttons": {
+        "viewRelated": "查看所有相关卡"
+      },
+      "dialog": {
+        "relatedTitle": "{{cardName}} · 相关卡片",
+        "emptyRelated": "暂时没有找到相关卡片。",
+        "close": "关闭"
       },
       "scroll": {
         "down": "滚动到底部",

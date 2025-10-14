@@ -35,6 +35,17 @@ export default defineConfig([
 			],
 			"react/jsx-uses-react": "error",
 			"react/jsx-uses-vars": "error",
+			"react/react-in-jsx-scope": "off", // React 17+ 不需要导入 React
+		},
+	},
+	// 测试文件配置
+	{
+		files: ["**/*.test.{js,jsx}", "**/*.spec.{js,jsx}"],
+		languageOptions: {
+			globals: {
+				...globals.browser,
+				...globals.jest,
+			},
 		},
 	},
 ]);

@@ -146,7 +146,9 @@
         "showZh": "Show Chinese",
         "hideZh": "Hide Chinese",
         "showJp": "Show Japanese",
-        "hideJp": "Hide Japanese"
+        "hideJp": "Hide Japanese",
+        "mergeVariants": "Merge rarity variants",
+        "splitVariants": "Show variants separately"
       },
       "labels": {
         "trait": "Trait",
@@ -154,7 +156,17 @@
         "flavor": "Flavor",
         "flavorZh": "Flavor (Chinese)",
         "effect": "Effect",
-        "effectZh": "Effect (Chinese)"
+        "effectZh": "Effect (Chinese)",
+        "variant": "Rarity version",
+        "related": "Related cards"
+      },
+      "buttons": {
+        "viewRelated": "View related cards"
+      },
+      "dialog": {
+        "relatedTitle": "{{cardName}} · Related cards",
+        "emptyRelated": "No related cards found yet.",
+        "close": "Close"
       },
       "scroll": {
         "down": "Scroll to bottom",

@@ -20,7 +20,12 @@ import {
 import { useLocale } from "../contexts/LocaleContext";
 
 // 硬编码的TODO项目列表
-const todoItems = ["导出对战记录", "自动组包", "导出卡组为图片", "伤害计算器"];
+const todoItems = [
+	"导出对战记录",
+	"导出卡组为图片",
+	"伤害计算器",
+	"更多战绩统计",
+];
 
 function Home() {
 	const { t } = useLocale();

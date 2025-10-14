@@ -28,12 +28,25 @@ import {
 	Avatar,
 	Tooltip,
 	Grid,
+	Fab,
+	Menu,
+	MenuItem as MenuItemMui,
+	ListItemIcon,
+	ListItemText,
+	useTheme,
+	useMediaQuery,
 } from "@mui/material";
 import {
 	Delete as DeleteIcon,
 	EmojiEvents as TrophyIcon,
 	Person as PersonIcon,
 	Casino as DeckIcon,
+	Settings as SettingsIcon,
+	BarChart as ChartIcon,
+	TableChart as TableIcon,
+	Visibility as VisibilityIcon,
+	VisibilityOff as VisibilityOffIcon,
+	Download as DownloadIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -47,16 +60,7 @@ import {
 } from "../components/ButtonVariants";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
-import { Pie } from "react-chartjs-2";
-import {
-	Chart as ChartJS,
-	ArcElement,
-	Tooltip as ChartTooltip,
-	Legend,
-} from "chart.js";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-
-ChartJS.register(ArcElement, ChartTooltip, Legend, ChartDataLabels);
+import ReactECharts from "echarts-for-react";
 
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
@@ -67,6 +71,8 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const Record = () => {
 	const { t } = useLocale();
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 	const [records, setRecords] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [tabValue, setTabValue] = useState(0);
@@ -81,6 +87,7 @@ const Record = () => {
 	});
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [recordToDelete, setRecordToDelete] = useState(null);
+	const [resetDialogOpen, setResetDialogOpen] = useState(false);
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
 	const [seriesStats, setSeriesStats] = useState([]);
@@ -89,11 +96,204 @@ const Record = () => {
 	const [showOpponentChart, setShowOpponentChart] = useState(false);
 	const [showWinRateTable, setShowWinRateTable] = useState(false);
 
-	const generateColors = (count) => {
-		if (count === 1) return [interpolateSpectral(0.5)];
-		return Array.from({ length: count }, (_, i) =>
-			interpolateSpectral(i / (count - 1))
+	// 浮动按钮菜单状态
+	const [fabMenuAnchor, setFabMenuAnchor] = useState(null);
+	const fabMenuOpen = Boolean(fabMenuAnchor);
+
+	// 对话框状态
+	const [chartDialogOpen, setChartDialogOpen] = useState(false);
+	const [opponentChartDialogOpen, setOpponentChartDialogOpen] = useState(false);
+	const [tableDialogOpen, setTableDialogOpen] = useState(false);
+	const [activeChartType, setActiveChartType] = useState(null); // 'playerChart', 'opponentChart', 'winRateTable'
+
+	// 图表ref用于导出
+	// 已移除：ECharts有内置导出功能，不再需要ref
+
+	// 创建 ECharts 配置 (带内置导出功能)
+	const createEChartsOption = (data, title) => {
+		const sortedData = [...data].sort((a, b) => b.value - a.value);
+		const colors = sortedData.map((_, index) =>
+			interpolateSpectral(
+				sortedData.length <= 1 ? 0 : index / (sortedData.length - 1)
+			)
 		);
+		const itemCount = sortedData.length;
+		const totalValue = sortedData.reduce((sum, item) => sum + item.value, 0);
+		const deviceWidth =
+			typeof window !== "undefined" ? window.innerWidth : undefined;
+		const mobileMaxChars = (() => {
+			if (!deviceWidth) return 16;
+			if (deviceWidth >= 430) return 18;
+			if (deviceWidth >= 390) return 16;
+			if (deviceWidth >= 360) return 14;
+			return 12;
+		})();
+		const wrapLegendLabel = (label) => {
+			const maxChars = isMobile ? mobileMaxChars : 24;
+			if (label.length <= maxChars) return label;
+			const chunks = label.match(new RegExp(`.{1,${maxChars}}`, "g")) || [
+				label,
+			];
+			return chunks.join("\n");
+		};
+		const formatPercent = (value) => {
+			if (!totalValue) return "0%";
+			const percent = (value / totalValue) * 100;
+			const digits = percent >= 10 ? 1 : 2;
+			const fixed = percent.toFixed(digits);
+			return `${fixed.replace(/\.0+$|0+$/g, "").replace(/\.$/, "")}%`;
+		};
+
+		const mobileChartHeight = Math.max(
+			360,
+			Math.min(880, 240 + itemCount * 22)
+		);
+
+		return {
+			option: {
+				title: {
+					text: title,
+					left: "center",
+					top: isMobile ? 10 : 24,
+					textStyle: {
+						fontSize: 18,
+						fontWeight: "bold",
+					},
+				},
+				tooltip: {
+					trigger: "item",
+					formatter: ({ name, value }) => `${name}: ${formatPercent(value)}`,
+				},
+				legend: {
+					orient: "horizontal",
+					...(isMobile
+						? { left: "center", width: "90%" }
+						: { left: "6%", right: "6%", width: "88%" }),
+					...(isMobile
+						? { top: "48%", bottom: 22 }
+						: { top: "80%", bottom: 28 }),
+					itemGap: isMobile
+						? itemCount <= 3
+							? 12
+							: itemCount <= 6
+							? 9
+							: 6
+						: itemCount <= 5
+						? 22
+						: itemCount <= 10
+						? 16
+						: 12,
+					itemWidth: isMobile ? 14 : 18,
+					itemHeight: isMobile ? 10 : 14,
+					data: sortedData.map((item) => item.name),
+					textStyle: {
+						fontSize: isMobile
+							? itemCount > 10
+								? 9
+								: itemCount > 6
+								? 10
+								: 11
+							: 12,
+						padding: [0, 2, 0, 2],
+						lineHeight: isMobile ? 14 : 20,
+					},
+					formatter: (name) => {
+						const item = sortedData.find((d) => d.name === name);
+						const countLabel = item ? `${item.value}个` : "0个";
+						return wrapLegendLabel(`${name} (${countLabel})`);
+					},
+				},
+				toolbox: {
+					show: true,
+					feature: {
+						saveAsImage: {
+							show: true,
+							title: "导出图片",
+							name: title,
+							type: "png",
+							backgroundColor: "#ffffff",
+							pixelRatio: 2,
+						},
+					},
+					right: 15,
+					top: 15,
+				},
+				series: [
+					{
+						name: title,
+						type: "pie",
+						radius: ["0%", isMobile ? "52%" : "46%"],
+						center: ["50%", isMobile ? "26%" : "42%"],
+						data: sortedData.map((item, index) => ({
+							value: item.value,
+							name: item.name,
+							itemStyle: {
+								color: colors[index],
+							},
+						})),
+						emphasis: {
+							itemStyle: {
+								shadowBlur: 10,
+								shadowOffsetX: 0,
+								shadowColor: "rgba(0, 0, 0, 0.5)",
+							},
+						},
+						label: {
+							show: !isMobile,
+							position: "outside",
+							formatter: ({ name, value }) =>
+								`${name}\n${formatPercent(value)}`,
+							fontSize: 11,
+							distance: 15,
+						},
+						labelLine: {
+							show: !isMobile,
+						},
+					},
+				],
+			},
+			mobileChartHeight,
+		};
+	};
+
+	const resetForm = () => {
+		setFormState({
+			playerDeckName: "",
+			playerSeries: "",
+			opponentDeckName: "",
+			opponentSeries: "",
+			result: "",
+			tournamentName: "",
+			notes: "",
+		});
+		setResetDialogOpen(false);
+	};
+
+	// 处理浮动按钮菜单
+	const handleFabMenuOpen = (event) => {
+		setFabMenuAnchor(event.currentTarget);
+	};
+
+	const handleFabMenuClose = () => {
+		setFabMenuAnchor(null);
+	};
+
+	const toggleDisplayOption = (option) => {
+		switch (option) {
+			case "playerChart":
+				setActiveChartType("playerChart");
+				setChartDialogOpen(true);
+				break;
+			case "opponentChart":
+				setActiveChartType("opponentChart");
+				setOpponentChartDialogOpen(true);
+				break;
+			case "winRateTable":
+				setActiveChartType("winRateTable");
+				setTableDialogOpen(true);
+				break;
+		}
+		handleFabMenuClose();
 	};
 
 	const deleteRecord = async () => {
@@ -135,10 +335,12 @@ const Record = () => {
 				const key = rec.playerSeries || "未知";
 				countMap[key] = (countMap[key] || 0) + 1;
 			});
-			const statsArray = Object.entries(countMap).map(([name, value]) => ({
-				name,
-				value,
-			}));
+			const statsArray = Object.entries(countMap)
+				.map(([name, value]) => ({
+					name,
+					value,
+				}))
+				.sort((a, b) => b.value - a.value);
 			setSeriesStats(statsArray);
 
 			const opponentMap = {};
@@ -146,12 +348,12 @@ const Record = () => {
 				const key = rec.opponentSeries || "未知";
 				opponentMap[key] = (opponentMap[key] || 0) + 1;
 			});
-			const opponentStatsArray = Object.entries(opponentMap).map(
-				([name, value]) => ({
+			const opponentStatsArray = Object.entries(opponentMap)
+				.map(([name, value]) => ({
 					name,
 					value,
-				})
-			);
+				}))
+				.sort((a, b) => b.value - a.value);
 			setOpponentSeriesStats(opponentStatsArray);
 		} catch (err) {
 			console.error("Error fetching match records:", err);
@@ -181,19 +383,18 @@ const Record = () => {
 			</Typography>
 
 			<Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-				<Box sx={{ display: "flex", justifyContent: "center" }}>
-					<Tabs
-						value={tabValue}
-						onChange={(e, newValue) => {
-							if (newValue === 1) {
-								getHistory();
-							}
-							setTabValue(newValue);
-						}}>
-						<Tab label={t("pages.record.tabs.create")} />
-						<Tab label={t("pages.record.tabs.query")} />
-					</Tabs>
-				</Box>
+				<Tabs
+					value={tabValue}
+					variant="fullWidth"
+					onChange={(e, newValue) => {
+						if (newValue === 1) {
+							getHistory();
+						}
+						setTabValue(newValue);
+					}}>
+					<Tab label={t("pages.record.tabs.create")} />
+					<Tab label={t("pages.record.tabs.query")} />
+				</Tabs>
 			</Box>
 
 			{tabValue === 0 && (
@@ -393,17 +594,40 @@ const Record = () => {
 							{t("pages.record.form.result.doubleLose")}
 						</MenuItem>
 					</TextField>
-					<PrimaryButton
-						type="submit"
-						variant="contained"
+					<Box
 						sx={{
-							px: 6,
-							py: 1.5,
-							backgroundColor: "#a6ceb6",
-							"&:hover": { backgroundColor: "#95bfa5" },
+							display: "flex",
+							justifyContent: "center",
+							gap: 2,
+							mb: 3,
 						}}>
-						提交记录
-					</PrimaryButton>
+						<PrimaryButton
+							type="submit"
+							variant="contained"
+							sx={{
+								px: 4,
+								py: 1.5,
+								backgroundColor: "#a6ceb6",
+								"&:hover": { backgroundColor: "#95bfa5" },
+							}}>
+							提交
+						</PrimaryButton>
+						<SecondaryButton
+							type="button"
+							variant="contained"
+							onClick={() => setResetDialogOpen(true)}
+							sx={{
+								backgroundColor: "#760f10",
+								color: "#fff",
+								"&:hover": {
+									backgroundColor: "#5a0c0d",
+								},
+								px: 4,
+								py: 1.5,
+							}}>
+							重置
+						</SecondaryButton>
+					</Box>
 				</Box>
 			)}
 
@@ -417,23 +641,41 @@ const Record = () => {
 							alignItems: "center",
 							gap: 2,
 							mb: 2,
+							width: "100%",
+							px: 1,
 						}}>
 						<LocalizationProvider dateAdapter={AdapterDateFns}>
 							<DatePicker
 								label={t("pages.record.form.startDate")}
 								value={startDate}
 								onChange={(newValue) => setStartDate(newValue)}
-								slotProps={{ textField: { id: "startDate", fullWidth: true } }}
+								slotProps={{
+									textField: {
+										id: "startDate",
+										fullWidth: true,
+										sx: { width: { xs: "100%", sm: "40%" } },
+									},
+								}}
 							/>
 							<DatePicker
 								label={t("pages.record.form.endDate")}
 								value={endDate}
 								onChange={(newValue) => setEndDate(newValue)}
-								slotProps={{ textField: { id: "endDate", fullWidth: true } }}
+								slotProps={{
+									textField: {
+										id: "endDate",
+										fullWidth: true,
+										sx: { width: { xs: "100%", sm: "40%" } },
+									},
+								}}
 							/>
 						</LocalizationProvider>
 						<SecondaryButton
 							variant="outlined"
+							sx={{
+								width: { xs: "100%", sm: "20%" },
+								whiteSpace: "nowrap",
+							}}
 							onClick={() => {
 								setLoading(true);
 								getHistory();
@@ -523,224 +765,6 @@ const Record = () => {
 							</DangerButton>
 						</DialogActions>
 					</Dialog>
-					{(seriesStats.length > 0 || opponentSeriesStats.length > 0) && (
-						<Box
-							display="flex"
-							flexDirection="column"
-							gap={4}
-							mb={4}>
-							{showPlayerChart &&
-								seriesStats.length > 0 &&
-								(() => {
-									const playerColors = generateColors(seriesStats.length);
-									return (
-										<Box
-											sx={{
-												width: "100%",
-												display: "flex",
-												flexDirection: "column",
-												alignItems: "center",
-											}}>
-											<Typography
-												align="center"
-												sx={{ mt: 1 }}
-												variant="h6">
-												我方系列分布
-											</Typography>
-											<Box sx={{ width: "100%", height: "40vh" }}>
-												<Pie
-													data={{
-														labels: seriesStats.map((s) => s.name),
-														datasets: [
-															{
-																data: seriesStats.map((s) => s.value),
-																backgroundColor: playerColors,
-															},
-														],
-													}}
-													options={{
-														responsive: true,
-														maintainAspectRatio: false,
-														plugins: {
-															legend: { display: false },
-															datalabels: {
-																color: "#fff",
-																font: {
-																	weight: "bold",
-																},
-																formatter: (value) => {
-																	return value;
-																},
-															},
-														},
-													}}
-												/>
-											</Box>
-											<Box
-												display="flex"
-												justifyContent="center"
-												flexWrap="wrap"
-												mt={1}>
-												{seriesStats.map((s, i) => (
-													<Box
-														key={s.name}
-														display="flex"
-														alignItems="center"
-														mx={1}
-														mb={0.5}>
-														<Box
-															sx={{
-																width: 16,
-																height: 16,
-																backgroundColor: playerColors[i],
-																borderRadius: "50%",
-																mr: 1,
-																border: "1px solid #ccc",
-															}}
-														/>
-														<Typography variant="body2">{s.name}</Typography>
-													</Box>
-												))}
-											</Box>
-										</Box>
-									);
-								})()}
-							{showOpponentChart &&
-								opponentSeriesStats.length > 0 &&
-								(() => {
-									const opponentColors = generateColors(
-										opponentSeriesStats.length
-									);
-									return (
-										<Box
-											sx={{
-												width: "100%",
-												display: "flex",
-												flexDirection: "column",
-												alignItems: "center",
-											}}>
-											<Typography
-												align="center"
-												sx={{ mt: 1 }}
-												variant="h6">
-												对手系列分布
-											</Typography>
-											<Box sx={{ width: "100%", height: "40vh" }}>
-												<Pie
-													data={{
-														labels: opponentSeriesStats.map((s) => s.name),
-														datasets: [
-															{
-																data: opponentSeriesStats.map((s) => s.value),
-																backgroundColor: opponentColors,
-															},
-														],
-													}}
-													options={{
-														responsive: true,
-														maintainAspectRatio: false,
-														plugins: {
-															legend: { display: false },
-															datalabels: {
-																color: "#fff",
-																font: {
-																	weight: "bold",
-																},
-																formatter: (value) => {
-																	return value;
-																},
-															},
-														},
-													}}
-												/>
-											</Box>
-											<Box
-												display="flex"
-												justifyContent="center"
-												flexWrap="wrap"
-												mt={1}>
-												{opponentSeriesStats.map((s, i) => (
-													<Box
-														key={s.name}
-														display="flex"
-														alignItems="center"
-														mx={1}
-														mb={0.5}>
-														<Box
-															sx={{
-																width: 16,
-																height: 16,
-																backgroundColor: opponentColors[i],
-																borderRadius: "50%",
-																mr: 1,
-																border: "1px solid #ccc",
-															}}
-														/>
-														<Typography variant="body2">{s.name}</Typography>
-													</Box>
-												))}
-											</Box>
-										</Box>
-									);
-								})()}
-						</Box>
-					)}
-					{showWinRateTable && records.length > 0 && (
-						<Box sx={{ m: 4 }}>
-							<Typography
-								variant="h6"
-								gutterBottom
-								align="center">
-								各敌人系列胜率统计
-							</Typography>
-							<Box
-								component="table"
-								sx={{
-									width: "100%",
-									borderCollapse: "collapse",
-									textAlign: "center",
-									mt: 1,
-									"& th, & td": {
-										border: "1px solid #ddd",
-										padding: "8px",
-									},
-									"& th": {
-										backgroundColor: "#f2f2f2",
-									},
-								}}>
-								<thead>
-									<tr>
-										<th>对手系列</th>
-										<th>对战次数</th>
-										<th>胜场</th>
-										<th>胜率</th>
-									</tr>
-								</thead>
-								<tbody>
-									{Object.entries(
-										records.reduce((acc, rec) => {
-											const key = rec.opponentSeries || "未知";
-											if (!acc[key]) acc[key] = { total: 0, wins: 0 };
-											acc[key].total += 1;
-											if (rec.result === "win") acc[key].wins += 1;
-											return acc;
-										}, {})
-									)
-										.sort((a, b) => b[1].total - a[1].total)
-										.map(([series, stats]) => (
-											<tr key={series}>
-												<td>{series}</td>
-												<td>{stats.total}</td>
-												<td>{stats.wins}</td>
-												<td>
-													{((stats.wins / stats.total) * 100).toFixed(1)}%
-												</td>
-											</tr>
-										))}
-								</tbody>
-							</Box>
-						</Box>
-					)}
 					{loading ? (
 						<Box
 							sx={{
@@ -1017,6 +1041,674 @@ const Record = () => {
 						</Grid>
 					)}
 				</Box>
+			)}
+
+			{/* 图表对话框 */}
+			{/* 我方系列分布图对话框 */}
+			<Dialog
+				open={chartDialogOpen}
+				onClose={() => setChartDialogOpen(false)}
+				maxWidth="lg"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: 3,
+						minHeight: { xs: "auto", md: "650px" },
+						maxHeight: { xs: "95vh", md: "90vh" },
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						textAlign: "center",
+						background: "linear-gradient(135deg, #1b4332 0%, #2d5a42 100%)",
+						color: "white",
+						fontWeight: "bold",
+						fontSize: "1.25rem",
+					}}>
+					我方系列分布图
+				</DialogTitle>
+				<DialogContent
+					sx={{
+						px: { xs: 2, sm: 4 },
+						py: { xs: 2, sm: 4 },
+						overflowX: "hidden",
+						overflowY: { xs: "auto", md: "visible" },
+						maxHeight: { xs: "75vh", md: "none" },
+					}}>
+					{activeChartType === "playerChart" &&
+						seriesStats.length > 0 &&
+						(() => {
+							const { option, mobileChartHeight } = createEChartsOption(
+								seriesStats,
+								"我方系列分布"
+							);
+							const chartHeight = isMobile ? mobileChartHeight : 560;
+							return (
+								<Box
+									sx={{
+										width: "100%",
+										boxSizing: "border-box",
+									}}>
+									<ReactECharts
+										option={option}
+										style={{ width: "100%", height: chartHeight }}
+										theme="default"
+									/>
+								</Box>
+							);
+						})()}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setChartDialogOpen(false)}>关闭</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* 对手系列分布图对话框 */}
+			<Dialog
+				open={opponentChartDialogOpen}
+				onClose={() => setOpponentChartDialogOpen(false)}
+				maxWidth="lg"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: 3,
+						minHeight: { xs: "auto", md: "650px" },
+						maxHeight: { xs: "95vh", md: "90vh" },
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						textAlign: "center",
+						background: "linear-gradient(135deg, #760f10 0%, #5c0f10 100%)",
+						color: "white",
+						fontWeight: "bold",
+						fontSize: "1.25rem",
+					}}>
+					对手系列分布图
+				</DialogTitle>
+				<DialogContent
+					sx={{
+						px: { xs: 2, sm: 4 },
+						py: { xs: 2, sm: 4 },
+						overflowX: "hidden",
+						overflowY: { xs: "auto", md: "visible" },
+						maxHeight: { xs: "75vh", md: "none" },
+					}}>
+					{activeChartType === "opponentChart" &&
+						opponentSeriesStats.length > 0 &&
+						(() => {
+							const { option, mobileChartHeight } = createEChartsOption(
+								opponentSeriesStats,
+								"对手系列分布"
+							);
+							const chartHeight = isMobile ? mobileChartHeight : 560;
+							return (
+								<Box
+									sx={{
+										width: "100%",
+										boxSizing: "border-box",
+									}}>
+									<ReactECharts
+										option={option}
+										style={{ width: "100%", height: chartHeight }}
+										theme="default"
+									/>
+								</Box>
+							);
+						})()}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setOpponentChartDialogOpen(false)}>
+						关闭
+					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* 胜率统计表格对话框 */}
+			<Dialog
+				open={tableDialogOpen}
+				onClose={() => setTableDialogOpen(false)}
+				maxWidth="lg"
+				fullWidth
+				sx={{
+					"& .MuiDialog-paper": {
+						borderRadius: 3,
+						maxHeight: "90vh",
+					},
+				}}>
+				<DialogTitle
+					sx={{
+						textAlign: "center",
+						background: "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+						color: "white",
+						fontWeight: "bold",
+						fontSize: "1.25rem",
+					}}>
+					📊 详细胜率统计
+				</DialogTitle>
+				<DialogContent sx={{ p: 0 }}>
+					{activeChartType === "winRateTable" && records.length > 0 && (
+						<Box sx={{ p: 3, maxHeight: "70vh", overflowY: "auto" }}>
+							{/* 综合数据概览 */}
+							<Card
+								elevation={4}
+								sx={{ mb: 3, borderRadius: 2 }}>
+								<CardContent sx={{ p: 3 }}>
+									<Typography
+										variant="h6"
+										gutterBottom
+										align="center"
+										color="primary"
+										fontWeight="bold">
+										📊 综合数据概览
+									</Typography>
+									<Grid
+										container
+										spacing={2}>
+										{(() => {
+											const totalGames = records.length;
+											const totalWins = records.filter(
+												(r) => r.result === "win"
+											).length;
+											const totalLosses = records.filter(
+												(r) => r.result === "lose"
+											).length;
+											const totalDraws = records.filter(
+												(r) => r.result === "doubleLose"
+											).length;
+											const winRate =
+												totalGames > 0
+													? ((totalWins / totalGames) * 100).toFixed(1)
+													: 0;
+
+											const stats = [
+												{
+													label: "总对局数",
+													value: totalGames,
+													color: "#3f51b5",
+													icon: "🎯",
+												},
+												{
+													label: "胜场",
+													value: totalWins,
+													color: "#4caf50",
+													icon: "🏆",
+												},
+												{
+													label: "负场",
+													value: totalLosses,
+													color: "#f44336",
+													icon: "💔",
+												},
+												{
+													label: "平局",
+													value: totalDraws,
+													color: "#ff9800",
+													icon: "🤝",
+												},
+												{
+													label: "总胜率",
+													value: `${winRate}%`,
+													color:
+														winRate >= 60
+															? "#4caf50"
+															: winRate >= 40
+															? "#ff9800"
+															: "#f44336",
+													icon: "📈",
+												},
+											];
+
+											return stats.map((stat, index) => (
+												<Grid
+													key={index}
+													size={{ xs: 6, sm: 4, md: 2.4 }}>
+													<Box
+														sx={{
+															p: 1.5,
+															borderRadius: 2,
+															textAlign: "center",
+															border: `2px solid ${stat.color}20`,
+															backgroundColor: `${stat.color}10`,
+														}}>
+														<Typography variant="h5">{stat.icon}</Typography>
+														<Typography
+															variant="h6"
+															fontWeight="bold"
+															color={stat.color}>
+															{stat.value}
+														</Typography>
+														<Typography
+															variant="caption"
+															color="text.secondary">
+															{stat.label}
+														</Typography>
+													</Box>
+												</Grid>
+											));
+										})()}
+									</Grid>
+								</CardContent>
+							</Card>
+
+							{/* 对手卡组统计表格 */}
+							<Card
+								elevation={4}
+								sx={{ mb: 3, borderRadius: 2 }}>
+								<CardContent sx={{ p: 3 }}>
+									<Typography
+										variant="h6"
+										gutterBottom
+										align="center"
+										color="warning.main"
+										fontWeight="bold">
+										🎯 对手卡组对战统计
+									</Typography>
+									<Box sx={{ overflowX: "auto" }}>
+										<Box
+											component="table"
+											sx={{
+												width: "100%",
+												borderCollapse: "collapse",
+												"& th": {
+													backgroundColor: "#1b4332",
+													color: "white",
+													padding: "8px",
+													fontWeight: "bold",
+													fontSize: "0.85rem",
+												},
+												"& td": {
+													padding: "8px",
+													borderBottom: "1px solid #e0e0e0",
+													fontSize: "0.8rem",
+													textAlign: "center",
+												},
+											}}>
+											<thead>
+												<tr>
+													<th>对手卡组</th>
+													<th>对战次数</th>
+													<th>胜</th>
+													<th>负</th>
+													<th>平</th>
+													<th>胜率</th>
+												</tr>
+											</thead>
+											<tbody>
+												{Object.entries(
+													records.reduce((acc, rec) => {
+														const opponentKey = `${
+															rec.opponentDeckName || "未知卡组"
+														} [${rec.opponentSeries || "未知系列"}]`;
+														if (!acc[opponentKey])
+															acc[opponentKey] = {
+																total: 0,
+																wins: 0,
+																losses: 0,
+																draws: 0,
+																deckName: rec.opponentDeckName || "未知卡组",
+																series: rec.opponentSeries || "未知系列",
+															};
+														acc[opponentKey].total += 1;
+														if (rec.result === "win")
+															acc[opponentKey].wins += 1;
+														if (rec.result === "lose")
+															acc[opponentKey].losses += 1;
+														if (rec.result === "doubleLose")
+															acc[opponentKey].draws += 1;
+														return acc;
+													}, {})
+												)
+													.sort((a, b) => b[1].total - a[1].total)
+													.map(([opponentKey, stats]) => {
+														const winRate = (stats.wins / stats.total) * 100;
+														return (
+															<tr key={opponentKey}>
+																<td>
+																	<Box>
+																		<Chip
+																			label={stats.deckName}
+																			size="small"
+																			sx={{
+																				backgroundColor: "#1b4332",
+																				color: "white",
+																				mb: 0.5,
+																			}}
+																		/>
+																		<br />
+																		<Chip
+																			label={stats.series}
+																			size="small"
+																			variant="outlined"
+																			sx={{
+																				color: "#1b4332",
+																				borderColor: "#1b4332",
+																			}}
+																		/>
+																	</Box>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold">
+																		{stats.total}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#4caf50">
+																		{stats.wins}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#f44336">
+																		{stats.losses}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#ff9800">
+																		{stats.draws}
+																	</Typography>
+																</td>
+																<td>
+																	<Chip
+																		label={`${winRate.toFixed(1)}%`}
+																		size="small"
+																		sx={{
+																			backgroundColor:
+																				winRate >= 70
+																					? "#4caf50"
+																					: winRate >= 50
+																					? "#ff9800"
+																					: "#f44336",
+																			color: "white",
+																			fontWeight: "bold",
+																		}}
+																	/>
+																</td>
+															</tr>
+														);
+													})}
+											</tbody>
+										</Box>
+									</Box>
+								</CardContent>
+							</Card>
+
+							{/* 我方卡组统计表格 */}
+							<Card
+								elevation={4}
+								sx={{ borderRadius: 2 }}>
+								<CardContent sx={{ p: 3 }}>
+									<Typography
+										variant="h6"
+										gutterBottom
+										align="center"
+										color="success.main"
+										fontWeight="bold">
+										🃏 我方卡组表现统计
+									</Typography>
+									<Box sx={{ overflowX: "auto" }}>
+										<Box
+											component="table"
+											sx={{
+												width: "100%",
+												borderCollapse: "collapse",
+												"& th": {
+													backgroundColor: "#4caf50",
+													color: "white",
+													padding: "8px",
+													fontWeight: "bold",
+													fontSize: "0.85rem",
+												},
+												"& td": {
+													padding: "8px",
+													borderBottom: "1px solid #e0e0e0",
+													fontSize: "0.8rem",
+													textAlign: "center",
+												},
+											}}>
+											<thead>
+												<tr>
+													<th>我方卡组</th>
+													<th>使用次数</th>
+													<th>胜</th>
+													<th>负</th>
+													<th>平</th>
+													<th>胜率</th>
+												</tr>
+											</thead>
+											<tbody>
+												{Object.entries(
+													records.reduce((acc, rec) => {
+														const deckKey = `${
+															rec.playerDeckName || "未知卡组"
+														} [${rec.playerSeries || "未知系列"}]`;
+														if (!acc[deckKey])
+															acc[deckKey] = {
+																total: 0,
+																wins: 0,
+																losses: 0,
+																draws: 0,
+																deckName: rec.playerDeckName || "未知卡组",
+																series: rec.playerSeries || "未知系列",
+															};
+														acc[deckKey].total += 1;
+														if (rec.result === "win") acc[deckKey].wins += 1;
+														if (rec.result === "lose") acc[deckKey].losses += 1;
+														if (rec.result === "doubleLose")
+															acc[deckKey].draws += 1;
+														return acc;
+													}, {})
+												)
+													.sort((a, b) => b[1].total - a[1].total)
+													.map(([deckKey, stats]) => {
+														const winRate = (stats.wins / stats.total) * 100;
+														return (
+															<tr key={deckKey}>
+																<td>
+																	<Box>
+																		<Chip
+																			label={stats.deckName}
+																			size="small"
+																			sx={{
+																				backgroundColor: "#4caf50",
+																				color: "white",
+																				mb: 0.5,
+																			}}
+																		/>
+																		<br />
+																		<Chip
+																			label={stats.series}
+																			size="small"
+																			variant="outlined"
+																			sx={{
+																				color: "#4caf50",
+																				borderColor: "#4caf50",
+																			}}
+																		/>
+																	</Box>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold">
+																		{stats.total}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#4caf50">
+																		{stats.wins}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#f44336">
+																		{stats.losses}
+																	</Typography>
+																</td>
+																<td>
+																	<Typography
+																		variant="body2"
+																		fontWeight="bold"
+																		color="#ff9800">
+																		{stats.draws}
+																	</Typography>
+																</td>
+																<td>
+																	<Chip
+																		label={`${winRate.toFixed(1)}%`}
+																		size="small"
+																		sx={{
+																			backgroundColor:
+																				winRate >= 60
+																					? "#4caf50"
+																					: winRate >= 40
+																					? "#ff9800"
+																					: "#f44336",
+																			color: "white",
+																			fontWeight: "bold",
+																		}}
+																	/>
+																</td>
+															</tr>
+														);
+													})}
+											</tbody>
+										</Box>
+									</Box>
+								</CardContent>
+							</Card>
+						</Box>
+					)}
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setTableDialogOpen(false)}>关闭</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* Reset Confirmation Dialog */}
+			<Dialog
+				open={resetDialogOpen}
+				onClose={() => setResetDialogOpen(false)}>
+				<DialogTitle>确认重置</DialogTitle>
+				<DialogContent>
+					<DialogContentText>
+						您确定要重置表单吗？所有已填写的内容将会被清空。
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions>
+					<SecondaryButton onClick={() => setResetDialogOpen(false)}>
+						取消
+					</SecondaryButton>
+					<DangerButton
+						color="error"
+						onClick={resetForm}>
+						确认重置
+					</DangerButton>
+				</DialogActions>
+			</Dialog>
+
+			{/* 浮动按钮 - 仅在历史记录标签页显示 */}
+			{tabValue === 1 && records.length > 0 && (
+				<>
+					<Fab
+						color="primary"
+						aria-label="display options"
+						onClick={handleFabMenuOpen}
+						sx={{
+							position: "fixed",
+							bottom: 24,
+							left: 24,
+							zIndex: 1000,
+							background: "linear-gradient(135deg, #1b4332 0%, #2d5a42 100%)",
+							"&:hover": {
+								background: "linear-gradient(135deg, #2d5a42 0%, #40916c 100%)",
+								transform: "scale(1.1)",
+							},
+							transition: "all 0.3s ease-in-out",
+							boxShadow: "0 4px 16px rgba(27, 67, 50, 0.3)",
+						}}>
+						<SettingsIcon />
+					</Fab>
+
+					{/* 浮动按钮菜单 */}
+					<Menu
+						anchorEl={fabMenuAnchor}
+						open={fabMenuOpen}
+						onClose={handleFabMenuClose}
+						anchorOrigin={{
+							vertical: "top",
+							horizontal: "right",
+						}}
+						transformOrigin={{
+							vertical: "bottom",
+							horizontal: "left",
+						}}
+						sx={{
+							"& .MuiPaper-root": {
+								borderRadius: 2,
+								minWidth: 200,
+								boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+								border: "1px solid rgba(27, 67, 50, 0.1)",
+							},
+						}}>
+						<MenuItemMui
+							onClick={() => toggleDisplayOption("playerChart")}
+							sx={{
+								py: 1.5,
+								"&:hover": {
+									backgroundColor: "rgba(27, 67, 50, 0.08)",
+								},
+							}}>
+							<ListItemIcon>
+								<ChartIcon color="primary" />
+							</ListItemIcon>
+							<ListItemText>我方系列分布图</ListItemText>
+						</MenuItemMui>
+
+						<MenuItemMui
+							onClick={() => toggleDisplayOption("opponentChart")}
+							sx={{
+								py: 1.5,
+								"&:hover": {
+									backgroundColor: "rgba(27, 67, 50, 0.08)",
+								},
+							}}>
+							<ListItemIcon>
+								<ChartIcon color="secondary" />
+							</ListItemIcon>
+							<ListItemText>对手系列分布图</ListItemText>
+						</MenuItemMui>
+
+						<MenuItemMui
+							onClick={() => toggleDisplayOption("winRateTable")}
+							sx={{
+								py: 1.5,
+								"&:hover": {
+									backgroundColor: "rgba(27, 67, 50, 0.08)",
+								},
+							}}>
+							<ListItemIcon>
+								<TableIcon color="info" />
+							</ListItemIcon>
+							<ListItemText>胜率统计表格</ListItemText>
+						</MenuItemMui>
+					</Menu>
+				</>
 			)}
 		</Box>
 	);
