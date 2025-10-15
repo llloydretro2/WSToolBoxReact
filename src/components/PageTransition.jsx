@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { motion, useReducedMotion } from "framer-motion";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
 
 // 简化的页面变换动画 - 只有淡出淡入效果
 const pageVariants = {
@@ -32,29 +33,40 @@ const getPageTransition = (prefersReducedMotion) => {
 const PageTransition = ({ children }) => {
 	const prefersReducedMotion = useReducedMotion();
 	const pageTransition = getPageTransition(prefersReducedMotion);
+	const theme = useTheme();
+	const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+	const toolbarHeight = isMobile ? 56 : 64;
 
 	return (
-		<motion.div
+		<Box
+			component={motion.div}
 			initial="initial"
 			animate="in"
 			exit="out"
 			variants={pageVariants}
 			transition={pageTransition}
-			style={{
+			sx={{
 				width: "100%",
-				height: "calc(100vh - 64px)", // 固定高度而不是最小高度
 				position: "relative",
-				overflow: "hidden", // 防止内容溢出
+				display: "flex",
+				flexDirection: "column",
+				minHeight: `calc(100vh - ${toolbarHeight}px)`,
+				overflow: "visible",
+				"@supports (height: 100dvh)": {
+					minHeight: `calc(100dvh - ${toolbarHeight}px)`,
+				},
 			}}>
-			<div
-				style={{
-					height: "100%",
-					overflowY: "auto", // 内容可滚动
-					padding: "32px 0", // 替代页面的 mt: 4
+			<Box
+				sx={{
+					width: "100%",
+					minHeight: "100%",
+					flexGrow: 1,
+					overflow: "visible",
+					py: { xs: 3, md: 4 },
 				}}>
 				{children}
-			</div>
-		</motion.div>
+			</Box>
+		</Box>
 	);
 };
 

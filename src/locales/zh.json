@@ -4,6 +4,8 @@
     "home": "主页",
     "tracker": "记录器",
     "cardSearch": "卡片查询",
+    "battleTools": "对战工具",
+    "pack": "开包",
     "simulator": "模拟开包",
     "tools": "更多工具",
     "pickPacks": "选择开包",
@@ -11,7 +13,7 @@
     "dice": "骰子",
     "chessClock": "棋钟",
     "shuffle": "随机洗牌",
-    "record": "记录",
+    "record": "对战记录",
     "deck": "卡组",
     "deckCreate": "创建卡组",
     "deckSearch": "卡组列表"

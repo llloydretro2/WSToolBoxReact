@@ -951,10 +951,13 @@ const DeckSearch = () => {
 									<Box
 										sx={{
 											display: "flex",
-											justifyContent: "flex-end",
-											gap: 1,
+											flexDirection: { xs: "column", sm: "row" },
+											justifyContent: { xs: "flex-start", sm: "flex-end" },
+											alignItems: { xs: "stretch", sm: "center" },
+											gap: { xs: 1.5, sm: 1 },
 											px: 3,
 											pb: 3,
+											pt: { xs: 1.25, sm: 2 },
 											borderTop: "1px solid rgba(118, 15, 16, 0.1)",
 										}}>
 										<PrimaryButton
@@ -966,6 +969,7 @@ const DeckSearch = () => {
 												...BUTTON_STYLES.secondary,
 												borderColor: "#a6ceb6",
 												color: "#a6ceb6",
+												width: { xs: "100%", sm: "auto" },
 												"&:hover": {
 													backgroundColor: "#a6ceb6",
 													color: "white",
@@ -982,6 +986,7 @@ const DeckSearch = () => {
 												...BUTTON_STYLES.secondary,
 												borderColor: "#dc3545",
 												color: "#dc3545",
+												width: { xs: "100%", sm: "auto" },
 												"&:hover": {
 													backgroundColor: "#dc3545",
 													color: "white",
@@ -997,14 +1002,20 @@ const DeckSearch = () => {
 												setCustomDrawnCards([]);
 												setCustomDialogOpen(true);
 											}}
-											sx={{ ...BUTTON_STYLES.secondary }}>
+											sx={{
+												...BUTTON_STYLES.secondary,
+												width: { xs: "100%", sm: "auto" },
+											}}>
 											模拟起手
 										</SecondaryButton>
 										<PrimaryButton
 											variant="contained"
 											size="small"
 											onClick={() => setExportingDeck(deck)}
-											sx={{ ...BUTTON_STYLES.accent }}>
+											sx={{
+												...BUTTON_STYLES.accent,
+												width: { xs: "100%", sm: "auto" },
+											}}>
 											导出中文效果
 										</PrimaryButton>
 									</Box>

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, {
   createContext,
   useContext,
@@ -6,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import PropTypes from "prop-types";
 import zh from "../locales/zh.json";
 import en from "../locales/en.json";
 
@@ -22,13 +24,18 @@ const getValueFromPath = (dictionary, path) =>
   }, dictionary);
 
 export function LocaleProvider({ children }) {
-  const [locale, setLocale] = useState(() => localStorage.getItem("locale") || "zh");
+  const [locale, setLocale] = useState(
+    () => localStorage.getItem("locale") || "zh",
+  );
 
   useEffect(() => {
     localStorage.setItem("locale", locale);
   }, [locale]);
 
-  const dictionary = useMemo(() => dictionaries[locale] || dictionaries.zh, [locale]);
+  const dictionary = useMemo(
+    () => dictionaries[locale] || dictionaries.zh,
+    [locale],
+  );
 
   const t = useCallback(
     (key, vars = {}) => {
@@ -43,15 +50,16 @@ export function LocaleProvider({ children }) {
       }
       return value !== undefined ? value : key;
     },
-    [dictionary]
+    [dictionary],
   );
 
-  const contextValue = useMemo(
-    () => ({ locale, setLocale, t }),
-    [locale, t]
-  );
+  const contextValue = useMemo(() => ({ locale, setLocale, t }), [locale, t]);
 
-  return <LocaleContext.Provider value={contextValue}>{children}</LocaleContext.Provider>;
+  return (
+    <LocaleContext.Provider value={contextValue}>
+      {children}
+    </LocaleContext.Provider>
+  );
 }
 
 export function useLocale() {
@@ -61,3 +69,7 @@ export function useLocale() {
   }
   return context;
 }
+
+LocaleProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
