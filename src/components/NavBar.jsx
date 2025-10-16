@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocale } from "../contexts/LocaleContext";
+
 import LanguageToggle from "./LanguageToggle";
 import Avatar from "@mui/material/Avatar";
 import {
@@ -209,7 +210,7 @@ function NavBar() {
                 backgroundColor: isActive
                   ? "rgba(255,255,255,0.25)"
                   : "transparent",
-                color: isActive ? "#1b4332" : "inherit",
+                color: isActive ? "var(--text)" : "inherit",
                 transition: "background-color 0.2s ease, color 0.2s ease",
                 "&:hover": {
                   backgroundColor: isActive
@@ -225,7 +226,7 @@ function NavBar() {
                 },
                 "& .MuiListItemText-primary": {
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? "#1b4332" : "#ffffff",
+                  color: isActive ? "var(--text)" : "#ffffff",
                 },
               }}
             >
@@ -260,7 +261,7 @@ function NavBar() {
                 backgroundColor: isActive
                   ? "rgba(255,255,255,0.25)"
                   : "transparent",
-                color: isActive ? "#1b4332" : "inherit",
+                color: isActive ? "var(--text)" : "inherit",
                 transition: "background-color 0.2s ease, color 0.2s ease",
                 "&:hover": {
                   backgroundColor: isActive
@@ -276,7 +277,7 @@ function NavBar() {
                 },
                 "& .MuiListItemText-primary": {
                   fontWeight: isActive ? 600 : 500,
-                  color: isActive ? "#1b4332" : "#ffffff",
+                  color: isActive ? "var(--text)" : "#ffffff",
                 },
               }}
             >
@@ -290,7 +291,7 @@ function NavBar() {
 
   return (
     <>
-      <AppBar position="fixed" sx={{ backgroundColor: "#a6ceb6" }}>
+      <AppBar position="fixed" sx={{ backgroundColor: "var(--primary)" }}>
         <Toolbar>
           <Box sx={{ display: { xs: "flex", md: "none" }, mr: 2 }}>
             <IconButton
@@ -347,7 +348,7 @@ function NavBar() {
                       backgroundColor: isActive
                         ? "rgba(255,255,255,0.25)"
                         : "transparent",
-                      color: isActive ? "#1b4332" : "inherit",
+                      color: isActive ? "var(--text)" : "inherit",
                       transition: "background-color 0.2s ease, color 0.2s ease",
                       "&:hover": {
                         backgroundColor: isActive
@@ -379,7 +380,7 @@ function NavBar() {
                   backgroundColor: isPackMenuActive()
                     ? "rgba(255,255,255,0.25)"
                     : "transparent",
-                  color: isPackMenuActive() ? "#1b4332" : "inherit",
+                  color: isPackMenuActive() ? "var(--text)" : "inherit",
                   transition: "background-color 0.2s ease, color 0.2s ease",
                   "&:hover": {
                     backgroundColor: isPackMenuActive()
@@ -405,7 +406,7 @@ function NavBar() {
               }}
               sx={{
                 "& .MuiPaper-root": {
-                  backgroundColor: "rgba(166, 206, 182, 0.95)",
+                  backgroundColor: "var(--primary)",
                   backdropFilter: "blur(10px)",
                   border: "1px solid rgba(255,255,255,0.2)",
                 },
@@ -427,7 +428,7 @@ function NavBar() {
                       backgroundColor: isActive
                         ? "rgba(255,255,255,0.25)"
                         : "transparent",
-                      color: isActive ? "#1b4332" : "#ffffff",
+                      color: isActive ? "var(--text)" : "#ffffff",
                       "&:hover": {
                         backgroundColor: "rgba(255,255,255,0.2)",
                       },
@@ -456,7 +457,7 @@ function NavBar() {
                   backgroundColor: isDeckMenuActive()
                     ? "rgba(255,255,255,0.25)"
                     : "transparent",
-                  color: isDeckMenuActive() ? "#1b4332" : "inherit",
+                  color: isDeckMenuActive() ? "var(--text)" : "inherit",
                   transition: "background-color 0.2s ease, color 0.2s ease",
                   "&:hover": {
                     backgroundColor: isDeckMenuActive()
@@ -482,7 +483,7 @@ function NavBar() {
               }}
               sx={{
                 "& .MuiPaper-root": {
-                  backgroundColor: "rgba(166, 206, 182, 0.95)",
+                  backgroundColor: "var(--primary)",
                   backdropFilter: "blur(10px)",
                   border: "1px solid rgba(255,255,255,0.2)",
                 },
@@ -504,7 +505,7 @@ function NavBar() {
                       backgroundColor: isActive
                         ? "rgba(255,255,255,0.25)"
                         : "transparent",
-                      color: isActive ? "#1b4332" : "#ffffff",
+                      color: isActive ? "var(--text)" : "#ffffff",
                       "&:hover": {
                         backgroundColor: "rgba(255,255,255,0.2)",
                       },
@@ -533,7 +534,7 @@ function NavBar() {
                   backgroundColor: isBattleToolsMenuActive()
                     ? "rgba(255,255,255,0.25)"
                     : "transparent",
-                  color: isBattleToolsMenuActive() ? "#1b4332" : "inherit",
+                  color: isBattleToolsMenuActive() ? "var(--text)" : "inherit",
                   transition: "background-color 0.2s ease, color 0.2s ease",
                   "&:hover": {
                     backgroundColor: isBattleToolsMenuActive()
@@ -559,7 +560,7 @@ function NavBar() {
               }}
               sx={{
                 "& .MuiPaper-root": {
-                  backgroundColor: "rgba(166, 206, 182, 0.95)",
+                  backgroundColor: "var(--primary)",
                   backdropFilter: "blur(10px)",
                   border: "1px solid rgba(255,255,255,0.2)",
                 },
@@ -778,13 +779,15 @@ function NavBar() {
               </Menu>
             </Stack>
           ) : (
-            <Button
-              color="inherit"
-              sx={{ ml: 2 }}
-              onClick={() => navigate("/login")}
-            >
-              {t("navbar.login")}
-            </Button>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Button
+                color="inherit"
+                sx={{ ml: 1 }}
+                onClick={() => navigate("/login")}
+              >
+                {t("navbar.login")}
+              </Button>
+            </Box>
           )}
         </Toolbar>
       </AppBar>

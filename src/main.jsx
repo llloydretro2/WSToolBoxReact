@@ -15,12 +15,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         width: "100%",
         height: "100vh",
         position: "fixed",
-        opacity: 0.3,
+        opacity: 0.2,
         zIndex: -1,
       }}
     />
     <LocaleProvider>
       <App />
     </LocaleProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

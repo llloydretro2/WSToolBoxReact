@@ -1,47 +1,129 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden; /* 防止水平滚动条 */
+    margin: 0;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden; /* 防止水平滚动条 */
 }
 
 html {
-  overflow-x: hidden; /* 在html层面也防止水平滚动 */
+    overflow-x: hidden; /* 在html层面也防止水平滚动 */
 }
 
 #root {
-  overflow-x: hidden; /* 确保根元素也不会出现水平滚动条 */
+    overflow-x: hidden; /* 确保根元素也不会出现水平滚动条 */
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+    font-family:
+        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+/* Spring Rain 配色方案 CSS 变量 */
+:root {
+    --spring-rain-50: #e3f5ea;
+    --spring-rain-100: #bdeacf;
+    --spring-rain-200: #a6ceb6;
+    --spring-rain-300: #9ec4ad;
+    --spring-rain-400: #94b7a2;
+    --spring-rain-500: #88a995;
+    --spring-rain-600: #7b9987;
+    --spring-rain-700: #6d8978;
+    --spring-rain-800: #607869;
+    --spring-rain-900: #52675a;
+    --spring-rain-1000: #4a5e52;
+    --spring-rain-1100: #43564b;
+    --spring-rain-1200: #3c4d43;
+    --spring-rain-1300: #35443b;
+    --spring-rain-1400: #2e3c34;
+    --spring-rain-1500: #28332c;
+    --spring-rain-1600: #212b25;
+    --spring-rain-1700: #1a231e;
+    --spring-rain-1800: #131b16;
+    --spring-rain-1900: #0c120f;
 
+    /* 主题颜色变量 */
+    --primary: var(--spring-rain-200);
+    --primary-hover: var(--spring-rain-300);
+    --primary-light: var(--spring-rain-100);
+    --primary-dark: var(--spring-rain-400);
+
+    --background: var(--spring-rain-50);
+    --surface: #ffffff;
+    --card-background: rgba(166, 206, 182, 0.15);
+
+    --text: var(--spring-rain-1900);
+    --text-secondary: var(--spring-rain-1300);
+    --text-muted: var(--spring-rain-900);
+
+    --border: var(--spring-rain-100);
+    --divider: var(--spring-rain-200);
+
+    --success: #4caf50;
+    --error: #f44336;
+    --warning: #ff9800;
+    --info: var(--spring-rain-500);
+    --reset: #760f10;
+    --reset-hover: #5c0f10;
+}
+
+/* 全局背景和文本颜色 */
+body {
+    background-color: transparent;
+    color: var(--background);
+    color: var(--text);
+}
+
+/* 卡片样式 */
+.card {
+    background-color: var(--surface);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background-color: var(--primary);
+    color: var(--text);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+}
+
+/* 边框样式 */
+.border {
+    border: 1px solid var(--border);
+}
+
+.divider {
+    border-bottom: 1px solid var(--divider);
+}
 
 @font-face {
-  font-family: 'agfa_rotis_semi_serif';
-  src: url('./assets/fonts/agfa_rotis_semi_serif.ttf') format('truetype');
+    font-family: "agfa_rotis_semi_serif";
+    src: url("./assets/fonts/agfa_rotis_semi_serif.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: 'BIZUDPMincho-Bold';
-  src: url('./assets/fonts/BIZUDPMincho-Bold.ttf') format('truetype');
+    font-family: "BIZUDPMincho-Bold";
+    src: url("./assets/fonts/BIZUDPMincho-Bold.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: 'BIZUDPMincho-Regular';
-  src: url('./assets/fonts/BIZUDPMincho-Regular.ttf') format('truetype');
+    font-family: "BIZUDPMincho-Regular";
+    src: url("./assets/fonts/BIZUDPMincho-Regular.ttf") format("truetype");
 }
 
 @font-face {
-  font-family: 'name_font';
-  src: url('./assets/fonts/NotoSansJP-VariableFont_wght.ttf') format('truetype');
+    font-family: "name_font";
+    src: url("./assets/fonts/NotoSansJP-VariableFont_wght.ttf")
+        format("truetype");
 }
-
-
-

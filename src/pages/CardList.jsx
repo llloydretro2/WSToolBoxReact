@@ -226,7 +226,12 @@ function CardList() {
 
   return (
     <Container maxWidth="md" sx={{ textAlign: "center" }}>
-      <Typography variant="h4" fontWeight={700} color="#1b4332" gutterBottom>
+      <Typography
+        variant="h4"
+        fontWeight={700}
+        color="var(--text)"
+        gutterBottom
+      >
         {t("pages.cardList.title")}
       </Typography>
       <Typography variant="body1" color="text.secondary" align="center">
@@ -239,10 +244,10 @@ function CardList() {
           mt: 4,
           mb: 4,
           p: 3,
-          backgroundColor: "rgba(27, 67, 50, 0.1)",
+          backgroundColor: "var(--card-background)",
           borderRadius: 3,
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-          border: "1px solid rgba(27, 67, 50, 0.2)",
+          border: "1px solid var(--border)",
         }}
       >
         <Box
@@ -620,9 +625,6 @@ function CardList() {
               sx={{
                 px: 4,
                 py: 1.5,
-                backgroundColor: "#a6ceb6",
-                color: "#1b4332",
-                "&:hover": { backgroundColor: "#95bfa5" },
               }}
             >
               {t("pages.cardList.searchButton")}
@@ -636,10 +638,6 @@ function CardList() {
               sx={{
                 px: 4,
                 py: 1.5,
-                backgroundColor: "#760f10",
-                "&:hover": {
-                  backgroundColor: "#5c0f10",
-                },
               }}
             >
               {t("pages.cardList.resetButton")}
@@ -672,20 +670,19 @@ function CardList() {
                       transform: "translateX(20px)",
                       color: "#fff",
                       "& + .MuiSwitch-track": {
-                        background:
-                          "linear-gradient(120deg, #4caf50 0%, #2e7d32 100%)",
+                        background: "var(--success)",
                         opacity: 1,
                       },
                     },
                   },
                   "& .MuiSwitch-thumb": {
-                    boxShadow: "0 4px 8px rgba(27, 67, 50, 0.3)",
+                    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
                     width: 18,
                     height: 18,
                   },
                   "& .MuiSwitch-track": {
                     borderRadius: 999,
-                    backgroundColor: "rgba(27, 67, 50, 0.2)",
+                    backgroundColor: "var(--border)",
                     opacity: 1,
                   },
                 }}
@@ -702,9 +699,9 @@ function CardList() {
               px: 2.5,
               py: 1,
               borderRadius: 999,
-              backgroundColor: "rgba(166, 206, 182, 0.18)",
-              boxShadow: "0 8px 18px rgba(27, 67, 50, 0.16)",
-              color: "#1b4332",
+              backgroundColor: "var(--card-background)",
+              boxShadow: "0 8px 18px rgba(0, 0, 0, 0.1)",
+              color: "var(--text)",
               gap: 1.5,
               "& .MuiTypography-root": {
                 fontWeight: 600,
@@ -807,10 +804,9 @@ function CardList() {
                 overflow: "hidden",
                 mb: 3,
                 borderRadius: 3,
-                background:
-                  "linear-gradient(140deg, rgba(255,255,255,0.96) 5%, rgba(214,236,223,0.92) 45%, rgba(255,255,255,0.9) 100%)",
+                backgroundColor: "var(--surface)",
                 boxShadow: "0 18px 45px rgba(17, 24, 39, 0.15)",
-                border: "1px solid rgba(166, 206, 182, 0.45)",
+                border: "1px solid var(--border)",
                 transition: "transform 0.4s ease, box-shadow 0.4s ease",
                 backdropFilter: "blur(4px)",
                 "&::before": {
@@ -821,7 +817,7 @@ function CardList() {
                   width: "40%",
                   height: "100%",
                   background:
-                    "radial-gradient(circle at top left, rgba(166,206,182,0.35), transparent 65%)",
+                    "radial-gradient(circle at top left, var(--primary-light), transparent 65%)",
                 },
                 "&:hover": {
                   transform: "translateY(-6px)",
@@ -839,7 +835,7 @@ function CardList() {
                   justifyContent: "center",
                   p: { xs: 3, sm: 4 },
                   background:
-                    "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, rgba(166,206,182,0.25) 100%)",
+                    "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, var(--card-background) 100%)",
                   zIndex: 1,
                 }}
               >
@@ -905,18 +901,17 @@ function CardList() {
                         size="small"
                         sx={{
                           borderRadius: 999,
-                          backgroundColor: "rgba(166, 206, 182, 0.14)",
+                          backgroundColor: "var(--card-background)",
                           "& .MuiToggleButton-root": {
                             border: "none",
                             px: 1.5,
                             minWidth: 44,
-                            color: "#1b4332",
+                            color: "var(--text)",
                             fontWeight: 600,
                             textTransform: "none",
                             transition: "all 0.2s ease",
                             "&.Mui-selected": {
-                              background:
-                                "linear-gradient(120deg, #4caf50 0%, #2e7d32 100%)",
+                              backgroundColor: "var(--success)",
                               color: "#fff",
                               boxShadow: "0 6px 12px rgba(46, 125, 50, 0.3)",
                             },
@@ -984,8 +979,8 @@ function CardList() {
                       label={chip.label}
                       size="small"
                       sx={{
-                        backgroundColor: "rgba(166, 206, 182, 0.2)",
-                        border: "1px solid rgba(166, 206, 182, 0.6)",
+                        backgroundColor: "var(--card-background)",
+                        border: "1px solid var(--border)",
                         fontWeight: 500,
                       }}
                     />
@@ -1005,8 +1000,8 @@ function CardList() {
                         label={chip.label}
                         size="small"
                         sx={{
-                          backgroundColor: "rgba(118, 15, 16, 0.08)",
-                          border: "1px solid rgba(118, 15, 16, 0.18)",
+                          backgroundColor: "rgba(244, 67, 54, 0.08)",
+                          border: "1px solid rgba(244, 67, 54, 0.18)",
                           fontWeight: 500,
                         }}
                       />
@@ -1014,7 +1009,7 @@ function CardList() {
                   </Stack>
                 )}
 
-                <Divider sx={{ borderColor: "rgba(118, 15, 16, 0.12)" }} />
+                <Divider sx={{ borderColor: "var(--divider)" }} />
 
                 <Box>
                   {card.trait && (
@@ -1058,7 +1053,7 @@ function CardList() {
                 {(showJP && card.effect) || (showZh && card.zh_effect) ? (
                   <Box
                     sx={{
-                      backgroundColor: "rgba(166, 206, 182, 0.16)",
+                      backgroundColor: "var(--card-background)",
                       borderRadius: 2,
                       p: 2,
                     }}
@@ -1092,14 +1087,14 @@ function CardList() {
                     sx={{
                       mt: 2,
                       p: 2,
-                      backgroundColor: "rgba(27, 67, 50, 0.06)",
+                      backgroundColor: "var(--card-background)",
                       borderRadius: 2,
-                      border: "1px solid rgba(27, 67, 50, 0.15)",
+                      border: "1px solid var(--border)",
                     }}
                   >
                     <Typography
                       variant="subtitle2"
-                      sx={{ fontWeight: 600, color: "#1b4332", mb: 1.5 }}
+                      sx={{ fontWeight: 600, color: "var(--text)", mb: 1.5 }}
                     >
                       {t("pages.cardList.labels.related")}
                     </Typography>
@@ -1127,8 +1122,8 @@ function CardList() {
                           variant="outlined"
                           size="small"
                           sx={{
-                            borderColor: "rgba(27, 67, 50, 0.3)",
-                            color: "#1b4332",
+                            borderColor: "var(--border)",
+                            color: "var(--text)",
                             fontWeight: 500,
                             maxWidth: "100%",
                             height: "auto",
@@ -1153,12 +1148,12 @@ function CardList() {
                       }
                       sx={{
                         mt: 1.5,
-                        borderColor: "rgba(27, 67, 50, 0.4)",
-                        color: "#1b4332",
+                        borderColor: "var(--border)",
+                        color: "var(--text)",
                         fontWeight: 600,
                         "&:hover": {
-                          borderColor: "#1b4332",
-                          backgroundColor: "rgba(27, 67, 50, 0.08)",
+                          borderColor: "var(--text)",
+                          backgroundColor: "var(--card-background)",
                         },
                       }}
                     >
@@ -1182,15 +1177,15 @@ function CardList() {
             size="small"
             sx={{
               "& .MuiPaginationItem-root": {
-                color: "#4b4b4b",
-                borderColor: "#a6ceb6",
+                color: "var(--text-secondary)",
+                borderColor: "var(--primary)",
               },
               "& .Mui-selected": {
-                backgroundColor: "#a6ceb6 !important",
+                backgroundColor: "var(--primary) !important",
                 color: "#fff !important",
                 borderColor: "#a6ceb6 !important",
                 "&:hover": {
-                  backgroundColor: "#95bfa5 !important",
+                  backgroundColor: "var(--primary-hover) !important",
                 },
               },
             }}
@@ -1207,11 +1202,10 @@ function CardList() {
           sx: {
             borderRadius: 4,
             overflow: "hidden",
-            background:
-              "linear-gradient(150deg, rgba(182, 212, 196, 0.96) 0%, rgba(166, 206, 182, 0.94) 55%, rgba(150, 196, 170, 0.94) 100%)",
-            border: "1px solid rgba(86, 126, 105, 0.35)",
+            backgroundColor: "var(--primary)",
+            border: "1px solid var(--border)",
             boxShadow: "0 24px 50px rgba(46, 76, 61, 0.35)",
-            color: "#234334",
+            color: "var(--text)",
           },
         }}
       >
@@ -1219,8 +1213,8 @@ function CardList() {
           sx={{
             px: { xs: 3, sm: 4 },
             py: { xs: 2.5, sm: 3.5 },
-            background: "linear-gradient(120deg, #6fa386 0%, #4d7e66 100%)",
-            color: "#f6fff9",
+            backgroundColor: "var(--primary-dark)",
+            color: "var(--text)",
           }}
         >
           <Box
@@ -1254,7 +1248,7 @@ function CardList() {
                     sx={{
                       backgroundColor: "rgba(255, 255, 255, 0.28)",
                       border: "1px solid rgba(255, 255, 255, 0.42)",
-                      color: "#21523d",
+                      color: "var(--text)",
                       fontWeight: 600,
                     }}
                   />

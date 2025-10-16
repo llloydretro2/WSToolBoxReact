@@ -526,7 +526,12 @@ const Record = () => {
         mx: "auto",
       }}
     >
-      <Typography variant="h4" fontWeight={700} color="#1b4332" gutterBottom>
+      <Typography
+        variant="h4"
+        fontWeight={700}
+        color="var(--text)"
+        gutterBottom
+      >
         {t("pages.record.title")}
       </Typography>
 
@@ -545,10 +550,10 @@ const Record = () => {
               color: "text.secondary",
             },
             "& .MuiTab-root.Mui-selected": {
-              color: "#a6ceb6",
+              color: "var(--primary)",
             },
             "& .MuiTabs-indicator": {
-              backgroundColor: "#a6ceb6",
+              backgroundColor: "var(--primary)",
             },
           }}
         >
@@ -597,7 +602,7 @@ const Record = () => {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              backgroundColor: "rgba(166, 206, 182, 0.15)",
+              backgroundColor: "var(--card-background)",
               borderRadius: 2,
               p: 2,
             }}
@@ -656,7 +661,7 @@ const Record = () => {
               display: "flex",
               flexDirection: "column",
               gap: 2,
-              backgroundColor: "rgba(255, 205, 210, 0.15)",
+              backgroundColor: "var(--card-background)",
               borderRadius: 2,
               p: 2,
             }}
@@ -768,28 +773,21 @@ const Record = () => {
               sx={{
                 px: 4,
                 py: 1.5,
-                backgroundColor: "#a6ceb6",
-                "&:hover": { backgroundColor: "#95bfa5" },
               }}
             >
               {t("pages.record.form.submitButton")}
             </PrimaryButton>
-            <SecondaryButton
+            <DangerButton
               type="button"
               variant="contained"
               onClick={() => setResetDialogOpen(true)}
               sx={{
-                backgroundColor: "#760f10",
-                color: "#fff",
-                "&:hover": {
-                  backgroundColor: "#5a0c0d",
-                },
                 px: 4,
                 py: 1.5,
               }}
             >
               {t("pages.record.form.resetButton")}
-            </SecondaryButton>
+            </DangerButton>
           </Box>
         </Box>
       )}
@@ -839,10 +837,6 @@ const Record = () => {
               sx={{
                 width: { xs: "100%", sm: "20%" },
                 whiteSpace: "nowrap",
-                backgroundColor: "#a6ceb6",
-                "&:hover": {
-                  backgroundColor: "#95bfa5",
-                },
               }}
               onClick={() => {
                 setLoading(true);
@@ -895,7 +889,7 @@ const Record = () => {
               sx={{
                 textAlign: "center",
                 py: 8,
-                backgroundColor: "white",
+                backgroundColor: "var(--surface)",
                 borderRadius: 2,
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
@@ -933,10 +927,10 @@ const Record = () => {
                         p: 1.5,
                         backgroundColor:
                           record.result === "win"
-                            ? "#4caf50"
+                            ? "var(--success)"
                             : record.result === "lose"
-                              ? "#f44336"
-                              : "#ff9800",
+                              ? "var(--error)"
+                              : "var(--warning)",
                         color: "white",
                         display: "flex",
                         alignItems: "center",
@@ -988,7 +982,7 @@ const Record = () => {
                             sx={{
                               width: 20,
                               height: 20,
-                              backgroundColor: "primary.main",
+                              backgroundColor: "var(--primary)",
                             }}
                           >
                             <PersonIcon sx={{ fontSize: 12 }} />
