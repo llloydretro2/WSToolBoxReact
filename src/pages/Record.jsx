@@ -1,5 +1,10 @@
-import React, { useState, useId } from "react";
-import { interpolateSpectral } from "d3-scale-chromatic";
+import React, { useState, useMemo } from "react";
+import PropTypes from "prop-types";
+import {
+  interpolateSpectral,
+  interpolateRainbow,
+  interpolateViridis,
+} from "d3-scale-chromatic";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
 import {
@@ -33,8 +38,6 @@ import {
   MenuItem as MenuItemMui,
   ListItemIcon,
   ListItemText,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import {
   Delete as DeleteIcon,
@@ -42,11 +45,10 @@ import {
   Person as PersonIcon,
   Casino as DeckIcon,
   Settings as SettingsIcon,
-  BarChart as ChartIcon,
   TableChart as TableIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  Download as DownloadIcon,
+  Analytics as AnalyticsIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -60,7 +62,7 @@ import {
 } from "../components/ButtonVariants";
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
-import ReactECharts from "echarts-for-react";
+import Chart from "react-apexcharts";
 
 // 本地后端测试地址
 // http://localhost:4000/api/cards?${params}
@@ -71,8 +73,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const Record = () => {
   const { t } = useLocale();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
@@ -90,173 +91,318 @@ const Record = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [seriesStats, setSeriesStats] = useState([]);
-  const [opponentSeriesStats, setOpponentSeriesStats] = useState([]);
-  const [showPlayerChart, setShowPlayerChart] = useState(false);
-  const [showOpponentChart, setShowOpponentChart] = useState(false);
-  const [showWinRateTable, setShowWinRateTable] = useState(false);
-  const playerChartSwitchId = useId();
-  const opponentChartSwitchId = useId();
-  const winRateTableSwitchId = useId();
 
   // 浮动按钮菜单状态
   const [fabMenuAnchor, setFabMenuAnchor] = useState(null);
   const fabMenuOpen = Boolean(fabMenuAnchor);
 
   // 对话框状态
-  const [chartDialogOpen, setChartDialogOpen] = useState(false);
+  const [playerChartDialogOpen, setPlayerChartDialogOpen] = useState(false);
   const [opponentChartDialogOpen, setOpponentChartDialogOpen] = useState(false);
-  const [tableDialogOpen, setTableDialogOpen] = useState(false);
-  const [activeChartType, setActiveChartType] = useState(null); // 'playerChart', 'opponentChart', 'winRateTable'
+  const [battleStatsDialogOpen, setBattleStatsDialogOpen] = useState(false);
+  const [seriesStats, setSeriesStats] = useState([]);
+  const [opponentSeriesStats, setOpponentSeriesStats] = useState([]);
 
-  // 图表ref用于导出
-  // 已移除：ECharts有内置导出功能，不再需要ref
+  const totalMatches = records.length;
 
-  // 创建 ECharts 配置 (带内置导出功能)
-  const createEChartsOption = (data, title) => {
-    const sortedData = [...data].sort((a, b) => b.value - a.value);
-    const colors = sortedData.map((_, index) =>
-      interpolateSpectral(
-        sortedData.length <= 1 ? 0 : index / (sortedData.length - 1),
-      ),
-    );
-    const itemCount = sortedData.length;
-    const totalValue = sortedData.reduce((sum, item) => sum + item.value, 0);
-    const deviceWidth =
-      typeof window !== "undefined" ? window.innerWidth : undefined;
-    const mobileMaxChars = (() => {
-      if (!deviceWidth) return 16;
-      if (deviceWidth >= 430) return 18;
-      if (deviceWidth >= 390) return 16;
-      if (deviceWidth >= 360) return 14;
-      return 12;
-    })();
-    const wrapLegendLabel = (label) => {
-      const maxChars = isMobile ? mobileMaxChars : 24;
-      if (label.length <= maxChars) return label;
-      const chunks = label.match(new RegExp(`.{1,${maxChars}}`, "g")) || [
-        label,
-      ];
-      return chunks.join("\n");
-    };
-    const formatPercent = (value) => {
-      if (!totalValue) return "0%";
-      const percent = (value / totalValue) * 100;
-      const digits = percent >= 10 ? 1 : 2;
-      const fixed = percent.toFixed(digits);
-      return `${fixed.replace(/\.0+$|0+$/g, "").replace(/\.$/, "")}%`;
-    };
+  const wins = useMemo(
+    () => records.filter((record) => record.result === "win").length,
+    [records],
+  );
+  const losses = useMemo(
+    () => records.filter((record) => record.result === "lose").length,
+    [records],
+  );
+  const draws = useMemo(
+    () => records.filter((record) => record.result === "doubleLose").length,
+    [records],
+  );
+  const winRate = totalMatches
+    ? ((wins / totalMatches) * 100).toFixed(1)
+    : "0.0";
 
-    const mobileChartHeight = Math.max(
-      360,
-      Math.min(880, 240 + itemCount * 22),
-    );
+  const playerSeriesSummary = useMemo(() => {
+    const noDataLabel = t("pages.record.stats.noData");
+    const unknownSeriesLabel = t("pages.record.display.unknownSeries");
+
+    if (!records.length) {
+      return {
+        counts: {},
+        topSeries: noDataLabel,
+        topCount: 0,
+        totalSeries: 0,
+      };
+    }
+
+    const counts = records.reduce((acc, rec) => {
+      const key = rec.playerSeries || unknownSeriesLabel;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const [topSeries, topCount] = Object.entries(counts).sort(
+      (a, b) => b[1] - a[1],
+    )[0] || [noDataLabel, 0];
 
     return {
-      option: {
-        title: {
-          text: title,
-          left: "center",
-          top: isMobile ? 10 : 24,
-          textStyle: {
-            fontSize: 18,
-            fontWeight: "bold",
-          },
-        },
-        tooltip: {
-          trigger: "item",
-          formatter: ({ name, value }) => `${name}: ${formatPercent(value)}`,
-        },
-        legend: {
-          orient: "horizontal",
-          ...(isMobile
-            ? { left: "center", width: "90%" }
-            : { left: "6%", right: "6%", width: "88%" }),
-          ...(isMobile
-            ? { top: "48%", bottom: 22 }
-            : { top: "80%", bottom: 28 }),
-          itemGap: isMobile
-            ? itemCount <= 3
-              ? 12
-              : itemCount <= 6
-                ? 9
-                : 6
-            : itemCount <= 5
-              ? 22
-              : itemCount <= 10
-                ? 16
-                : 12,
-          itemWidth: isMobile ? 14 : 18,
-          itemHeight: isMobile ? 10 : 14,
-          data: sortedData.map((item) => item.name),
-          textStyle: {
-            fontSize: isMobile
-              ? itemCount > 10
-                ? 9
-                : itemCount > 6
-                  ? 10
-                  : 11
-              : 12,
-            padding: [0, 2, 0, 2],
-            lineHeight: isMobile ? 14 : 20,
-          },
-          formatter: (name) => {
-            const item = sortedData.find((d) => d.name === name);
-            const countLabel = item ? `${item.value}个` : "0个";
-            return wrapLegendLabel(`${name} (${countLabel})`);
-          },
-        },
-        toolbox: {
-          show: true,
-          feature: {
-            saveAsImage: {
-              show: true,
-              title: "导出图片",
-              name: title,
-              type: "png",
-              backgroundColor: "#ffffff",
-              pixelRatio: 2,
-            },
-          },
-          right: 15,
-          top: 15,
-        },
-        series: [
-          {
-            name: title,
-            type: "pie",
-            radius: ["0%", isMobile ? "52%" : "46%"],
-            center: ["50%", isMobile ? "26%" : "42%"],
-            data: sortedData.map((item, index) => ({
-              value: item.value,
-              name: item.name,
-              itemStyle: {
-                color: colors[index],
-              },
-            })),
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: "rgba(0, 0, 0, 0.5)",
-              },
-            },
-            label: {
-              show: !isMobile,
-              position: "outside",
-              formatter: ({ name, value }) =>
-                `${name}\n${formatPercent(value)}`,
-              fontSize: 11,
-              distance: 15,
-            },
-            labelLine: {
-              show: !isMobile,
-            },
-          },
-        ],
-      },
-      mobileChartHeight,
+      counts,
+      topSeries,
+      topCount,
+      totalSeries: Object.keys(counts).length,
     };
+  }, [records, t]);
+
+  const opponentSeriesSummary = useMemo(() => {
+    const noDataLabel = t("pages.record.stats.noData");
+    const unknownSeriesLabel = t("pages.record.display.unknownSeries");
+
+    if (!records.length) {
+      return {
+        counts: {},
+        topSeries: noDataLabel,
+        topCount: 0,
+        totalSeries: 0,
+      };
+    }
+
+    const counts = records.reduce((acc, rec) => {
+      const key = rec.opponentSeries || unknownSeriesLabel;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    const [topSeries, topCount] = Object.entries(counts).sort(
+      (a, b) => b[1] - a[1],
+    )[0] || [noDataLabel, 0];
+
+    return {
+      counts,
+      topSeries,
+      topCount,
+      totalSeries: Object.keys(counts).length,
+    };
+  }, [records, t]);
+
+  const basicStatsLines = useMemo(
+    () => [
+      t("pages.record.stats.totalMatches", { count: totalMatches }),
+      t("pages.record.stats.wins", { count: wins }),
+      t("pages.record.stats.losses", { count: losses }),
+      t("pages.record.stats.draws", { count: draws }),
+      totalMatches
+        ? t("pages.record.stats.winRateDetailed", {
+            percentage: winRate,
+            wins,
+            losses,
+            draws,
+          })
+        : t("pages.record.stats.winRateEmpty"),
+    ],
+    [totalMatches, wins, losses, draws, winRate, t],
+  );
+
+  const playerSeriesLines = useMemo(
+    () => [
+      playerSeriesSummary.topCount > 0
+        ? t("pages.record.stats.playerTop", {
+            series: playerSeriesSummary.topSeries,
+            count: playerSeriesSummary.topCount,
+          })
+        : t("pages.record.stats.playerTopEmpty"),
+      playerSeriesSummary.totalSeries > 0
+        ? t("pages.record.stats.playerTotal", {
+            count: playerSeriesSummary.totalSeries,
+          })
+        : t("pages.record.stats.playerTotalEmpty"),
+    ],
+    [playerSeriesSummary, t],
+  );
+
+  const opponentSeriesLines = useMemo(
+    () => [
+      opponentSeriesSummary.topCount > 0
+        ? t("pages.record.stats.opponentTop", {
+            series: opponentSeriesSummary.topSeries,
+            count: opponentSeriesSummary.topCount,
+          })
+        : t("pages.record.stats.opponentTopEmpty"),
+      opponentSeriesSummary.totalSeries > 0
+        ? t("pages.record.stats.opponentTotal", {
+            count: opponentSeriesSummary.totalSeries,
+          })
+        : t("pages.record.stats.opponentTotalEmpty"),
+    ],
+    [opponentSeriesSummary, t],
+  );
+
+  const StatSection = ({ title, lines }) => (
+    <Box
+      sx={{
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 2,
+        p: 2,
+        mb: 3,
+        backgroundColor: "background.paper",
+      }}
+    >
+      <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+        {title}
+      </Typography>
+      <Box component="ul" sx={{ pl: 2.5, m: 0 }}>
+        {lines.map((line, index) => (
+          <Typography
+            component="li"
+            variant="body2"
+            sx={{ lineHeight: 1.7 }}
+            key={`${title}-${index}`}
+          >
+            {line}
+          </Typography>
+        ))}
+      </Box>
+    </Box>
+  );
+
+  StatSection.propTypes = {
+    title: PropTypes.string.isRequired,
+    lines: PropTypes.array.isRequired,
+  };
+
+  // 生成饼图颜色 - 使用d3颜色方案
+  const generateColors = (count) => {
+    if (count <= 1) return ["#8884d8"];
+
+    // 方案1: 彩虹色方案 - 适合大量数据
+    if (count > 20) {
+      return Array.from({ length: count }, (_, i) =>
+        interpolateRainbow(i / Math.max(count - 1, 1)),
+      );
+    }
+
+    // 方案2: 光谱色方案 - 适合中等数量数据
+    if (count > 10) {
+      return Array.from({ length: count }, (_, i) =>
+        interpolateSpectral(i / Math.max(count - 1, 1)),
+      );
+    }
+
+    // 方案3: Viridis色方案 - 适合少量数据
+    if (count > 5) {
+      return Array.from({ length: count }, (_, i) =>
+        interpolateViridis(i / Math.max(count - 1, 1)),
+      );
+    }
+
+    // 方案4: 预定义基础颜色 - 适合少量数据
+    const baseColors = [
+      "#8884d8",
+      "#82ca9d",
+      "#ffc658",
+      "#ff7300",
+      "#8dd1e1",
+      "#d084d0",
+      "#ff8042",
+      "#00C49F",
+      "#FFBB28",
+      "#FF6B6B",
+      "#4ECDC4",
+      "#45B7D1",
+      "#96CEB4",
+      "#FFEAA7",
+      "#DDA0DD",
+      "#98D8C8",
+      "#F7DC6F",
+      "#BB8FCE",
+      "#85C1E9",
+      "#F8C471",
+    ];
+    return baseColors.slice(0, count);
+  };
+
+  // 准备ApexCharts配置
+  const prepareChartOptions = (data, _title) => {
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+
+    return {
+      chart: {
+        type: "pie",
+        toolbar: {
+          show: false,
+        },
+      },
+      labels: data.map((item) => item.name),
+      colors: generateColors(data.length),
+      responsive: [
+        {
+          breakpoint: 768,
+          options: {
+            chart: {
+              width: 400,
+            },
+            legend: {
+              position: "bottom",
+            },
+          },
+        },
+        {
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 300,
+            },
+            legend: {
+              position: "bottom",
+            },
+          },
+        },
+      ],
+      legend: {
+        position: "bottom",
+        formatter: function (seriesName, opts) {
+          const value = data[opts.seriesIndex].value;
+          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+          return t("pages.record.charts.legendFull", {
+            series: seriesName,
+            count: value,
+            percentage,
+          });
+        },
+      },
+      tooltip: {
+        y: {
+          formatter: function (value, { seriesIndex: _seriesIndex }) {
+            const percentage =
+              total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return t("pages.record.charts.legendShort", {
+              count: value,
+              percentage,
+            });
+          },
+        },
+      },
+      dataLabels: {
+        enabled: true,
+        formatter: function (val, opts) {
+          const value = data[opts.seriesIndex].value;
+          return value.toString();
+        },
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            labels: {
+              show: false,
+            },
+          },
+        },
+      },
+    };
+  };
+
+  // 准备图表数据
+  const prepareChartSeries = (data) => {
+    return data.map((item) => item.value);
   };
 
   const resetForm = () => {
@@ -281,22 +427,22 @@ const Record = () => {
     setFabMenuAnchor(null);
   };
 
+  // 切换显示选项
   const toggleDisplayOption = (option) => {
+    handleFabMenuClose();
     switch (option) {
       case "playerChart":
-        setActiveChartType("playerChart");
-        setChartDialogOpen(true);
+        setPlayerChartDialogOpen(true);
         break;
       case "opponentChart":
-        setActiveChartType("opponentChart");
         setOpponentChartDialogOpen(true);
         break;
-      case "winRateTable":
-        setActiveChartType("winRateTable");
-        setTableDialogOpen(true);
+      case "battleStats":
+        setBattleStatsDialogOpen(true);
+        break;
+      default:
         break;
     }
-    handleFabMenuClose();
   };
 
   const deleteRecord = async () => {
@@ -316,7 +462,7 @@ const Record = () => {
       setRecordToDelete(null);
       getHistory();
     } catch (err) {
-      console.error("删除出错:", err);
+      console.error("Failed to delete record:", err);
     }
   };
 
@@ -334,8 +480,9 @@ const Record = () => {
       });
       setRecords(filtered);
       const countMap = {};
+      const unknownSeriesLabel = t("pages.record.display.unknownSeries");
       filtered.forEach((rec) => {
-        const key = rec.playerSeries || "未知";
+        const key = rec.playerSeries || unknownSeriesLabel;
         countMap[key] = (countMap[key] || 0) + 1;
       });
       const statsArray = Object.entries(countMap)
@@ -346,9 +493,10 @@ const Record = () => {
         .sort((a, b) => b.value - a.value);
       setSeriesStats(statsArray);
 
+      // 敌方系列统计
       const opponentMap = {};
       filtered.forEach((rec) => {
-        const key = rec.opponentSeries || "未知";
+        const key = rec.opponentSeries || unknownSeriesLabel;
         opponentMap[key] = (opponentMap[key] || 0) + 1;
       });
       const opponentStatsArray = Object.entries(opponentMap)
@@ -379,7 +527,7 @@ const Record = () => {
       }}
     >
       <Typography variant="h4" fontWeight={700} color="#1b4332" gutterBottom>
-        对战记录
+        {t("pages.record.title")}
       </Typography>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
@@ -391,6 +539,17 @@ const Record = () => {
               getHistory();
             }
             setTabValue(newValue);
+          }}
+          sx={{
+            "& .MuiTab-root": {
+              color: "text.secondary",
+            },
+            "& .MuiTab-root.Mui-selected": {
+              color: "#a6ceb6",
+            },
+            "& .MuiTabs-indicator": {
+              backgroundColor: "#a6ceb6",
+            },
           }}
         >
           <Tab label={t("pages.record.tabs.create")} />
@@ -428,7 +587,7 @@ const Record = () => {
               setRecords((prev) => [newRecord, ...prev]);
               setTabValue(1);
             } catch (err) {
-              console.error("提交出错:", err);
+              console.error("Failed to submit record:", err);
             }
           }}
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -613,7 +772,7 @@ const Record = () => {
                 "&:hover": { backgroundColor: "#95bfa5" },
               }}
             >
-              提交
+              {t("pages.record.form.submitButton")}
             </PrimaryButton>
             <SecondaryButton
               type="button"
@@ -629,7 +788,7 @@ const Record = () => {
                 py: 1.5,
               }}
             >
-              重置
+              {t("pages.record.form.resetButton")}
             </SecondaryButton>
           </Box>
         </Box>
@@ -675,11 +834,15 @@ const Record = () => {
                 }}
               />
             </LocalizationProvider>
-            <SecondaryButton
-              variant="outlined"
+            <PrimaryButton
+              variant="contained"
               sx={{
                 width: { xs: "100%", sm: "20%" },
                 whiteSpace: "nowrap",
+                backgroundColor: "#a6ceb6",
+                "&:hover": {
+                  backgroundColor: "#95bfa5",
+                },
               }}
               onClick={() => {
                 setLoading(true);
@@ -687,73 +850,9 @@ const Record = () => {
               }}
             >
               {t("pages.record.form.filterButton")}
-            </SecondaryButton>
+            </PrimaryButton>
           </Box>
-          <Box
-            display="flex"
-            justifyContent="center"
-            flexDirection="column"
-            alignItems="center"
-          >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showPlayerChart}
-                  onChange={(e) => setShowPlayerChart(e.target.checked)}
-                  inputProps={{ id: playerChartSwitchId }}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
-                      color: "rgba(166, 206, 182, 1)",
-                    },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "rgba(166, 206, 182, 1)",
-                    },
-                  }}
-                />
-              }
-              slotProps={{ label: { htmlFor: playerChartSwitchId } }}
-              label={t("pages.record.charts.showMySeriesDistribution")}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showOpponentChart}
-                  onChange={(e) => setShowOpponentChart(e.target.checked)}
-                  inputProps={{ id: opponentChartSwitchId }}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": {
-                      color: "rgba(166, 206, 182, 1)",
-                    },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "rgba(166, 206, 182, 1)",
-                    },
-                  }}
-                />
-              }
-              slotProps={{ label: { htmlFor: opponentChartSwitchId } }}
-              label={t("pages.record.charts.showOpponentSeriesDistribution")}
-            />
-          </Box>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showWinRateTable}
-                onChange={(e) => setShowWinRateTable(e.target.checked)}
-                inputProps={{ id: winRateTableSwitchId }}
-                sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": {
-                    color: "rgba(166, 206, 182, 1)",
-                  },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                    backgroundColor: "rgba(166, 206, 182, 1)",
-                  },
-                }}
-              />
-            }
-            slotProps={{ label: { htmlFor: winRateTableSwitchId } }}
-            label={t("pages.record.charts.showWinRateTable")}
-            sx={{ mb: 2 }}
-          />
+
           <Dialog
             open={deleteDialogOpen}
             onClose={() => setDeleteDialogOpen(false)}
@@ -771,7 +870,7 @@ const Record = () => {
               <DangerButton
                 color="error"
                 onClick={() => {
-                  console.log("将删除记录:", recordToDelete);
+                  console.log("Preparing to delete record:", recordToDelete);
                   deleteRecord();
                   setDeleteDialogOpen(false);
                 }}
@@ -903,7 +1002,8 @@ const Record = () => {
                           fontWeight="medium"
                           sx={{ mb: 0.5 }}
                         >
-                          {record.playerDeckName || "未知牌组"}
+                          {record.playerDeckName ||
+                            t("pages.record.display.unknownDeck")}
                         </Typography>
                         <Chip
                           label={
@@ -975,7 +1075,8 @@ const Record = () => {
                           fontWeight="medium"
                           sx={{ mb: 0.5 }}
                         >
-                          {record.opponentDeckName || "未知牌组"}
+                          {record.opponentDeckName ||
+                            t("pages.record.display.unknownDeck")}
                         </Typography>
                         <Chip
                           label={
@@ -1053,18 +1154,17 @@ const Record = () => {
         </Box>
       )}
 
-      {/* 图表对话框 */}
-      {/* 我方系列分布图对话框 */}
+      {/* 我方系列分布对话框 */}
       <Dialog
-        open={chartDialogOpen}
-        onClose={() => setChartDialogOpen(false)}
-        maxWidth="lg"
+        open={playerChartDialogOpen}
+        onClose={() => setPlayerChartDialogOpen(false)}
+        maxWidth="md"
         fullWidth
         sx={{
           "& .MuiDialog-paper": {
             borderRadius: 3,
-            minHeight: { xs: "auto", md: "650px" },
-            maxHeight: { xs: "95vh", md: "90vh" },
+            maxHeight: "80vh",
+            minHeight: "500px",
           },
         }}
       >
@@ -1077,57 +1177,70 @@ const Record = () => {
             fontSize: "1.25rem",
           }}
         >
-          我方系列分布图
+          {t("pages.record.charts.playerDialogTitle")}
         </DialogTitle>
         <DialogContent
           sx={{
-            px: { xs: 2, sm: 4 },
-            py: { xs: 2, sm: 4 },
-            overflowX: "hidden",
-            overflowY: { xs: "auto", md: "visible" },
-            maxHeight: { xs: "75vh", md: "none" },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 3 },
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {activeChartType === "playerChart" &&
-            seriesStats.length > 0 &&
-            (() => {
-              const { option, mobileChartHeight } = createEChartsOption(
-                seriesStats,
-                "我方系列分布",
-              );
-              const chartHeight = isMobile ? mobileChartHeight : 560;
-              return (
-                <Box
-                  sx={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <ReactECharts
-                    option={option}
-                    style={{ width: "100%", height: chartHeight }}
-                    theme="default"
-                  />
-                </Box>
-              );
-            })()}
+          {seriesStats.length > 0 ? (
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: "600px",
+                margin: "0 auto",
+                textAlign: "center",
+              }}
+            >
+              <Box
+                id="player-chart-container"
+                sx={{
+                  width: "100%",
+                  height: "350px",
+                }}
+              >
+                <Chart
+                  options={prepareChartOptions(
+                    seriesStats,
+                    t("pages.record.charts.playerDialogTitle"),
+                  )}
+                  series={prepareChartSeries(seriesStats)}
+                  type="pie"
+                  height="100%"
+                />
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="body1" align="center" color="text.secondary">
+              {t("pages.record.charts.noData")}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setChartDialogOpen(false)}>关闭</Button>
+          <Button onClick={() => setPlayerChartDialogOpen(false)}>
+            {t("pages.record.stats.close")}
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 对手系列分布图对话框 */}
+      {/* 敌方系列分布对话框 */}
       <Dialog
         open={opponentChartDialogOpen}
         onClose={() => setOpponentChartDialogOpen(false)}
-        maxWidth="lg"
+        maxWidth="md"
         fullWidth
         sx={{
           "& .MuiDialog-paper": {
             borderRadius: 3,
-            minHeight: { xs: "auto", md: "650px" },
-            maxHeight: { xs: "95vh", md: "90vh" },
+            maxHeight: "80vh",
+            minHeight: "500px",
           },
         }}
       >
@@ -1140,500 +1253,172 @@ const Record = () => {
             fontSize: "1.25rem",
           }}
         >
-          对手系列分布图
+          {t("pages.record.charts.opponentDialogTitle")}
         </DialogTitle>
         <DialogContent
           sx={{
-            px: { xs: 2, sm: 4 },
-            py: { xs: 2, sm: 4 },
-            overflowX: "hidden",
-            overflowY: { xs: "auto", md: "visible" },
-            maxHeight: { xs: "75vh", md: "none" },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 3 },
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
-          {activeChartType === "opponentChart" &&
-            opponentSeriesStats.length > 0 &&
-            (() => {
-              const { option, mobileChartHeight } = createEChartsOption(
-                opponentSeriesStats,
-                "对手系列分布",
-              );
-              const chartHeight = isMobile ? mobileChartHeight : 560;
-              return (
-                <Box
-                  sx={{
-                    width: "100%",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <ReactECharts
-                    option={option}
-                    style={{ width: "100%", height: chartHeight }}
-                    theme="default"
-                  />
-                </Box>
-              );
-            })()}
+          {opponentSeriesStats.length > 0 ? (
+            <Box
+              sx={{
+                width: "100%",
+                maxWidth: "600px",
+                margin: "0 auto",
+                textAlign: "center",
+              }}
+            >
+              <Box
+                id="opponent-chart-container"
+                sx={{
+                  width: "100%",
+                  height: "350px",
+                }}
+              >
+                <Chart
+                  options={prepareChartOptions(
+                    opponentSeriesStats,
+                    t("pages.record.charts.opponentDialogTitle"),
+                  )}
+                  series={prepareChartSeries(opponentSeriesStats)}
+                  type="pie"
+                  height="100%"
+                />
+              </Box>
+            </Box>
+          ) : (
+            <Typography variant="body1" align="center" color="text.secondary">
+              {t("pages.record.charts.noData")}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpponentChartDialogOpen(false)}>
-            关闭
+            {t("pages.record.stats.close")}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 胜率统计表格对话框 */}
+      {/* 对战数据统计对话框 */}
       <Dialog
-        open={tableDialogOpen}
-        onClose={() => setTableDialogOpen(false)}
+        open={battleStatsDialogOpen}
+        onClose={() => setBattleStatsDialogOpen(false)}
         maxWidth="lg"
         fullWidth
         sx={{
           "& .MuiDialog-paper": {
             borderRadius: 3,
-            maxHeight: "90vh",
+            background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
           },
         }}
       >
         <DialogTitle
           sx={{
             textAlign: "center",
-            background: "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             color: "white",
             fontWeight: "bold",
-            fontSize: "1.25rem",
+            fontSize: "1.5rem",
+            py: 3,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
           }}
         >
-          📊 详细胜率统计
+          {t("pages.record.stats.dialogTitle")}
         </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
-          {activeChartType === "winRateTable" && records.length > 0 && (
-            <Box sx={{ p: 3, maxHeight: "70vh", overflowY: "auto" }}>
-              {/* 综合数据概览 */}
-              <Card elevation={4} sx={{ mb: 3, borderRadius: 2 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    align="center"
-                    color="primary"
-                    fontWeight="bold"
-                  >
-                    📊 综合数据概览
-                  </Typography>
-                  <Grid container spacing={2}>
-                    {(() => {
-                      const totalGames = records.length;
-                      const totalWins = records.filter(
-                        (r) => r.result === "win",
-                      ).length;
-                      const totalLosses = records.filter(
-                        (r) => r.result === "lose",
-                      ).length;
-                      const totalDraws = records.filter(
-                        (r) => r.result === "doubleLose",
-                      ).length;
-                      const winRate =
-                        totalGames > 0
-                          ? ((totalWins / totalGames) * 100).toFixed(1)
-                          : 0;
-
-                      const stats = [
-                        {
-                          label: "总对局数",
-                          value: totalGames,
-                          color: "#3f51b5",
-                          icon: "🎯",
-                        },
-                        {
-                          label: "胜场",
-                          value: totalWins,
-                          color: "#4caf50",
-                          icon: "🏆",
-                        },
-                        {
-                          label: "负场",
-                          value: totalLosses,
-                          color: "#f44336",
-                          icon: "💔",
-                        },
-                        {
-                          label: "平局",
-                          value: totalDraws,
-                          color: "#ff9800",
-                          icon: "🤝",
-                        },
-                        {
-                          label: "总胜率",
-                          value: `${winRate}%`,
-                          color:
-                            winRate >= 60
-                              ? "#4caf50"
-                              : winRate >= 40
-                                ? "#ff9800"
-                                : "#f44336",
-                          icon: "📈",
-                        },
-                      ];
-
-                      return stats.map((stat, index) => (
-                        <Grid key={index} size={{ xs: 6, sm: 4, md: 2.4 }}>
-                          <Box
-                            sx={{
-                              p: 1.5,
-                              borderRadius: 2,
-                              textAlign: "center",
-                              border: `2px solid ${stat.color}20`,
-                              backgroundColor: `${stat.color}10`,
-                            }}
-                          >
-                            <Typography variant="h5">{stat.icon}</Typography>
-                            <Typography
-                              variant="h6"
-                              fontWeight="bold"
-                              color={stat.color}
-                            >
-                              {stat.value}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {stat.label}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      ));
-                    })()}
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              {/* 对手卡组统计表格 */}
-              <Card elevation={4} sx={{ mb: 3, borderRadius: 2 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    align="center"
-                    color="warning.main"
-                    fontWeight="bold"
-                  >
-                    🎯 对手卡组对战统计
-                  </Typography>
-                  <Box sx={{ overflowX: "auto" }}>
-                    <Box
-                      component="table"
-                      sx={{
-                        width: "100%",
-                        borderCollapse: "collapse",
-                        "& th": {
-                          backgroundColor: "#1b4332",
-                          color: "white",
-                          padding: "8px",
-                          fontWeight: "bold",
-                          fontSize: "0.85rem",
-                        },
-                        "& td": {
-                          padding: "8px",
-                          borderBottom: "1px solid #e0e0e0",
-                          fontSize: "0.8rem",
-                          textAlign: "center",
-                        },
-                      }}
-                    >
-                      <thead>
-                        <tr>
-                          <th>对手卡组</th>
-                          <th>对战次数</th>
-                          <th>胜</th>
-                          <th>负</th>
-                          <th>平</th>
-                          <th>胜率</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(
-                          records.reduce((acc, rec) => {
-                            const opponentKey = `${
-                              rec.opponentDeckName || "未知卡组"
-                            } [${rec.opponentSeries || "未知系列"}]`;
-                            if (!acc[opponentKey])
-                              acc[opponentKey] = {
-                                total: 0,
-                                wins: 0,
-                                losses: 0,
-                                draws: 0,
-                                deckName: rec.opponentDeckName || "未知卡组",
-                                series: rec.opponentSeries || "未知系列",
-                              };
-                            acc[opponentKey].total += 1;
-                            if (rec.result === "win")
-                              acc[opponentKey].wins += 1;
-                            if (rec.result === "lose")
-                              acc[opponentKey].losses += 1;
-                            if (rec.result === "doubleLose")
-                              acc[opponentKey].draws += 1;
-                            return acc;
-                          }, {}),
-                        )
-                          .sort((a, b) => b[1].total - a[1].total)
-                          .map(([opponentKey, stats]) => {
-                            const winRate = (stats.wins / stats.total) * 100;
-                            return (
-                              <tr key={opponentKey}>
-                                <td>
-                                  <Box>
-                                    <Chip
-                                      label={stats.deckName}
-                                      size="small"
-                                      sx={{
-                                        backgroundColor: "#1b4332",
-                                        color: "white",
-                                        mb: 0.5,
-                                      }}
-                                    />
-                                    <br />
-                                    <Chip
-                                      label={stats.series}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        color: "#1b4332",
-                                        borderColor: "#1b4332",
-                                      }}
-                                    />
-                                  </Box>
-                                </td>
-                                <td>
-                                  <Typography variant="body2" fontWeight="bold">
-                                    {stats.total}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#4caf50"
-                                  >
-                                    {stats.wins}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#f44336"
-                                  >
-                                    {stats.losses}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#ff9800"
-                                  >
-                                    {stats.draws}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Chip
-                                    label={`${winRate.toFixed(1)}%`}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor:
-                                        winRate >= 70
-                                          ? "#4caf50"
-                                          : winRate >= 50
-                                            ? "#ff9800"
-                                            : "#f44336",
-                                      color: "white",
-                                      fontWeight: "bold",
-                                    }}
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              {/* 我方卡组统计表格 */}
-              <Card elevation={4} sx={{ borderRadius: 2 }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    align="center"
-                    color="success.main"
-                    fontWeight="bold"
-                  >
-                    🃏 我方卡组表现统计
-                  </Typography>
-                  <Box sx={{ overflowX: "auto" }}>
-                    <Box
-                      component="table"
-                      sx={{
-                        width: "100%",
-                        borderCollapse: "collapse",
-                        "& th": {
-                          backgroundColor: "#4caf50",
-                          color: "white",
-                          padding: "8px",
-                          fontWeight: "bold",
-                          fontSize: "0.85rem",
-                        },
-                        "& td": {
-                          padding: "8px",
-                          borderBottom: "1px solid #e0e0e0",
-                          fontSize: "0.8rem",
-                          textAlign: "center",
-                        },
-                      }}
-                    >
-                      <thead>
-                        <tr>
-                          <th>我方卡组</th>
-                          <th>使用次数</th>
-                          <th>胜</th>
-                          <th>负</th>
-                          <th>平</th>
-                          <th>胜率</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(
-                          records.reduce((acc, rec) => {
-                            const deckKey = `${
-                              rec.playerDeckName || "未知卡组"
-                            } [${rec.playerSeries || "未知系列"}]`;
-                            if (!acc[deckKey])
-                              acc[deckKey] = {
-                                total: 0,
-                                wins: 0,
-                                losses: 0,
-                                draws: 0,
-                                deckName: rec.playerDeckName || "未知卡组",
-                                series: rec.playerSeries || "未知系列",
-                              };
-                            acc[deckKey].total += 1;
-                            if (rec.result === "win") acc[deckKey].wins += 1;
-                            if (rec.result === "lose") acc[deckKey].losses += 1;
-                            if (rec.result === "doubleLose")
-                              acc[deckKey].draws += 1;
-                            return acc;
-                          }, {}),
-                        )
-                          .sort((a, b) => b[1].total - a[1].total)
-                          .map(([deckKey, stats]) => {
-                            const winRate = (stats.wins / stats.total) * 100;
-                            return (
-                              <tr key={deckKey}>
-                                <td>
-                                  <Box>
-                                    <Chip
-                                      label={stats.deckName}
-                                      size="small"
-                                      sx={{
-                                        backgroundColor: "#4caf50",
-                                        color: "white",
-                                        mb: 0.5,
-                                      }}
-                                    />
-                                    <br />
-                                    <Chip
-                                      label={stats.series}
-                                      size="small"
-                                      variant="outlined"
-                                      sx={{
-                                        color: "#4caf50",
-                                        borderColor: "#4caf50",
-                                      }}
-                                    />
-                                  </Box>
-                                </td>
-                                <td>
-                                  <Typography variant="body2" fontWeight="bold">
-                                    {stats.total}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#4caf50"
-                                  >
-                                    {stats.wins}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#f44336"
-                                  >
-                                    {stats.losses}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Typography
-                                    variant="body2"
-                                    fontWeight="bold"
-                                    color="#ff9800"
-                                  >
-                                    {stats.draws}
-                                  </Typography>
-                                </td>
-                                <td>
-                                  <Chip
-                                    label={`${winRate.toFixed(1)}%`}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor:
-                                        winRate >= 60
-                                          ? "#4caf50"
-                                          : winRate >= 40
-                                            ? "#ff9800"
-                                            : "#f44336",
-                                      color: "white",
-                                      fontWeight: "bold",
-                                    }}
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
+        <DialogContent
+          sx={{
+            px: { xs: 2, sm: 4 },
+            py: { xs: 3, sm: 4 },
+            overflow: "auto",
+            maxHeight: "75vh",
+          }}
+        >
+          {records.length > 0 ? (
+            <Box sx={{ width: "100%", mt: 2 }}>
+              <StatSection
+                title={t("pages.record.stats.basicSection")}
+                lines={basicStatsLines}
+              />
+              <StatSection
+                title={t("pages.record.stats.playerSection")}
+                lines={playerSeriesLines}
+              />
+              <StatSection
+                title={t("pages.record.stats.opponentSection")}
+                lines={opponentSeriesLines}
+              />
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: "center", py: 8 }}>
+              <Box
+                sx={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 16px",
+                  fontSize: "2rem",
+                }}
+              >
+                📊
+              </Box>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {t("pages.record.stats.emptyStateTitle")}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("pages.record.stats.emptyStateSubtitle")}
+              </Typography>
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setTableDialogOpen(false)}>关闭</Button>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={() => setBattleStatsDialogOpen(false)}
+            sx={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              borderRadius: 2,
+              px: 4,
+              py: 1,
+              fontWeight: "bold",
+              boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
+              "&:hover": {
+                boxShadow: "0 6px 20px rgba(102, 126, 234, 0.4)",
+                transform: "translateY(-1px)",
+              },
+              transition: "all 0.3s ease",
+            }}
+          >
+            {t("pages.record.stats.close")}
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Reset Confirmation Dialog */}
       <Dialog open={resetDialogOpen} onClose={() => setResetDialogOpen(false)}>
-        <DialogTitle>确认重置</DialogTitle>
+        <DialogTitle>{t("pages.record.resetDialog.title")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            您确定要重置表单吗？所有已填写的内容将会被清空。
+            {t("pages.record.resetDialog.content")}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <SecondaryButton onClick={() => setResetDialogOpen(false)}>
-            取消
+            {t("pages.record.resetDialog.cancel")}
           </SecondaryButton>
           <DangerButton color="error" onClick={resetForm}>
-            确认重置
+            {t("pages.record.resetDialog.confirm")}
           </DangerButton>
         </DialogActions>
       </Dialog>
@@ -1659,7 +1444,7 @@ const Record = () => {
               boxShadow: "0 4px 16px rgba(27, 67, 50, 0.3)",
             }}
           >
-            <SettingsIcon />
+            <AnalyticsIcon />
           </Fab>
 
           {/* 浮动按钮菜单 */}
@@ -1693,10 +1478,9 @@ const Record = () => {
                 },
               }}
             >
-              <ListItemIcon>
-                <ChartIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText>我方系列分布图</ListItemText>
+              <ListItemText>
+                {t("pages.record.charts.showMySeriesDistribution")}
+              </ListItemText>
             </MenuItemMui>
 
             <MenuItemMui
@@ -1708,14 +1492,13 @@ const Record = () => {
                 },
               }}
             >
-              <ListItemIcon>
-                <ChartIcon color="secondary" />
-              </ListItemIcon>
-              <ListItemText>对手系列分布图</ListItemText>
+              <ListItemText>
+                {t("pages.record.charts.showOpponentSeriesDistribution")}
+              </ListItemText>
             </MenuItemMui>
 
             <MenuItemMui
-              onClick={() => toggleDisplayOption("winRateTable")}
+              onClick={() => toggleDisplayOption("battleStats")}
               sx={{
                 py: 1.5,
                 "&:hover": {
@@ -1723,10 +1506,7 @@ const Record = () => {
                 },
               }}
             >
-              <ListItemIcon>
-                <TableIcon color="info" />
-              </ListItemIcon>
-              <ListItemText>胜率统计表格</ListItemText>
+              <ListItemText>{t("pages.record.stats.menuItem")}</ListItemText>
             </MenuItemMui>
           </Menu>
         </>

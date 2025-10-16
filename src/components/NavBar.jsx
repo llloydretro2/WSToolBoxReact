@@ -298,7 +298,6 @@ function NavBar() {
               edge="start"
               onClick={toggleDrawer(true)}
               sx={{
-                border: "1px solid rgba(255,255,255,0.3)",
                 borderRadius: 1,
               }}
             >

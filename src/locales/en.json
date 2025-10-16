@@ -241,6 +241,8 @@
         "filterButton": "Filter",
         "myInfo": "My Information",
         "opponentInfo": "Opponent Information",
+        "submitButton": "Submit",
+        "resetButton": "Reset",
         "result": {
           "win": "Win",
           "lose": "Lose",
@@ -254,18 +256,56 @@
         "opponentDeck": "Opponent's Deck",
         "notesLabel": "Notes:",
         "deleteTooltip": "Delete Record",
-        "unknownSeries": "Unknown Series"
+        "unknownSeries": "Unknown Series",
+        "unknownDeck": "Unknown Deck"
+      },
+      "stats": {
+        "dialogTitle": "📊 Match Statistics",
+        "menuItem": "Match Statistics",
+        "noData": "No data",
+        "basicSection": "Basic Stats",
+        "playerSection": "My Series Stats",
+        "opponentSection": "Opponent Series Stats",
+        "totalMatches": "Total matches: {{count}}",
+        "wins": "Wins: {{count}}",
+        "losses": "Losses: {{count}}",
+        "draws": "Draws: {{count}}",
+        "winRateDetailed": "Win rate: {{percentage}}% (W {{wins}} · L {{losses}} · D {{draws}})",
+        "winRateEmpty": "Win rate: 0% (no matches)",
+        "playerTop": "Most used series: {{series}} ({{count}} times)",
+        "playerTopEmpty": "Most used series: no records",
+        "playerTotal": "Total series used: {{count}}",
+        "playerTotalEmpty": "Total series used: no data",
+        "opponentTop": "Most faced series: {{series}} ({{count}} times)",
+        "opponentTopEmpty": "Most faced series: no records",
+        "opponentTotal": "Total series faced: {{count}}",
+        "opponentTotalEmpty": "Total series faced: no data",
+        "emptyStateTitle": "No data available",
+        "emptyStateSubtitle": "Add match records to see statistics",
+        "close": "Close"
       },
       "charts": {
-        "showMySeriesDistribution": "Show My Series Distribution",
-        "showOpponentSeriesDistribution": "Show Opponent Series Distribution",
-        "showWinRateTable": "Show Win Rate Statistics"
+        "showMySeriesDistribution": "My Series Distribution",
+        "showOpponentSeriesDistribution": "Opponent Series Distribution",
+        "showWinRateTable": "Show Win Rate Statistics",
+        "playerDialogTitle": "My Series Distribution",
+        "opponentDialogTitle": "Opponent Series Distribution",
+        "noData": "No data available",
+        "legendFull": "{{series}} ({{count}} entries, {{percentage}}%)",
+        "legendShort": "{{count}} entries ({{percentage}}%)",
+        "legendCount": "{{count}} entries"
       },
       "deleteDialog": {
         "title": "Confirm Delete",
         "content": "Are you sure you want to delete this record? This action cannot be undone.",
         "cancel": "Cancel",
         "confirm": "Delete"
+      },
+      "resetDialog": {
+        "title": "Reset Confirmation",
+        "content": "Reset the form? All entered information will be cleared.",
+        "cancel": "Cancel",
+        "confirm": "Reset"
       }
     },
     "deckEdit": {
