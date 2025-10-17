@@ -79,7 +79,13 @@ body {
 
 /* 卡片样式 */
 .card {
-    background-color: var(--surface);
+    background: linear-gradient(
+        135deg,
+        var(--spring-rain-100),
+        var(--spring-rain-200),
+        var(--spring-rain-300),
+        var(--spring-rain-400)
+    );
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

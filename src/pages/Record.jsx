@@ -978,15 +978,6 @@ const Record = () => {
                             mb: 0.5,
                           }}
                         >
-                          <Avatar
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: "var(--primary)",
-                            }}
-                          >
-                            <PersonIcon sx={{ fontSize: 12 }} />
-                          </Avatar>
                           <Typography variant="caption" color="text.secondary">
                             {t("pages.record.display.myDeck")}
                           </Typography>
@@ -1051,15 +1042,6 @@ const Record = () => {
                             mb: 0.5,
                           }}
                         >
-                          <Avatar
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: "secondary.main",
-                            }}
-                          >
-                            <DeckIcon sx={{ fontSize: 12 }} />
-                          </Avatar>
                           <Typography variant="caption" color="text.secondary">
                             {t("pages.record.display.opponentDeck")}
                           </Typography>

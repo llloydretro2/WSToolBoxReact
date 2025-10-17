@@ -192,6 +192,31 @@ function CardList() {
     setForm((prev) => ({ ...prev, page: newPage }));
   };
 
+  // 处理Autocomplete回车键选择第一个匹配项
+  const handleAutocompleteEnter = (event, options, fieldName) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      const inputValue = event.target.value;
+      if (inputValue && options.length > 0) {
+        // 找到第一个匹配的选项
+        const firstMatch = options.find((option) =>
+          option.toLowerCase().includes(inputValue.toLowerCase()),
+        );
+        if (firstMatch) {
+          // 根据字段名处理不同的值格式
+          let selectedValue;
+          if (["series_number", "series", "product_name"].includes(fieldName)) {
+            // 这些字段需要提取括号前的值
+            selectedValue = firstMatch.split("（")[0];
+          } else {
+            selectedValue = firstMatch;
+          }
+          setDraftForm((prev) => ({ ...prev, [fieldName]: selectedValue }));
+        }
+      }
+    }
+  };
+
   const scrollToTop = () => {
     const container = getScrollContainer();
     if (container === window) {
@@ -310,6 +335,32 @@ function CardList() {
                   label={t("pages.cardList.fields.seriesNumber")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const inputValue = e.target.value;
+                      if (inputValue) {
+                        const matchingOption = productList.series_number
+                          .slice()
+                          .sort()
+                          .find((option) =>
+                            `${option}${
+                              translationMap.series_number?.[option]
+                                ? `（${translationMap.series_number?.[option]}）`
+                                : ""
+                            }`
+                              .toLowerCase()
+                              .includes(inputValue.toLowerCase()),
+                          );
+                        if (matchingOption) {
+                          setDraftForm((prev) => ({
+                            ...prev,
+                            series_number: matchingOption,
+                          }));
+                        }
+                      }
+                    }
+                  }}
                 />
               )}
             />
@@ -346,6 +397,32 @@ function CardList() {
                   label={t("pages.cardList.fields.series")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const inputValue = e.target.value;
+                      if (inputValue) {
+                        const matchingOption = productList.series
+                          .slice()
+                          .sort()
+                          .find((option) =>
+                            `${option}${
+                              translationMap.series?.[option]
+                                ? `（${translationMap.series?.[option]}）`
+                                : ""
+                            }`
+                              .toLowerCase()
+                              .includes(inputValue.toLowerCase()),
+                          );
+                        if (matchingOption) {
+                          setDraftForm((prev) => ({
+                            ...prev,
+                            series: matchingOption,
+                          }));
+                        }
+                      }
+                    }
+                  }}
                 />
               )}
             />
@@ -386,6 +463,23 @@ function CardList() {
                   label={t("pages.cardList.fields.product")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.series
+                        .slice()
+                        .sort()
+                        .map(
+                          (s) =>
+                            `${s}${
+                              translationMap.series?.[s]
+                                ? `（${translationMap.series?.[s]}）`
+                                : ""
+                            }`,
+                        ),
+                      "series",
+                    )
+                  }
                 />
               )}
             />
@@ -428,6 +522,23 @@ function CardList() {
                   label={t("pages.cardList.fields.side")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.series_number
+                        .slice()
+                        .sort()
+                        .map(
+                          (s) =>
+                            `${s}${
+                              translationMap.series_number?.[s]
+                                ? `（${translationMap.series_number?.[s]}）`
+                                : ""
+                            }`,
+                        ),
+                      "series_number",
+                    )
+                  }
                 />
               )}
             />
@@ -462,6 +573,23 @@ function CardList() {
                   label={t("pages.cardList.fields.color")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.product_name
+                        .slice()
+                        .sort()
+                        .map(
+                          (p) =>
+                            `${p}${
+                              translationMap.product_name?.[p]
+                                ? `（${translationMap.product_name?.[p]}）`
+                                : ""
+                            }`,
+                        ),
+                      "product_name",
+                    )
+                  }
                 />
               )}
             />
@@ -481,6 +609,13 @@ function CardList() {
                   label={t("pages.cardList.fields.level")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.side.slice().sort(),
+                      "side",
+                    )
+                  }
                 />
               )}
             />
@@ -498,6 +633,13 @@ function CardList() {
                   label={t("pages.cardList.fields.rarity")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.trigger.slice().sort(),
+                      "trigger",
+                    )
+                  }
                 />
               )}
             />
@@ -515,6 +657,15 @@ function CardList() {
                   label={t("pages.cardList.fields.cardType")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.level
+                        .slice()
+                        .sort((a, b) => Number(a) - Number(b)),
+                      "level",
+                    )
+                  }
                 />
               )}
             />
@@ -550,6 +701,13 @@ function CardList() {
                   label={t("pages.cardList.fields.power")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.rarity.slice().sort(),
+                      "rarity",
+                    )
+                  }
                 />
               )}
             />
@@ -569,6 +727,13 @@ function CardList() {
                   label={t("pages.cardList.fields.cost")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.card_type.slice().sort(),
+                      "card_type",
+                    )
+                  }
                 />
               )}
             />
@@ -586,6 +751,13 @@ function CardList() {
                   label={t("pages.cardList.fields.soul")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.soul.slice().sort(),
+                      "soul",
+                    )
+                  }
                 />
               )}
             />
@@ -603,6 +775,13 @@ function CardList() {
                   label={t("pages.cardList.fields.trigger")}
                   variant="outlined"
                   fullWidth
+                  onKeyDown={(e) =>
+                    handleAutocompleteEnter(
+                      e,
+                      productList.trigger.slice().sort(),
+                      "trigger",
+                    )
+                  }
                 />
               )}
             />
@@ -804,7 +983,7 @@ function CardList() {
                 overflow: "hidden",
                 mb: 3,
                 borderRadius: 3,
-                backgroundColor: "var(--surface)",
+
                 boxShadow: "0 18px 45px rgba(17, 24, 39, 0.15)",
                 border: "1px solid var(--border)",
                 transition: "transform 0.4s ease, box-shadow 0.4s ease",
@@ -816,8 +995,6 @@ function CardList() {
                   left: 0,
                   width: "40%",
                   height: "100%",
-                  background:
-                    "radial-gradient(circle at top left, var(--primary-light), transparent 65%)",
                 },
                 "&:hover": {
                   transform: "translateY(-6px)",
@@ -834,8 +1011,7 @@ function CardList() {
                   alignItems: "center",
                   justifyContent: "center",
                   p: { xs: 3, sm: 4 },
-                  background:
-                    "linear-gradient(160deg, rgba(255,255,255,0.15) 0%, var(--card-background) 100%)",
+
                   zIndex: 1,
                 }}
               >
@@ -1320,8 +1496,7 @@ function CardList() {
                     alignItems: { xs: "stretch", sm: "center" },
                     p: { xs: 2, sm: 3 },
                     borderRadius: 3,
-                    background:
-                      "linear-gradient(150deg, rgba(187, 216, 202, 0.96) 0%, rgba(168, 208, 190, 0.92) 60%, rgba(154, 196, 178, 0.92) 100%)",
+                    backgroundColor: "rgba(187, 216, 202, 0.96)",
                     border: "1px solid rgba(94, 134, 112, 0.4)",
                     boxShadow: "0 14px 28px rgba(60, 94, 78, 0.28)",
                     color: "#214233",
@@ -1349,8 +1524,7 @@ function CardList() {
                         justifyContent: "center",
                         p: { xs: 1.25, sm: 1.75 },
                         borderRadius: 2,
-                        background:
-                          "linear-gradient(160deg, rgba(166, 206, 182, 0.38) 0%, rgba(166, 206, 182, 0.12) 100%)",
+                        backgroundColor: "rgba(166, 206, 182, 0.38)",
                         boxShadow: "inset 0 0 0 1px rgba(86, 126, 105, 0.28)",
                       }}
                     >
@@ -1579,12 +1753,12 @@ function CardList() {
             onClick={handleCloseRelatedModal}
             variant="contained"
             sx={{
-              background: "linear-gradient(120deg, #6fa386 0%, #4d7e66 100%)",
+              backgroundColor: "#6fa386",
               color: "#f6fff9",
               boxShadow: "0 10px 20px rgba(77, 126, 102, 0.35)",
               fontWeight: 600,
               "&:hover": {
-                background: "linear-gradient(120deg, #5a9276 0%, #3c6d56 100%)",
+                backgroundColor: "#5a9276",
                 boxShadow: "0 14px 26px rgba(60, 110, 86, 0.38)",
               },
             }}
