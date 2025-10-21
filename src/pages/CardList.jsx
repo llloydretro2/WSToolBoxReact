@@ -28,6 +28,7 @@ import {
 	CircularProgress,
 } from "@mui/material";
 import { PrimaryButton, DangerButton } from "../components/ButtonVariants";
+import LazyImage from "../components/LazyImage";
 
 import productList from "../data/productList.json";
 import translationMap from "../data/filter_translations.json";
@@ -212,7 +213,7 @@ function CardList() {
 			minLevel: minLevel.toString(),
 			maxLevel: maxLevel.toString(),
 		}));
-	}, [levelRange, levelScale, validLevels.length]);
+	}, [levelRange, levelScale, validLevels.length]); // 移除setDraftForm依赖，因为它是稳定的
 
 	// 监听powerRange变化，更新draftForm.power
 	useEffect(() => {
@@ -234,7 +235,7 @@ function CardList() {
 			minPower: minPower.toString(),
 			maxPower: maxPower.toString(),
 		}));
-	}, [powerRange, powerScale, validPowers.length]);
+	}, [powerRange, powerScale, validPowers.length]); // 移除setDraftForm依赖
 
 	// 监听costRange变化，更新draftForm.cost
 	useEffect(() => {
@@ -256,7 +257,7 @@ function CardList() {
 			minCost: minCost.toString(),
 			maxCost: maxCost.toString(),
 		}));
-	}, [costRange, costScale, validCosts.length]);
+	}, [costRange, costScale, validCosts.length]); // 移除setDraftForm依赖
 
 	const cardGroups = useMemo(() => {
 		const groupsInOrder = [];
@@ -294,7 +295,7 @@ function CardList() {
 		});
 
 		return groupsInOrder;
-	}, [result.data]);
+	}, [result.data]); // 移除extractBaseCardNo依赖，因为它是稳定的函数
 
 	const cardsToRender = useMemo(() => {
 		if (showMergedVariants) {
@@ -308,7 +309,7 @@ function CardList() {
 			baseCardNo: extractBaseCardNo(card.cardno),
 			variants: [card],
 		}));
-	}, [cardGroups, result.data, showMergedVariants]);
+	}, [cardGroups, result.data, showMergedVariants]); // 移除extractBaseCardNo依赖
 
 	const handleSearch = (draftForm) => {
 		setIsLoading(true);
@@ -317,7 +318,6 @@ function CardList() {
 				([, v]) => v !== undefined && v !== "" && v !== null
 			)
 		).toString();
-		console.log(params);
 
 		// 本地后端测试地址
 		// http://localhost:4000/api/cards?${params}
@@ -331,7 +331,6 @@ function CardList() {
 					page: res.page,
 					pageSize: res.pageSize,
 				});
-				console.log(res);
 			})
 			.catch((err) => {
 				console.error("搜索失败:", err);
@@ -1564,11 +1563,11 @@ function CardList() {
 
 										zIndex: 1,
 									}}>
-									<Box
-										component="img"
+									<LazyImage
 										src={card.image_url}
 										alt={card.name}
-										sx={{
+										placeholder="卡片加载中..."
+										style={{
 											width: "100%",
 											maxWidth: 260,
 											borderRadius: 2,
@@ -2077,12 +2076,13 @@ function CardList() {
 												backgroundColor: "rgba(166, 206, 182, 0.38)",
 												boxShadow: "inset 0 0 0 1px rgba(86, 126, 105, 0.28)",
 											}}>
-											<Box
-												component="img"
+											<LazyImage
 												src={related.image_url}
 												alt={related.name || related.cardno}
-												sx={{
-													width: { xs: 92, sm: 118 },
+												placeholder="相关卡片加载中..."
+												style={{
+													width: "100%",
+													maxWidth: 118,
 													borderRadius: 2,
 													boxShadow: "0 10px 20px rgba(61, 93, 76, 0.36)",
 												}}

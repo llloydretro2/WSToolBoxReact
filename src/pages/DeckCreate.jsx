@@ -22,6 +22,7 @@ import {
 	SecondaryButton,
 	DangerButton,
 } from "../components/ButtonVariants";
+import LazyImage from "../components/LazyImage";
 import deckRulesWeiss from "../data/deck_rules_weiss.json";
 import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
 
@@ -847,15 +848,10 @@ const DeckCreate = () => {
 							}}>
 							{filteredCards.map((card) => (
 								<Box key={card.cardno}>
-									<img
+									<LazyImage
 										src={card.image_url}
 										alt={card.name}
-										style={{
-											width: "100%",
-											height: "auto",
-											borderRadius: 4,
-											cursor: "pointer",
-										}}
+										placeholder="卡片加载中..."
 										onClick={() => {
 											setSelectedCard(card);
 											setCardDialogOpen(true);
