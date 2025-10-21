@@ -108,22 +108,38 @@
         "seriesNumber": "系列编号",
         "series": "系列名",
         "product": "产品名",
-        "side": "Side",
-        "keyword": "搜索关键字",
+  "side": "边",
+        "keyword": "搜索关键词",
         "color": "颜色",
         "level": "等级",
         "rarity": "稀有度",
         "cardType": "卡片类型",
+        "card_type": "卡片类型",
         "power": "攻击力",
         "cost": "费用",
         "soul": "灵魂",
         "trigger": "触发"
       },
+      "colors": {
+        "blue": "蓝色",
+        "green": "绿色",
+        "red": "红色",
+        "yellow": "黄色"
+      },
+      "sides": {
+        "s": "S",
+        "w": "W"
+      },
+      "cardTypes": {
+        "イベント": "事件",
+        "キャラ": "角色",
+        "クライマックス": "高潮"
+      },
       "toggle": {
         "showZh": "显示中文",
         "hideZh": "隐藏中文",
-        "showJp": "显示日语",
-        "hideJp": "隐藏日语",
+        "showJp": "显示日文",
+        "hideJp": "隐藏日文",
         "mergeVariants": "合并稀有度版本",
         "splitVariants": "拆分稀有度版本"
       },
@@ -132,7 +148,7 @@
         "traitZh": "特征（中文）",
         "flavor": "风味",
         "flavorZh": "风味（中文）",
-        "effect": "効果",
+        "effect": "效果",
         "effectZh": "效果（中文）",
         "variant": "稀有度版本",
         "related": "相关卡片"
@@ -142,90 +158,95 @@
       },
       "dialog": {
         "relatedTitle": "{{cardName}} · 相关卡片",
-        "emptyRelated": "暂时没有找到相关卡片。",
+        "emptyRelated": "暂无找到相关卡片。",
         "close": "关闭"
       },
       "scroll": {
         "down": "滚动到底部",
         "up": "返回顶部"
+      },
+      "noResults": "无符合要求的卡片",
+      "noResultsTitle": "没有找到符合条件的卡片",
+      "noResultsDescription": "尝试调整筛选条件，或点击下方按钮重置筛选以查看全部内容。",
+      "noResultsAction": "重置筛选"
+    }
+  },
+  "dice": {
+    "title": "骰子掷骰器",
+    "subtitle": "快速设置不同数量与面数的骰子",
+    "addButton": "添加骰子",
+    "resetButton": "重置",
+    "rollButton": "投掷骰子",
+    "setLabel": "第{{index}}组骰子",
+    "countLabel": "数量",
+    "facesLabel": "面数",
+    "resultsTitle": "投掷结果",
+    "summaryTitle": "汇总",
+    "summaryValue": "总计 {{total}} · 平均 {{average}}"
+  },
+  "chessClock": {
+    "title": "棋钟",
+    "subtitle": "轻触当前回合的玩家按钮即可切换。",
+    "statusRunning": "{{player}} 正在计时",
+    "statusPaused": "计时已暂停",
+    "playerLabel": "玩家 {{index}}",
+    "playerHint": "点击以宣告回合结束并切换到对手。",
+    "activeChip": "当前行动",
+    "pauseButton": "暂停计时",
+    "resumeButton": "继续计时",
+    "switchButton": "切换行动方",
+    "resetButton": "重置计时",
+    "totalTime": "总用时 {{time}}",
+    "dialogTitle": "确认要重置吗？",
+    "dialogSubtitle": "确定要重置棋钟？",
+    "dialogBody": "这将清空两位玩家的所有计时记录。",
+    "dialogCancel": "取消",
+    "dialogConfirm": "立即重置"
+  },
+  "shuffle": {
+    "title": "随机洗牌工具",
+    "subtitle": "每次生成 50 点总和，6-10 张的不均匀牌堆",
+    "summary": "共 {{deckLength}} 张，平均 {{average}}",
+    "summaryEmpty": "尚未生成牌堆",
+    "generateButton": "生成牌堆",
+    "clearButton": "清空结果",
+    "copyButton": "复制数据",
+    "decreaseButton": "全部-1",
+    "copyTooltip": "复制结果",
+    "copyTooltipSuccess": "已复制",
+    "copyTooltipError": "复制失败",
+    "generationChip": "第 {{count}} 次生成 · 总点数 50",
+    "cardCaption": "数量"
+  },
+  "record": {
+    "title": "战绩管理",
+    "tabs": {
+      "create": "创建记录",
+      "query": "查询记录"
+    },
+    "form": {
+      "matchName": "比赛名（可选）",
+      "notes": "备注（可选）",
+      "myDeckName": "我方卡组名称",
+      "mySeries": "我方系列",
+      "opponentDeckName": "对方卡组名称",
+      "opponentSeries": "对手系列",
+      "resultLabel": "胜负",
+      "startDate": "起始日期",
+      "endDate": "结束日期",
+      "filterButton": "筛选",
+      "myInfo": "我方信息",
+      "opponentInfo": "对手信息",
+      "submitButton": "提交",
+      "resetButton": "重置",
+      "result": {
+        "win": "胜利",
+        "lose": "失败",
+        "doubleLose": "双败"
       }
     },
-    "dice": {
-      "title": "骰子掷骰器",
-      "subtitle": "快速设置不同数量与面数的骰子",
-      "addButton": "添加骰子",
-      "resetButton": "重置",
-      "rollButton": "投掷骰子",
-      "setLabel": "第{{index}}组骰子",
-      "countLabel": "数量",
-      "facesLabel": "面数",
-      "resultsTitle": "投掷结果",
-      "summaryTitle": "汇总",
-      "summaryValue": "总计 {{total}} · 平均 {{average}}"
-    },
-    "chessClock": {
-      "title": "棋钟",
-      "subtitle": "轻触当前回合的玩家按钮即可切换。",
-      "statusRunning": "{{player}} 正在计时",
-      "statusPaused": "计时已暂停",
-      "playerLabel": "玩家 {{index}}",
-      "playerHint": "点击以宣告回合结束并切换到对手。",
-      "activeChip": "当前行动",
-      "pauseButton": "暂停计时",
-      "resumeButton": "继续计时",
-      "switchButton": "切换行动方",
-      "resetButton": "重置计时",
-      "totalTime": "总用时 {{time}}",
-      "dialogTitle": "确认要重置吗？",
-      "dialogSubtitle": "确定要重置棋钟？",
-      "dialogBody": "这将清空两位玩家的所有计时记录。",
-      "dialogCancel": "取消",
-      "dialogConfirm": "立即重置"
-    },
-    "shuffle": {
-      "title": "随机洗牌工具",
-      "subtitle": "每次生成 50 点总和，6-10 张的不均匀牌堆",
-      "summary": "共 {{deckLength}} 张，平均 {{average}}",
-      "summaryEmpty": "尚未生成牌堆",
-      "generateButton": "生成牌堆",
-      "clearButton": "清空结果",
-      "copyButton": "复制数据",
-      "decreaseButton": "全部-1",
-      "copyTooltip": "复制结果",
-      "copyTooltipSuccess": "已复制",
-      "copyTooltipError": "复制失败",
-      "generationChip": "第 {{count}} 次生成 · 总点数 50",
-      "cardCaption": "数量"
-    },
-    "record": {
-      "title": "战绩管理",
-      "tabs": {
-        "create": "创建记录",
-        "query": "查询记录"
-      },
-      "form": {
-        "matchName": "比赛名（可选）",
-        "notes": "备注（可选）",
-        "myDeckName": "我方卡组名称",
-        "mySeries": "我方系列",
-        "opponentDeckName": "对方卡组名称",
-        "opponentSeries": "对手系列",
-        "resultLabel": "胜负",
-        "startDate": "起始日期",
-        "endDate": "结束日期",
-        "filterButton": "筛选",
-        "myInfo": "我方信息",
-        "opponentInfo": "对手信息",
-        "submitButton": "提交",
-        "resetButton": "重置",
-        "result": {
-          "win": "胜利",
-          "lose": "失败",
-          "doubleLose": "双败"
-        }
-      },
-      "display": {
-        "noRecords": "暂无比赛记录",
+    "display": {
+      "noRecords": "暂无比赛记录",
       "startFirst": "开始你的第一场比赛吧！",
       "myDeck": "我的牌组",
       "opponentDeck": "对手牌组",
@@ -233,118 +254,117 @@
       "deleteTooltip": "删除记录",
       "unknownSeries": "未知系列",
       "unknownDeck": "未知牌组"
-      },
-      "stats": {
-        "dialogTitle": "📊 对战数据统计",
-        "menuItem": "对战数据统计",
-        "noData": "无数据",
-        "basicSection": "基础统计",
-        "playerSection": "我方系列统计",
-        "opponentSection": "敌方系列统计",
-        "totalMatches": "总对局数：{{count}}",
-        "wins": "胜场：{{count}}",
-        "losses": "负场：{{count}}",
-        "draws": "平局：{{count}}",
-        "winRateDetailed": "总胜率：{{percentage}}%（胜 {{wins}} · 负 {{losses}} · 平 {{draws}}）",
-        "winRateEmpty": "总胜率：0%（暂无对局）",
-        "playerTop": "最常用系列：{{series}}（{{count}} 次）",
-        "playerTopEmpty": "最常用系列：暂无记录",
-        "playerTotal": "使用系列总数：{{count}} 种",
-        "playerTotalEmpty": "使用系列总数：暂无系列数据",
-        "opponentTop": "最常遇到系列：{{series}}（{{count}} 次）",
-        "opponentTopEmpty": "最常遇到系列：暂无记录",
-        "opponentTotal": "遇到系列总数：{{count}} 种",
-        "opponentTotalEmpty": "遇到系列总数：暂无系列数据",
-        "emptyStateTitle": "暂无数据可显示",
-        "emptyStateSubtitle": "请先添加对战记录以查看统计数据",
-        "close": "关闭"
-      },
-      "charts": {
-        "showMySeriesDistribution": "显示我方系列分布",
-        "showOpponentSeriesDistribution": "显示对手系列分布",
-        "showWinRateTable": "显示胜率统计表格",
-        "playerDialogTitle": "我方系列分布",
-        "opponentDialogTitle": "敌方系列分布",
-        "noData": "暂无数据可显示",
-        "legendFull": "{{series}} ({{count}}个, {{percentage}}%)",
-        "legendShort": "{{count}}个 ({{percentage}}%)",
-        "legendCount": "{{count}}个"
-      },
-      "deleteDialog": {
-        "title": "确认删除",
-        "content": "确定要删除该记录吗？此操作不可撤销。",
-        "cancel": "取消",
-        "confirm": "删除"
-      },
-      "resetDialog": {
-        "title": "确认重置",
-        "content": "您确定要重置表单吗？所有已填写的内容将会被清空。",
-        "cancel": "取消",
-        "confirm": "确认重置"
-      }
     },
-    "deckEdit": {
-      "sideLabel": "边",
-      "seriesLabel": "系列",
-      "notSet": "未设置"
+    "stats": {
+      "dialogTitle": "📊 对战数据统计",
+      "menuItem": "对战数据统计",
+      "noData": "无数据",
+      "basicSection": "基础统计",
+      "playerSection": "我方系列统计",
+      "opponentSection": "敌方系列统计",
+      "totalMatches": "总对局数：{{count}}",
+      "wins": "胜场：{{count}}",
+      "losses": "负场：{{count}}",
+      "draws": "平局：{{count}}",
+      "winRateDetailed": "总胜率：{{percentage}}%（胜 {{wins}} · 负 {{losses}} · 平 {{draws}}）",
+      "winRateEmpty": "总胜率：0%（暂无对局）",
+      "playerTop": "最常用系列：{{series}}（{{count}} 次）",
+      "playerTopEmpty": "最常用系列：暂无记录",
+      "playerTotal": "使用系列总数：{{count}} 种",
+      "playerTotalEmpty": "使用系列总数：暂无系列数据",
+      "opponentTop": "最常遇到系列：{{series}}（{{count}} 次）",
+      "opponentTopEmpty": "最常遇到系列：暂无记录",
+      "opponentTotal": "遇到系列总数：{{count}} 种",
+      "opponentTotalEmpty": "遇到系列总数：暂无系列数据",
+      "emptyStateTitle": "暂无数据可显示",
+      "emptyStateSubtitle": "请先添加对战记录以查看统计数据",
+      "close": "关闭"
     },
-    "tracker": {
-      "title": "This is the Tracker Page"
+    "charts": {
+      "showMySeriesDistribution": "显示我方系列分布",
+      "showOpponentSeriesDistribution": "显示对手系列分布",
+      "showWinRateTable": "显示胜率统计表格",
+      "playerDialogTitle": "我方系列分布",
+      "opponentDialogTitle": "敌方系列分布",
+      "noData": "暂无数据可显示",
+      "legendFull": "{{series}} ({{count}}个, {{percentage}}%)",
+      "legendShort": "{{count}}个 ({{percentage}}%)",
+      "legendCount": "{{count}}个"
     },
-    "login": {
-      "title": "登陆",
-      "registerTitle": "注册",
-      "username": "用户名",
-      "password": "密码",
-      "loginButton": "登录账户",
-      "registerButton": "立即注册",
-      "switchToRegister": "创建新账户",
-      "switchToLogin": "点击登录",
-      "or": "或者",
-      "hasAccount": "已经有账户了？",
-      "noAccount": "还没有账户？",
-      "loading": "处理中...",
-      "error": {
-        "emptyFields": "请输入用户名和密码",
-        "loginFailed": "登录失败",
-        "registerFailed": "注册失败"
-      },
-      "success": {
-        "login": "登录成功！跳转到首页",
-        "register": "注册成功，请登录"
-      }
-    },
-    "deckCreate": {
-      "title": "创建新的卡组",
-      "createButton": "创建",
-      "creating": "创建中...",
+    "deleteDialog": {
+      "title": "确认删除",
+      "content": "确定要删除该记录吗？此操作不可撤销。",
       "cancel": "取消",
-      "messages": {
-        "loginRequired": "请先登录后再创建卡组",
-        "createSuccess": "卡组创建成功",
-        "createFailed": "创建卡组失败"
-      }
+      "confirm": "删除"
     },
-    "deckSearch": {
-      "title": "卡组搜索",
-      "myDecks": "我的卡组",
-      "loginRequired": "请先登录以查看自己的卡组",
-      "noDecks": "暂时还没有创建卡组",
-      "unnamed": "未命名卡组",
-      "publicDeck": "公开卡组",
-      "privateDeck": "私密卡组",
-      "customAction": "自定义操作",
-      "messages": {
-        "loadFailed": "加载卡组失败",
-        "fetchFailed": "获取卡组失败",
-        "deleteFailed": "删除卡组失败",
-        "deleteSuccess": "卡组删除成功",
-        "dataError": "卡组数据异常，缺少ID"
-      }
-    },
-    "deck": {
-      "createTab": "创建卡组",
-      "searchTab": "查询卡组"
+    "resetDialog": {
+      "title": "确认重置",
+      "content": "您确定要重置表单吗？所有已填写的内容将会被清空。",
+      "cancel": "取消",
+      "confirm": "确认重置"
     }
+  },
+  "deckEdit": {
+    "sideLabel": "边",
+    "seriesLabel": "系列",
+    "notSet": "未设置"
+  },
+  "tracker": {
+    "title": "This is the Tracker Page"
+  },
+  "login": {
+    "title": "登陆",
+    "registerTitle": "注册",
+    "username": "用户名",
+    "password": "密码",
+    "loginButton": "登录账户",
+    "registerButton": "立即注册",
+    "switchToRegister": "创建新账户",
+    "switchToLogin": "点击登录",
+    "or": "或者",
+    "hasAccount": "已经有账户了？",
+    "noAccount": "还没有账户？",
+    "loading": "处理中...",
+    "error": {
+      "emptyFields": "请输入用户名和密码",
+      "loginFailed": "登录失败",
+      "registerFailed": "注册失败"
+    },
+    "success": {
+      "login": "登录成功！跳转到首页",
+      "register": "注册成功，请登录"
+    }
+  },
+  "deckCreate": {
+    "title": "创建新的卡组",
+    "createButton": "创建",
+    "creating": "创建中...",
+    "cancel": "取消",
+    "messages": {
+      "loginRequired": "请先登录后再创建卡组",
+      "createSuccess": "卡组创建成功",
+      "createFailed": "创建卡组失败"
+    }
+  },
+  "deckSearch": {
+    "title": "卡组搜索",
+    "myDecks": "我的卡组",
+    "loginRequired": "请先登录以查看自己的卡组",
+    "noDecks": "暂时还没有创建卡组",
+    "unnamed": "未命名卡组",
+    "publicDeck": "公开卡组",
+    "privateDeck": "私密卡组",
+    "customAction": "自定义操作",
+    "messages": {
+      "loadFailed": "加载卡组失败",
+      "fetchFailed": "获取卡组失败",
+      "deleteFailed": "删除卡组失败",
+      "deleteSuccess": "卡组删除成功",
+      "dataError": "卡组数据异常，缺少ID"
+    }
+  },
+  "deck": {
+    "createTab": "创建卡组",
+    "searchTab": "查询卡组"
   }
 }

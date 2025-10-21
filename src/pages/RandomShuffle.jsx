@@ -72,22 +72,22 @@ function RandomShuffle() {
 					color="#1b4332"
 					gutterBottom
 					align="center">
-					{t("pages.shuffle.title")}
+					{t("shuffle.title")}
 				</Typography>
 				<Typography
 					variant="body1"
 					color="text.secondary"
 					align="center">
-					{t("pages.shuffle.subtitle")}
+					{t("shuffle.subtitle")}
 				</Typography>
 				<Chip
 					label={
 						deck.length
-							? t("pages.shuffle.summary", {
+							? t("shuffle.summary", {
 									deckLength: deck.length,
 									average: averageValue,
 							  })
-							: t("pages.shuffle.summaryEmpty")
+							: t("shuffle.summaryEmpty")
 					}
 					size="small"
 					sx={{
@@ -125,7 +125,7 @@ function RandomShuffle() {
 								color: GREEN_TEXT,
 								"&:hover": { backgroundColor: GREEN_DARK },
 							}}>
-							{t("pages.shuffle.generateButton")}
+							{t("shuffle.generateButton")}
 						</GenerateButton>
 						<SecondaryButton
 							variant="outlined"
@@ -140,7 +140,7 @@ function RandomShuffle() {
 								},
 							}}
 							onClick={handleReset}>
-							{t("pages.shuffle.clearButton")}
+							{t("shuffle.clearButton")}
 						</SecondaryButton>
 						{deck.length > 0 && (
 							<DangerButton
@@ -156,7 +156,7 @@ function RandomShuffle() {
 									},
 								}}
 								onClick={handleDecrease}>
-								{t("pages.shuffle.decreaseButton")}
+								{t("shuffle.decreaseButton")}
 							</DangerButton>
 						)}
 					</Stack>
@@ -165,7 +165,7 @@ function RandomShuffle() {
 						<Stack spacing={{ xs: 2, md: 3 }}>
 							{" "}
 							<Chip
-								label={t("pages.shuffle.generationChip", {
+								label={t("shuffle.generationChip", {
 									count: generatedCount,
 								})}
 								size="small"
@@ -209,7 +209,7 @@ function RandomShuffle() {
 													sx={{
 														opacity: card === 0 ? 0.6 : 1,
 													}}>
-													{t("pages.shuffle.cardCaption")}
+													{t("shuffle.cardCaption")}
 												</Typography>
 											</Stack>
 										</Paper>

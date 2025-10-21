@@ -75,7 +75,7 @@ const DeckSearch = () => {
 					},
 				});
 				if (!res.ok) {
-					throw new Error(t("pages.deckSearch.messages.fetchFailed"));
+					throw new Error(t("deckSearch.messages.fetchFailed"));
 				}
 				const data = await res.json();
 				if (isMounted) {
@@ -84,7 +84,7 @@ const DeckSearch = () => {
 			} catch (err) {
 				console.error("加载卡组失败:", err);
 				if (isMounted) {
-					setError(err.message || t("pages.deckSearch.messages.loadFailed"));
+					setError(err.message || t("deckSearch.messages.loadFailed"));
 					setDecks([]);
 				}
 			} finally {
@@ -198,7 +198,7 @@ const DeckSearch = () => {
 
 			return {
 				id: deck._id,
-				name: deck.name || t("pages.deckSearch.unnamed"),
+				name: deck.name || t("deckSearch.unnamed"),
 				totalCards,
 				isPublic: deck.isPublic,
 				cards: Array.isArray(deck.cards)
@@ -521,7 +521,7 @@ const DeckSearch = () => {
 			console.error("❌ 卡组缺少ID");
 			setSnackbar({
 				open: true,
-				message: t("pages.deckSearch.messages.dataError"),
+				message: t("deckSearch.messages.dataError"),
 				severity: "error",
 			});
 			return;
@@ -566,7 +566,7 @@ const DeckSearch = () => {
 				const errorBody = await response.text();
 				console.error(`❌ 删除请求失败: ${response.status} - ${errorBody}`);
 				throw new Error(
-					`${t("pages.deckSearch.messages.deleteFailed")}: ${response.status}`
+					`${t("deckSearch.messages.deleteFailed")}: ${response.status}`
 				);
 			}
 
@@ -575,7 +575,7 @@ const DeckSearch = () => {
 
 			setSnackbar({
 				open: true,
-				message: t("pages.deckSearch.messages.deleteSuccess"),
+				message: t("deckSearch.messages.deleteSuccess"),
 				severity: "success",
 			});
 
@@ -585,7 +585,7 @@ const DeckSearch = () => {
 			console.error("删除卡组失败:", error);
 			setSnackbar({
 				open: true,
-				message: error.message || t("pages.deckSearch.messages.deleteFailed"),
+				message: error.message || t("deckSearch.messages.deleteFailed"),
 				severity: "error",
 			});
 		} finally {
@@ -619,7 +619,7 @@ const DeckSearch = () => {
 						variant="h5"
 						gutterBottom
 						sx={{ fontWeight: 700, letterSpacing: 0.4 }}>
-						{t("pages.deckSearch.myDecks")}
+						{t("deckSearch.myDecks")}
 					</Typography>
 					<Typography
 						variant="body2"
@@ -627,7 +627,7 @@ const DeckSearch = () => {
 						sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}>
 						{token
 							? `当前账号：${username || "未知用户"}`
-							: t("pages.deckSearch.loginRequired")}
+							: t("deckSearch.loginRequired")}
 					</Typography>
 				</Box>
 				<Box sx={{ display: "flex", gap: 1 }}>
@@ -666,7 +666,7 @@ const DeckSearch = () => {
 						align="center"
 						color="text.secondary"
 						sx={{ py: 6 }}>
-						{t("pages.deckSearch.noDecks")}
+						{t("deckSearch.noDecks")}
 					</Typography>
 				) : (
 					<Stack spacing={3}>
@@ -725,8 +725,8 @@ const DeckSearch = () => {
 														<Chip
 															label={
 																deck.isPublic
-																	? t("pages.deckSearch.publicDeck")
-																	: t("pages.deckSearch.privateDeck")
+																	? t("deckSearch.publicDeck")
+																	: t("deckSearch.privateDeck")
 															}
 															size="small"
 															sx={{
@@ -1078,8 +1078,8 @@ const DeckSearch = () => {
 				fullWidth>
 				<DialogTitle>
 					{customDialogDeck
-						? `${t("pages.deckSearch.customAction")} · ${
-								customDialogDeck.name || t("pages.deckSearch.unnamed")
+						? `${t("deckSearch.customAction")} · ${
+								customDialogDeck.name || t("deckSearch.unnamed")
 						  }`
 						: "自定义操作"}
 				</DialogTitle>

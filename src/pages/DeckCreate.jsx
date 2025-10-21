@@ -388,7 +388,7 @@ const DeckCreate = () => {
 
 		const token = localStorage.getItem("token");
 		if (!token) {
-			showSnackbar(t("pages.deckCreate.messages.loginRequired"), "warning");
+			showSnackbar(t("deckCreate.messages.loginRequired"), "warning");
 			return;
 		}
 
@@ -416,7 +416,7 @@ const DeckCreate = () => {
 			});
 
 			if (!response.ok) {
-				let errorMessage = t("pages.deckCreate.messages.createFailed");
+				let errorMessage = t("deckCreate.messages.createFailed");
 				try {
 					const errorBody = await response.json();
 					errorMessage = errorBody?.message || errorMessage;
@@ -427,7 +427,7 @@ const DeckCreate = () => {
 			}
 
 			await response.json();
-			showSnackbar(t("pages.deckCreate.messages.createSuccess"), "success");
+			showSnackbar(t("deckCreate.messages.createSuccess"), "success");
 			setDeckName("");
 			setDeck({});
 			setCardCounts({});
@@ -435,7 +435,7 @@ const DeckCreate = () => {
 		} catch (err) {
 			console.error("创建卡组失败:", err);
 			showSnackbar(
-				err.message || t("pages.deckCreate.messages.createFailed"),
+				err.message || t("deckCreate.messages.createFailed"),
 				"error"
 			);
 		} finally {
@@ -465,7 +465,7 @@ const DeckCreate = () => {
 			<Typography
 				variant="h6"
 				gutterBottom>
-				{t("pages.deckCreate.title")}
+				{t("deckCreate.title")}
 			</Typography>
 			<TextField
 				required
@@ -787,9 +787,7 @@ const DeckCreate = () => {
 					backgroundColor: "#a6ceb6",
 					"&:hover": { backgroundColor: "#95bfa5" },
 				}}>
-				{creatingDeck
-					? t("pages.deckCreate.creating")
-					: t("pages.deckCreate.createButton")}
+				{creatingDeck ? t("deckCreate.creating") : t("deckCreate.createButton")}
 			</PrimaryButton>
 			<Box
 				sx={{
@@ -812,7 +810,7 @@ const DeckCreate = () => {
 				</Typography> */}
 				{/* <Box
 					sx={{
-						
+
 						mt: 4,
 						p: 2,
 						width: "80%",
@@ -920,7 +918,7 @@ const DeckCreate = () => {
 					</>
 				)}
 			</Box>
-			<Box
+			{/* <Box
 				sx={{
 					mt: 4,
 					p: 2,
@@ -940,7 +938,7 @@ const DeckCreate = () => {
 					所有卡片
 				</Typography>
 				{JSON.stringify(allCards, null, 2)}
-			</Box>
+			</Box> */}
 			<Fab
 				sx={{
 					position: "fixed",
@@ -1465,7 +1463,7 @@ const DeckCreate = () => {
 								borderColor: "#8bb89d",
 							},
 						}}>
-						{t("pages.deckCreate.cancel")}
+						{t("deckCreate.cancel")}
 					</SecondaryButton>
 					<PrimaryButton
 						onClick={handleConfirmSeriesChange}

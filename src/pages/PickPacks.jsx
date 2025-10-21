@@ -22,7 +22,7 @@ function PickPacks() {
   const { t } = useLocale();
   const [totalPacks, setTotalPacks] = useState("");
   const [openPacks, setOpenPacks] = useState("");
-  const [seed, setSeed] = useState("");
+  const [_, setSeed] = useState("");
   const [results, setResults] = useState([]);
   const [errorOpen, setErrorOpen] = useState(false);
 
@@ -45,14 +45,65 @@ function PickPacks() {
     localStorage.removeItem("pickpacks");
   };
 
+  const tianGan = "甲乙丙丁戊己庚辛壬癸";
+  const diZhi = "子丑寅卯辰巳午未申酉戌亥";
+
+  // 将公历年转为干支年（简化版）
+  function getGanZhiYear(year) {
+    const tgIndex = (year - 4) % 10;
+    const dzIndex = (year - 4) % 12;
+    return tianGan[tgIndex] + diZhi[dzIndex];
+  }
+
+  // 从固定日期生成对应的八字（简化推算）
+  function getFixedDateBazi() {
+    const date = new Date("2001-12-11T00:00:00");
+    const y = date.getFullYear();
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const h = date.getHours();
+
+    const yearGZ = getGanZhiYear(y);
+    const monthGZ = tianGan[(y * 12 + m) % 10] + diZhi[(m + 1) % 12];
+    const dayGZ = tianGan[(y * 5 + m + d) % 10] + diZhi[(d + 2) % 12];
+    const hourGZ =
+      tianGan[(y + m + d + Math.floor(h / 2)) % 10] +
+      diZhi[Math.floor(h / 2) % 12];
+
+    return yearGZ + monthGZ + dayGZ + hourGZ;
+  }
+
+  function generateFixedBaziSeed() {
+    const baziStr = getFixedDateBazi();
+    let total = 0;
+
+    for (const ch of baziStr) {
+      if (tianGan.includes(ch)) {
+        total += tianGan.indexOf(ch) + 1;
+      } else if (diZhi.includes(ch)) {
+        total += diZhi.indexOf(ch) + 1;
+      }
+    }
+
+    const now = new Date();
+    total +=
+      now.getFullYear() +
+      now.getMonth() +
+      now.getDate() +
+      now.getHours() +
+      now.getMinutes() +
+      now.getSeconds();
+
+    return { baziStr, seed: total };
+  }
+
   const randomGeneratePacks = () => {
     const total = parseInt(totalPacks);
     const open = parseInt(openPacks);
 
-    const currentDate = new Date().getTime();
-    const timestamp = new Date("2001-12-11").getTime();
-    const differenceSeed = currentDate - timestamp;
-    setSeed(differenceSeed);
+    const { baziStr, seed } = generateFixedBaziSeed();
+    console.log("八字:", baziStr, "种子:", seed);
+    setSeed(seed);
 
     if (
       open > total ||
@@ -78,12 +129,14 @@ function PickPacks() {
 
     selected.sort((a, b) => a - b);
     setResults(selected);
+
     localStorage.setItem(
       "pickpacks",
       JSON.stringify({
         total: totalPacks,
         open: openPacks,
         seed,
+        bazi: baziStr,
         results: selected,
       }),
     );

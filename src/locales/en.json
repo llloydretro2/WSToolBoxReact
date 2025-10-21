@@ -133,16 +133,32 @@
         "seriesNumber": "Series Number",
         "series": "Series Name",
         "product": "Product Name",
-        "side": "Side",
+  "side": "Side",
         "keyword": "Keyword",
         "color": "Color",
         "level": "Level",
         "rarity": "Rarity",
         "cardType": "Card Type",
+        "card_type": "Card Type",
         "power": "Power",
         "cost": "Cost",
         "soul": "Soul",
         "trigger": "Trigger"
+      },
+      "colors": {
+        "blue": "Blue",
+        "green": "Green",
+        "red": "Red",
+        "yellow": "Yellow"
+      },
+      "sides": {
+        "s": "S",
+        "w": "W"
+      },
+      "cardTypes": {
+        "イベント": "Event",
+        "キャラ": "Character",
+        "クライマックス": "Climax"
       },
       "toggle": {
         "showZh": "Show Chinese",
@@ -173,7 +189,11 @@
       "scroll": {
         "down": "Scroll to bottom",
         "up": "Back to top"
-      }
+      },
+      "noResults": "No cards match your search criteria.",
+      "noResultsTitle": "No cards found",
+      "noResultsDescription": "Try adjusting the filters or reset to explore the full database.",
+      "noResultsAction": "Reset filters"
     },
     "dice": {
       "title": "Dice Roller",

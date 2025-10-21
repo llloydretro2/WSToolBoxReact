@@ -666,14 +666,14 @@ const DeckEdit = () => {
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											{t("pages.deckEdit.sideLabel")}:{" "}
-											{deckData.side || t("pages.deckEdit.notSet")}
+											{t("deckEdit.sideLabel")}:{" "}
+											{deckData.side || t("deckEdit.notSet")}
 										</Typography>
 										<Typography
 											variant="body2"
 											color="text.secondary">
-											{t("pages.deckEdit.seriesLabel")}:{" "}
-											{deckData.series || t("pages.deckEdit.notSet")}
+											{t("deckEdit.seriesLabel")}:{" "}
+											{deckData.series || t("deckEdit.notSet")}
 										</Typography>
 										<Typography
 											variant="body2"
