@@ -31,6 +31,19 @@
     "logout": "Sign out",
     "loginPrompt": "Please log in before editing decks"
   },
+  "deckCreate": {
+    "title": "Create New Deck",
+    "createButton": "Create",
+    "creating": "Creating...",
+    "cancel": "Cancel",
+    "messages": {
+      "loginRequired": "Please log in to create a deck",
+      "createSuccess": "Deck created successfully",
+      "createFailed": "Failed to create deck"
+    },
+    "confirmSwitch": "Confirm Switch",
+    "confirm": "Confirm"
+  },
   "pages": {
     "home": {
       "title": "WSToolBox",
@@ -336,31 +349,6 @@
     "tracker": {
       "title": "This is the Tracker Page"
     },
-    "login": {
-      "title": "Welcome Back!",
-      "subtitle": "Sign in to your account to continue",
-      "registerTitle": "Join Us!",
-      "registerSubtitle": "Create a new account to start your WS journey",
-      "username": "Username",
-      "password": "Password",
-      "loginButton": "Sign In",
-      "registerButton": "Sign Up",
-      "switchToRegister": "Create New Account",
-      "switchToLogin": "Sign In",
-      "or": "Or",
-      "hasAccount": "Already have an account?",
-      "noAccount": "Don't have an account?",
-      "loading": "Processing...",
-      "error": {
-        "emptyFields": "Please enter username and password",
-        "loginFailed": "Login failed",
-        "registerFailed": "Registration failed"
-      },
-      "success": {
-        "login": "Login successful! Redirecting to home...",
-        "register": "Registration successful, please login!"
-      }
-    },
     "deckCreate": {
       "title": "Create New Deck",
       "createButton": "Create",
@@ -392,6 +380,31 @@
     "deck": {
       "createTab": "Create Deck",
       "searchTab": "Search Decks"
+    }
+  },
+  "login": {
+    "title": "Welcome Back!",
+    "subtitle": "Sign in to your account to continue",
+    "registerTitle": "Join Us!",
+    "registerSubtitle": "Create a new account to start your WS journey",
+    "username": "Username",
+    "password": "Password",
+    "loginButton": "Sign In",
+    "registerButton": "Sign Up",
+    "switchToRegister": "Create New Account",
+    "switchToLogin": "Sign In",
+    "or": "Or",
+    "hasAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "loading": "Processing...",
+    "error": {
+      "emptyFields": "Please enter username and password",
+      "loginFailed": "Login failed",
+      "registerFailed": "Registration failed"
+    },
+    "success": {
+      "login": "Login successful! Redirecting to home...",
+      "register": "Registration successful, please login!"
     }
   }
 }

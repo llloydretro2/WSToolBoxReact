@@ -591,6 +591,8 @@ const Record = () => {
 							const newRecord = await res.json();
 							setRecords((prev) => [newRecord, ...prev]);
 							setTabValue(1);
+							setLoading(true);
+							getHistory();
 						} catch (err) {
 							console.error("Failed to submit record:", err);
 						}

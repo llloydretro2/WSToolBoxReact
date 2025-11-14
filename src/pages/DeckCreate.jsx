@@ -591,7 +591,7 @@ const DeckCreate = () => {
 							fetchSeriesCards(newSeriesCodes);
 						}
 					}}>
-					确定
+					{t("deckCreate.confirm")}
 				</PrimaryButton>
 			</Box>
 			{form.series && (
@@ -1474,7 +1474,7 @@ const DeckCreate = () => {
 								backgroundColor: "#8bb89d",
 							},
 						}}>
-						确认切换
+						{t("deckCreate.confirmSwitch")}
 					</PrimaryButton>
 				</DialogActions>
 			</Dialog>

@@ -344,7 +344,9 @@
       "loginRequired": "请先登录后再创建卡组",
       "createSuccess": "卡组创建成功",
       "createFailed": "创建卡组失败"
-    }
+    },
+    "confirmSwitch": "确认切换",
+    "confirm": "确定"
   },
   "deckSearch": {
     "title": "卡组搜索",

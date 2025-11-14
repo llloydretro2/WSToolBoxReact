@@ -26,6 +26,8 @@ const todoItems = [
 	"伤害计算器",
 	"更多战绩统计",
 ];
+// 硬编码的更新内容列表（便于在界面上像待办一样修改）
+const updateItems = ["租借女友", "Key"];
 
 function Home() {
 	const { t } = useLocale();
@@ -122,16 +124,25 @@ function Home() {
 									</Box>
 									<Box
 										sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-										<Chip
-											label="BA动画"
-											size="medium"
-											sx={{
-												bgcolor: "var(--card-background)",
-												color: "var(--text)",
-												fontWeight: 600,
-												alignSelf: "flex-start",
-											}}
-										/>
+										{updateItems.map((item, index) => (
+											<Typography
+												key={index}
+												variant="body1"
+												color="text.secondary"
+												sx={{
+													display: "flex",
+													alignItems: "center",
+													"&:before": {
+														content: '"•"',
+														color: "var(--text)",
+														fontWeight: "bold",
+														fontSize: "1.2rem",
+														marginRight: 2,
+													},
+												}}>
+												{item}
+											</Typography>
+										))}
 									</Box>
 								</CardContent>
 							</Paper>
