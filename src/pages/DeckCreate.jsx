@@ -22,6 +22,7 @@ import {
 	SecondaryButton,
 	DangerButton,
 } from "../components/ButtonVariants";
+import { useAuth } from "../contexts/AuthContext";
 import LazyImage from "../components/LazyImage";
 import deckRulesWeiss from "../data/deck_rules_weiss.json";
 import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
@@ -32,6 +33,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const DeckCreate = () => {
 	const { t } = useLocale();
+	const { token } = useAuth();
 	const [deckName, setDeckName] = useState("");
 	const [side, setSide] = useState("weiss"); // "weiss" or "schwarz"
 	const [form, setForm] = useState({
@@ -387,7 +389,6 @@ const DeckCreate = () => {
 			return;
 		}
 
-		const token = localStorage.getItem("token");
 		if (!token) {
 			showSnackbar(t("deckCreate.messages.loginRequired"), "warning");
 			return;

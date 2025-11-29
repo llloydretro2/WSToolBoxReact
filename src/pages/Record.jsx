@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
 	interpolateSpectral,
@@ -7,6 +7,7 @@ import {
 } from "d3-scale-chromatic";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
+import { useAuth } from "../contexts/AuthContext";
 import {
 	Box,
 	Typography,
@@ -34,6 +35,9 @@ import {
 	Tooltip,
 	Grid,
 	Fab,
+	ToggleButton,
+	ToggleButtonGroup,
+	Divider,
 	Menu,
 	MenuItem as MenuItemMui,
 	ListItemIcon,
@@ -49,6 +53,7 @@ import {
 	Visibility as VisibilityIcon,
 	VisibilityOff as VisibilityOffIcon,
 	Analytics as AnalyticsIcon,
+	RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -73,6 +78,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 
 const Record = () => {
 	const { t } = useLocale();
+	const { user } = useAuth();
 
 	const [records, setRecords] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -86,6 +92,115 @@ const Record = () => {
 		notes: "",
 		result: "",
 	});
+
+	// 简单的按字段保存到 localStorage 的实现
+	const storagePrefix = "record:";
+	const updateFormField = (field, value) => {
+		setFormState((prev) => ({ ...prev, [field]: value }));
+		try {
+			localStorage.setItem(`${storagePrefix}${field}`, JSON.stringify(value));
+		} catch {
+			// ignore
+		}
+	};
+
+	const setAndSaveStartDate = (d) => {
+		setStartDate(d);
+		try {
+			localStorage.setItem(
+				`${storagePrefix}startDate`,
+				JSON.stringify(d ? d.toISOString() : null)
+			);
+		} catch (e) {
+			void e;
+		}
+	};
+
+	const setAndSaveEndDate = (d) => {
+		setEndDate(d);
+		try {
+			localStorage.setItem(
+				`${storagePrefix}endDate`,
+				JSON.stringify(d ? d.toISOString() : null)
+			);
+		} catch (e) {
+			void e;
+		}
+	};
+
+	// 挂载时逐项恢复字段（简单直接）
+	useEffect(() => {
+		try {
+			const keys = [
+				"playerDeckName",
+				"opponentDeckName",
+				"playerSeries",
+				"opponentSeries",
+				"tournamentName",
+				"notes",
+				"result",
+				"startDate",
+				"endDate",
+				"tabValue",
+			];
+			const restored = {};
+			keys.forEach((k) => {
+				const raw = localStorage.getItem(`${storagePrefix}${k}`);
+				if (raw != null) {
+					try {
+						const parsed = JSON.parse(raw);
+						restored[k] = parsed;
+					} catch {
+						restored[k] = raw;
+					}
+				}
+			});
+			// 恢复到 state
+			setFormState((prev) => ({
+				...prev,
+				...(restored.playerDeckName
+					? { playerDeckName: restored.playerDeckName }
+					: {}),
+				...(restored.opponentDeckName
+					? { opponentDeckName: restored.opponentDeckName }
+					: {}),
+				...(restored.playerSeries
+					? { playerSeries: restored.playerSeries }
+					: {}),
+				...(restored.opponentSeries
+					? { opponentSeries: restored.opponentSeries }
+					: {}),
+				...(restored.tournamentName
+					? { tournamentName: restored.tournamentName }
+					: {}),
+				...(restored.notes ? { notes: restored.notes } : {}),
+				...(restored.result ? { result: restored.result } : {}),
+			}));
+			if (restored.startDate) {
+				try {
+					setStartDate(new Date(restored.startDate));
+				} catch {
+					setStartDate(restored.startDate);
+				}
+			}
+			if (restored.endDate) {
+				try {
+					setEndDate(new Date(restored.endDate));
+				} catch {
+					setEndDate(restored.endDate);
+				}
+			}
+			if (
+				typeof restored.tabValue !== "undefined" &&
+				restored.tabValue !== null
+			) {
+				const v = Number(restored.tabValue) || 0;
+				setTabValue(v);
+			}
+		} catch (err) {
+			console.warn("Record: failed to restore per-field draft", err);
+		}
+	}, []);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [recordToDelete, setRecordToDelete] = useState(null);
 	const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -419,6 +534,36 @@ const Record = () => {
 			notes: "",
 		});
 		setResetDialogOpen(false);
+
+		// 清除本地存储的各字段草稿
+		try {
+			const keys = [
+				"playerDeckName",
+				"opponentDeckName",
+				"playerSeries",
+				"opponentSeries",
+				"tournamentName",
+				"notes",
+				"result",
+				"startDate",
+				"endDate",
+				"tabValue",
+			];
+			keys.forEach((k) => localStorage.removeItem(`${storagePrefix}${k}`));
+		} catch (e) {
+			void e;
+		}
+	};
+
+	// 局部重置：我方 / 对手
+	const resetMyInfo = () => {
+		updateFormField("playerDeckName", "");
+		updateFormField("playerSeries", "");
+	};
+
+	const resetOpponentInfo = () => {
+		updateFormField("opponentDeckName", "");
+		updateFormField("opponentSeries", "");
 	};
 
 	// 处理浮动按钮菜单
@@ -545,6 +690,14 @@ const Record = () => {
 							getHistory();
 						}
 						setTabValue(newValue);
+						try {
+							localStorage.setItem(
+								`${storagePrefix}tabValue`,
+								JSON.stringify(newValue)
+							);
+						} catch (e) {
+							void e;
+						}
 					}}
 					sx={{
 						"& .MuiTab-root": {
@@ -568,7 +721,11 @@ const Record = () => {
 					onSubmit={async (e) => {
 						e.preventDefault();
 						const data = {};
-						const userName = JSON.parse(localStorage.getItem("user")).username;
+						const userName = user?.username;
+						if (!userName) {
+							console.error("未登录或无法获取用户名，提交记录失败");
+							return;
+						}
 						data.userName = userName;
 						data.playerDeckName = formState.playerDeckName.trim();
 						data.opponentDeckName = formState.opponentDeckName.trim();
@@ -597,31 +754,36 @@ const Record = () => {
 							console.error("Failed to submit record:", err);
 						}
 					}}
-					sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+					sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 					<Box
 						sx={{
 							display: "flex",
 							flexDirection: "column",
 							gap: 2,
-							backgroundColor: "var(--card-background)",
 							borderRadius: 2,
-							p: 2,
+							p: 3,
+							mb: 2,
+							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
 						}}>
-						<Typography
-							variant="subtitle2"
-							sx={{ fontWeight: 600 }}>
-							{t("record.form.myInfo")}
-						</Typography>
+						<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+							<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+								{t("record.form.myInfo")}
+							</Typography>
+							<Tooltip title={"重置我方信息"}>
+								<IconButton size="small" onClick={resetMyInfo} aria-label="reset-my-info">
+									<RestartAltIcon fontSize="small" />
+								</IconButton>
+							</Tooltip>
+						</Box>
 						<TextField
 							required
-							label={t("record.form.myDeckName")}
+							id="playerDeckName"
 							name="playerDeckName"
+							fullWidth
+							label={t("record.form.myDeckName")}
 							value={formState.playerDeckName}
 							onChange={(e) =>
-								setFormState((prev) => ({
-									...prev,
-									playerDeckName: e.target.value,
-								}))
+								updateFormField("playerDeckName", e.target.value)
 							}
 						/>
 						<Autocomplete
@@ -647,41 +809,50 @@ const Record = () => {
 							}
 							onChange={(_, newValue) => {
 								const key = newValue?.split("（")[0];
-								setFormState((prev) => ({ ...prev, playerSeries: key || "" }));
+								updateFormField("playerSeries", key || "");
 							}}
 							renderInput={(params) => (
 								<TextField
 									{...params}
+									id="playerSeries"
+									name="playerSeries"
+									fullWidth
 									label={t("record.form.mySeries")}
 									required
 								/>
 							)}
 						/>
 					</Box>
+					<Divider sx={{ my: 1 }} />
 					<Box
 						sx={{
 							display: "flex",
 							flexDirection: "column",
 							gap: 2,
-							backgroundColor: "var(--card-background)",
 							borderRadius: 2,
-							p: 2,
+							p: 3,
+							mb: 2,
+							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
 						}}>
-						<Typography
-							variant="subtitle2"
-							sx={{ fontWeight: 600 }}>
-							{t("record.form.opponentInfo")}
-						</Typography>
+						<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+							<Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+								{t("record.form.opponentInfo")}
+							</Typography>
+							<Tooltip title={"重置对手信息"}>
+								<IconButton size="small" onClick={resetOpponentInfo} aria-label="reset-opponent-info">
+									<RestartAltIcon fontSize="small" />
+								</IconButton>
+							</Tooltip>
+						</Box>
 						<TextField
 							required
-							label={t("record.form.opponentDeckName")}
+							id="opponentDeckName"
 							name="opponentDeckName"
+							fullWidth
+							label={t("record.form.opponentDeckName")}
 							value={formState.opponentDeckName}
 							onChange={(e) =>
-								setFormState((prev) => ({
-									...prev,
-									opponentDeckName: e.target.value,
-								}))
+								updateFormField("opponentDeckName", e.target.value)
 							}
 						/>
 						<Autocomplete
@@ -709,61 +880,96 @@ const Record = () => {
 							}
 							onChange={(_, newValue) => {
 								const key = newValue?.split("（")[0];
-								setFormState((prev) => ({
-									...prev,
-									opponentSeries: key || "",
-								}));
+								updateFormField("opponentSeries", key || "");
 							}}
 							renderInput={(params) => (
 								<TextField
 									{...params}
+									id="opponentSeries"
+									name="opponentSeries"
+									fullWidth
 									label={t("record.form.opponentSeries")}
 									required
 								/>
 							)}
 						/>
 					</Box>
+					<Divider sx={{ my: 1 }} />
 					<TextField
-						label={t("record.form.matchName")}
+						id="tournamentName"
 						name="tournamentName"
+						fullWidth
+						label={t("record.form.matchName")}
 						value={formState.tournamentName}
-						onChange={(e) =>
-							setFormState((prev) => ({
-								...prev,
-								tournamentName: e.target.value,
-							}))
-						}
+						onChange={(e) => updateFormField("tournamentName", e.target.value)}
 					/>
 					<TextField
-						label={t("record.form.notes")}
+						id="notes"
 						name="notes"
-						multiline
-						minRows={2}
+						fullWidth
+						label={t("record.form.notes")}
 						value={formState.notes}
-						onChange={(e) =>
-							setFormState((prev) => ({ ...prev, notes: e.target.value }))
-						}
+						onChange={(e) => updateFormField("notes", e.target.value)}
+						inputProps={{ id: "notes", name: "notes" }}
 					/>
-					<TextField
-						label={t("record.form.resultLabel")}
-						name="result"
-						select
-						required
-						value={formState.result}
-						onChange={(e) =>
-							setFormState((prev) => ({ ...prev, result: e.target.value }))
-						}>
-						<MenuItem value="win">{t("record.form.result.win")}</MenuItem>
-						<MenuItem value="lose">{t("record.form.result.lose")}</MenuItem>
-						<MenuItem value="doubleLose">
-							{t("record.form.result.doubleLose")}
-						</MenuItem>
-					</TextField>
+					<Box>
+						<ToggleButtonGroup
+							value={formState.result || ""}
+							exclusive
+							onChange={(_, value) => updateFormField("result", value || "")}
+							size="small"
+							sx={{
+								width: "100%",
+								display: "flex",
+								gap: 1,
+								"& .MuiToggleButton-root": {
+									flex: 1,
+									minWidth: 0,
+									px: 2,
+									fontSize: { xs: "0.875rem", sm: "0.95rem" },
+								},
+							}}>
+							<ToggleButton
+								value="win"
+								sx={{
+									fontWeight: 600,
+									"&.Mui-selected, &.Mui-selected:hover": {
+										backgroundColor: "var(--success) !important",
+										color: "#fff",
+									},
+								}}>
+								{t("record.form.result.win")}
+							</ToggleButton>
+							<ToggleButton
+								value="lose"
+								sx={{
+									fontWeight: 600,
+									"&.Mui-selected, &.Mui-selected:hover": {
+										backgroundColor: "var(--error) !important",
+										color: "#fff",
+									},
+								}}>
+								{t("record.form.result.lose")}
+							</ToggleButton>
+							<ToggleButton
+								value="doubleLose"
+								sx={{
+									fontWeight: 600,
+									"&.Mui-selected, &.Mui-selected:hover": {
+										backgroundColor: "var(--warning) !important",
+										color: "#fff",
+									},
+								}}>
+								{t("record.form.result.doubleLose")}
+							</ToggleButton>
+						</ToggleButtonGroup>
+					</Box>
 					<Box
 						sx={{
 							display: "flex",
 							justifyContent: "center",
 							gap: 2,
+							mt: 2,
 							mb: 3,
 						}}>
 						<PrimaryButton
@@ -806,7 +1012,7 @@ const Record = () => {
 							<DatePicker
 								label={t("record.form.startDate")}
 								value={startDate}
-								onChange={(newValue) => setStartDate(newValue)}
+								onChange={(newValue) => setAndSaveStartDate(newValue)}
 								slotProps={{
 									textField: {
 										id: "startDate",
@@ -818,7 +1024,7 @@ const Record = () => {
 							<DatePicker
 								label={t("record.form.endDate")}
 								value={endDate}
-								onChange={(newValue) => setEndDate(newValue)}
+								onChange={(newValue) => setAndSaveEndDate(newValue)}
 								slotProps={{
 									textField: {
 										id: "endDate",
@@ -903,11 +1109,7 @@ const Record = () => {
 							spacing={2}
 							sx={{ width: "100%" }}>
 							{records.map((record) => (
-								<Grid
-									item
-									xs={12}
-									sx={{ width: "100%" }}
-									key={record._id}>
+								<Grid xs={12} sx={{ width: "100%" }} key={record._id}>
 									<Card
 										sx={{
 											display: "flex",
@@ -1402,7 +1604,6 @@ const Record = () => {
 				<>
 					<Fab
 						color="primary"
-						aria-label="display options"
 						onClick={handleFabMenuOpen}
 						sx={{
 							position: "fixed",
@@ -1412,10 +1613,10 @@ const Record = () => {
 							background: "linear-gradient(135deg, #1b4332 0%, #2d5a42 100%)",
 							"&:hover": {
 								background: "linear-gradient(135deg, #2d5a42 0%, #40916c 100%)",
-								transform: "scale(1.1)",
+								transform: "scale(1.05)",
 							},
-							transition: "all 0.3s ease-in-out",
-							boxShadow: "0 4px 16px rgba(27, 67, 50, 0.3)",
+							transition: "all 0.2s ease-in-out",
+							boxShadow: "0 6px 18px rgba(27, 67, 50, 0.18)",
 						}}>
 						<AnalyticsIcon />
 					</Fab>

@@ -1,5 +1,6 @@
 {
   "title": "WS工具箱",
+  "close": "关闭",
   "menu": {
     "home": "主页",
     "tracker": "记录器",
@@ -154,7 +155,8 @@
         "related": "相关卡片"
       },
       "buttons": {
-        "viewRelated": "查看所有相关卡"
+        "viewRelated": "查看所有相关卡",
+        "resetNumeric": "重置数值"
       },
       "dialog": {
         "relatedTitle": "{{cardName}} · 相关卡片",

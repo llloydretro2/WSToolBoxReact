@@ -70,7 +70,22 @@ function CardList() {
 	const [showMergedVariants, setShowMergedVariants] = useState(true);
 	const [selectedVariants, setSelectedVariants] = useState({});
 	const [showScrollButtons, setShowScrollButtons] = useState(false);
-	const [relatedModalCard, setRelatedModalCard] = useState(null);
+	// related modal removed: relatedModalCard state is no longer used
+	// New: detail dialog for showing a single card when clicking related chips
+	const [detailCard, setDetailCard] = useState(null);
+
+	const openDetailCard = (card) => {
+		setDetailCard(card);
+	};
+
+	const closeDetailCard = () => setDetailCard(null);
+
+	// 重置数值过滤（等级、攻击力、费用）
+	const resetNumericFilters = () => {
+		setLevelRange(null);
+		setPowerRange(null);
+		setCostRange(null);
+	};
 	const [hasSearched, setHasSearched] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const { locale, t } = useLocale();
@@ -408,13 +423,7 @@ function CardList() {
 		}
 	};
 
-	const handleOpenRelatedModal = (card) => {
-		setRelatedModalCard(card);
-	};
-
-	const handleCloseRelatedModal = () => {
-		setRelatedModalCard(null);
-	};
+	// related modal handlers removed
 
 	return (
 		<Container
@@ -994,11 +1003,25 @@ function CardList() {
 						/>
 					</Box>
 					{/* 数值属性 */}
-					<Typography
-						variant="h6"
-						sx={{ mb: 2, textAlign: "left" }}>
-						{t("pages.cardList.sections.numericAttributes")}
-					</Typography>
+					<Box
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							mb: 2,
+						}}>
+						<Typography
+							variant="h6"
+							sx={{ textAlign: "left" }}>
+							{t("pages.cardList.sections.numericAttributes")}
+						</Typography>
+						<DangerButton
+							size="small"
+							onClick={resetNumericFilters}
+							sx={{ ml: 2, px: 2, py: 0.5 }}>
+							{t("pages.cardList.buttons.resetNumeric")}
+						</DangerButton>
+					</Box>
 					<Box
 						sx={{
 							display: "flex",
@@ -1660,9 +1683,7 @@ function CardList() {
 										</Box>
 									)}
 									<Box>
-										<Typography
-											variant="h6"
-											sx={{ fontWeight: 600 }}>
+										<Typography sx={{ fontWeight: 600 }}>
 											{card.name}
 										</Typography>
 										{showZh && card.zh_name && (
@@ -1847,6 +1868,8 @@ function CardList() {
 														}`}
 														variant="outlined"
 														size="small"
+														clickable
+														onClick={() => openDetailCard(related)}
 														sx={{
 															borderColor: "var(--border)",
 															color: "var(--text)",
@@ -1854,6 +1877,7 @@ function CardList() {
 															maxWidth: "100%",
 															height: "auto",
 															alignSelf: "flex-start",
+															cursor: "pointer",
 															"& .MuiChip-label": {
 																whiteSpace: "normal",
 																lineHeight: 1.3,
@@ -1863,27 +1887,6 @@ function CardList() {
 													/>
 												))}
 											</Stack>
-											<Button
-												variant="outlined"
-												size="small"
-												onClick={() =>
-													handleOpenRelatedModal({
-														...card,
-														related_cards: relatedCards,
-													})
-												}
-												sx={{
-													mt: 1.5,
-													borderColor: "var(--border)",
-													color: "var(--text)",
-													fontWeight: 600,
-													"&:hover": {
-														borderColor: "var(--text)",
-														backgroundColor: "var(--card-background)",
-													},
-												}}>
-												{t("pages.cardList.buttons.viewRelated")}
-											</Button>
 										</Box>
 									)}
 								</CardContent>
@@ -1923,396 +1926,7 @@ function CardList() {
 				</Box>
 			)}
 
-			<Dialog
-				open={Boolean(relatedModalCard)}
-				onClose={handleCloseRelatedModal}
-				fullWidth
-				maxWidth="md"
-				PaperProps={{
-					sx: {
-						borderRadius: 4,
-						overflow: "hidden",
-						backgroundColor: "var(--primary)",
-						border: "1px solid var(--border)",
-						boxShadow: "0 24px 50px rgba(46, 76, 61, 0.35)",
-						color: "var(--text)",
-					},
-				}}>
-				<DialogTitle
-					sx={{
-						px: { xs: 3, sm: 4 },
-						py: { xs: 2.5, sm: 3.5 },
-						backgroundColor: "var(--primary-dark)",
-						color: "var(--text)",
-					}}>
-					<Box
-						sx={{
-							display: "flex",
-							alignItems: { xs: "flex-start", sm: "center" },
-							gap: 2,
-						}}>
-						<Box sx={{ flex: 1, minWidth: 0 }}>
-							<Typography
-								variant="h6"
-								sx={{ fontWeight: 700, mb: 0.5 }}>
-								{relatedModalCard
-									? t("pages.cardList.dialog.relatedTitle", {
-											cardName:
-												relatedModalCard.name ||
-												relatedModalCard.zh_name ||
-												relatedModalCard.cardno,
-									  })
-									: ""}
-							</Typography>
-							<Stack
-								direction="row"
-								spacing={1}
-								flexWrap="wrap"
-								sx={{ rowGap: 0.75 }}>
-								{relatedModalCard?.cardno && (
-									<Chip
-										size="small"
-										label={relatedModalCard.cardno}
-										sx={{
-											backgroundColor: "rgba(255, 255, 255, 0.28)",
-											border: "1px solid rgba(255, 255, 255, 0.42)",
-											color: "var(--text)",
-											fontWeight: 600,
-										}}
-									/>
-								)}
-								{relatedModalCard?.product_name && (
-									<Chip
-										size="small"
-										label={relatedModalCard.product_name}
-										sx={{
-											backgroundColor: "rgba(255, 255, 255, 0.24)",
-											border: "1px solid rgba(255, 255, 255, 0.36)",
-											color: "#2a5b46",
-											fontWeight: 500,
-										}}
-									/>
-								)}
-								{relatedModalCard?.related_cards?.length ? (
-									<Chip
-										size="small"
-										label={`${t("pages.cardList.labels.related")} · ${
-											relatedModalCard.related_cards.length
-										}`}
-										sx={{
-											backgroundColor: "rgba(255, 255, 255, 0.24)",
-											border: "1px solid rgba(255, 255, 255, 0.36)",
-											color: "#2a5b46",
-											fontWeight: 500,
-										}}
-									/>
-								) : null}
-							</Stack>
-						</Box>
-						<IconButton
-							onClick={handleCloseRelatedModal}
-							aria-label={t("pages.cardList.dialog.close")}
-							sx={{
-								color: "#f6fff9",
-								backgroundColor: "rgba(17, 52, 38, 0.24)",
-								"&:hover": {
-									backgroundColor: "rgba(17, 52, 38, 0.4)",
-								},
-							}}>
-							<CloseIcon />
-						</IconButton>
-					</Box>
-				</DialogTitle>
-				<DialogContent
-					dividers
-					sx={{
-						px: { xs: 2.5, sm: 4 },
-						py: { xs: 2.5, sm: 3.5 },
-						backgroundColor: "rgba(220, 236, 226, 0.78)",
-					}}>
-					{relatedModalCard && relatedModalCard.related_cards?.length ? (
-						<Stack spacing={2.5}>
-							{relatedModalCard.related_cards.map((related, relatedIndex) => (
-								<Paper
-									key={`${relatedModalCard.cardno || "card"}-modal-${
-										related.cardno || related.name || relatedIndex
-									}`}
-									sx={{
-										position: "relative",
-										overflow: "hidden",
-										display: "flex",
-										flexDirection: { xs: "column", sm: "row" },
-										gap: { xs: 2, sm: 3 },
-										alignItems: { xs: "stretch", sm: "center" },
-										p: { xs: 2, sm: 3 },
-										borderRadius: 3,
-										backgroundColor: "rgba(187, 216, 202, 0.96)",
-										border: "1px solid rgba(94, 134, 112, 0.4)",
-										boxShadow: "0 14px 28px rgba(60, 94, 78, 0.28)",
-										color: "#214233",
-										"& .MuiTypography-body2": {
-											color: "rgba(40, 76, 60, 0.8)",
-										},
-										"& .MuiTypography-subtitle1": {
-											color: "#1b3e2e",
-										},
-										"& .MuiTypography-body2 strong": {
-											color: "#1b3e2e",
-										},
-										"& .MuiChip-root": {
-											color: "#1b3e2e",
-										},
-									}}>
-									{related.image_url && (
-										<Box
-											sx={{
-												flexShrink: 0,
-												alignSelf: { xs: "center", sm: "stretch" },
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "center",
-												p: { xs: 1.25, sm: 1.75 },
-												borderRadius: 2,
-												backgroundColor: "rgba(166, 206, 182, 0.38)",
-												boxShadow: "inset 0 0 0 1px rgba(86, 126, 105, 0.28)",
-											}}>
-											<LazyImage
-												src={related.image_url}
-												alt={related.name || related.cardno}
-												placeholder="相关卡片加载中..."
-												style={{
-													width: "100%",
-													maxWidth: 118,
-													borderRadius: 2,
-													boxShadow: "0 10px 20px rgba(61, 93, 76, 0.36)",
-												}}
-											/>
-										</Box>
-									)}
-									<Box
-										sx={{
-											flex: 1,
-											position: "relative",
-											zIndex: 1,
-											display: "flex",
-											flexDirection: "column",
-											gap: 1.25,
-										}}>
-										<Typography
-											variant="subtitle1"
-											sx={{ fontWeight: 600, wordBreak: "break-word" }}>
-											{related.name || related.zh_name || related.cardno}
-										</Typography>
-										{related.zh_name && related.name && (
-											<Typography
-												variant="body2"
-												color="text.secondary">
-												{related.zh_name}
-											</Typography>
-										)}
-										{related.cardno && (
-											<Typography
-												variant="body2"
-												color="text.secondary"
-												sx={{ mt: 0.5, wordBreak: "break-word" }}>
-												{related.cardno}
-											</Typography>
-										)}
-										{related.product_name && (
-											<Typography
-												variant="body2"
-												color="text.secondary"
-												sx={{ wordBreak: "break-word" }}>
-												{related.product_name}
-											</Typography>
-										)}
-										{(related.series_number || related.series) && (
-											<Typography
-												variant="body2"
-												color="text.secondary">
-												{[related.series_number, related.series]
-													.filter(Boolean)
-													.join(" · ")}
-											</Typography>
-										)}
-										{(() => {
-											const pillItems = [
-												related.level && `Lv.${related.level}`,
-												related.cost && `Cost ${related.cost}`,
-												related.power &&
-													`${related.power} ${t(
-														"pages.cardList.fields.power"
-													)}`,
-												related.soul &&
-													`${related.soul} ${t("pages.cardList.fields.soul")}`,
-												related.trigger &&
-													`${t("pages.cardList.fields.trigger")} ${
-														related.trigger
-													}`,
-											].filter(Boolean);
-											if (pillItems.length === 0) {
-												return null;
-											}
-											return (
-												<Stack
-													direction="row"
-													spacing={1}
-													flexWrap="wrap"
-													sx={{ rowGap: 1, mt: 1 }}>
-													{pillItems.map((label, statIndex) => (
-														<Chip
-															key={`${
-																related.cardno || statIndex
-															}-stat-${label}`}
-															label={label}
-															size="small"
-															sx={{
-																backgroundColor: "rgba(134, 176, 154, 0.36)",
-																border: "1px solid rgba(134, 176, 154, 0.55)",
-																fontWeight: 500,
-															}}
-														/>
-													))}
-												</Stack>
-											);
-										})()}
-										{(related.rarity || related.card_type || related.color) && (
-											<Typography
-												variant="body2"
-												color="text.secondary"
-												sx={{ mt: 1 }}>
-												{[
-													related.rarity,
-													related.card_type,
-													related.color ? related.color.toUpperCase() : null,
-												]
-													.filter(Boolean)
-													.join(" · ")}
-											</Typography>
-										)}
-										{(related.trait || related.zh_trait) && (
-											<Box>
-												{related.trait && (
-													<Typography
-														variant="body2"
-														color="text.secondary">
-														<strong>
-															{t("pages.cardList.labels.trait")}
-															{colon}
-														</strong>
-														{related.trait}
-													</Typography>
-												)}
-												{related.zh_trait && (
-													<Typography
-														variant="body2"
-														color="text.secondary">
-														<strong>
-															{t("pages.cardList.labels.traitZh")}
-															{colon}
-														</strong>
-														{related.zh_trait}
-													</Typography>
-												)}
-											</Box>
-										)}
-										{(related.effect || related.zh_effect) && (
-											<Box
-												sx={{
-													backgroundColor: "rgba(148, 189, 168, 0.3)",
-													borderRadius: 2,
-													p: 1.5,
-													mt: 1.5,
-													border: "1px solid rgba(104, 146, 123, 0.45)",
-												}}>
-												{related.effect && (
-													<Typography
-														variant="body2"
-														sx={{ mb: related.zh_effect ? 1 : 0 }}>
-														<strong>
-															{t("pages.cardList.labels.effect")}
-															{colon}
-														</strong>
-														{related.effect}
-													</Typography>
-												)}
-												{related.zh_effect && (
-													<Typography variant="body2">
-														<strong>
-															{t("pages.cardList.labels.effectZh")}
-															{colon}
-														</strong>
-														{related.zh_effect}
-													</Typography>
-												)}
-											</Box>
-										)}
-										{(related.flavor || related.zh_flavor) && (
-											<Box
-												sx={{
-													backgroundColor: "rgba(150, 196, 170, 0.24)",
-													borderRadius: 2,
-													p: 1.5,
-													mt: 1.5,
-													border: "1px solid rgba(106, 148, 125, 0.4)",
-												}}>
-												{related.flavor && (
-													<Typography
-														variant="body2"
-														sx={{ mb: related.zh_flavor ? 1 : 0 }}>
-														<strong>
-															{t("pages.cardList.labels.flavor")}
-															{colon}
-														</strong>
-														{related.flavor}
-													</Typography>
-												)}
-												{related.zh_flavor && (
-													<Typography variant="body2">
-														<strong>
-															{t("pages.cardList.labels.flavorZh")}
-															{colon}
-														</strong>
-														{related.zh_flavor}
-													</Typography>
-												)}
-											</Box>
-										)}
-									</Box>
-								</Paper>
-							))}
-						</Stack>
-					) : (
-						<Typography
-							variant="body2"
-							sx={{ color: "rgba(222, 238, 229, 0.75)" }}>
-							{t("pages.cardList.dialog.emptyRelated")}
-						</Typography>
-					)}
-				</DialogContent>
-				<DialogActions
-					sx={{
-						px: { xs: 2.5, sm: 4 },
-						py: { xs: 2, sm: 2.5 },
-						backgroundColor: "rgba(201, 224, 211, 0.82)",
-					}}>
-					<Button
-						onClick={handleCloseRelatedModal}
-						variant="contained"
-						sx={{
-							backgroundColor: "#6fa386",
-							color: "#f6fff9",
-							boxShadow: "0 10px 20px rgba(77, 126, 102, 0.35)",
-							fontWeight: 600,
-							"&:hover": {
-								backgroundColor: "#5a9276",
-								boxShadow: "0 14px 26px rgba(60, 110, 86, 0.38)",
-							},
-						}}>
-						{t("pages.cardList.dialog.close")}
-					</Button>
-				</DialogActions>
-			</Dialog>
+			{/* related-card modal removed */}
 
 			<Box
 				sx={{
@@ -2412,6 +2026,287 @@ function CardList() {
 				)}
 			</Box>
 			<Box sx={{ height: 48 }} />
+
+			{/* Detail dialog for a single card when clicking a related chip */}
+			<Dialog
+				open={Boolean(detailCard)}
+				onClose={closeDetailCard}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: 3 } }}>
+				<DialogTitle sx={{ px: 3, py: 2 }}>
+					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+						<Box sx={{ flex: 1, minWidth: 0 }}>
+							<Typography
+								variant="h6"
+								sx={{ fontWeight: 700 }}>
+								{detailCard
+									? detailCard.name || detailCard.zh_name || detailCard.cardno
+									: ""}
+							</Typography>
+							{detailCard?.cardno && (
+								<Chip
+									size="small"
+									label={detailCard.cardno}
+									sx={{ mt: 1 }}
+								/>
+							)}
+						</Box>
+						<IconButton
+							onClick={closeDetailCard}
+							aria-label={t("close")}>
+							<CloseIcon />
+						</IconButton>
+					</Box>
+				</DialogTitle>
+				<DialogContent
+					dividers
+					sx={{ px: 3, py: 2 }}>
+					{detailCard && (
+						<Box
+							sx={{
+								display: "flex",
+								gap: 2,
+								flexDirection: { xs: "column", sm: "row" },
+							}}>
+							{detailCard.image_url && (
+								<Box
+									sx={{
+										flex: { xs: "0 0 auto", sm: "0 0 260px" },
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+										p: { xs: 0, sm: 0 },
+									}}>
+									<img
+										src={detailCard.image_url}
+										alt={detailCard.name || detailCard.cardno}
+										style={{
+											maxWidth: "100%",
+											height: "auto",
+											borderRadius: 6,
+											boxShadow: "0 14px 30px rgba(17,24,39,0.12)",
+										}}
+									/>
+								</Box>
+							)}
+							<Box sx={{ flex: 1 }}>
+								<Box>
+									<Typography sx={{ fontWeight: 600 }}>
+										{detailCard.name}
+									</Typography>
+									{showZh && detailCard.zh_name && (
+										<Typography
+											variant="subtitle1"
+											color="text.secondary">
+											{detailCard.zh_name}
+										</Typography>
+									)}
+									{detailCard.cardno && (
+										<Typography
+											variant="body2"
+											color="text.secondary"
+											sx={{ mt: 0.5, fontWeight: 600 }}>
+											{detailCard.cardno}
+										</Typography>
+									)}
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										{detailCard.series_number} · {detailCard.series}
+									</Typography>
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										{detailCard.product_name}
+									</Typography>
+								</Box>
+
+								{/* stats chips */}
+								{(() => {
+									const stats = [
+										detailCard.level && {
+											key: "level",
+											label: `Lv.${detailCard.level}`,
+										},
+										detailCard.cost && {
+											key: "cost",
+											label: `Cost ${detailCard.cost}`,
+										},
+										detailCard.power && {
+											key: "power",
+											label: `${detailCard.power} ${t(
+												"pages.cardList.fields.power"
+											)}`,
+										},
+										detailCard.soul && {
+											key: "soul",
+											label: `${detailCard.soul} ${t(
+												"pages.cardList.fields.soul"
+											)}`,
+										},
+										detailCard.trigger && {
+											key: "trigger",
+											label: `${t("pages.cardList.fields.trigger")} ${
+												detailCard.trigger
+											}`,
+										},
+									].filter(Boolean);
+									return (
+										<Stack
+											direction="row"
+											spacing={1}
+											flexWrap="wrap"
+											sx={{ rowGap: 1, mt: 1 }}>
+											{stats.map((chip) => (
+												<Chip
+													key={chip.key}
+													label={chip.label}
+													size="small"
+													sx={{
+														backgroundColor: "var(--card-background)",
+														border: "1px solid var(--border)",
+														fontWeight: 500,
+													}}
+												/>
+											))}
+										</Stack>
+									);
+								})()}
+
+								{/* meta chips */}
+								{(() => {
+									const meta = [
+										detailCard.color && {
+											key: "color",
+											label: detailCard.color,
+										},
+										detailCard.side && {
+											key: "side",
+											label: `Side ${detailCard.side}`,
+										},
+										detailCard.rarity && {
+											key: "rarity",
+											label: detailCard.rarity,
+										},
+										detailCard.card_type && {
+											key: "type",
+											label: detailCard.card_type,
+										},
+									].filter(Boolean);
+									if (meta.length === 0) return null;
+									return (
+										<Stack
+											direction="row"
+											spacing={1}
+											flexWrap="wrap"
+											sx={{ rowGap: 1, mt: 1 }}>
+											{meta.map((chip) => (
+												<Chip
+													key={chip.key}
+													label={chip.label}
+													size="small"
+													sx={{
+														backgroundColor: "rgba(244, 67, 54, 0.08)",
+														border: "1px solid rgba(244, 67, 54, 0.18)",
+														fontWeight: 500,
+													}}
+												/>
+											))}
+										</Stack>
+									);
+								})()}
+
+								<Divider sx={{ borderColor: "var(--divider)", my: 1 }} />
+
+								{detailCard.trait && (
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										<strong>
+											{t("pages.cardList.labels.trait")}
+											{colon}
+										</strong>
+										{detailCard.trait}
+									</Typography>
+								)}
+								{showZh && detailCard.zh_trait && (
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										<strong>
+											{t("pages.cardList.labels.traitZh")}
+											{colon}
+										</strong>
+										{detailCard.zh_trait}
+									</Typography>
+								)}
+								{detailCard.flavor && (
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										<strong>
+											{t("pages.cardList.labels.flavor")}
+											{colon}
+										</strong>
+										{detailCard.flavor}
+									</Typography>
+								)}
+								{showZh && detailCard.zh_flavor && (
+									<Typography
+										variant="body2"
+										color="text.secondary">
+										<strong>
+											{t("pages.cardList.labels.flavorZh")}
+											{colon}
+										</strong>
+										{detailCard.zh_flavor}
+									</Typography>
+								)}
+
+								{(showJP && detailCard.effect) ||
+								(showZh && detailCard.zh_effect) ? (
+									<Box
+										sx={{
+											backgroundColor: "var(--card-background)",
+											borderRadius: 2,
+											p: 2,
+											mt: 1,
+										}}>
+										{showJP && detailCard.effect && (
+											<Typography
+												variant="body2"
+												sx={{ mb: showZh && detailCard.zh_effect ? 1 : 0 }}>
+												<strong>
+													{t("pages.cardList.labels.effect")}
+													{colon}
+												</strong>
+												{detailCard.effect}
+											</Typography>
+										)}
+										{showZh && detailCard.zh_effect && (
+											<Typography variant="body2">
+												<strong>
+													{t("pages.cardList.labels.effectZh")}
+													{colon}
+												</strong>
+												{detailCard.zh_effect}
+											</Typography>
+										)}
+									</Box>
+								) : null}
+							</Box>
+						</Box>
+					)}
+				</DialogContent>
+				<DialogActions sx={{ px: 3, py: 2 }}>
+					<Button
+						onClick={closeDetailCard}
+						variant="contained">
+						{t("close")}
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Container>
 	);
 }

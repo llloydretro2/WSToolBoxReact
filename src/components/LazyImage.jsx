@@ -44,10 +44,11 @@ const LazyImage = ({
 		setIsLoaded(true);
 	}, []);
 
+	// 如果调用方传入了高度或最小高度，则使用调用方的尺寸。
+	const hasExplicitSize = style && (style.height || style.minHeight);
 	const containerStyle = {
 		position: "relative",
 		width: "100%",
-		minHeight: "200px", // 占位高度
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
@@ -55,6 +56,11 @@ const LazyImage = ({
 		borderRadius: "4px",
 		...style,
 	};
+
+	if (!hasExplicitSize) {
+		// 只有在没有显式尺寸时才保留占位高度，避免小缩略图出现大空白
+		containerStyle.minHeight = "200px";
+	}
 
 	const placeholderStyle = {
 		color: "#666",
@@ -64,7 +70,8 @@ const LazyImage = ({
 
 	const imageStyle = {
 		width: "100%",
-		height: "auto",
+		height: "100%",
+		objectFit: (style && style.objectFit) || "cover",
 		opacity: isLoaded ? 1 : 0,
 		transition: "opacity 0.3s ease-in-out",
 		borderRadius: "4px",

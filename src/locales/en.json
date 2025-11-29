@@ -1,5 +1,6 @@
 {
   "title": "WS Toolbox",
+  "close": "Close",
   "menu": {
     "home": "Home",
     "tracker": "Tracker",
@@ -192,7 +193,8 @@
         "related": "Related cards"
       },
       "buttons": {
-        "viewRelated": "View related cards"
+        "viewRelated": "View related cards",
+        "resetNumeric": "Reset numbers"
       },
       "dialog": {
         "relatedTitle": "{{cardName}} · Related cards",

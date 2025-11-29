@@ -41,10 +41,10 @@ function LoginPage() {
 	const [successMessage, setSuccessMessage] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 
-	const handleSubmit = async () => {
+	const handleSubmit = async (e) => {
+		if (e && e.preventDefault) e.preventDefault();
 		if (!username || !password) {
 			setErrorMessage(t("login.error.emptyFields"));
-			// removed
 			return;
 		}
 
@@ -151,7 +151,9 @@ function LoginPage() {
 							border: "1px solid var(--border)",
 						}}>
 						<Box
+							component="form"
 							className="login-form-container"
+							onSubmit={handleSubmit}
 							sx={{ p: 4 }}>
 							{/* 标题部分 */}
 							<Box sx={{ textAlign: "center", mb: 4 }}>
@@ -191,6 +193,8 @@ function LoginPage() {
 								<TextField
 									className="login-input"
 									label={t("login.username")}
+									name="username"
+									autoComplete="username"
 									variant="outlined"
 									value={username}
 									onChange={(e) => setUsername(e.target.value)}
@@ -225,6 +229,10 @@ function LoginPage() {
 								<TextField
 									className="login-input"
 									label={t("login.password")}
+									name="password"
+									autoComplete={
+										isRegister ? "new-password" : "current-password"
+									}
 									type={showPassword ? "text" : "password"}
 									variant="outlined"
 									value={password}
@@ -272,7 +280,7 @@ function LoginPage() {
 							<PrimaryButton
 								className="login-button"
 								variant="contained"
-								onClick={handleSubmit}
+								type="submit"
 								fullWidth
 								size="large"
 								sx={{
