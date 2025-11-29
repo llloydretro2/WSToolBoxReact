@@ -765,12 +765,23 @@ const Record = () => {
 							mb: 2,
 							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
 						}}>
-						<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-							<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+						<Box
+							sx={{
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								mb: 1,
+							}}>
+							<Typography
+								variant="subtitle2"
+								sx={{ fontWeight: 600 }}>
 								{t("record.form.myInfo")}
 							</Typography>
 							<Tooltip title={"重置我方信息"}>
-								<IconButton size="small" onClick={resetMyInfo} aria-label="reset-my-info">
+								<IconButton
+									size="small"
+									onClick={resetMyInfo}
+									aria-label="reset-my-info">
 									<RestartAltIcon fontSize="small" />
 								</IconButton>
 							</Tooltip>
@@ -834,12 +845,23 @@ const Record = () => {
 							mb: 2,
 							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
 						}}>
-						<Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-							<Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+						<Box
+							sx={{
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								mb: 1,
+							}}>
+							<Typography
+								variant="subtitle1"
+								sx={{ fontWeight: 700 }}>
 								{t("record.form.opponentInfo")}
 							</Typography>
 							<Tooltip title={"重置对手信息"}>
-								<IconButton size="small" onClick={resetOpponentInfo} aria-label="reset-opponent-info">
+								<IconButton
+									size="small"
+									onClick={resetOpponentInfo}
+									aria-label="reset-opponent-info">
 									<RestartAltIcon fontSize="small" />
 								</IconButton>
 							</Tooltip>
@@ -1109,7 +1131,10 @@ const Record = () => {
 							spacing={2}
 							sx={{ width: "100%" }}>
 							{records.map((record) => (
-								<Grid xs={12} sx={{ width: "100%" }} key={record._id}>
+								<Grid
+									xs={12}
+									sx={{ width: "100%" }}
+									key={record._id}>
 									<Card
 										sx={{
 											display: "flex",
