@@ -27,7 +27,7 @@ const todoItems = [
 	"更多战绩统计",
 ];
 // 硬编码的更新内容列表（便于在界面上像待办一样修改）
-const updateItems = ["租借女友", "Key"];
+const updateItems = ["黄金拼图", "overload", "pjsk"];
 
 function Home() {
 	const { t } = useLocale();
