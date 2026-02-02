@@ -539,6 +539,18 @@
           "series_codes": [
             "KJ8"
           ]
+        },
+        {
+          "title": "『テイルズ オブ』シリーズ",
+          "series_codes": [
+            "TAL"
+          ]
+        },
+        {
+          "title": "東方Project",
+          "series_codes": [
+            "THP"
+          ]
         }
       ],
       "schwarz_side": [
@@ -918,6 +930,13 @@
           ]
         },
         {
+          "title": "VIRTUAL GIRL",
+          "series_codes": [
+            "VRG",
+            "BDY"
+          ]
+        },
+        {
           "title": "ペルソナ",
           "series_codes": [
             "P3",
@@ -1154,8 +1173,8 @@
     "crawl_info": {
       "source_url": "https://ws-tcg.com/rules/deck_rule/",
       "crawl_time": "2025-10-04",
-      "total_weiss": 75,
-      "total_schwarz": 77
+      "total_weiss": 77,
+      "total_schwarz": 78
     }
   },
   "crawl_info": {

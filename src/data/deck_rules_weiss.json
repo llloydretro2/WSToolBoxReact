@@ -537,11 +537,23 @@
       "series_codes": [
         "KJ8"
       ]
+    },
+    {
+      "title": "『テイルズ オブ』シリーズ",
+      "series_codes": [
+        "TAL"
+      ]
+    },
+    {
+      "title": "東方Project",
+      "series_codes": [
+        "THP"
+      ]
     }
   ],
   "crawl_info": {
     "source_url": "https://ws-tcg.com/rules/deck_rule/",
     "crawl_time": "2025-10-04",
-    "total_entries": 75
+    "total_entries": 77
   }
 }

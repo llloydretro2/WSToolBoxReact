@@ -377,6 +377,13 @@
       ]
     },
     {
+      "title": "VIRTUAL GIRL",
+      "series_codes": [
+        "VRG",
+        "BDY"
+      ]
+    },
+    {
       "title": "ペルソナ",
       "series_codes": [
         "P3",
@@ -612,6 +619,6 @@
   "crawl_info": {
     "source_url": "https://ws-tcg.com/rules/deck_rule/",
     "crawl_time": "2025-10-04",
-    "total_entries": 77
+    "total_entries": 78
   }
 }
