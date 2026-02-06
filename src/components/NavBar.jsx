@@ -51,6 +51,7 @@ const battleToolsMenuItems = [
 	{ labelKey: "menu.shuffle", path: "/shuffle" },
 	{ labelKey: "menu.dice", path: "/dice" },
 	{ labelKey: "menu.chessClock", path: "/chess_clock" },
+	{ labelKey: "menu.audio", path: "/audio" },
 ];
 
 function getAvatarIndexFromUsername(username) {
@@ -82,6 +83,7 @@ function NavBar() {
 		{ labelKey: "menu.shuffle", path: "/shuffle" },
 		{ labelKey: "menu.dice", path: "/dice" },
 		{ labelKey: "menu.chessClock", path: "/chess_clock" },
+		{ labelKey: "menu.audio", path: "/audio" },
 	];
 
 	const navigate = useNavigate();
@@ -371,6 +373,8 @@ function NavBar() {
 								</motion.div>
 							);
 						})}
+
+						{/* 桌面端：音效面板按钮 */}
 
 						{/* 开包菜单下拉 */}
 						<motion.div

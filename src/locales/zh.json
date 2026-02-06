@@ -18,6 +18,8 @@
     "deck": "卡组",
     "deckCreate": "创建卡组",
     "deckSearch": "卡组列表"
+    ,
+    "audio": "音效"
   },
   "common": {
     "language": {

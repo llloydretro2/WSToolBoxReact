@@ -18,6 +18,8 @@
     "deck": "Deck",
     "deckCreate": "Create Deck",
     "deckSearch": "Deck List"
+    ,
+    "audio": "Audio"
   },
   "common": {
     "language": {

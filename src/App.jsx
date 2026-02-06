@@ -22,6 +22,7 @@ const PickPacks = lazy(() => import("./pages/PickPacks.jsx"));
 const FirstSecond = lazy(() => import("./pages/FirstSecond.jsx"));
 const ChessClock = lazy(() => import("./pages/ChessClock.jsx"));
 const RandomShuffle = lazy(() => import("./pages/RandomShuffle.jsx"));
+const AudioBoard = lazy(() => import("./pages/AudioBoard.jsx"));
 const Record = lazy(() => import("./pages/Record.jsx"));
 
 // 卡片相关页面 - 分组加载
@@ -102,6 +103,10 @@ function AnimatedRoutes() {
 				<Route
 					path="/shuffle"
 					element={withPageTransition(RandomShuffle)}
+				/>
+				<Route
+					path="/audio"
+					element={withPageTransition(AudioBoard)}
 				/>
 				<Route
 					path="/login"
