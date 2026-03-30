@@ -33,8 +33,7 @@ import {
 } from "../components/ButtonVariants";
 
 // 导入卡组规则数据
-import deckRulesWeiss from "../data/deck_rules_weiss.json";
-import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
+import { useOptions } from "../contexts/OptionsContext";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
 
@@ -43,6 +42,7 @@ const DeckEdit = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { token } = useAuth();
+	const { deckRules } = useOptions();
 
 	// 原有状态
 	const [deckData, setDeckData] = useState(null);
@@ -430,9 +430,7 @@ const DeckEdit = () => {
 
 	// 获取当前side的系列数据
 	const getCurrentSideData = () => {
-		return side === "weiss"
-			? deckRulesWeiss.title_categories
-			: deckRulesSchwarz.title_categories;
+		return side === "weiss" ? deckRules.weiss : deckRules.schwarz;
 	};
 
 	// 获取当前side的系列选项

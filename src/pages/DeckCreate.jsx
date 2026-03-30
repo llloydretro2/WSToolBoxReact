@@ -24,8 +24,7 @@ import {
 } from "../components/ButtonVariants";
 import { useAuth } from "../contexts/AuthContext";
 import LazyImage from "../components/LazyImage";
-import deckRulesWeiss from "../data/deck_rules_weiss.json";
-import deckRulesSchwarz from "../data/deck_rules_schwarz.json";
+import { useOptions } from "../contexts/OptionsContext";
 
 // Ensure BACKEND_URL is accessible from environment variables
 const BACKEND_URL = "https://api.cardtoolbox.org";
@@ -34,6 +33,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 const DeckCreate = () => {
 	const { t } = useLocale();
 	const { token } = useAuth();
+	const { deckRules } = useOptions();
 	const [deckName, setDeckName] = useState("");
 	const [side, setSide] = useState("weiss"); // "weiss" or "schwarz"
 	const [form, setForm] = useState({
@@ -447,9 +447,7 @@ const DeckCreate = () => {
 
 	// 获取当前side的系列数据
 	const getCurrentSideData = () => {
-		return side === "weiss"
-			? deckRulesWeiss.title_categories
-			: deckRulesSchwarz.title_categories;
+		return side === "weiss" ? deckRules.weiss : deckRules.schwarz;
 	};
 
 	// 获取当前side的系列选项

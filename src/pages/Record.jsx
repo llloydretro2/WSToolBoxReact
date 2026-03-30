@@ -65,8 +65,7 @@ import {
 	GenerateButton,
 	SubtleButton,
 } from "../components/ButtonVariants";
-import productList from "../data/productList.json";
-import translationMap from "../data/filter_translations.json";
+import { useOptions } from "../contexts/OptionsContext";
 import Chart from "react-apexcharts";
 
 // 本地后端测试地址
@@ -77,6 +76,7 @@ const BACKEND_URL = "https://api.cardtoolbox.org";
 // const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 const Record = () => {
+	const { productList, translationMap } = useOptions();
 	const { t } = useLocale();
 	const { user } = useAuth();
 

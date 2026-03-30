@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { OptionsProvider } from "./contexts/OptionsContext";
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import { AnimatePresence } from "framer-motion";
@@ -24,6 +25,7 @@ const ChessClock = lazy(() => import("./pages/ChessClock.jsx"));
 const RandomShuffle = lazy(() => import("./pages/RandomShuffle.jsx"));
 const AudioBoard = lazy(() => import("./pages/AudioBoard.jsx"));
 const Record = lazy(() => import("./pages/Record.jsx"));
+const OptionsApiTest = lazy(() => import("./pages/OptionsApiTest.jsx"));
 
 // 卡片相关页面 - 分组加载
 const CardList = lazy(() => import("./pages/CardList.jsx"));
@@ -132,6 +134,10 @@ function AnimatedRoutes() {
 					path="/record"
 					element={withPageTransition(Record)}
 				/>
+				<Route
+					path="/options-test"
+					element={withPageTransition(OptionsApiTest)}
+				/>
 			</Routes>
 		</AnimatePresence>
 	);
@@ -152,10 +158,12 @@ function App() {
 			<ThemeProvider>
 				<ThemeWrapper>
 					<AuthProvider>
-						<Router>
-							<NavBar />
-							<AnimatedRoutes />
-						</Router>
+						<OptionsProvider>
+							<Router>
+								<NavBar />
+								<AnimatedRoutes />
+							</Router>
+						</OptionsProvider>
 					</AuthProvider>
 				</ThemeWrapper>
 			</ThemeProvider>

@@ -17,13 +17,14 @@ import {
 	DangerButton,
 	GenerateButton,
 } from "../components/ButtonVariants";
-import productList from "../data/productList.json";
+import { useOptions } from "../contexts/OptionsContext";
 
 const BACKEND_URL = "https://api.cardtoolbox.org";
 // const BACKEND_URL = "http://38.244.14.142:4000";
 
 function Simulator() {
 	const { t } = useLocale();
+	const { productList } = useOptions();
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [cards, setCards] = useState([]);
 	const [rarityMap, setRarityMap] = useState({});

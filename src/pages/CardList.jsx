@@ -29,9 +29,7 @@ import {
 } from "@mui/material";
 import { PrimaryButton, DangerButton } from "../components/ButtonVariants";
 import LazyImage from "../components/LazyImage";
-
-import productList from "../data/productList.json";
-import translationMap from "../data/filter_translations.json";
+import { useOptions } from "../contexts/OptionsContext";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CloseIcon from "@mui/icons-material/Close";
@@ -53,6 +51,7 @@ const extractBaseCardNo = (cardno) => {
 };
 
 function CardList() {
+	const { productList, translationMap } = useOptions();
 	const [result, setResult] = useState({
 		data: [],
 		total: 0,
