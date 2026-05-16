@@ -31,6 +31,9 @@ const OptionsApiTest = lazy(() => import("./pages/OptionsApiTest.jsx"));
 const CardList = lazy(() => import("./pages/CardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
 
+// 麻将役种训练
+const MahjongTrainer = lazy(() => import("./pages/MahjongTrainer.jsx"));
+
 // 卡组页面 - 分组加载
 const DeckPage = lazy(() => import("./pages/Deck.jsx"));
 const DeckCreate = lazy(() => import("./pages/DeckCreate.jsx"));
@@ -133,6 +136,10 @@ function AnimatedRoutes() {
 				<Route
 					path="/record"
 					element={withPageTransition(Record)}
+				/>
+				<Route
+					path="/mahjong"
+					element={withPageTransition(MahjongTrainer)}
 				/>
 				<Route
 					path="/options-test"

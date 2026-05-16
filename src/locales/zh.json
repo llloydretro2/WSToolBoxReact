@@ -19,7 +19,8 @@
     "deckCreate": "创建卡组",
     "deckSearch": "卡组列表"
     ,
-    "audio": "音效"
+    "audio": "音效",
+    "mahjong": "麻将役种"
   },
   "common": {
     "language": {
@@ -372,5 +373,19 @@
   "deck": {
     "createTab": "创建卡组",
     "searchTab": "查询卡组"
+  },
+  "mahjong": {
+    "title": "麻将役种路线分析",
+    "subtitle": "输入手牌，分析可行役种路线——适合麻将初学者",
+    "concealedHand": "暗手（门清手牌）",
+    "handHelper": "支持数字+花色（77m234p3477s）或中文字牌（中中东南西北白发）",
+    "openMelds": "副露（吃/碰/杠）",
+    "meldsHelper": "多组副露用英文逗号分隔，如：555m,中中中",
+    "seatWind": "自风",
+    "roundWind": "场风",
+    "openTanyao": "允许副露断幺九（kuitan）",
+    "twoHanMin": "两番起和规则",
+    "analyzeButton": "分析役种",
+    "resetButton": "重置"
   }
 }

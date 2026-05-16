@@ -52,6 +52,7 @@ const battleToolsMenuItems = [
 	{ labelKey: "menu.dice", path: "/dice" },
 	{ labelKey: "menu.chessClock", path: "/chess_clock" },
 	{ labelKey: "menu.audio", path: "/audio" },
+	{ labelKey: "menu.mahjong", path: "/mahjong" },
 ];
 
 function getAvatarIndexFromUsername(username) {
@@ -84,6 +85,7 @@ function NavBar() {
 		{ labelKey: "menu.dice", path: "/dice" },
 		{ labelKey: "menu.chessClock", path: "/chess_clock" },
 		{ labelKey: "menu.audio", path: "/audio" },
+		{ labelKey: "menu.mahjong", path: "/mahjong" },
 	];
 
 	const navigate = useNavigate();

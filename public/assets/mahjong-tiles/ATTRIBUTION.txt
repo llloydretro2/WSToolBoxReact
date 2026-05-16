@@ -1,0 +1,23 @@
+Mahjong Tile SVG Assets
+=======================
+Source  : FluffyStuff/riichi-mahjong-tiles
+URL     : https://github.com/FluffyStuff/riichi-mahjong-tiles
+License : CC0 1.0 Universal (Public Domain Dedication)
+          https://creativecommons.org/publicdomain/zero/1.0/
+
+These vector graphics of riichi mahjong tiles have been dedicated to the
+public domain. No attribution is required, but credit is appreciated.
+
+Files included (Regular/ variant):
+  Man1–Man9.svg   1–9 man (characters / 万子)
+  Pin1–Pin9.svg   1–9 pin (circles / 饼子)
+  Sou1–Sou9.svg   1–9 sou (bamboo / 索子)
+  Ton.svg         East wind (東)
+  Nan.svg         South wind (南)
+  Shaa.svg        West wind (西)
+  Pei.svg         North wind (北)
+  Haku.svg        White dragon (白)
+  Hatsu.svg       Green dragon (發)
+  Chun.svg        Red dragon (中)
+
+Downloaded: 2026-05-15

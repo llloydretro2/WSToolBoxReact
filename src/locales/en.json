@@ -19,7 +19,8 @@
     "deckCreate": "Create Deck",
     "deckSearch": "Deck List"
     ,
-    "audio": "Audio"
+    "audio": "Audio",
+    "mahjong": "Mahjong Yaku"
   },
   "common": {
     "language": {
@@ -385,6 +386,20 @@
       "createTab": "Create Deck",
       "searchTab": "Search Decks"
     }
+  },
+  "mahjong": {
+    "title": "Riichi Mahjong Yaku Trainer",
+    "subtitle": "Enter your hand to explore which yaku routes are possible — beginner-friendly",
+    "concealedHand": "Concealed Hand",
+    "handHelper": "Digits + suit letter (m/p/s/z) or Chinese honour chars. e.g. 77m234p3477s中中",
+    "openMelds": "Open Melds (chi / pon / kan)",
+    "meldsHelper": "Comma-separated, e.g. 555m,中中中",
+    "seatWind": "Seat Wind",
+    "roundWind": "Round Wind",
+    "openTanyao": "Open tanyao allowed (kuitan)",
+    "twoHanMin": "Two-han minimum rule",
+    "analyzeButton": "Analyze",
+    "resetButton": "Reset"
   },
   "login": {
     "title": "Welcome Back!",
