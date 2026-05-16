@@ -20,7 +20,7 @@
  *   searchYakuRoute(concealedTiles, openMelds, yakuId, seatWind, roundWind,
  *                   rules, maxDepth?, maxStates?) → BFSResult | null
  *
- *   computeShanten(tiles, numMelds) → number  (-1=complete, 0=tenpai, 1+= shanten)
+ *   computeShanten — now in shanten.js; re-exported here for back-compat.
  */
 
 import {
@@ -31,6 +31,9 @@ import {
   evaluateYakuFromDecomposition, extractYakuRelevantGroups,
   ALL_34_TILES,
 } from './handSimulator';
+// Re-export the accurate shanten implementation so callers that import it
+// from yakuBFS continue to work without change.
+export { computeShanten } from './shanten';
 
 // ── Search constants ──────────────────────────────────────────────────────────
 
@@ -162,45 +165,7 @@ export function getDrawCandidates(yakuId, tilesAtWaiting, seatWind, roundWind, m
     .slice(0, maxN);
 }
 
-// ── Shanten calculation (simplified) ─────────────────────────────────────────
-// Returns -1 (complete), 0 (tenpai), or a positive integer estimate.
-// Not a fully accurate shanten algorithm — used for feasibility labelling only.
-
-export function computeShanten(tiles, numMelds) {
-  const numMeldsN  = numMelds ?? 0;
-  const completeN  = 14 - 3 * numMeldsN;
-  const waitingN   = 13 - 3 * numMeldsN;
-
-  if (tiles.length === completeN && extractHandGroups(tiles, numMeldsN)) return -1;
-
-  if (tiles.length === waitingN) {
-    // Check tenpai: is there any draw that completes the hand?
-    for (const t of ALL_34_TILES) {
-      const test = [...tiles, t];
-      if (extractHandGroups(test, numMeldsN)) return 0;
-    }
-  }
-
-  // Chiitoitsu shanten (only when closed and tile count matches)
-  if (numMeldsN === 0 && tiles.length === waitingN) {
-    const g = groupTiles(tiles);
-    const pairs = Object.values(g).filter(c => c >= 2).length;
-    const chiitoi = 6 - pairs; // 0 = tenpai
-    if (chiitoi <= 1) return Math.max(0, chiitoi);
-  }
-
-  // Rough standard shanten estimate using tile groups
-  const g = groupTiles(tiles);
-  const setsNeeded = 4 - numMeldsN;
-  let triplets = 0, pairs = 0;
-  for (const c of Object.values(g)) {
-    if (c >= 3) triplets++;
-    else if (c >= 2) pairs++;
-  }
-  const completeSets = Math.min(triplets, setsNeeded);
-  const estimate = Math.max(0, setsNeeded - completeSets - Math.min(pairs, setsNeeded - completeSets));
-  return estimate;
-}
+// computeShanten has moved to shanten.js and is re-exported at the top of this file.
 
 // ── Core BFS ──────────────────────────────────────────────────────────────────
 
