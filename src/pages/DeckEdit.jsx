@@ -34,8 +34,7 @@ import {
 
 // 导入卡组规则数据
 import { useOptions } from "../contexts/OptionsContext";
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
+import { apiRequest } from "../utils/api.js";
 
 const DeckEdit = () => {
 	const { t } = useLocale();
@@ -58,14 +57,18 @@ const DeckEdit = () => {
 	const [cardCounts, setCardCounts] = useState({});
 
 	// 筛选相关状态
-	const [color, setColor] = useState("");
-	const [level, setLevel] = useState("");
-	const [rarity, setRarity] = useState("");
-	const [cardType, setCardType] = useState("");
-	const [power, setPower] = useState("");
-	const [cost, setCost] = useState("");
-	const [soul, setSoul] = useState("");
-	const [trigger, setTrigger] = useState("");
+	const [filterState, setFilterState] = useState({
+		color: "",
+		level: "",
+		rarity: "",
+		cardType: "",
+		power: "",
+		cost: "",
+		soul: "",
+		trigger: "",
+	});
+	const setFilter = (key, val) =>
+		setFilterState((prev) => ({ ...prev, [key]: val }));
 	const [searchText, setSearchText] = useState("");
 
 	// 卡片数据相关状态
@@ -122,18 +125,7 @@ const DeckEdit = () => {
 			try {
 				console.log("正在获取卡组数据，ID:", deckId);
 
-				const response = await fetch(`${BACKEND_URL}/api/decks/${deckId}`, {
-					method: "GET",
-					headers: {
-						Authorization: `Bearer ${token}`,
-						"Content-Type": "application/json",
-					},
-				});
-
-				if (!response.ok) {
-					throw new Error("获取卡组数据失败");
-				}
-
+				const response = await apiRequest(`/api/decks/${deckId}`);
 				const data = await response.json();
 
 				// 显示完整的获取到的信息用于调试
@@ -203,14 +195,14 @@ const DeckEdit = () => {
 		params.set("series", targetSeries);
 
 		const appliedFilters = {
-			color: overrides.color ?? color,
-			level: overrides.level ?? level,
-			rarity: overrides.rarity ?? rarity,
-			card_type: overrides.card_type ?? cardType,
-			power: overrides.power ?? power,
-			cost: overrides.cost ?? cost,
-			soul: overrides.soul ?? soul,
-			trigger: overrides.trigger ?? trigger,
+			color: overrides.color ?? filterState.color,
+			level: overrides.level ?? filterState.level,
+			rarity: overrides.rarity ?? filterState.rarity,
+			card_type: overrides.card_type ?? filterState.cardType,
+			power: overrides.power ?? filterState.power,
+			cost: overrides.cost ?? filterState.cost,
+			soul: overrides.soul ?? filterState.soul,
+			trigger: overrides.trigger ?? filterState.trigger,
 			search: searchText.trim(),
 			...overrides,
 		};
@@ -244,12 +236,7 @@ const DeckEdit = () => {
 		}
 
 		try {
-			const response = await fetch(
-				`${BACKEND_URL}/api/cards?${params.toString()}`
-			);
-			if (!response.ok) {
-				throw new Error("获取卡片数据失败");
-			}
+			const response = await apiRequest(`/api/cards?${params.toString()}`);
 			const result = await response.json();
 			const incoming = Array.isArray(result.data) ? result.data : [];
 			setAllCards((prev) => (reset ? incoming : [...prev, ...incoming]));
@@ -273,14 +260,16 @@ const DeckEdit = () => {
 	};
 
 	const fetchSeriesCards = async (series) => {
-		setColor("");
-		setLevel("");
-		setRarity("");
-		setCardType("");
-		setPower("");
-		setCost("");
-		setSoul("");
-		setTrigger("");
+		setFilterState({
+			color: "",
+			level: "",
+			rarity: "",
+			cardType: "",
+			power: "",
+			cost: "",
+			soul: "",
+			trigger: "",
+		});
 		setSearchText("");
 		setAllCards([]);
 		setFilteredCards([]);
@@ -354,14 +343,16 @@ const DeckEdit = () => {
 	};
 
 	const handleFilterReset = () => {
-		setColor("");
-		setLevel("");
-		setRarity("");
-		setCardType("");
-		setPower("");
-		setCost("");
-		setSoul("");
-		setTrigger("");
+		setFilterState({
+			color: "",
+			level: "",
+			rarity: "",
+			cardType: "",
+			power: "",
+			cost: "",
+			soul: "",
+			trigger: "",
+		});
 		setSearchText("");
 		setAllCards([]);
 		setFilteredCards([]);
@@ -465,18 +456,10 @@ const DeckEdit = () => {
 				cards: cardsArray,
 			};
 
-			const response = await fetch(`${BACKEND_URL}/api/decks/${deckData._id}`, {
+			await apiRequest(`/api/decks/${deckData._id}`, {
 				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
 				body: JSON.stringify(deckDataToSave),
 			});
-
-			if (!response.ok) {
-				throw new Error("更新卡组失败");
-			}
 
 			setSnackbarMessage("卡组更新成功！");
 			setSnackbarOpen(true);
@@ -507,12 +490,8 @@ const DeckEdit = () => {
 				count,
 			}));
 
-			const response = await fetch(`${BACKEND_URL}/api/decks/${deckData._id}`, {
+			await apiRequest(`/api/decks/${deckData._id}`, {
 				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
 				body: JSON.stringify({
 					name: deckName.trim(),
 					series: deckData.series,
@@ -521,10 +500,6 @@ const DeckEdit = () => {
 					isPublic: deckData.isPublic,
 				}),
 			});
-
-			if (!response.ok) {
-				throw new Error("保存卡组失败");
-			}
 
 			setSnackbarMessage("卡组保存成功");
 			setSnackbarOpen(true);
@@ -585,7 +560,7 @@ const DeckEdit = () => {
 										</Typography>
 										<Box
 											sx={{
-												backgroundColor: "#f5f5f5",
+												backgroundColor: "var(--surface)",
 												p: 2,
 												borderRadius: 1,
 												maxHeight: "300px",
@@ -731,7 +706,7 @@ const DeckEdit = () => {
 												justifyContent="space-between"
 												alignItems="center"
 												py={1}
-												borderBottom="1px solid #eee">
+												borderBottom="1px solid var(--border)">
 												<Typography variant="body2">{cardno}</Typography>
 												<Typography variant="body2">x{count}</Typography>
 											</Box>
@@ -763,9 +738,9 @@ const DeckEdit = () => {
 						onClick={handleSave}
 						disabled={saving}
 						sx={{
-							backgroundColor: "#a6ceb6",
+							backgroundColor: "var(--primary)",
 							"&:hover": {
-								backgroundColor: "#8bb89d",
+								backgroundColor: "var(--primary-hover)",
 							},
 						}}>
 						{saving ? <CircularProgress size={20} /> : "保存卡组"}
@@ -815,16 +790,16 @@ const DeckEdit = () => {
 						}}
 						sx={{
 							"& .MuiToggleButton-root": {
-								border: "1px solid #a6ceb6",
-								color: "#a6ceb6",
+								border: "1px solid var(--primary)",
+								color: "var(--primary)",
 								fontWeight: "bold",
 								px: 3,
 								py: 1,
 								"&.Mui-selected": {
-									backgroundColor: "#a6ceb6",
+									backgroundColor: "var(--primary)",
 									color: "white",
 									"&:hover": {
-										backgroundColor: "#8bb89d",
+										backgroundColor: "var(--primary-hover)",
 									},
 								},
 								"&:hover": {
@@ -876,11 +851,11 @@ const DeckEdit = () => {
 					<PrimaryButton
 						variant="contained"
 						sx={{
-							backgroundColor: "#a6ceb6",
+							backgroundColor: "var(--primary)",
 							color: "white",
 							fontWeight: "bold",
 							"&:hover": {
-								backgroundColor: "#8bb89d",
+								backgroundColor: "var(--primary-hover)",
 							},
 						}}
 						onClick={() => {
@@ -965,8 +940,8 @@ const DeckEdit = () => {
 							}}>
 							<Autocomplete
 								options={uniqueColors}
-								value={color || null}
-								onChange={(_, newValue) => setColor(newValue || "")}
+								value={filterState.color || null}
+								onChange={(_, newValue) => setFilter("color", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -978,8 +953,8 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueLevels}
-								value={level || null}
-								onChange={(_, newValue) => setLevel(newValue || "")}
+								value={filterState.level || null}
+								onChange={(_, newValue) => setFilter("level", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -991,8 +966,8 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueRarities}
-								value={rarity || null}
-								onChange={(_, newValue) => setRarity(newValue || "")}
+								value={filterState.rarity || null}
+								onChange={(_, newValue) => setFilter("rarity", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1004,8 +979,10 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueCardTypes}
-								value={cardType || null}
-								onChange={(_, newValue) => setCardType(newValue || "")}
+								value={filterState.cardType || null}
+								onChange={(_, newValue) =>
+									setFilter("cardType", newValue || "")
+								}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1017,8 +994,8 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniquePowers}
-								value={power || null}
-								onChange={(_, newValue) => setPower(newValue || "")}
+								value={filterState.power || null}
+								onChange={(_, newValue) => setFilter("power", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1030,8 +1007,8 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueCosts}
-								value={cost || null}
-								onChange={(_, newValue) => setCost(newValue || "")}
+								value={filterState.cost || null}
+								onChange={(_, newValue) => setFilter("cost", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1043,8 +1020,8 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueSouls}
-								value={soul || null}
-								onChange={(_, newValue) => setSoul(newValue || "")}
+								value={filterState.soul || null}
+								onChange={(_, newValue) => setFilter("soul", newValue || "")}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1056,8 +1033,10 @@ const DeckEdit = () => {
 							/>
 							<Autocomplete
 								options={uniqueTriggers}
-								value={trigger || null}
-								onChange={(_, newValue) => setTrigger(newValue || "")}
+								value={filterState.trigger || null}
+								onChange={(_, newValue) =>
+									setFilter("trigger", newValue || "")
+								}
 								renderInput={(params) => (
 									<TextField
 										{...params}
@@ -1080,11 +1059,11 @@ const DeckEdit = () => {
 								type="submit"
 								variant="contained"
 								sx={{
-									backgroundColor: "#a6ceb6",
+									backgroundColor: "var(--primary)",
 									color: "white",
 									fontWeight: "bold",
 									"&:hover": {
-										backgroundColor: "#8bb89d",
+										backgroundColor: "var(--primary-hover)",
 									},
 								}}>
 								搜索
@@ -1093,11 +1072,11 @@ const DeckEdit = () => {
 								type="button"
 								variant="outlined"
 								sx={{
-									borderColor: "#a6ceb6",
-									color: "#a6ceb6",
+									borderColor: "var(--primary)",
+									color: "var(--primary)",
 									fontWeight: "bold",
 									"&:hover": {
-										borderColor: "#8bb89d",
+										borderColor: "var(--primary-hover)",
 										backgroundColor: "rgba(166, 206, 182, 0.1)",
 									},
 								}}
@@ -1179,7 +1158,7 @@ const DeckEdit = () => {
 													textAlign: "center",
 													fontSize: "0.75rem",
 													fontWeight: "bold",
-													backgroundColor: count > 0 ? "#a6ceb6" : "#e0e0e0",
+													backgroundColor: count > 0 ? "var(--primary)" : "#e0e0e0",
 													color: count > 0 ? "white" : "black",
 													borderRadius: 1,
 													px: 0.5,
@@ -1220,10 +1199,10 @@ const DeckEdit = () => {
 								onClick={handleLoadMore}
 								disabled={isLoadingMore}
 								sx={{
-									borderColor: "#a6ceb6",
-									color: "#a6ceb6",
+									borderColor: "var(--primary)",
+									color: "var(--primary)",
 									"&:hover": {
-										borderColor: "#8bb89d",
+										borderColor: "var(--primary-hover)",
 										backgroundColor: "rgba(166, 206, 182, 0.1)",
 									},
 								}}>
@@ -1247,10 +1226,10 @@ const DeckEdit = () => {
 					onClick={handleSaveDeck}
 					disabled={isSaving}
 					sx={{
-						backgroundColor: "#a6ceb6",
+						backgroundColor: "var(--primary)",
 						color: "white",
 						"&:hover": {
-							backgroundColor: "#8bb89d",
+							backgroundColor: "var(--primary-hover)",
 						},
 						minWidth: 120,
 					}}>
@@ -1290,7 +1269,7 @@ const DeckEdit = () => {
 					position: "fixed",
 					bottom: 16,
 					right: 16,
-					backgroundColor: "#a6ceb6",
+					backgroundColor: "var(--primary)",
 					color: "white",
 					fontSize: "16px",
 					fontWeight: "bold",
@@ -1298,7 +1277,7 @@ const DeckEdit = () => {
 					height: 64,
 					boxShadow: "0 8px 24px rgba(166, 206, 182, 0.4)",
 					"&:hover": {
-						backgroundColor: "#8bb89d",
+						backgroundColor: "var(--primary-hover)",
 						boxShadow: "0 12px 32px rgba(166, 206, 182, 0.6)",
 						transform: "scale(1.05)",
 					},
@@ -1323,7 +1302,7 @@ const DeckEdit = () => {
 				}}>
 				<DialogTitle
 					sx={{
-						background: "linear-gradient(135deg, #a6ceb6 0%, #8bb89d 100%)",
+						background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%)",
 						color: "white",
 						fontWeight: "bold",
 						textAlign: "center",
@@ -1413,7 +1392,7 @@ const DeckEdit = () => {
 											key={cardId}
 											sx={{
 												textAlign: "center",
-												backgroundColor: "white",
+												backgroundColor: "var(--surface)",
 												borderRadius: "12px",
 												padding: 2,
 												boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
@@ -1439,7 +1418,7 @@ const DeckEdit = () => {
 														position: "absolute",
 														top: -8,
 														right: -8,
-														backgroundColor: "#a6ceb6",
+														backgroundColor: "var(--primary)",
 														color: "white",
 														borderRadius: "50%",
 														width: 32,
@@ -1498,7 +1477,7 @@ const DeckEdit = () => {
 													variant="body2"
 													sx={{
 														fontWeight: "bold",
-														color: "#a6ceb6",
+														color: "var(--primary)",
 														minWidth: 24,
 														textAlign: "center",
 													}}>

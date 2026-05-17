@@ -18,9 +18,7 @@ import {
 	GenerateButton,
 } from "../components/ButtonVariants";
 import { useOptions } from "../contexts/OptionsContext";
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
+import { apiRequest } from "../utils/api.js";
 
 function Simulator() {
 	const { t } = useLocale();
@@ -213,22 +211,14 @@ function Simulator() {
 				onChange={async (event, newValue) => {
 					setSelectedProduct(newValue);
 
-					// http://localhost:4000/api/cards/by-product?product_name=
 					if (newValue) {
 						try {
-							const res = await fetch(
-								`${BACKEND_URL}/api/cards/by-product?product_name=${encodeURIComponent(
-									newValue
-								)}`
+							const res = await apiRequest(
+								`/api/cards/by-product?product_name=${encodeURIComponent(newValue)}`
 							);
-							if (res.ok) {
-								const data = await res.json();
-								setCards(data.data);
-								console.log(data);
-							} else {
-								console.error("API 请求失败");
-								setCards([]);
-							}
+							const data = await res.json();
+							setCards(data.data);
+							console.log(data);
 						} catch (error) {
 							console.error("请求出错:", error);
 							setCards([]);
@@ -410,8 +400,8 @@ function Simulator() {
 				onClick={simulatePacks}
 				sx={{
 					m: 2,
-					backgroundColor: "#a6ceb6",
-					"&:hover": { backgroundColor: "#95bfa5" },
+					backgroundColor: "var(--primary)",
+					"&:hover": { backgroundColor: "var(--primary-hover)" },
 				}}>
 				{t("pages.simulator.startSimulation")}
 			</GenerateButton>
@@ -469,7 +459,7 @@ function Simulator() {
 											flexWrap: "wrap",
 											gap: 1,
 											mt: 1,
-											border: "1px solid #ccc",
+											border: "1px solid var(--border)",
 											borderRadius: 2,
 											p: 1,
 										}}>
@@ -531,7 +521,7 @@ function Simulator() {
 									flexWrap: "wrap",
 									gap: 1,
 									mt: 1,
-									border: "1px solid #ccc",
+									border: "1px solid var(--border)",
 									borderRadius: 2,
 									p: 1,
 								}}>

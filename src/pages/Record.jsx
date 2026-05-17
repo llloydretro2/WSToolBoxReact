@@ -68,13 +68,6 @@ import {
 import { useOptions } from "../contexts/OptionsContext";
 import Chart from "react-apexcharts";
 
-// 本地后端测试地址
-// http://localhost:4000/api/cards?${params}
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
-// const LOCAL_BACKEND_URL = "http://localhost:4000";
-
 const Record = () => {
 	const { productList, translationMap } = useOptions();
 	const { t } = useLocale();
@@ -201,8 +194,7 @@ const Record = () => {
 			console.warn("Record: failed to restore per-field draft", err);
 		}
 	}, []);
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [recordToDelete, setRecordToDelete] = useState(null);
+	const [deleteDialog, setDeleteDialog] = useState({ open: false, record: null });
 	const [resetDialogOpen, setResetDialogOpen] = useState(false);
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
@@ -594,20 +586,20 @@ const Record = () => {
 	};
 
 	const deleteRecord = async () => {
-		if (!recordToDelete) return;
+		if (!deleteDialog.record) return;
 
 		try {
 			await apiRequest(
-				`${BACKEND_URL}/api/matches/delete/${recordToDelete._id}`,
+				`/api/matches/delete/${deleteDialog.record._id}`,
 				{
 					method: "DELETE",
 				}
 			);
 
 			setRecords((prev) =>
-				prev.filter((record) => record._id !== recordToDelete._id)
+				prev.filter((record) => record._id !== deleteDialog.record._id)
 			);
-			setRecordToDelete(null);
+			setDeleteDialog({ open: false, record: null });
 			getHistory();
 		} catch (err) {
 			console.error("Failed to delete record:", err);
@@ -616,7 +608,7 @@ const Record = () => {
 
 	const getHistory = async () => {
 		try {
-			const res = await apiRequest(`${BACKEND_URL}/api/matches/history`);
+			const res = await apiRequest(`/api/matches/history`);
 			const data = await res.json();
 
 			// 筛选时间范围
@@ -739,7 +731,7 @@ const Record = () => {
 
 						try {
 							const res = await apiRequest(
-								`${BACKEND_URL}/api/matches/create`,
+								`/api/matches/create`,
 								{
 									method: "POST",
 									body: JSON.stringify(data),
@@ -1071,8 +1063,8 @@ const Record = () => {
 					</Box>
 
 					<Dialog
-						open={deleteDialogOpen}
-						onClose={() => setDeleteDialogOpen(false)}>
+						open={deleteDialog.open}
+						onClose={() => setDeleteDialog({ open: false, record: null })}>
 						<DialogTitle>{t("record.deleteDialog.title")}</DialogTitle>
 						<DialogContent>
 							<DialogContentText>
@@ -1080,15 +1072,14 @@ const Record = () => {
 							</DialogContentText>
 						</DialogContent>
 						<DialogActions>
-							<SecondaryButton onClick={() => setDeleteDialogOpen(false)}>
+							<SecondaryButton onClick={() => setDeleteDialog({ open: false, record: null })}>
 								{t("record.deleteDialog.cancel")}
 							</SecondaryButton>
 							<DangerButton
 								color="error"
 								onClick={() => {
-									console.log("Preparing to delete record:", recordToDelete);
+									console.log("Preparing to delete record:", deleteDialog.record);
 									deleteRecord();
-									setDeleteDialogOpen(false);
 								}}>
 								{t("record.deleteDialog.confirm")}
 							</DangerButton>
@@ -1146,8 +1137,7 @@ const Record = () => {
 												transform: "translateY(-2px)",
 											},
 											borderRadius: 2,
-											background:
-												"linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)",
+											backgroundColor: "var(--surface)",
 											width: "100%",
 										}}>
 										{/* 卡片头部 - 比赛结果 */}
@@ -1332,8 +1322,7 @@ const Record = () => {
 											<Tooltip title={t("record.display.deleteTooltip")}>
 												<IconButton
 													onClick={() => {
-														setRecordToDelete(record);
-														setDeleteDialogOpen(true);
+														setDeleteDialog({ open: true, record: record });
 													}}
 													color="error"
 													size="small"

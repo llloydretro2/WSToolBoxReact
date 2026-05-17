@@ -25,10 +25,9 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import LazyImage from "../components/LazyImage";
 import { useOptions } from "../contexts/OptionsContext";
+import { apiRequest } from "../utils/api.js";
 
-// Ensure BACKEND_URL is accessible from environment variables
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
+const EMPTY_FILTER = { color: "", level: "", rarity: "", cardType: "", power: "", cost: "", soul: "", trigger: "" };
 
 const DeckCreate = () => {
 	const { t } = useLocale();
@@ -48,14 +47,8 @@ const DeckCreate = () => {
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(false);
 	const [searchText, setSearchText] = useState("");
-	const [color, setColor] = useState("");
-	const [level, setLevel] = useState("");
-	const [rarity, setRarity] = useState("");
-	const [cardType, setCardType] = useState("");
-	const [power, setPower] = useState("");
-	const [cost, setCost] = useState("");
-	const [soul, setSoul] = useState("");
-	const [trigger, setTrigger] = useState("");
+	const [filterState, setFilterState] = useState(EMPTY_FILTER);
+	const setFilter = (key, val) => setFilterState((prev) => ({ ...prev, [key]: val }));
 	const [cardCounts, setCardCounts] = useState({});
 	const [deck, setDeck] = useState({});
 	const [deckOpen, setDeckOpen] = useState(false);
@@ -82,14 +75,7 @@ const DeckCreate = () => {
 		setCurrentPage(0);
 		setHasMore(false);
 		// 重置筛选条件
-		setColor("");
-		setLevel("");
-		setRarity("");
-		setCardType("");
-		setPower("");
-		setCost("");
-		setSoul("");
-		setTrigger("");
+		setFilterState(EMPTY_FILTER);
 		setSearchText("");
 	}, [side]);
 
@@ -99,14 +85,14 @@ const DeckCreate = () => {
 		params.set("pageSize", pageSize.toString());
 
 		const appliedFilters = {
-			color,
-			level,
-			rarity,
-			card_type: cardType,
-			power,
-			cost,
-			soul,
-			trigger,
+			color: filterState.color,
+			level: filterState.level,
+			rarity: filterState.rarity,
+			card_type: filterState.cardType,
+			power: filterState.power,
+			cost: filterState.cost,
+			soul: filterState.soul,
+			trigger: filterState.trigger,
 			search: searchText.trim(),
 			...overrides,
 		};
@@ -140,12 +126,7 @@ const DeckCreate = () => {
 		}
 
 		try {
-			const response = await fetch(
-				`${BACKEND_URL}/api/cards?${params.toString()}`
-			);
-			if (!response.ok) {
-				throw new Error("获取卡片数据失败");
-			}
+			const response = await apiRequest(`/api/cards?${params.toString()}`);
 			const result = await response.json();
 			const incoming = Array.isArray(result.data) ? result.data : [];
 			setAllCards((prev) => (reset ? incoming : [...prev, ...incoming]));
@@ -169,14 +150,7 @@ const DeckCreate = () => {
 	};
 
 	const fetchSeriesCards = async (series) => {
-		setColor("");
-		setLevel("");
-		setRarity("");
-		setCardType("");
-		setPower("");
-		setCost("");
-		setSoul("");
-		setTrigger("");
+		setFilterState(EMPTY_FILTER);
 		setSearchText("");
 		setAllCards([]);
 		setFilteredCards([]);
@@ -254,14 +228,7 @@ const DeckCreate = () => {
 	};
 
 	const handleFilterReset = () => {
-		setColor("");
-		setLevel("");
-		setRarity("");
-		setCardType("");
-		setPower("");
-		setCost("");
-		setSoul("");
-		setTrigger("");
+		setFilterState(EMPTY_FILTER);
 		setSearchText("");
 		setAllCards([]);
 		setFilteredCards([]);
@@ -408,25 +375,10 @@ const DeckCreate = () => {
 			console.log("当前选择的边:", side);
 			console.log("当前选择的系列:", form.series);
 
-			const response = await fetch(`${BACKEND_URL}/api/decks`, {
+			const response = await apiRequest("/api/decks", {
 				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-				},
 				body: JSON.stringify(deckPayload),
 			});
-
-			if (!response.ok) {
-				let errorMessage = t("deckCreate.messages.createFailed");
-				try {
-					const errorBody = await response.json();
-					errorMessage = errorBody?.message || errorMessage;
-				} catch (parseErr) {
-					console.error("解析创建卡组错误响应失败:", parseErr);
-				}
-				throw new Error(errorMessage);
-			}
 
 			await response.json();
 			showSnackbar(t("deckCreate.messages.createSuccess"), "success");
@@ -495,16 +447,16 @@ const DeckCreate = () => {
 					}}
 					sx={{
 						"& .MuiToggleButton-root": {
-							border: "1px solid #a6ceb6",
-							color: "#a6ceb6",
+							border: "1px solid var(--primary)",
+							color: "var(--primary)",
 							fontWeight: "bold",
 							px: 3,
 							py: 1,
 							"&.Mui-selected": {
-								backgroundColor: "#a6ceb6",
+								backgroundColor: "var(--primary)",
 								color: "white",
 								"&:hover": {
-									backgroundColor: "#8bb89d",
+									backgroundColor: "var(--primary-dark)",
 								},
 							},
 							"&:hover": {
@@ -555,11 +507,11 @@ const DeckCreate = () => {
 				<PrimaryButton
 					variant="contained"
 					sx={{
-						backgroundColor: "#a6ceb6",
+						backgroundColor: "var(--primary)",
 						color: "white",
 						fontWeight: "bold",
 						"&:hover": {
-							backgroundColor: "#8bb89d",
+							backgroundColor: "var(--primary-dark)",
 						},
 					}}
 					onClick={() => {
@@ -643,8 +595,8 @@ const DeckCreate = () => {
 						}}>
 						<Autocomplete
 							options={uniqueColors}
-							value={color || null}
-							onChange={(_, newValue) => setColor(newValue || "")}
+							value={filterState.color || null}
+							onChange={(_, newValue) => setFilter("color", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -656,8 +608,8 @@ const DeckCreate = () => {
 						/>
 						<Autocomplete
 							options={uniqueLevels}
-							value={level || null}
-							onChange={(_, newValue) => setLevel(newValue || "")}
+							value={filterState.level || null}
+							onChange={(_, newValue) => setFilter("level", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -669,8 +621,8 @@ const DeckCreate = () => {
 						/>
 						<Autocomplete
 							options={uniqueRarities}
-							value={rarity || null}
-							onChange={(_, newValue) => setRarity(newValue || "")}
+							value={filterState.rarity || null}
+							onChange={(_, newValue) => setFilter("rarity", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -682,8 +634,8 @@ const DeckCreate = () => {
 						/>
 						<Autocomplete
 							options={uniqueCardTypes}
-							value={cardType || null}
-							onChange={(_, newValue) => setCardType(newValue || "")}
+							value={filterState.cardType || null}
+							onChange={(_, newValue) => setFilter("cardType", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -696,8 +648,8 @@ const DeckCreate = () => {
 						<Autocomplete
 							options={uniquePowers}
 							size="small"
-							value={power || null}
-							onChange={(_, newValue) => setPower(newValue || "")}
+							value={filterState.power || null}
+							onChange={(_, newValue) => setFilter("power", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -710,8 +662,8 @@ const DeckCreate = () => {
 						<Autocomplete
 							options={uniqueCosts}
 							size="small"
-							value={cost || null}
-							onChange={(_, newValue) => setCost(newValue || "")}
+							value={filterState.cost || null}
+							onChange={(_, newValue) => setFilter("cost", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -724,8 +676,8 @@ const DeckCreate = () => {
 						<Autocomplete
 							options={uniqueSouls}
 							size="small"
-							value={soul || null}
-							onChange={(_, newValue) => setSoul(newValue || "")}
+							value={filterState.soul || null}
+							onChange={(_, newValue) => setFilter("soul", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -737,8 +689,8 @@ const DeckCreate = () => {
 						/>
 						<Autocomplete
 							options={uniqueTriggers}
-							value={trigger || null}
-							onChange={(_, newValue) => setTrigger(newValue || "")}
+							value={filterState.trigger || null}
+							onChange={(_, newValue) => setFilter("trigger", newValue || "")}
 							renderInput={(params) => (
 								<TextField
 									{...params}
@@ -784,8 +736,8 @@ const DeckCreate = () => {
 				sx={{
 					px: 6,
 					py: 1.5,
-					backgroundColor: "#a6ceb6",
-					"&:hover": { backgroundColor: "#95bfa5" },
+					backgroundColor: "var(--primary)",
+					"&:hover": { backgroundColor: "var(--primary-dark)" },
 				}}>
 				{creatingDeck ? t("deckCreate.creating") : t("deckCreate.createButton")}
 			</PrimaryButton>
@@ -795,8 +747,8 @@ const DeckCreate = () => {
 					p: 2,
 					width: "80%",
 					maxWidth: 800,
-					backgroundColor: "#f5f5f5",
-					border: "1px solid #ccc",
+					backgroundColor: "var(--surface)",
+					border: "1px solid var(--border)",
 					borderRadius: "8px",
 					fontFamily: "monospace",
 					fontSize: "0.85rem",
@@ -815,8 +767,8 @@ const DeckCreate = () => {
 						p: 2,
 						width: "80%",
 						maxWidth: 800,
-						backgroundColor: "#f5f5f5",
-						border: "1px solid #ccc",
+						backgroundColor: "var(--surface)",
+						border: "1px solid var(--border)",
 						borderRadius: "8px",
 						fontFamily: "monospace",
 						fontSize: "0.85rem",
@@ -919,8 +871,8 @@ const DeckCreate = () => {
 					p: 2,
 					width: "80%",
 					maxWidth: 800,
-					backgroundColor: "#f5f5f5",
-					border: "1px solid #ccc",
+					backgroundColor: "var(--surface)",
+					border: "1px solid var(--border)",
 					borderRadius: "8px",
 					fontFamily: "monospace",
 					fontSize: "0.85rem",
@@ -939,7 +891,7 @@ const DeckCreate = () => {
 					position: "fixed",
 					bottom: 16,
 					right: 16,
-					backgroundColor: "#a6ceb6",
+					backgroundColor: "var(--primary)",
 					color: "white",
 					fontSize: "16px",
 					fontWeight: "bold",
@@ -947,7 +899,7 @@ const DeckCreate = () => {
 					height: 64,
 					boxShadow: "0 8px 24px rgba(166, 206, 182, 0.4)",
 					"&:hover": {
-						backgroundColor: "#8bb89d",
+						backgroundColor: "var(--primary-dark)",
 						boxShadow: "0 12px 32px rgba(166, 206, 182, 0.6)",
 						transform: "scale(1.05)",
 					},
@@ -970,7 +922,7 @@ const DeckCreate = () => {
 				}}>
 				<DialogTitle
 					sx={{
-						background: "linear-gradient(135deg, #a6ceb6 0%, #8bb89d 100%)",
+						background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)",
 						color: "white",
 						fontWeight: "bold",
 						textAlign: "center",
@@ -980,7 +932,7 @@ const DeckCreate = () => {
 					🎴 当前卡组 (
 					{Object.values(deck).reduce((sum, count) => sum + count, 0)} 张卡片)
 				</DialogTitle>
-				<DialogContent sx={{ padding: 3, backgroundColor: "#f8f9fa" }}>
+				<DialogContent sx={{ padding: 3, backgroundColor: "var(--surface)" }}>
 					{Object.keys(deck).length === 0 ? (
 						<Box
 							sx={{
@@ -1017,7 +969,7 @@ const DeckCreate = () => {
 										key={cardId}
 										sx={{
 											textAlign: "center",
-											backgroundColor: "white",
+											backgroundColor: "var(--surface)",
 											borderRadius: "12px",
 											padding: 2,
 											boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
@@ -1043,7 +995,7 @@ const DeckCreate = () => {
 													position: "absolute",
 													top: -8,
 													right: -8,
-													backgroundColor: "#a6ceb6",
+													backgroundColor: "var(--primary)",
 													color: "white",
 													borderRadius: "50%",
 													width: 32,
@@ -1102,7 +1054,7 @@ const DeckCreate = () => {
 												variant="body2"
 												sx={{
 													fontWeight: "bold",
-													color: "#a6ceb6",
+													color: "var(--primary)",
 													minWidth: 24,
 													textAlign: "center",
 												}}>
@@ -1161,7 +1113,7 @@ const DeckCreate = () => {
 				}}>
 				<DialogTitle
 					sx={{
-						background: "linear-gradient(135deg, #a6ceb6 0%, #8bb89d 100%)",
+						background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)",
 						color: "white",
 						fontWeight: "bold",
 						textAlign: "center",
@@ -1213,7 +1165,7 @@ const DeckCreate = () => {
 									sx={{
 										fontWeight: "bold",
 										color: "#1b4332",
-										borderBottom: "2px solid #a6ceb6",
+										borderBottom: "2px solid var(--primary)",
 										paddingBottom: 1,
 										marginBottom: 2,
 										fontSize: { xs: "1.1rem", sm: "1.25rem" },
@@ -1285,7 +1237,7 @@ const DeckCreate = () => {
 											backgroundColor: "#f0f8f0",
 											padding: { xs: 1.5, sm: 2 },
 											borderRadius: "8px",
-											borderLeft: "4px solid #a6ceb6",
+											borderLeft: "4px solid var(--primary)",
 											marginBottom: { xs: 1.5, sm: 2 },
 										}}>
 										<Typography
@@ -1384,7 +1336,7 @@ const DeckCreate = () => {
 						onClick={() => setCardDialogOpen(false)}
 						variant="contained"
 						sx={{
-							backgroundColor: "#a6ceb6",
+							backgroundColor: "var(--primary)",
 							color: "white",
 							fontWeight: "bold",
 							paddingX: { xs: 3, sm: 4 },
@@ -1392,7 +1344,7 @@ const DeckCreate = () => {
 							borderRadius: "20px",
 							fontSize: { xs: "0.9rem", sm: "1rem" },
 							"&:hover": {
-								backgroundColor: "#8bb89d",
+								backgroundColor: "var(--primary-dark)",
 							},
 						}}>
 						关闭
@@ -1432,7 +1384,7 @@ const DeckCreate = () => {
 						variant="body1"
 						sx={{ marginBottom: 2 }}>
 						确定要切换到：
-						<strong style={{ color: "#a6ceb6" }}>
+						<strong style={{ color: "var(--primary)" }}>
 							{confirmDialog.newSeries}
 						</strong>{" "}
 						吗？
@@ -1448,14 +1400,14 @@ const DeckCreate = () => {
 						onClick={handleCancelSeriesChange}
 						variant="outlined"
 						sx={{
-							borderColor: "#a6ceb6",
-							color: "#a6ceb6",
+							borderColor: "var(--primary)",
+							color: "var(--primary)",
 							fontWeight: "bold",
 							paddingX: 3,
 							borderRadius: "20px",
 							"&:hover": {
 								backgroundColor: "rgba(166, 206, 182, 0.1)",
-								borderColor: "#8bb89d",
+								borderColor: "var(--primary-dark)",
 							},
 						}}>
 						{t("deckCreate.cancel")}
@@ -1464,13 +1416,13 @@ const DeckCreate = () => {
 						onClick={handleConfirmSeriesChange}
 						variant="contained"
 						sx={{
-							backgroundColor: "#a6ceb6",
+							backgroundColor: "var(--primary)",
 							color: "white",
 							fontWeight: "bold",
 							paddingX: 3,
 							borderRadius: "20px",
 							"&:hover": {
-								backgroundColor: "#8bb89d",
+								backgroundColor: "var(--primary-dark)",
 							},
 						}}>
 						{t("deckCreate.confirmSwitch")}

@@ -29,8 +29,6 @@ const formatTime = (seconds) => {
 };
 
 function ChessClock() {
-	const [p1Time, setP1Time] = useState("00:00");
-	const [p2Time, setP2Time] = useState("00:00");
 	const [side, setSide] = useState(1);
 	const [isRunning, setIsRunning] = useState(false);
 	const [p1Seconds, setP1Seconds] = useState(0);
@@ -47,11 +45,9 @@ function ChessClock() {
 			const parsed = JSON.parse(saved);
 			if (typeof parsed.p1Seconds === "number") {
 				setP1Seconds(parsed.p1Seconds);
-				setP1Time(formatTime(parsed.p1Seconds));
 			}
 			if (typeof parsed.p2Seconds === "number") {
 				setP2Seconds(parsed.p2Seconds);
-				setP2Time(formatTime(parsed.p2Seconds));
 			}
 			if (parsed.side === 1 || parsed.side === 2) {
 				setSide(parsed.side);
@@ -79,11 +75,6 @@ function ChessClock() {
 	}, [isRunning, side]);
 
 	useEffect(() => {
-		setP1Time(formatTime(p1Seconds));
-		setP2Time(formatTime(p2Seconds));
-	}, [p1Seconds, p2Seconds]);
-
-	useEffect(() => {
 		localStorage.setItem(
 			"chessclock",
 			JSON.stringify({
@@ -94,6 +85,9 @@ function ChessClock() {
 			})
 		);
 	}, [p1Seconds, p2Seconds, side, isRunning]);
+
+	const p1Time = formatTime(p1Seconds);
+	const p2Time = formatTime(p2Seconds);
 
 	const activeSide = isRunning ? side : null;
 	const totalSeconds = p1Seconds + p2Seconds;
@@ -128,8 +122,6 @@ function ChessClock() {
 		setSide(1);
 		setP1Seconds(0);
 		setP2Seconds(0);
-		setP1Time("00:00");
-		setP2Time("00:00");
 		setShowResetConfirm(false);
 		localStorage.removeItem("chessclock");
 	};

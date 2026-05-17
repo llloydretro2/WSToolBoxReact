@@ -24,11 +24,8 @@ import {
 	PersonAddRounded,
 } from "@mui/icons-material";
 import { PrimaryButton, SecondaryButton } from "../components/ButtonVariants";
+import { apiRequest } from "../utils/api.js";
 import "./Login.css";
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
-// const LOCAL_BACKEND_URL = "http://localhost:4000";
 
 function LoginPage() {
 	const { t } = useLocale();
@@ -37,44 +34,28 @@ function LoginPage() {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [isRegister, setIsRegister] = useState(false);
-	const [errorMessage, setErrorMessage] = useState("");
-	const [successMessage, setSuccessMessage] = useState("");
+	const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "error" });
 	const [showPassword, setShowPassword] = useState(false);
 
 	const handleSubmit = async (e) => {
 		if (e && e.preventDefault) e.preventDefault();
 		if (!username || !password) {
-			setErrorMessage(t("login.error.emptyFields"));
+			setSnackbar({ open: true, message: t("login.error.emptyFields"), severity: "error" });
 			return;
 		}
 
 		try {
 			const endpoint = isRegister ? "/api/auth/register" : "/api/auth/login";
 
-			const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+			const response = await apiRequest(endpoint, {
 				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
 				body: JSON.stringify({ username, password }),
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(
-					errorData.message ||
-						(isRegister
-							? t("login.error.registerFailed")
-							: t("login.error.loginFailed"))
-				);
-			}
-
 			const data = await response.json();
-			// localStorage.setItem("token", data.token);
-			// localStorage.setItem("username", data.user.username);
 
 			if (!isRegister) {
-				setSuccessMessage(t("login.success.login"));
+				setSnackbar({ open: true, message: t("login.success.login"), severity: "success" });
 				setTimeout(() => {
 					navigate("/");
 				}, 1000);
@@ -84,51 +65,32 @@ function LoginPage() {
 					userData: data.user,
 				});
 			} else {
-				setErrorMessage(t("login.success.register"));
+				setSnackbar({ open: true, message: t("login.success.register"), severity: "success" });
 				setIsRegister(false);
 			}
 		} catch (error) {
-			setErrorMessage(error.message);
-			// removed
+			setSnackbar({ open: true, message: error.message, severity: "error" });
 		}
 	};
 
 	return (
 		<>
 			<Snackbar
-				open={Boolean(errorMessage)}
+				open={snackbar.open}
 				autoHideDuration={4000}
-				onClose={() => setErrorMessage("")}
+				onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
 				anchorOrigin={{ vertical: "top", horizontal: "center" }}
 				sx={{ zIndex: 9999, mt: 8 }}>
 				<Alert
-					onClose={() => setErrorMessage("")}
-					severity="warning"
+					onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+					severity={snackbar.severity}
 					variant="filled"
 					sx={{
 						width: "100%",
 						borderRadius: 2,
 						boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
 					}}>
-					{errorMessage}
-				</Alert>
-			</Snackbar>
-			<Snackbar
-				open={Boolean(successMessage)}
-				autoHideDuration={3000}
-				onClose={() => setSuccessMessage("")}
-				anchorOrigin={{ vertical: "top", horizontal: "center" }}
-				sx={{ zIndex: 9999, mt: 8 }}>
-				<Alert
-					onClose={() => setSuccessMessage("")}
-					severity="success"
-					variant="filled"
-					sx={{
-						width: "100%",
-						borderRadius: 2,
-						boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
-					}}>
-					{successMessage}
+					{snackbar.message}
 				</Alert>
 			</Snackbar>
 			{/* 主容器 - 正常布局，可滚动 */}

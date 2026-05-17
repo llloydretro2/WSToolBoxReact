@@ -55,9 +55,9 @@ function RandomShuffle() {
 	const averageValue =
 		deck.length > 0 ? (totalSum / deck.length).toFixed(2) : "0";
 
-	const GREEN_MAIN = "#a6ceb6";
-	const GREEN_DARK = "#95bfa5";
-	const GREEN_TEXT = "#1b4332";
+	const GREEN_MAIN = "var(--primary)";
+	const GREEN_DARK = "var(--primary-hover)";
+	const GREEN_TEXT = "var(--text-secondary)";
 
 	return (
 		<Container maxWidth="md">

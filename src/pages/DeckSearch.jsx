@@ -31,9 +31,7 @@ import {
 	GenerateButton,
 	SubtleButton,
 } from "../components/ButtonVariants";
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
+import { apiRequest } from "../utils/api.js";
 
 const DeckSearch = () => {
 	const { t } = useLocale();
@@ -69,14 +67,7 @@ const DeckSearch = () => {
 			setLoading(true);
 			setError("");
 			try {
-				const res = await fetch(`${BACKEND_URL}/api/decks/mine`, {
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				});
-				if (!res.ok) {
-					throw new Error(t("deckSearch.messages.fetchFailed"));
-				}
+				const res = await apiRequest('/api/decks/mine');
 				const data = await res.json();
 				if (isMounted) {
 					setDecks(Array.isArray(data) ? data : []);
@@ -128,12 +119,9 @@ const DeckSearch = () => {
 			for (const cardNo of missingCardNos) {
 				fetchedCardNosRef.current.add(cardNo);
 				try {
-					const res = await fetch(
-						`${BACKEND_URL}/api/cards?search=${encodeURIComponent(
-							cardNo
-						)}&page=1&pageSize=1`
+					const res = await apiRequest(
+						`/api/cards?search=${encodeURIComponent(cardNo)}&page=1&pageSize=1`
 					);
-					if (!res.ok) throw new Error("获取卡片详情失败");
 					const json = await res.json();
 					const detail = Array.isArray(json.data) ? json.data[0] : undefined;
 					if (detail) {
@@ -364,11 +352,11 @@ const DeckSearch = () => {
 			py: 1,
 			fontWeight: 600,
 			textTransform: "none",
-			background: "linear-gradient(135deg, #a6ceb6 0%, #8dbca0 100%)",
+			background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)",
 			color: "#ffffff",
 			boxShadow: "0 12px 26px rgba(17, 24, 39, 0.16)",
 			"&:hover": {
-				background: "linear-gradient(135deg, #95bfa5 0%, #7dab94 100%)",
+				background: "linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-dark) 100%)",
 				boxShadow: "0 16px 32px rgba(17, 24, 39, 0.2)",
 			},
 			"&:disabled": {
@@ -550,25 +538,11 @@ const DeckSearch = () => {
 		);
 		setIsDeleting(true);
 		try {
-			const response = await fetch(
-				`${BACKEND_URL}/api/decks/${deletingDeck.id}`,
-				{
-					method: "DELETE",
-					headers: {
-						Authorization: `Bearer ${token}`,
-					},
-				}
-			);
+			const response = await apiRequest(`/api/decks/${deletingDeck.id}`, {
+				method: "DELETE",
+			});
 
 			console.log(`📡 删除请求响应状态: ${response.status}`);
-
-			if (!response.ok) {
-				const errorBody = await response.text();
-				console.error(`❌ 删除请求失败: ${response.status} - ${errorBody}`);
-				throw new Error(
-					`${t("deckSearch.messages.deleteFailed")}: ${response.status}`
-				);
-			}
 
 			const result = await response.json();
 			console.log(`✅ 删除成功:`, result);
@@ -967,11 +941,11 @@ const DeckSearch = () => {
 											startIcon={<EditIcon />}
 											sx={{
 												...BUTTON_STYLES.secondary,
-												borderColor: "#a6ceb6",
-												color: "#a6ceb6",
+												borderColor: "var(--primary)",
+												color: "var(--primary)",
 												width: { xs: "100%", sm: "auto" },
 												"&:hover": {
-													backgroundColor: "#a6ceb6",
+													backgroundColor: "var(--primary)",
 													color: "white",
 												},
 											}}>
@@ -1244,14 +1218,14 @@ const DeckSearch = () => {
 						onClick={handleCancelDelete}
 						variant="outlined"
 						sx={{
-							borderColor: "#a6ceb6",
-							color: "#a6ceb6",
+							borderColor: "var(--primary)",
+							color: "var(--primary)",
 							fontWeight: "bold",
 							paddingX: 3,
 							borderRadius: "20px",
 							"&:hover": {
 								backgroundColor: "rgba(166, 206, 182, 0.1)",
-								borderColor: "#8bb89d",
+								borderColor: "var(--primary-hover)",
 							},
 						}}>
 						取消

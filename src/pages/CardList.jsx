@@ -35,11 +35,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useLocale } from "../contexts/LocaleContext";
-import { themeConfig } from "../theme/themeConfig";
-
-const BACKEND_URL = "https://api.cardtoolbox.org";
-// const BACKEND_URL = "http://38.244.14.142:4000";
-// const BACKEND_URL = "http://localhost:4000";
+import { apiRequest } from "../utils/api.js";
 
 const extractBaseCardNo = (cardno) => {
 	if (!cardno) {
@@ -333,10 +329,7 @@ function CardList() {
 			)
 		).toString();
 
-		// 本地后端测试地址
-		// http://localhost:4000/api/cards?${params}
-
-		fetch(`${BACKEND_URL}/api/cards?${params}`)
+		apiRequest(`/api/cards?${params}`)
 			.then((res) => res.json())
 			.then((res) => {
 				setResult({
@@ -731,7 +724,7 @@ function CardList() {
 										fontWeight: 600,
 										"&.Mui-selected, &.Mui-selected:hover": {
 											backgroundColor:
-												themeConfig.light.colors.primary + " !important",
+												'var(--primary) !important',
 											color: "#fff",
 										},
 									}}>
@@ -792,7 +785,7 @@ function CardList() {
 										fontWeight: 600,
 										"&.Mui-selected, &.Mui-selected:hover": {
 											backgroundColor:
-												themeConfig.light.colors.primary + " !important",
+												'var(--primary) !important',
 											color: "#fff",
 										},
 									}}>
@@ -850,7 +843,7 @@ function CardList() {
 											fontWeight: 600,
 											"&.Mui-selected, &.Mui-selected:hover": {
 												backgroundColor:
-													themeConfig.light.colors.primary + " !important",
+													'var(--primary) !important',
 												color: "#fff",
 											},
 										}}>
@@ -906,7 +899,7 @@ function CardList() {
 									fontWeight: 600,
 									"&.Mui-selected, &.Mui-selected:hover": {
 										backgroundColor:
-											themeConfig.light.colors.primary + " !important",
+											'var(--primary) !important',
 										color: "#fff",
 									},
 								}}>
@@ -1915,7 +1908,7 @@ function CardList() {
 							"& .Mui-selected": {
 								backgroundColor: "var(--primary) !important",
 								color: "#fff !important",
-								borderColor: "#a6ceb6 !important",
+								borderColor: "var(--primary) !important",
 								"&:hover": {
 									backgroundColor: "var(--primary-hover) !important",
 								},
@@ -1946,11 +1939,11 @@ function CardList() {
 						size="small"
 						onClick={() => setShowZh((prev) => !prev)}
 						sx={{
-							backgroundColor: showZh ? "#a6ceb6" : "#cfd8dc",
+							backgroundColor: showZh ? "var(--primary)" : "#cfd8dc",
 							color: showZh ? "#fff" : "#4b4b4b",
 							fontSize: 14,
 							"&:hover": {
-								backgroundColor: showZh ? "#95bfa5" : "#b0bec5",
+								backgroundColor: showZh ? "var(--primary-hover)" : "#b0bec5",
 							},
 						}}>
 						{showZh ? "中" : "中"}
@@ -1965,11 +1958,11 @@ function CardList() {
 						size="small"
 						onClick={() => setShowJP((prev) => !prev)}
 						sx={{
-							backgroundColor: showJP ? "#a6ceb6" : "#cfd8dc",
+							backgroundColor: showJP ? "var(--primary)" : "#cfd8dc",
 							color: showJP ? "#fff" : "#4b4b4b",
 							fontSize: 14,
 							"&:hover": {
-								backgroundColor: showJP ? "#95bfa5" : "#b0bec5",
+								backgroundColor: showJP ? "var(--primary-hover)" : "#b0bec5",
 							},
 						}}>
 						{showJP ? "日" : "日"}
@@ -1986,14 +1979,14 @@ function CardList() {
 								onClick={scrollToTop}
 								aria-label={scrollUpLabel}
 								sx={{
-									backgroundColor: "#a6ceb6",
+									backgroundColor: "var(--primary)",
 									color: "#fff",
 									fontSize: 14,
 									minWidth: 40,
 									width: 40,
 									height: 40,
 									"&:hover": {
-										backgroundColor: "#95bfa5",
+										backgroundColor: "var(--primary-hover)",
 									},
 								}}>
 								<KeyboardArrowUpIcon />
@@ -2008,14 +2001,14 @@ function CardList() {
 								onClick={scrollToBottom}
 								aria-label={scrollDownLabel}
 								sx={{
-									backgroundColor: "#a6ceb6",
+									backgroundColor: "var(--primary)",
 									color: "#fff",
 									fontSize: 14,
 									minWidth: 40,
 									width: 40,
 									height: 40,
 									"&:hover": {
-										backgroundColor: "#95bfa5",
+										backgroundColor: "var(--primary-hover)",
 									},
 								}}>
 								<KeyboardArrowDownIcon />
