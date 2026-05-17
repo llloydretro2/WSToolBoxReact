@@ -328,12 +328,8 @@ export function makeBFSScenario(bfsResult, yakuNameZh, yakuNameEn, concealedTile
 
   const hasDiscards = discardTiles.length > 0;
 
-  const routeLabel = {
-    'one-step':    { zh: '一步路线', en: 'One-step route' },
-    'short':       { zh: '短期路线', en: 'Short route' },
-    'longer-term': { zh: '较长路线', en: 'Longer-term route' },
-  }[routeType] ?? { zh: '路线', en: 'Route' };
-
+  // Route-type label is rendered as a badge chip in ScenarioItem; do NOT embed
+  // it in the title string to avoid double-labeling.
   const titleZh = hasDiscards ? `打出${xZh}，待摸${dZh}和牌` : `摸到${dZh}，和牌`;
   const titleEn = hasDiscards ? `Discard ${xEn}, then win by drawing ${dEn}` : `Win by drawing ${dEn}`;
 
@@ -345,7 +341,7 @@ export function makeBFSScenario(bfsResult, yakuNameZh, yakuNameEn, concealedTile
     : `Drawing ${dEn} completes the hand, satisfying ${yakuNameEn}.`;
 
   return {
-    title:               { zh: `[${routeLabel.zh}] ${titleZh}`, en: `[${routeLabel.en}] ${titleEn}` },
+    title:               { zh: titleZh, en: titleEn },
     neededTiles:         drawnTiles,
     discardTiles,
     completedHandGroups,

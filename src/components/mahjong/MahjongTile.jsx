@@ -164,7 +164,9 @@ function MahjongTile({
     cursor: isClickable ? 'pointer' : 'default',
     userSelect: 'none',
     opacity: isDisabled ? 0.4 : 1,
-    overflow: 'hidden',
+    // 'visible' lets the count badge render outside the tile bounds.
+    // Image/text content won't overflow thanks to objectFit + centering.
+    overflow: 'visible',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease',
     '&:hover': isClickable ? {
       transform: 'translateY(-3px)',
