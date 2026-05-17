@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-16
+> Last updated: 2026-05-17
 
 ## Deployment
 
@@ -9,63 +9,87 @@
 - **Backend**: `https://api.cardtoolbox.org` (WS card data, deck management, auth)
 - **Dev proxy**: `/api` and `/audios` → `http://localhost:4000`
 
-## Current feature work
+---
 
-### Branch: `feature/mahjong-yaku-trainer`
+## Completed work (merged to `main`)
 
-**Status: MVP completed, ready to merge**
+### Mahjong Yaku Route Trainer
 
-#### Product goal
+A beginner-friendly Riichi Mahjong yaku-awareness trainer at `/mahjong`. See `CLAUDE.md` for full architecture details.
 
-A beginner-friendly Riichi Mahjong yaku-awareness trainer. Helps new players understand which yaku routes are reachable from their current hand, what tiles are needed, what should be discarded, and what the resulting hand structure looks like.
-
-#### Completed capabilities
-
-| Capability | Notes |
+| Capability | Status |
 |---|---|
-| Visual tile picker | 34-tile grid grouped by suit/honour; left-click adds, right-click removes |
-| Fixed current-hand bar | `position: fixed` below AppBar — shows live concealed tiles + open melds at all times while scrolling |
-| Tile count indicator | Shows concealed/meld/total counts in the fixed bar |
-| Open meld support | Meld builder: select tiles, Add Meld, melds shown in fixed bar with × removal |
-| Seat wind / round wind selectors | Drives Yakuhai detection |
-| Rule toggles | Open Tanyao (kuitan), Two-han minimum |
-| Hand status panel | Shanten badge, open/closed chip, confirmed yaku chips |
-| Yaku route cards | 14 regular yaku + 9 yakuman; sorted by feasibility |
-| Collapsible route detail | Collapsed = name/meaning/example; expanded = Need/Discard/Target/Why |
-| Accurate shanten calculation | 3-way (standard Neval DFS + Chiitoitsu + Kokushi), `shanten.js` |
-| Exact one-step simulation | Brute-force 34-draw scan for 0/1-step completions |
-| Bounded BFS route search | Depth-2, per-yaku pruned draw/discard candidates, ≤280 states |
-| Heuristic/reference fallback | Fires when BFS finds nothing; clearly labelled "Reference route" |
-| Real mahjong tile images | 34 SVGs from FluffyStuff/riichi-mahjong-tiles (CC0 public domain) |
-| Responsive layout | Mobile-friendly: tiles wrap, cards stack, no horizontal overflow |
-| Back-to-top Fab | Fixed bottom-right, smooth scroll to tile picker |
+| Visual tile picker (34 tiles), meld builder | ✅ |
+| Fixed hand bar (tile count, status badges, clear button) | ✅ |
+| Shanten calculation (3-way: standard/Chiitoitsu/Kokushi) | ✅ |
+| Exact 0/1-step brute-force simulation | ✅ |
+| Bounded BFS route search (depth 2, ≤280 states) | ✅ |
+| Heuristic fallback with "Reference route" label | ✅ |
+| `FEASIBILITY_ACHIEVED` tier — yaku structure already present in hand | ✅ |
+| `CompletedHandPanel` — shown when hand is complete, no route suggestions | ✅ |
+| 14 regular yaku + 9 yakuman route cards | ✅ |
+| Seat wind / round wind / kuitan / two-han-min rule toggles | ✅ |
 
-#### Known limitations (next phase)
+**Known limitations:** first-decomposition only (`extractHandGroups`), no ukeire, no scoring, simplified Pinfu wait check, BFS draw-candidate over-pruning.
 
-| Limitation | Impact |
-|---|---|
-| First-decomposition only (`extractHandGroups`) | May miss yaku in ambiguous hands (e.g. `223344m` = Iipeikou OR Toitoi) |
-| No `extractAllHandGroups` | Cannot evaluate all valid decompositions per hand |
-| No ukeire | Cannot enumerate all tiles that improve shanten |
-| No scoring (fu/han/dora) | Cannot calculate point values |
-| Pinfu wait check simplified | Kanchan/penchan falsely labelled Pinfu |
-| BFS draw-candidate over-pruning | May miss structural fixes from non-yaku tiles |
-| Sanankou win-method not enforced | Does not distinguish tsumo vs ron |
+---
 
-## Merging to deploy
+### Frontend refactoring (2026-05-17)
 
-```bash
-git checkout main
-git pull origin main
-git merge feature/mahjong-yaku-trainer   # fast-forward, no conflicts expected
-npm run build                             # verify
-git push origin main                      # triggers Cloudflare Pages deploy
-```
+A comprehensive quality pass across all non-Mahjong pages. No features added — only correctness, consistency, and maintainability improvements.
 
-## Recommended next phase
+#### API centralisation
+- Removed per-page `BACKEND_URL` constants from every page (CardList, Record, DeckCreate, DeckEdit, DeckSearch, Login, Simulator, AudioBoard)
+- All API calls now route through `src/utils/api.js:apiRequest()` — automatic auth header, 401 handling, `VITE_BACKEND_URL` support
 
+#### State cleanup
+- **ChessClock**: removed derived `p1Time`/`p2Time` useState + sync useEffect; computed inline
+- **Login**: merged `errorMessage` + `successMessage` into single `snackbar` state; fixed register-success showing as error
+- **Record**: consolidated `deleteDialogOpen` + `recordToDelete` into `deleteDialog` object
+- **DeckCreate + DeckEdit**: consolidated 8 flat filter useState fields (color/level/rarity/cardType/power/cost/soul/trigger) into `filterState` object
+
+#### DeckEdit critical fixes
+- Removed two debug JSON data cards that were exposed to end users
+- Merged duplicate `handleSaveDeck` / `handleSave` into one correct save function
+- Removed duplicate `isSaving` state (was alongside `saving`)
+- Removed 15 `console.log` / `console.error` statements
+
+#### Layout standardisation
+- All pages now use `Container` with consistent `maxWidth` (lg/md/sm) — no more manual `Box width="80%"` patterns
+- All page titles standardised to `variant="h4" fontWeight={700} color="var(--text)"` in a centred `Box mb={4}`
+- Simulator widened from `sm` → `md` (was too narrow for 4-column config grid)
+- PickPacks narrowed from `lg` → `md` (inconsistent with other tool pages)
+
+#### ButtonVariants adoption
+- **FirstSecond**: raw `Button` with hardcoded colors → `PrimaryButton`; removed redundant `framer-motion` wrapper
+- **ChessClock**: all 3 control buttons + dialog buttons → `PrimaryButton` / `SecondaryButton` / `DangerButton`
+- **AudioBoard**: track toggle buttons → `Box component="button"` with CSS variables (toggle state pattern doesn't fit ButtonVariants)
+
+#### Hardcoded color elimination
+- `color="#1b4332"` replaced with `color="var(--text)"` on titles in FirstSecond, ChessClock, RandomShuffle, Simulator
+- Removed illegal `DangerButton` color overrides in RandomShuffle (violates CLAUDE.md)
+- ChessClock Paper border `rgba(...)` → `var(--border)`
+- Removed `themeConfig` import from CardList; replaced with `var(--primary)`
+
+#### Polish
+- Removed 19 `console.log` statements across Simulator, DeckSearch, Record
+- Removed 5 unused color constants from Dice
+- Fixed MUI v5 `<Grid item>` → v6 `<Grid size>` in Record and DeckEdit
+- Polished Record empty state (bordered card with i18n keys)
+- Added loading spinner to Simulator during product card fetch
+- DeckCreate card ±1 touch targets increased from 22px → 36px
+
+---
+
+## Recommended next work
+
+### Mahjong engine improvements
 1. **`extractAllHandGroups`** — try all valid decompositions; required for accurate Toitoi/Iipeikou/Sanankou detection
 2. **Ukeire** — enumerate shanten-improving tiles (O(34) shanten calls per hand)
 3. **Wait classification** — distinguish ryanmen/kanchan/penchan/tanki; fixes Pinfu labelling
-4. **Engine refactor** (optional) — split `yakuAnalyzer.js` into `engine/feasibility.js` + `engine/scenarios.js` + `trainer/analyzer.js` for reuse by future tools
-5. **Scoring** — fu/han calculation, basic point table (only if a score-display feature is planned)
+4. **Scoring** — fu/han calculation, basic point table
+
+### App-wide
+5. **i18n completion** — DeckSearch, DeckCreate, PickPacks lore section, Record tooltips, AudioBoard still have hardcoded Chinese strings not covered by `t()`
+6. **DeckEdit completion** — the page is functional but was originally a work-in-progress; consider a proper card-editor redesign using DeckCreate as the base
+7. **CardList `useMemo` deps** — 3 pre-existing `react-hooks/exhaustive-deps` warnings for `productList.level/power/cost` dependency arrays

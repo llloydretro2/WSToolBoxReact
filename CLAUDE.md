@@ -47,6 +47,10 @@ All backend calls go through `src/utils/api.js:apiRequest(url, options)`:
 - Automatically attaches `Authorization: Bearer <token>` from localStorage
 - On 401, clears auth state and redirects to `/login`
 - Prepends `VITE_BACKEND_URL` (or `https://api.cardtoolbox.org`) to relative `/api/...` paths
+- Returns the raw `Response` object — still call `.json()` to get data
+- For POST/PUT pass `{ method: 'POST', body: JSON.stringify(data) }` — `Content-Type: application/json` is added automatically
+
+**Every page must use `apiRequest` — never define a local `BACKEND_URL` constant or call `fetch` directly.** Audio playback URLs (used in `new Audio(url)`) are the only exception; those use `import.meta.env.VITE_BACKEND_URL || 'https://api.cardtoolbox.org'` directly.
 
 Endpoint constants are in `src/constants/api.js`.
 
@@ -70,7 +74,43 @@ Light theme only — dark mode has been removed. Colors are CSS variables define
 --success, --error, --warning, --info, --reset, --reset-hover
 ```
 
-**Never hardcode color values.** Always use `var(--primary)` etc. in `sx` props or CSS files.
+**Never hardcode color values.** Always use `var(--primary)` etc. in `sx` props or CSS files. `src/theme/themeConfig.js` is deprecated — do not import it.
+
+## Page layout conventions
+
+Every page must follow this standard structure:
+
+```jsx
+<Container maxWidth="lg" sx={{ py: 3 }}>   {/* lg for data pages, md for simple tools */}
+  <Box textAlign="center" mb={4}>
+    <Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
+      {t("page.title")}
+    </Typography>
+    <Typography variant="body1" color="text.secondary">   {/* optional subtitle */}
+      {t("page.subtitle")}
+    </Typography>
+  </Box>
+
+  {/* page content */}
+</Container>
+```
+
+- **Never use manual `Box sx={{ width: "80%", mx: "auto" }}`** as a layout container — use `Container`.
+- `maxWidth="lg"` for full-feature pages (DeckCreate, DeckEdit, DeckSearch, Record, CardList).
+- `maxWidth="md"` for single-focus tool pages (Dice, ChessClock, RandomShuffle, Simulator, PickPacks, AudioBoard, MahjongTrainer).
+- `maxWidth="sm"` for single-form pages (Login).
+
+## MUI Grid API
+
+This project uses **MUI v6**. Always use the `size` prop, never the v5 `item` prop:
+
+```jsx
+// ✅ Correct (v6)
+<Grid size={{ xs: 12, md: 6 }}>
+
+// ❌ Wrong (v5 legacy)
+<Grid item xs={12} md={6}>
+```
 
 ## Button components
 
@@ -85,6 +125,8 @@ Import from `src/components/ButtonVariants.jsx`. Never set `backgroundColor` or 
 | `SubtleButton` | Icon buttons, links |
 | `InfoButton` | Details, help |
 | `WarningButton` | Caution actions |
+
+Custom toggle buttons (e.g. AudioBoard track buttons that toggle between active/inactive states) may use `Box component="button"` with CSS variable colors when no ButtonVariant fits the interaction pattern.
 
 ## Localisation
 

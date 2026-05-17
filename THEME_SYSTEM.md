@@ -77,12 +77,12 @@ const styles = {
 ```
 src/
 ├── theme/
-│   └── themeConfig.js       # 主题配置（简化版）
+│   └── themeConfig.js       # ⚠️ 已废弃 — 不要导入此文件
 ├── contexts/
 │   └── ThemeContext.jsx     # 主题上下文（简化版）
 ├── hooks/
 │   └── useThemeVariables.js # 主题变量钩子（简化版）
-└── index.css                # CSS 变量定义
+└── index.css                # CSS 变量定义（权威来源）
 ```
 
 ## 注意事项
@@ -90,6 +90,7 @@ src/
 - 系统已移除暗色主题支持
 - 系统已移除主题切换功能
 - 所有硬编码颜色已替换为 CSS 变量
+- `themeConfig.js` 已废弃，所有页面不应再导入它；直接使用 CSS 变量
 - 确保新组件遵循相同的颜色使用规范
 
 通过使用这个统一的颜色系统，WSToolBox 保持了视觉一致性，并使得未来的颜色调整变得更加容易。
