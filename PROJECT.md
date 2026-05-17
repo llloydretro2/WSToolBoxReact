@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-17
+> Last updated: 2026-05-17 (session 2)
 
 ## Deployment
 
@@ -81,6 +81,58 @@ A comprehensive quality pass across all non-Mahjong pages. No features added —
 
 ---
 
+---
+
+### Multi-game platform restructuring (2026-05-17 session 2)
+
+Expanded scope from a WS-only tool to a multi-game platform at `cardtoolbox.org`.
+
+#### Game hub model
+
+- `/` redesigned as a **Game Hub** — three clickable cards (Weiss Schwarz / 麻将 / 通用工具) replacing the old update/todo home page.
+- Routes reorganised into section namespaces: `/ws/*`, `/mahjong/*`, `/tools/*`.
+- All old flat paths (`/cardlist`, `/mahjong`, `/dice`, etc.) kept as `<Navigate replace>` redirects.
+
+#### Route changes
+
+| Old | New |
+|-----|-----|
+| `/cardlist` | `/ws/cards` |
+| `/pick_packs` | `/ws/packs` |
+| `/simulator` | `/ws/simulator` |
+| `/record` | `/ws/record` |
+| `/audio` | `/ws/audio` |
+| `/first_second` | `/ws/first-second` |
+| `/shuffle` | `/ws/shuffle` (moved from tools to WS) |
+| `/mahjong` | `/mahjong/trainer` |
+| `/dice` | `/tools/dice` |
+| `/chess_clock` | `/tools/clock` |
+
+DeckCreate and DeckSearch removed from routes and NavBar (pages pending redesign).
+
+#### NavBar redesign
+
+- Replaced MUI AppBar + hamburger/drawer with a **Tailwind floating pill** (Raycast-style).
+- Primary pill: frosted glass white (`rgba(255,255,255,0.86)`) + Spring Rain border.
+- Secondary pill: mobile-only horizontal scroll for section nav items, no hamburger.
+- Language toggle: replaced MUI ToggleButtonGroup with a minimal single `<button>` showing current locale.
+- Added Tailwind CSS v3 (`tailwind.config.js`, `postcss.config.js`) with `preflight: false` to coexist with MUI.
+
+#### Dead code removed
+
+- `src/hooks/useTheme.js` — never imported by any page
+- `src/hooks/useThemeVariables.js` — never imported by any page
+- `src/theme/themeConfig.js` — deprecated, only used by the above two
+
+#### AudioBoard improvements
+
+- Loading state: wave skeleton cards while fetching track list.
+- Track tiles: show format badge (e.g. `MP3`) and duration (prefetched via `preload="metadata"` — only a few KB per file, no full download).
+- Player bar: appears when a track is selected. Controls: prev / play-pause / next / loop toggle / volume slider with mute. Progress bar with seek support (mouse + touch). Current time and total duration display.
+- EQ animation bars on the active playing card (`eq-bounce` CSS keyframe, 4 bars with staggered delays).
+
+---
+
 ## Recommended next work
 
 ### Mahjong engine improvements
@@ -90,6 +142,8 @@ A comprehensive quality pass across all non-Mahjong pages. No features added —
 4. **Scoring** — fu/han calculation, basic point table
 
 ### App-wide
-5. **i18n completion** — DeckSearch, DeckCreate, PickPacks lore section, Record tooltips, AudioBoard still have hardcoded Chinese strings not covered by `t()`
-6. **DeckEdit completion** — the page is functional but was originally a work-in-progress; consider a proper card-editor redesign using DeckCreate as the base
+5. **i18n completion** — PickPacks, Record tooltips still have some hardcoded Chinese strings not covered by `t()`
+6. **DeckCreate / DeckSearch redesign** — currently removed from routing; needs a proper design before re-enabling
 7. **CardList `useMemo` deps** — 3 pre-existing `react-hooks/exhaustive-deps` warnings for `productList.level/power/cost` dependency arrays
+8. **Section-specific themes** — NavBar uses Spring Rain green for all sections; WS/Mahjong/Tools could have distinct accent colours as the platform grows
+9. **shadcn/ui adoption** — new Mahjong and Tools pages should use Tailwind + shadcn instead of MUI for new features

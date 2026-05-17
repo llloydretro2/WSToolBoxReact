@@ -511,7 +511,7 @@ const DeckSearch = () => {
 			return;
 		}
 
-		navigate("/deck-edit", {
+		navigate("/ws/deck/edit", {
 			state: {
 				deckId: deckId,
 			},

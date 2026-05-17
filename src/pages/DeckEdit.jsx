@@ -101,7 +101,7 @@ const DeckEdit = () => {
 				setSnackbarMessage("缺少卡组ID，将返回卡组列表");
 				setSnackbarOpen(true);
 				setLoading(false);
-				setTimeout(() => navigate("/deck-search"), 3000);
+				setTimeout(() => navigate("/ws/deck/search"), 3000);
 				return;
 			}
 
@@ -109,7 +109,7 @@ const DeckEdit = () => {
 				setSnackbarMessage("请先登录，将返回卡组列表");
 				setSnackbarOpen(true);
 				setLoading(false);
-				setTimeout(() => navigate("/deck-search"), 3000);
+				setTimeout(() => navigate("/ws/deck/search"), 3000);
 				return;
 			}
 
@@ -577,7 +577,7 @@ const DeckEdit = () => {
 			<Box sx={{ mt: 4, display: "flex", gap: 2, justifyContent: "center" }}>
 				<SecondaryButton
 					variant="outlined"
-					onClick={() => navigate("/deck-search")}
+					onClick={() => navigate("/ws/deck/search")}
 					disabled={saving}>
 					返回卡组列表
 				</SecondaryButton>

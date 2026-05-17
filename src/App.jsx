@@ -3,6 +3,7 @@ import {
 	BrowserRouter as Router,
 	Routes,
 	Route,
+	Navigate,
 	useLocation,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -12,11 +13,9 @@ import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
 import { AnimatePresence } from "framer-motion";
 
-// 核心页面 - 立即加载
 const Home = lazy(() => import("./pages/Home.jsx"));
 const LoginPage = lazy(() => import("./pages/Login.jsx"));
 
-// 工具页面 - 按需加载
 const Dice = lazy(() => import("./pages/Dice.jsx"));
 const Tracker = lazy(() => import("./pages/Tracker.jsx"));
 const PickPacks = lazy(() => import("./pages/PickPacks.jsx"));
@@ -27,17 +26,10 @@ const AudioBoard = lazy(() => import("./pages/AudioBoard.jsx"));
 const Record = lazy(() => import("./pages/Record.jsx"));
 const OptionsApiTest = lazy(() => import("./pages/OptionsApiTest.jsx"));
 
-// 卡片相关页面 - 分组加载
 const CardList = lazy(() => import("./pages/CardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
-
-// 麻将役种训练
 const MahjongTrainer = lazy(() => import("./pages/MahjongTrainer.jsx"));
 
-// 卡组页面 - 分组加载
-const DeckPage = lazy(() => import("./pages/Deck.jsx"));
-const DeckCreate = lazy(() => import("./pages/DeckCreate.jsx"));
-const DeckSearch = lazy(() => import("./pages/DeckSearch.jsx"));
 const DeckEdit = lazy(() => import("./pages/DeckEdit.jsx"));
 
 const LoadingFallback = () => (
@@ -67,112 +59,69 @@ function AnimatedRoutes() {
 	const location = useLocation();
 
 	return (
-		<AnimatePresence
-			mode="wait"
-			initial={false}>
-			<Routes
-				location={location}
-				key={location.pathname}>
-				<Route
-					path="/"
-					element={withPageTransition(Home)}
-				/>
-				<Route
-					path="/dice"
-					element={withPageTransition(Dice)}
-				/>
-				<Route
-					path="/tracker"
-					element={withPageTransition(Tracker)}
-				/>
-				<Route
-					path="/pick_packs"
-					element={withPageTransition(PickPacks)}
-				/>
-				<Route
-					path="/first_second"
-					element={withPageTransition(FirstSecond)}
-				/>
-				<Route
-					path="/chess_clock"
-					element={withPageTransition(ChessClock)}
-				/>
-				<Route
-					path="/cardlist"
-					element={withPageTransition(CardList)}
-				/>
-				<Route
-					path="/simulator"
-					element={withPageTransition(Simulator)}
-				/>
-				<Route
-					path="/shuffle"
-					element={withPageTransition(RandomShuffle)}
-				/>
-				<Route
-					path="/audio"
-					element={withPageTransition(AudioBoard)}
-				/>
-				<Route
-					path="/login"
-					element={withPageTransition(LoginPage)}
-				/>
-				<Route
-					path="/deck"
-					element={withPageTransition(DeckPage)}
-				/>
-				<Route
-					path="/deck-create"
-					element={withPageTransition(DeckCreate)}
-				/>
-				<Route
-					path="/deck-search"
-					element={withPageTransition(DeckSearch)}
-				/>
-				<Route
-					path="/deck-edit"
-					element={withPageTransition(DeckEdit)}
-				/>
-				<Route
-					path="/record"
-					element={withPageTransition(Record)}
-				/>
-				<Route
-					path="/mahjong"
-					element={withPageTransition(MahjongTrainer)}
-				/>
-				<Route
-					path="/options-test"
-					element={withPageTransition(OptionsApiTest)}
-				/>
+		<AnimatePresence mode="wait" initial={false}>
+			<Routes location={location} key={location.pathname}>
+				{/* Hub */}
+				<Route path="/" element={withPageTransition(Home)} />
+
+				{/* Weiss Schwarz */}
+				<Route path="/ws/cards" element={withPageTransition(CardList)} />
+				<Route path="/ws/packs" element={withPageTransition(PickPacks)} />
+				<Route path="/ws/simulator" element={withPageTransition(Simulator)} />
+				<Route path="/ws/deck/edit" element={withPageTransition(DeckEdit)} />
+				<Route path="/ws/record" element={withPageTransition(Record)} />
+				<Route path="/ws/audio" element={withPageTransition(AudioBoard)} />
+				<Route path="/ws/first-second" element={withPageTransition(FirstSecond)} />
+			<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
+
+				{/* Mahjong */}
+				<Route path="/mahjong/trainer" element={withPageTransition(MahjongTrainer)} />
+
+				{/* Tools */}
+				<Route path="/tools/dice" element={withPageTransition(Dice)} />
+				<Route path="/tools/clock" element={withPageTransition(ChessClock)} />
+	
+				{/* Auth */}
+				<Route path="/login" element={withPageTransition(LoginPage)} />
+
+				{/* Legacy redirects */}
+				<Route path="/cardlist" element={<Navigate to="/ws/cards" replace />} />
+				<Route path="/pick_packs" element={<Navigate to="/ws/packs" replace />} />
+				<Route path="/simulator" element={<Navigate to="/ws/simulator" replace />} />
+				<Route path="/deck-edit" element={<Navigate to="/ws/deck/edit" replace />} />
+				<Route path="/record" element={<Navigate to="/ws/record" replace />} />
+				<Route path="/audio" element={<Navigate to="/ws/audio" replace />} />
+				<Route path="/first_second" element={<Navigate to="/ws/first-second" replace />} />
+				<Route path="/mahjong" element={<Navigate to="/mahjong/trainer" replace />} />
+				<Route path="/dice" element={<Navigate to="/tools/dice" replace />} />
+				<Route path="/chess_clock" element={<Navigate to="/tools/clock" replace />} />
+				<Route path="/shuffle" element={<Navigate to="/ws/shuffle" replace />} />
+
+				{/* Hidden / dev */}
+				<Route path="/tracker" element={withPageTransition(Tracker)} />
+				<Route path="/options-test" element={withPageTransition(OptionsApiTest)} />
 			</Routes>
 		</AnimatePresence>
 	);
-}
-
-function ThemeWrapper({ children }) {
-	return children;
 }
 
 function App() {
 	return (
 		<div
 			style={{
-				overflowX: "hidden", // 防止水平滚动条
-				width: "100vw", // 确保宽度不超过视口
-				position: "relative", // 建立定位上下文
+				overflowX: "hidden",
+				width: "100vw",
+				position: "relative",
 			}}>
 			<ThemeProvider>
-				<ThemeWrapper>
-					<AuthProvider>
-						<OptionsProvider>
-							<Router>
-								<NavBar />
-								<AnimatedRoutes />
-							</Router>
-						</OptionsProvider>
-					</AuthProvider>
-				</ThemeWrapper>
+				<AuthProvider>
+					<OptionsProvider>
+						<Router>
+							<NavBar />
+							<AnimatedRoutes />
+						</Router>
+					</OptionsProvider>
+				</AuthProvider>
 			</ThemeProvider>
 		</div>
 	);

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-WSToolBox Frontend — a React + Vite PWA for Weiss Schwarz card game players. Features card search, pack simulator, deck management, match record tracking, and a set of in-game tools (dice, chess clock, shuffle, etc.).
+CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records), a Riichi Mahjong yaku trainer, and general game utilities (dice, chess clock). Domain: `cardtoolbox.org`.
 
 ## Commands
 
@@ -32,6 +32,22 @@ LocaleProvider       # i18n (src/contexts/LocaleContext.jsx)
 ```
 
 All pages are lazy-loaded via `React.lazy` + `Suspense` with framer-motion page transitions.
+
+### Route structure
+
+The app uses a **game hub model** with section-scoped URL namespaces:
+
+| Prefix | Section | Example routes |
+|--------|---------|----------------|
+| `/` | Hub (game selector) | `/` |
+| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/first-second`, `/ws/shuffle`, `/ws/deck/edit` |
+| `/mahjong/*` | Mahjong | `/mahjong/trainer` |
+| `/tools/*` | General tools | `/tools/dice`, `/tools/clock` |
+| `/login` | Auth | `/login` |
+
+Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new paths via `<Navigate replace>` in `App.jsx`.
+
+**Note:** DeckCreate and DeckSearch pages exist as files but are not routed or linked — they are incomplete and pending a redesign.
 
 ### Key hooks
 
@@ -64,7 +80,7 @@ JWT stored in localStorage (`token`, `user`, `username`). On load, `AuthContext`
 
 ## Theme system
 
-Light theme only — dark mode has been removed. Colors are CSS variables defined in `src/index.css` (Spring Rain palette, `#a6ceb6` family):
+Light theme only. Colors are CSS variables defined in `src/index.css` (Spring Rain palette, `#a6ceb6` family):
 
 ```
 --primary, --primary-hover, --primary-light, --primary-dark
@@ -74,11 +90,23 @@ Light theme only — dark mode has been removed. Colors are CSS variables define
 --success, --error, --warning, --info, --reset, --reset-hover
 ```
 
-**Never hardcode color values.** Always use `var(--primary)` etc. in `sx` props or CSS files. `src/theme/themeConfig.js` is deprecated — do not import it.
+**Never hardcode color values.** Always use `var(--primary)` etc. in `sx` props, CSS files, or Tailwind `style` props.
+
+Dead theme files removed: `src/hooks/useTheme.js`, `src/hooks/useThemeVariables.js`, `src/theme/themeConfig.js`. `ThemeContext.jsx` is kept (imported by `App.jsx`) but is a light-only stub with no toggle logic.
+
+## CSS framework
+
+**Dual-stack: MUI (existing pages) + Tailwind CSS v3 (NavBar and new pages).**
+
+Tailwind is configured with `corePlugins.preflight: false` so it does not reset MUI's global styles. Config: `tailwind.config.js` + `postcss.config.js`. Directives are at the top of `src/index.css`.
+
+- **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
+- **WS pages** (CardList, Record, DeckEdit, AudioBoard, etc.) — remain MUI.
+- **New sections** (Mahjong, Tools, Hub) — use Tailwind + shadcn/ui as they are built or redesigned.
 
 ## Page layout conventions
 
-Every page must follow this standard structure:
+Every MUI page must follow this standard structure:
 
 ```jsx
 <Container maxWidth="lg" sx={{ py: 3 }}>   {/* lg for data pages, md for simple tools */}
@@ -96,9 +124,10 @@ Every page must follow this standard structure:
 ```
 
 - **Never use manual `Box sx={{ width: "80%", mx: "auto" }}`** as a layout container — use `Container`.
-- `maxWidth="lg"` for full-feature pages (DeckCreate, DeckEdit, DeckSearch, Record, CardList).
+- `maxWidth="lg"` for full-feature pages (Record, CardList).
 - `maxWidth="md"` for single-focus tool pages (Dice, ChessClock, RandomShuffle, Simulator, PickPacks, AudioBoard, MahjongTrainer).
 - `maxWidth="sm"` for single-form pages (Login).
+- The Hub page (`/`) does **not** follow this pattern — it is a custom Tailwind layout with game-selector cards.
 
 ## MUI Grid API
 
@@ -154,8 +183,8 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool merged into `main`.
 | Item | Path |
 |------|------|
 | Page | `src/pages/MahjongTrainer.jsx` |
-| Route | `/mahjong` (added to `src/App.jsx`) |
-| NavBar entry | `menu.mahjong` in `src/components/NavBar.jsx` |
+| Route | `/mahjong/trainer` (added to `src/App.jsx`) |
+| NavBar entry | `menu.mahjong` in `src/components/NavBar.jsx` (under `MAHJONG_NAV`) |
 | Locale keys | `mahjong.*` in `src/locales/zh.json` + `en.json` |
 | Tile images | `public/assets/mahjong-tiles/` (34 SVGs, CC0 from FluffyStuff/riichi-mahjong-tiles) |
 | Tile components | `src/components/mahjong/MahjongTile.jsx`, `MahjongTilePicker.jsx` |
@@ -193,6 +222,30 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool merged into `main`.
 - **Pinfu wait check simplified** — all-sequence + non-value pair is labelled Pinfu without verifying two-sided (ryanmen) wait.
 - **Sanankou win-method not enforced** — does not distinguish tsumo vs ron for the completing triplet.
 - **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles (demonstrated in TC1 Yakuhai case).
+
+## NavBar architecture
+
+`src/components/NavBar.jsx` is fully Tailwind-based and section-aware.
+
+### Section detection
+
+```js
+getGameSection(pathname) → "hub" | "ws" | "mahjong" | "tools"
+```
+
+### Layout
+
+- **Floating pill** — `position: fixed`, `pointer-events-none` on the outer header so content scrolls under the margins; each pill has `pointer-events-auto`.
+- **Primary pill** — 3-column CSS grid (`auto 1fr auto`): brand+chip | centered desktop nav | lang toggle + auth.
+- **Secondary pill** — mobile only, game sections only. Horizontally scrollable flat nav items. Hidden with `md:hidden`.
+
+### Nav configs
+
+`WS_NAV`, `MAHJONG_NAV`, `TOOLS_NAV` are plain objects at the top of the file. The component reads `section` and switches between them. No hamburger, no drawer.
+
+### Language toggle
+
+A single `<button>` that shows the current locale (`"中文"` or `"EN"`) and calls `setLocale()` on click. The MUI `LanguageToggle` component is no longer used in NavBar.
 
 ### ⚠️ Critical rule
 

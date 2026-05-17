@@ -1,5 +1,5 @@
 {
-  "title": "WS工具箱",
+  "title": "卡牌工具箱",
   "close": "关闭",
   "menu": {
     "home": "主页",
@@ -37,12 +37,13 @@
   },
   "pages": {
     "home": {
-      "title": "WSToolBox",
-      "subtitle": "WS(Weiss Schwarz) 工具箱",
-      "description": "致力于为WS卡牌爱好者提供简单易用且人性化的游戏工具",
-      "updateTitle": "近期更新",
+      "title": "卡牌工具箱",
+      "subtitle": "卡牌与桌游多合一工具集",
+      "description": "致力于为卡牌与桌游爱好者提供简单易用且人性化的游戏工具",
       "contactTitle": "联系我",
-      "todoTitle": "开发路线图"
+      "ws": { "name": "Weiss Schwarz", "desc": "卡片查询、卡组构筑、开包模拟与对战记录" },
+      "mahjong": { "name": "麻将", "desc": "立直麻将役种路线训练" },
+      "tools": { "name": "通用工具", "desc": "骰子、棋钟、随机洗牌等对战辅助" }
     },
     "firstSecond": {
       "title": "先后攻",
@@ -373,6 +374,16 @@
   "deck": {
     "createTab": "创建卡组",
     "searchTab": "查询卡组"
+  },
+  "audio": {
+    "title": "音效面板",
+    "subtitle": "点击卡片播放背景音效，支持循环与音量调节",
+    "loading": "正在加载音效列表…",
+    "empty": "暂无音频文件",
+    "loop": "循环播放",
+    "volume": "音量",
+    "prev": "上一曲",
+    "next": "下一曲"
   },
   "mahjong": {
     "title": "麻将役种路线分析",

@@ -1,5 +1,5 @@
 {
-  "title": "WS Toolbox",
+  "title": "CardToolBox",
   "close": "Close",
   "menu": {
     "home": "Home",
@@ -50,37 +50,13 @@
   },
   "pages": {
     "home": {
-      "title": "WSToolBox",
-      "subtitle": "WS(Weiss Schwarz) ToolBox",
-      "description": "Committed to providing simple, user-friendly and humanized game tools for WS card enthusiasts",
-      "updateTitle": "Recent Updates",
+      "title": "CardToolBox",
+      "subtitle": "All-in-one tools for card & board games",
+      "description": "Tools for card game and board game enthusiasts",
       "contactTitle": "Contact Me",
-      "todoTitle": "Development Roadmap",
-      "features": {
-        "title": "Key Features",
-        "subtitle": "Comprehensive support for your WS journey",
-        "cardSearch": {
-          "title": "Card Search",
-          "description": "Quickly find card information with multiple search criteria"
-        },
-        "deckBuilder": {
-          "title": "Deck Builder",
-          "description": "Build and manage your decks online"
-        },
-        "gameTools": {
-          "title": "Game Tools",
-          "description": "Useful tools like dice, coin flip, etc."
-        },
-        "record": {
-          "title": "Match Records",
-          "description": "Record and analyze your battle history"
-        }
-      },
-      "lastUpdate": {
-        "title": "Recent Updates",
-        "data": "Card Database Update",
-        "ui": "UI Optimization"
-      }
+      "ws": { "name": "Weiss Schwarz", "desc": "Card search, deck building, pack simulation & match records" },
+      "mahjong": { "name": "Mahjong", "desc": "Riichi Mahjong yaku route trainer" },
+      "tools": { "name": "General Tools", "desc": "Dice, chess clock, shuffle and more" }
     },
     "firstSecond": {
       "title": "First/Second",
@@ -386,6 +362,16 @@
       "createTab": "Create Deck",
       "searchTab": "Search Decks"
     }
+  },
+  "audio": {
+    "title": "Audio Board",
+    "subtitle": "Click a card to play background audio with loop and volume controls",
+    "loading": "Loading audio files…",
+    "empty": "No audio files available",
+    "loop": "Loop",
+    "volume": "Volume",
+    "prev": "Previous",
+    "next": "Next"
   },
   "mahjong": {
     "title": "Riichi Mahjong Yaku Trainer",

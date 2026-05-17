@@ -1,826 +1,504 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import PropTypes from "prop-types";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocale } from "../contexts/LocaleContext";
-
-import LanguageToggle from "./LanguageToggle";
 import Avatar from "@mui/material/Avatar";
-import {
-	AppBar,
-	Toolbar,
-	IconButton,
-	Typography,
-	Drawer,
-	List,
-	ListItemText,
-	ListItemButton,
-	Box,
-	Button,
-	Snackbar,
-	Stack,
-	Tooltip,
-	Badge,
-} from "@mui/material";
+import { Snackbar, Badge, Tooltip } from "@mui/material";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import MenuIcon from "@mui/icons-material/Menu";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// 主要导航项（显示在顶层）
-const primaryNavItems = [{ labelKey: "menu.cardSearch", path: "/cardlist" }];
+// ─── Nav configs ───────────────────────────────────────────────────────────────
 
-// 开包菜单项（分组到下拉菜单）
-const packMenuItems = [
-	{ labelKey: "menu.pickPacks", path: "/pick_packs" },
-	{ labelKey: "menu.simulator", path: "/simulator" },
-];
+const WS_NAV = {
+	primary: [{ labelKey: "menu.cardSearch", path: "/ws/cards" }],
+	pack: {
+		labelKey: "menu.pack",
+		items: [
+			{ labelKey: "menu.pickPacks", path: "/ws/packs" },
+			{ labelKey: "menu.simulator", path: "/ws/simulator" },
+		],
+	},
+	battleTools: {
+		labelKey: "menu.battleTools",
+		items: [
+			{ labelKey: "menu.firstSecond", path: "/ws/first-second" },
+			{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
+			{ labelKey: "menu.audio", path: "/ws/audio" },
+		],
+	},
+	userItems: [{ labelKey: "menu.record", path: "/ws/record" }],
+};
 
-// 卡组菜单项（分组到下拉菜单）
-const deckMenuItems = [
-	{ labelKey: "menu.deckCreate", path: "/deck-create" },
-	{ labelKey: "menu.deckSearch", path: "/deck-search" },
-];
+const MAHJONG_NAV = {
+	primary: [{ labelKey: "menu.mahjong", path: "/mahjong/trainer" }],
+};
 
-// 用户相关菜单项（与登录状态绑定）
-const userNavItems = [{ labelKey: "menu.record", path: "/record" }];
+const TOOLS_NAV = {
+	primary: [
+		{ labelKey: "menu.dice", path: "/tools/dice" },
+		{ labelKey: "menu.chessClock", path: "/tools/clock" },
+	],
+};
 
-// 对战工具菜单项（分组到下拉菜单）
-const battleToolsMenuItems = [
-	{ labelKey: "menu.firstSecond", path: "/first_second" },
-	{ labelKey: "menu.shuffle", path: "/shuffle" },
-	{ labelKey: "menu.dice", path: "/dice" },
-	{ labelKey: "menu.chessClock", path: "/chess_clock" },
-	{ labelKey: "menu.audio", path: "/audio" },
-	{ labelKey: "menu.mahjong", path: "/mahjong" },
-];
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function getAvatarIndexFromUsername(username) {
-	const hash = [...username].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+function getGameSection(pathname) {
+	if (pathname.startsWith("/ws")) return "ws";
+	if (pathname.startsWith("/mahjong")) return "mahjong";
+	if (pathname.startsWith("/tools")) return "tools";
+	return "hub";
+}
+
+function getAvatarIndex(username) {
+	const hash = [...username].reduce((acc, c) => acc + c.charCodeAt(0), 0);
 	return (hash % 29) + 1;
 }
 
-function NavBar() {
-	const [drawerOpen, setDrawerOpen] = useState(false);
-	const [deckMenuAnchor, setDeckMenuAnchor] = useState(null);
-	const [battleToolsMenuAnchor, setBattleToolsMenuAnchor] = useState(null);
-	const [packMenuAnchor, setPackMenuAnchor] = useState(null);
+// ─── Pill styles (shared) ──────────────────────────────────────────────────────
+
+const PILL_BG = "rgba(255, 255, 255, 0.86)";
+const PILL_BORDER = "1px solid rgba(166, 206, 182, 0.45)";
+const PILL_SHADOW =
+	"0 4px 32px rgba(80, 140, 106, 0.12), 0 1px 6px rgba(0,0,0,0.06)";
+const PILL_BLUR = "blur(24px) saturate(180%)";
+
+// ─── Desktop nav button ────────────────────────────────────────────────────────
+
+function NavBtn({ label, isActive, onClick }) {
+	return (
+		<button
+			onClick={onClick}
+			className={[
+				"px-3.5 py-1.5 rounded-full text-[13px] border-0 cursor-pointer select-none",
+				"transition-all duration-150 whitespace-nowrap",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+				isActive
+					? "font-semibold"
+					: "opacity-60 font-medium hover:opacity-100",
+			].join(" ")}
+			style={{
+				fontFamily: "inherit",
+				color: "var(--text)",
+				backgroundColor: isActive ? "rgba(166,206,182,0.35)" : "transparent",
+			}}>
+			{label}
+		</button>
+	);
+}
+
+NavBtn.propTypes = {
+	label: PropTypes.string.isRequired,
+	isActive: PropTypes.bool,
+	onClick: PropTypes.func.isRequired,
+};
+
+// ─── Desktop dropdown button ───────────────────────────────────────────────────
+
+function DropBtn({ label, isActive, onClick }) {
+	return (
+		<button
+			onClick={onClick}
+			className={[
+				"flex items-center gap-0.5 px-3.5 py-1.5 rounded-full text-[13px]",
+				"border-0 cursor-pointer select-none",
+				"transition-all duration-150 whitespace-nowrap",
+				"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+				isActive ? "font-semibold" : "opacity-60 font-medium hover:opacity-100",
+			].join(" ")}
+			style={{
+				fontFamily: "inherit",
+				color: "var(--text)",
+				backgroundColor: isActive ? "rgba(166,206,182,0.35)" : "transparent",
+			}}>
+			{label}
+			<KeyboardArrowDownIcon style={{ fontSize: 14, opacity: 0.55, marginLeft: 1 }} />
+		</button>
+	);
+}
+
+DropBtn.propTypes = {
+	label: PropTypes.string.isRequired,
+	isActive: PropTypes.bool,
+	onClick: PropTypes.func.isRequired,
+};
+
+// ─── Mobile scrollable pill ────────────────────────────────────────────────────
+
+function MobilePill({ label, isActive, onClick }) {
+	return (
+		<button
+			onClick={onClick}
+			className={[
+				"flex-shrink-0 px-3 py-1 rounded-full text-[11px] border-0 cursor-pointer select-none",
+				"transition-all duration-150 whitespace-nowrap",
+				isActive ? "font-semibold" : "opacity-55 font-medium hover:opacity-90",
+			].join(" ")}
+			style={{
+				fontFamily: "inherit",
+				color: "var(--text)",
+				backgroundColor: isActive ? "rgba(166,206,182,0.4)" : "transparent",
+			}}>
+			{label}
+		</button>
+	);
+}
+
+MobilePill.propTypes = {
+	label: PropTypes.string.isRequired,
+	isActive: PropTypes.bool,
+	onClick: PropTypes.func.isRequired,
+};
+
+// ─── Dropdown menu paper styles ────────────────────────────────────────────────
+
+const dropMenuSx = {
+	"& .MuiPaper-root": {
+		mt: "6px",
+		background: "rgba(240, 250, 244, 0.97)",
+		backdropFilter: "blur(20px)",
+		border: "1px solid rgba(166,206,182,0.4)",
+		borderRadius: "14px",
+		boxShadow: "0 8px 32px rgba(80,140,106,0.14), 0 2px 8px rgba(0,0,0,0.06)",
+		minWidth: 152,
+		px: "5px",
+		py: "5px",
+	},
+};
+
+const dropItemSx = (active) => ({
+	fontSize: "0.8rem",
+	fontWeight: active ? 600 : 400,
+	color: "var(--text)",
+	borderRadius: "8px",
+	backgroundColor: active ? "rgba(166,206,182,0.3)" : "transparent",
+	opacity: active ? 1 : 0.65,
+	transition: "all 0.12s",
+	"&:hover": { backgroundColor: "rgba(166,206,182,0.2)", opacity: 1 },
+});
+
+// ─── NavBar ────────────────────────────────────────────────────────────────────
+
+export default function NavBar() {
+	const [packAnchor, setPackAnchor] = useState(null);
+	const [battleAnchor, setBattleAnchor] = useState(null);
+	const [avatarAnchor, setAvatarAnchor] = useState(null);
+	const [avatarError, setAvatarError] = useState(false);
+	const [loginSnackbar, setLoginSnackbar] = useState(false);
+
 	const { user, logout } = useAuth();
 	const isLoggedIn = !!user;
-	const { t } = useLocale();
-
-	// 为移动端抽屉创建所有菜单项的列表（包含所有导航项，保持平铺布局）
-	const userNavItemsForDrawer = [
-		{ labelKey: "menu.record", path: "/record" },
-		{ labelKey: "menu.deckCreate", path: "/deck-create" },
-		{ labelKey: "menu.deckSearch", path: "/deck-search" },
-	];
-
-	const otherNavItems = [
-		{ labelKey: "menu.cardSearch", path: "/cardlist" },
-		{ labelKey: "menu.pickPacks", path: "/pick_packs" },
-		{ labelKey: "menu.simulator", path: "/simulator" },
-		{ labelKey: "menu.firstSecond", path: "/first_second" },
-		{ labelKey: "menu.shuffle", path: "/shuffle" },
-		{ labelKey: "menu.dice", path: "/dice" },
-		{ labelKey: "menu.chessClock", path: "/chess_clock" },
-		{ labelKey: "menu.audio", path: "/audio" },
-		{ labelKey: "menu.mahjong", path: "/mahjong" },
-	];
-
+	const { t, locale, setLocale } = useLocale();
 	const navigate = useNavigate();
 	const location = useLocation();
+	const section = getGameSection(location.pathname);
 
-	const [showLoginSnackbar, setShowLoginSnackbar] = useState(false);
-
-	const isActivePath = (targetPath) => {
-		if (!targetPath) return false;
-		if (targetPath === "/") {
-			return location.pathname === "/";
-		}
-		return location.pathname.startsWith(targetPath);
+	const isActive = (path) => {
+		if (!path) return false;
+		if (path === "/") return location.pathname === "/";
+		return location.pathname.startsWith(path);
 	};
 
-	// 卡组菜单相关的处理函数
-	const handleDeckMenuOpen = (event) => {
-		setDeckMenuAnchor(event.currentTarget);
-	};
-	const handleDeckMenuClose = () => {
-		setDeckMenuAnchor(null);
-	};
+	const chipLabel =
+		section === "ws" ? "Weiss Schwarz"
+		: section === "mahjong" ? t("pages.home.mahjong.name")
+		: section === "tools" ? t("pages.home.tools.name")
+		: null;
 
-	// 对战工具菜单相关的处理函数
-	const handleBattleToolsMenuOpen = (event) => {
-		setBattleToolsMenuAnchor(event.currentTarget);
-	};
-	const handleBattleToolsMenuClose = () => {
-		setBattleToolsMenuAnchor(null);
-	};
-
-	// 检查卡组菜单中是否有活跃路径
-	const isDeckMenuActive = () => {
-		return deckMenuItems.some((item) => isActivePath(item.path));
-	};
-
-	// 检查对战工具菜单中是否有活跃路径
-	const isBattleToolsMenuActive = () => {
-		return battleToolsMenuItems.some((item) => isActivePath(item.path));
-	};
-
-	// 开包菜单相关的处理函数
-	const handlePackMenuOpen = (event) => {
-		setPackMenuAnchor(event.currentTarget);
-	};
-	const handlePackMenuClose = () => {
-		setPackMenuAnchor(null);
-	};
-
-	// 检查开包菜单中是否有活跃路径
-	const isPackMenuActive = () => {
-		return packMenuItems.some((item) => isActivePath(item.path));
-	};
-
-	// Avatar menu state and handlers
-	const [anchorEl, setAnchorEl] = useState(null);
-	const [avatarError, setAvatarError] = useState(false);
 	const displayName = user?.username ?? "";
 	const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : "?";
-	const avatarIndex = displayName ? getAvatarIndexFromUsername(displayName) : 1;
 	const avatarSrc =
 		!avatarError && displayName
 			? displayName === "Amon"
 				? "/assets/283/6.png"
-				: `/assets/283/${avatarIndex}.png`
+				: `/assets/283/${getAvatarIndex(displayName)}.png`
 			: undefined;
 
-	useEffect(() => {
-		setAvatarError(false);
-	}, [displayName]);
-
-	const handleAvatarClick = (event) => {
-		setAnchorEl(event.currentTarget);
-	};
-	const handleCloseMenu = () => {
-		setAnchorEl(null);
-	};
-	const handleLogout = () => {
-		logout();
-		handleCloseMenu();
-	};
-
-	const toggleDrawer = (open) => (event) => {
-		if (
-			event.type === "keydown" &&
-			(event.key === "Tab" || event.key === "Shift")
-		) {
-			return;
-		}
-		setDrawerOpen(open);
-	};
+	useEffect(() => { setAvatarError(false); }, [displayName]);
 
 	useEffect(() => {
 		if (location.state?.fromDeck) {
-			setShowLoginSnackbar(true);
-			// 清除状态，避免返回上一页仍然触发
+			setLoginSnackbar(true);
 			window.history.replaceState({}, document.title);
 		}
 	}, [location]);
 
-	const drawer = (
-		<Box
-			sx={{ maxWidth: 300, width: "50vw" }}
-			role="presentation"
-			onClick={toggleDrawer(false)}
-			onKeyDown={toggleDrawer(false)}>
-			<Stack
-				direction="row"
-				justifyContent="center"
-				sx={{ p: 2, pb: 1 }}>
-				<LanguageToggle />
-			</Stack>
-			<List>
-				{userNavItemsForDrawer
-					.filter((item) => {
-						// hide deck-related items and record in drawer when not logged in
-						if (
-							!isLoggedIn &&
-							item.path &&
-							(item.path.startsWith("/deck") || item.path === "/record")
-						)
-							return false;
-						return true;
-					})
-					.map((item) => {
-						const label = item.labelKey ? t(item.labelKey) : "";
-						if (!label) return null;
-						const isActive = isActivePath(item.path);
-						return (
-							<ListItemButton
-								key={item.labelKey || item.path}
-								selected={isActive}
-								onClick={() => {
-									navigate(item.path);
-								}}
-								sx={{
-									borderRadius: 1,
-									mb: 0.5,
-									backgroundColor: isActive
-										? "rgba(255,255,255,0.25)"
-										: "transparent",
-									color: isActive ? "var(--text)" : "inherit",
-									transition: "background-color 0.2s ease, color 0.2s ease",
-									"&:hover": {
-										backgroundColor: isActive
-											? "rgba(255,255,255,0.35)"
-											: "rgba(255,255,255,0.2)",
-									},
-									"&.Mui-selected": {
-										backgroundColor: "rgba(255,255,255,0.25)",
-										color: "#1b4332",
-									},
-									"&.Mui-selected:hover": {
-										backgroundColor: "rgba(255,255,255,0.35)",
-									},
-									"& .MuiListItemText-primary": {
-										fontWeight: isActive ? 600 : 500,
-										color: isActive ? "var(--text)" : "#ffffff",
-									},
-								}}>
-								<ListItemText primary={label} />
-							</ListItemButton>
-						);
-					})}
+	// ── Desktop nav ─────────────────────────────────────────────────────────────
 
-				{/* 分割线 */}
-				<Box
-					sx={{
-						borderTop: "1px solid rgba(255,255,255,0.3)",
-						my: 1,
-						mx: 2,
-					}}
-				/>
+	const renderDesktopNav = () => {
+		if (section === "ws") return renderWSDesktop();
+		if (section === "mahjong")
+			return MAHJONG_NAV.primary.map((i) => (
+				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
+			));
+		if (section === "tools")
+			return TOOLS_NAV.primary.map((i) => (
+				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
+			));
+		return null;
+	};
 
-				{otherNavItems.map((item) => {
-					const label = item.labelKey ? t(item.labelKey) : "";
-					if (!label) return null;
-					const isActive = isActivePath(item.path);
-					return (
-						<ListItemButton
-							key={item.labelKey || item.path}
-							selected={isActive}
-							onClick={() => {
-								navigate(item.path);
-							}}
-							sx={{
-								borderRadius: 1,
-								mb: 0.5,
-								backgroundColor: isActive
-									? "rgba(255,255,255,0.25)"
-									: "transparent",
-								color: isActive ? "var(--text)" : "inherit",
-								transition: "background-color 0.2s ease, color 0.2s ease",
-								"&:hover": {
-									backgroundColor: isActive
-										? "rgba(255,255,255,0.35)"
-										: "rgba(255,255,255,0.2)",
-								},
-								"&.Mui-selected": {
-									backgroundColor: "rgba(255,255,255,0.25)",
-									color: "#1b4332",
-								},
-								"&.Mui-selected:hover": {
-									backgroundColor: "rgba(255,255,255,0.35)",
-								},
-								"& .MuiListItemText-primary": {
-									fontWeight: isActive ? 600 : 500,
-									color: isActive ? "var(--text)" : "#ffffff",
-								},
-							}}>
-							<ListItemText primary={label} />
-						</ListItemButton>
-					);
-				})}
-			</List>
-		</Box>
+	const renderWSDesktop = () => (
+		<>
+			{WS_NAV.primary.map((i) => (
+				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
+			))}
+
+			<DropBtn
+				label={t(WS_NAV.pack.labelKey)}
+				isActive={WS_NAV.pack.items.some((i) => isActive(i.path))}
+				onClick={(e) => setPackAnchor(e.currentTarget)}
+			/>
+			<Menu anchorEl={packAnchor} open={Boolean(packAnchor)} onClose={() => setPackAnchor(null)}
+				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+				transformOrigin={{ vertical: "top", horizontal: "left" }}
+				sx={dropMenuSx}>
+				{WS_NAV.pack.items.map((i) => (
+					<MenuItem key={i.path} onClick={() => { navigate(i.path); setPackAnchor(null); }} sx={dropItemSx(isActive(i.path))}>
+						{t(i.labelKey)}
+					</MenuItem>
+				))}
+			</Menu>
+
+			<DropBtn
+				label={t(WS_NAV.battleTools.labelKey)}
+				isActive={WS_NAV.battleTools.items.some((i) => isActive(i.path))}
+				onClick={(e) => setBattleAnchor(e.currentTarget)}
+			/>
+			<Menu anchorEl={battleAnchor} open={Boolean(battleAnchor)} onClose={() => setBattleAnchor(null)}
+				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+				transformOrigin={{ vertical: "top", horizontal: "left" }}
+				sx={dropMenuSx}>
+				{WS_NAV.battleTools.items.map((i) => (
+					<MenuItem key={i.path} onClick={() => { navigate(i.path); setBattleAnchor(null); }} sx={dropItemSx(isActive(i.path))}>
+						{t(i.labelKey)}
+					</MenuItem>
+				))}
+			</Menu>
+
+			{isLoggedIn && WS_NAV.userItems.map((i) => (
+				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
+			))}
+		</>
 	);
 
+	// ── Mobile flat items ────────────────────────────────────────────────────────
+
+	const getMobileItems = () => {
+		if (section === "ws") {
+			const base = [
+				{ labelKey: "menu.cardSearch", path: "/ws/cards" },
+				{ labelKey: "menu.pickPacks", path: "/ws/packs" },
+				{ labelKey: "menu.simulator", path: "/ws/simulator" },
+				{ labelKey: "menu.firstSecond", path: "/ws/first-second" },
+				{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
+				{ labelKey: "menu.audio", path: "/ws/audio" },
+			];
+			const auth = isLoggedIn ? [
+				{ labelKey: "menu.record", path: "/ws/record" },
+			] : [];
+			return [...base, ...auth];
+		}
+		if (section === "mahjong") return MAHJONG_NAV.primary;
+		if (section === "tools") return TOOLS_NAV.primary;
+		return [];
+	};
+
+	// ── Render ───────────────────────────────────────────────────────────────────
+
+	// pointer-events-none on header so page content under the gap is clickable;
+	// pointer-events-auto on each pill so the pills themselves are interactive.
 	return (
 		<>
-			<AppBar
-				position="fixed"
-				sx={{ backgroundColor: "var(--primary)" }}>
-				<Toolbar>
-					<Box sx={{ display: { xs: "flex", md: "none" }, mr: 2 }}>
-						<IconButton
-							color="inherit"
-							edge="start"
-							onClick={toggleDrawer(true)}
-							sx={{
-								borderRadius: 1,
-							}}>
-							<MenuIcon />
-						</IconButton>
-					</Box>
-					<Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-						<Typography
-							variant="h6"
-							component="div"
-							onClick={() => navigate("/")}
-							sx={{
-								cursor: "pointer",
-								"&:hover": {
-									opacity: 0.8,
-								},
-							}}>
-							{t("title")}
-						</Typography>
-						<Box sx={{ ml: 2, display: { xs: "none", md: "block" } }}>
-							<LanguageToggle />
-						</Box>
-					</Box>
-					<Box sx={{ display: { xs: "none", md: "flex" } }}>
-						{/* 主要导航项 */}
-						{primaryNavItems.map((item) => {
-							const label = item.labelKey ? t(item.labelKey) : "";
-							if (!label) return null;
-							const isActive = isActivePath(item.path);
-							return (
-								<motion.div
-									key={item.labelKey || item.path}
-									whileHover={{ scale: 1.05 }}
-									whileTap={{ scale: 0.95 }}
-									transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-									<Button
-										color="inherit"
-										onClick={() => {
-											navigate(item.path);
-										}}
-										sx={{
-											ml: 0.75,
-											borderRadius: 1,
-											fontWeight: isActive ? 600 : 500,
-											backgroundColor: isActive
-												? "rgba(255,255,255,0.25)"
-												: "transparent",
-											color: isActive ? "var(--text)" : "inherit",
-											transition: "background-color 0.2s ease, color 0.2s ease",
-											"&:hover": {
-												backgroundColor: isActive
-													? "rgba(255,255,255,0.35)"
-													: "rgba(255,255,255,0.2)",
-											},
-										}}>
-										{label}
-									</Button>
-								</motion.div>
-							);
-						})}
+			<header className="fixed top-0 left-0 right-0 z-50 pointer-events-none px-3 md:px-8 pt-3 md:pt-4">
 
-						{/* 桌面端：音效面板按钮 */}
+				{/* ── Primary pill ─────────────────────────────────────────── */}
+				<div
+					className="pointer-events-auto max-w-5xl mx-auto rounded-2xl md:rounded-full"
+					style={{
+						background: PILL_BG,
+						backdropFilter: PILL_BLUR,
+						WebkitBackdropFilter: PILL_BLUR,
+						border: PILL_BORDER,
+						boxShadow: PILL_SHADOW,
+					}}>
 
-						{/* 开包菜单下拉 */}
-						<motion.div
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
-							transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-							<Button
-								color="inherit"
-								onClick={handlePackMenuOpen}
-								endIcon={<ArrowDropDownIcon />}
-								sx={{
-									ml: 0.75,
-									borderRadius: 1,
-									fontWeight: isPackMenuActive() ? 600 : 500,
-									backgroundColor: isPackMenuActive()
-										? "rgba(255,255,255,0.25)"
-										: "transparent",
-									color: isPackMenuActive() ? "var(--text)" : "inherit",
-									transition: "background-color 0.2s ease, color 0.2s ease",
-									"&:hover": {
-										backgroundColor: isPackMenuActive()
-											? "rgba(255,255,255,0.35)"
-											: "rgba(255,255,255,0.2)",
-									},
-								}}>
-								{t("menu.pack")}
-							</Button>
-						</motion.div>
-						<Menu
-							anchorEl={packMenuAnchor}
-							open={Boolean(packMenuAnchor)}
-							onClose={handlePackMenuClose}
-							anchorOrigin={{
-								vertical: "bottom",
-								horizontal: "left",
-							}}
-							transformOrigin={{
-								vertical: "top",
-								horizontal: "left",
-							}}
-							sx={{
-								"& .MuiPaper-root": {
-									backgroundColor: "var(--primary)",
-									backdropFilter: "blur(10px)",
-									border: "1px solid rgba(255,255,255,0.2)",
-								},
-							}}>
-							{packMenuItems.map((item) => {
-								const label = item.labelKey ? t(item.labelKey) : "";
-								if (!label) return null;
-								const isActive = isActivePath(item.path);
-								return (
-									<MenuItem
-										key={item.labelKey || item.path}
-										onClick={() => {
-											navigate(item.path);
-											handlePackMenuClose();
-										}}
-										sx={{
-											fontWeight: isActive ? 600 : 500,
-											backgroundColor: isActive
-												? "rgba(255,255,255,0.25)"
-												: "transparent",
-											color: isActive ? "var(--text)" : "#ffffff",
-											"&:hover": {
-												backgroundColor: "rgba(255,255,255,0.2)",
-											},
-										}}>
-										{label}
-									</MenuItem>
-								);
-							})}
-						</Menu>
+					<div className="grid grid-cols-[auto_1fr_auto] items-center h-12 px-3 md:px-5 gap-3">
 
-						{/* 卡组菜单下拉 */}
-						{isLoggedIn && (
-							<motion.div
-								whileHover={{ scale: 1.05 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-								<Button
-									color="inherit"
-									onClick={handleDeckMenuOpen}
-									endIcon={<ArrowDropDownIcon />}
-									sx={{
-										ml: 0.75,
-										borderRadius: 1,
-										fontWeight: isDeckMenuActive() ? 600 : 500,
-										backgroundColor: isDeckMenuActive()
-											? "rgba(255,255,255,0.25)"
-											: "transparent",
-										color: isDeckMenuActive() ? "var(--text)" : "inherit",
-										transition: "background-color 0.2s ease, color 0.2s ease",
-										"&:hover": {
-											backgroundColor: isDeckMenuActive()
-												? "rgba(255,255,255,0.35)"
-												: "rgba(255,255,255,0.2)",
-										},
+						{/* LEFT: brand + section chip */}
+						<div className="flex items-center gap-2 min-w-0">
+							<button
+								onClick={() => navigate("/")}
+								className="border-0 bg-transparent cursor-pointer p-0 flex-shrink-0"
+								style={{ fontFamily: "inherit" }}>
+								<span className="font-bold text-[15px] md:text-base tracking-tight leading-none hover:opacity-60 transition-opacity duration-150" style={{ color: "var(--text)" }}>
+									{t("title")}
+								</span>
+							</button>
+
+							{chipLabel && (
+								<span
+									className="flex-shrink-0 hidden sm:inline-flex items-center text-[10px] font-semibold px-2.5 py-0.5 rounded-full leading-none"
+									style={{
+										backgroundColor: "rgba(166,206,182,0.3)",
+										color: "var(--text-secondary)",
+										letterSpacing: "0.04em",
 									}}>
-									{t("menu.deck")}
-								</Button>
-							</motion.div>
-						)}
-						{isLoggedIn && (
-							<Menu
-								anchorEl={deckMenuAnchor}
-								open={Boolean(deckMenuAnchor)}
-								onClose={handleDeckMenuClose}
-								anchorOrigin={{
-									vertical: "bottom",
-									horizontal: "left",
-								}}
-								transformOrigin={{
-									vertical: "top",
-									horizontal: "left",
-								}}
-								sx={{
-									"& .MuiPaper-root": {
-										backgroundColor: "var(--primary)",
-										backdropFilter: "blur(10px)",
-										border: "1px solid rgba(255,255,255,0.2)",
-									},
-								}}>
-								{deckMenuItems.map((item) => {
-									const label = item.labelKey ? t(item.labelKey) : "";
-									if (!label) return null;
-									const isActive = isActivePath(item.path);
-									return (
-										<MenuItem
-											key={item.labelKey || item.path}
-											onClick={() => {
-												navigate(item.path);
-												handleDeckMenuClose();
-											}}
-											sx={{
-												fontWeight: isActive ? 600 : 500,
-												backgroundColor: isActive
-													? "rgba(255,255,255,0.25)"
-													: "transparent",
-												color: isActive ? "var(--text)" : "#ffffff",
-												"&:hover": {
-													backgroundColor: "rgba(255,255,255,0.2)",
-												},
-											}}>
-											{label}
-										</MenuItem>
-									);
-								})}
-							</Menu>
-						)}
+									{chipLabel}
+								</span>
+							)}
+						</div>
 
-						{/* 对战工具菜单下拉 */}
-						<motion.div
-							whileHover={{ scale: 1.05 }}
-							whileTap={{ scale: 0.95 }}
-							transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-							<Button
-								color="inherit"
-								onClick={handleBattleToolsMenuOpen}
-								endIcon={<ArrowDropDownIcon />}
-								sx={{
-									ml: 0.75,
-									borderRadius: 1,
-									fontWeight: isBattleToolsMenuActive() ? 600 : 500,
-									backgroundColor: isBattleToolsMenuActive()
-										? "rgba(255,255,255,0.25)"
-										: "transparent",
-									color: isBattleToolsMenuActive() ? "var(--text)" : "inherit",
-									transition: "background-color 0.2s ease, color 0.2s ease",
-									"&:hover": {
-										backgroundColor: isBattleToolsMenuActive()
-											? "rgba(255,255,255,0.35)"
-											: "rgba(255,255,255,0.2)",
-									},
-								}}>
-								{t("menu.battleTools")}
-							</Button>
-						</motion.div>
-						<Menu
-							anchorEl={battleToolsMenuAnchor}
-							open={Boolean(battleToolsMenuAnchor)}
-							onClose={handleBattleToolsMenuClose}
-							anchorOrigin={{
-								vertical: "bottom",
-								horizontal: "left",
-							}}
-							transformOrigin={{
-								vertical: "top",
-								horizontal: "left",
-							}}
-							sx={{
-								"& .MuiPaper-root": {
-									backgroundColor: "var(--primary)",
-									backdropFilter: "blur(10px)",
-									border: "1px solid rgba(255,255,255,0.2)",
-								},
-							}}>
-							{battleToolsMenuItems.map((item) => {
-								const label = item.labelKey ? t(item.labelKey) : "";
-								if (!label) return null;
-								const isActive = isActivePath(item.path);
-								return (
-									<MenuItem
-										key={item.labelKey || item.path}
-										onClick={() => {
-											navigate(item.path);
-											handleBattleToolsMenuClose();
-										}}
-										sx={{
-											fontWeight: isActive ? 600 : 500,
-											backgroundColor: isActive
-												? "rgba(255,255,255,0.25)"
-												: "transparent",
-											color: isActive ? "#1b4332" : "#ffffff",
-											"&:hover": {
-												backgroundColor: "rgba(255,255,255,0.2)",
-											},
-										}}>
-										{label}
-									</MenuItem>
-								);
-							})}
-						</Menu>
-					</Box>
+						{/* CENTER: desktop nav */}
+						<nav className="hidden md:flex items-center justify-center gap-0.5">
+							{renderDesktopNav()}
+						</nav>
 
-					{isLoggedIn ? (
-						<Stack
-							direction="row"
-							spacing={1.5}
-							alignItems="center"
-							sx={{ ml: 2 }}>
-							{/* 用户相关导航项 - 只在桌面端显示 */}
-							<Box sx={{ display: { xs: "none", md: "flex" } }}>
-								{userNavItems.map((item) => {
-									const label = item.labelKey ? t(item.labelKey) : "";
-									if (!label) return null;
-									const isActive = isActivePath(item.path);
-									return (
-										<motion.div
-											key={item.labelKey || item.path}
-											whileHover={{ scale: 1.05 }}
-											whileTap={{ scale: 0.95 }}
-											transition={{
-												type: "spring",
-												stiffness: 400,
-												damping: 17,
-											}}>
-											<Button
-												color="inherit"
-												onClick={() => {
-													navigate(item.path);
-												}}
+						{/* RIGHT: language + auth */}
+						<div className="flex items-center justify-end gap-1.5 md:gap-2">
+							<button
+								onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
+								className="border-0 bg-transparent cursor-pointer px-2 py-1 rounded-lg text-[12px] font-medium transition-all duration-150 opacity-50 hover:opacity-90 select-none"
+								style={{ fontFamily: "inherit", color: "var(--text)" }}>
+								{locale === "zh" ? "中文" : "EN"}
+							</button>
+
+							{isLoggedIn ? (
+								<>
+									<Tooltip title={t("navbar.avatarTooltip") || ""} arrow>
+										<button
+											onClick={(e) => setAvatarAnchor(e.currentTarget)}
+											className="flex items-center gap-2 border-0 bg-transparent cursor-pointer p-0 hover:opacity-75 transition-opacity duration-150">
+											<Badge
+												overlap="circular"
+												color="success"
+												variant="dot"
+												anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
 												sx={{
-													ml: 0.75,
-													borderRadius: 1,
-													fontWeight: isActive ? 600 : 500,
-													backgroundColor: isActive
-														? "rgba(255,255,255,0.25)"
-														: "transparent",
-													color: isActive ? "#1b4332" : "inherit",
-													transition:
-														"background-color 0.2s ease, color 0.2s ease",
-													"&:hover": {
-														backgroundColor: isActive
-															? "rgba(255,255,255,0.35)"
-															: "rgba(255,255,255,0.2)",
+													"& .MuiBadge-badge": {
+														height: 8, minWidth: 8, borderRadius: "50%",
+														boxShadow: "0 0 0 1.5px rgba(255,255,255,0.86)",
 													},
 												}}>
-												{label}
-											</Button>
-										</motion.div>
-									);
-								})}
-							</Box>
+												<Avatar
+													alt={displayName}
+													src={avatarSrc}
+													sx={{
+														width: 30, height: 30,
+														backgroundColor: "rgba(166,206,182,0.4)",
+														color: "var(--text)",
+														fontWeight: 700,
+														fontSize: "0.75rem",
+														border: "1.5px solid rgba(166,206,182,0.5)",
+													}}
+													onError={() => setAvatarError(true)}>
+													{avatarInitial}
+												</Avatar>
+											</Badge>
+											<span className="hidden md:block text-[13px] font-medium leading-none" style={{ color: "var(--text)" }}>
+												{displayName}
+											</span>
+										</button>
+									</Tooltip>
 
-							{/* 卡组下拉菜单 - 仅在已登录时显示（桌面端） */}
-							{isLoggedIn && (
-								<Box sx={{ display: { xs: "none", md: "block" } }}>
-									<motion.div
-										whileHover={{ scale: 1.05 }}
-										whileTap={{ scale: 0.95 }}
-										transition={{
-											type: "spring",
-											stiffness: 400,
-											damping: 17,
-										}}>
-										<Button
-											color="inherit"
-											onClick={handleDeckMenuOpen}
-											endIcon={<ArrowDropDownIcon />}
-											sx={{
-												ml: 0.75,
-												borderRadius: 1,
-												fontWeight: isDeckMenuActive() ? 600 : 500,
-												backgroundColor: isDeckMenuActive()
-													? "rgba(255,255,255,0.25)"
-													: "transparent",
-												color: isDeckMenuActive() ? "#1b4332" : "inherit",
-												transition:
-													"background-color 0.2s ease, color 0.2s ease",
-												"&:hover": {
-													backgroundColor: isDeckMenuActive()
-														? "rgba(255,255,255,0.35)"
-														: "rgba(255,255,255,0.2)",
-												},
-											}}>
-											{t("menu.deck")}
-										</Button>
-									</motion.div>
-								</Box>
-							)}
-
-							<Tooltip
-								title={t("navbar.avatarTooltip") || ""}
-								arrow>
-								<motion.div
-									whileHover={{ scale: 1.1 }}
-									whileTap={{ scale: 0.9 }}
-									transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-									<IconButton
-										onClick={handleAvatarClick}
-										aria-label={t("navbar.avatarTooltip") || "avatar"}
+									<Menu
+										anchorEl={avatarAnchor}
+										open={Boolean(avatarAnchor)}
+										onClose={() => setAvatarAnchor(null)}
+										anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+										transformOrigin={{ vertical: "top", horizontal: "right" }}
 										sx={{
-											p: 0,
-											borderRadius: "50%",
-											boxShadow: "0 6px 14px -8px rgba(0,0,0,0.45)",
+											"& .MuiPaper-root": {
+												mt: "8px",
+												background: "rgba(240,250,244,0.97)",
+												backdropFilter: "blur(20px)",
+												border: "1px solid rgba(166,206,182,0.4)",
+												borderRadius: "14px",
+												boxShadow: "0 8px 32px rgba(80,140,106,0.14), 0 2px 8px rgba(0,0,0,0.06)",
+												px: "5px", py: "5px",
+												minWidth: 132,
+											},
 										}}>
-										<Badge
-											overlap="circular"
-											color="success"
-											variant="dot"
-											anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+										<MenuItem
+											onClick={() => { logout(); setAvatarAnchor(null); }}
 											sx={{
-												"& .MuiBadge-badge": {
-													height: 10,
-													minWidth: 10,
-													borderRadius: "50%",
-													boxShadow: "0 0 0 2px rgba(166, 206, 182, 0.4)",
-												},
+												fontSize: "0.8rem",
+												color: "var(--error)",
+												borderRadius: "8px",
+												transition: "all 0.12s",
+												"&:hover": { backgroundColor: "rgba(244,67,54,0.07)" },
 											}}>
-											<Avatar
-												alt={displayName}
-												src={avatarSrc}
-												sx={{
-													width: 36,
-													height: 36,
-													backgroundColor: "rgba(166, 206, 182, 0.35)",
-													color: "#1b4332",
-													fontWeight: 600,
-													border: "1px solid rgba(166, 206, 182, 0.6)",
-												}}
-												onError={() => setAvatarError(true)}>
-												{avatarInitial}
-											</Avatar>
-										</Badge>
-									</IconButton>
-								</motion.div>
-							</Tooltip>
-							<Box
-								sx={{
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "flex-start",
-								}}>
-								<Typography
-									variant="body2"
-									fontWeight={600}
-									color="inherit"
-									sx={{ lineHeight: 1.2 }}>
-									{displayName}
-								</Typography>
-							</Box>
-							<Menu
-								anchorEl={anchorEl}
-								open={Boolean(anchorEl)}
-								onClose={handleCloseMenu}
-								anchorOrigin={{
-									vertical: "bottom",
-									horizontal: "center",
-								}}
-								transformOrigin={{
-									vertical: "top",
-									horizontal: "center",
-								}}
-								sx={{
-									"& .MuiPaper-root": {
-										backgroundColor: "rgba(166, 206, 182, 0.95)",
-										backdropFilter: "blur(10px)",
-										border: "1px solid rgba(255,255,255,0.2)",
-									},
-								}}>
-								{/* 退出登录 */}
-								<MenuItem
-									onClick={handleLogout}
-									sx={{
-										color: "red",
-										"&:hover": {
-											backgroundColor: "rgba(255,255,255,0.2)",
-										},
-									}}>
-									{t("navbar.logout")}
-								</MenuItem>
-							</Menu>
-						</Stack>
-					) : (
-						<Box sx={{ display: "flex", alignItems: "center" }}>
-							<Button
-								color="inherit"
-								sx={{ ml: 1 }}
-								onClick={() => navigate("/login")}>
-								{t("navbar.login")}
-							</Button>
-						</Box>
-					)}
-				</Toolbar>
-			</AppBar>
-			<Toolbar />
-			<Drawer
-				anchor="left"
-				open={drawerOpen}
-				onClose={toggleDrawer(false)}
-				sx={{
-					"& .MuiDrawer-paper": {
-						backgroundColor: "rgba(166, 206, 182)", // 自定义背景色
-						color: "white", // 自定义文字颜色
-					},
-					"& .MuiListItemText-root": {
-						color: "white",
-					},
-					"& .MuiButtonBase-root": {
-						color: "white",
-					},
-				}}>
-				{drawer}
-			</Drawer>
+											{t("navbar.logout")}
+										</MenuItem>
+									</Menu>
+								</>
+							) : (
+								<button
+									onClick={() => navigate("/login")}
+									className="border-0 cursor-pointer px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-all duration-150"
+									style={{
+										fontFamily: "inherit",
+										color: "var(--text)",
+										backgroundColor: "rgba(166,206,182,0.25)",
+									}}
+									onMouseEnter={e => e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.42)"}
+									onMouseLeave={e => e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.25)"}>
+									{t("navbar.login")}
+								</button>
+							)}
+						</div>
+					</div>
+				</div>
+
+				{/* ── Secondary pill — mobile only, in-game sections ────────── */}
+				{section !== "hub" && (
+					<div
+						className="pointer-events-auto max-w-5xl mx-auto mt-2 rounded-2xl md:hidden"
+						style={{
+							background: "rgba(255,255,255,0.78)",
+							backdropFilter: "blur(20px)",
+							WebkitBackdropFilter: "blur(20px)",
+							border: "1px solid rgba(166,206,182,0.38)",
+							boxShadow: "0 2px 16px rgba(80,140,106,0.10)",
+						}}>
+
+						{/* Gradient fade indicators */}
+						<div className="relative overflow-hidden rounded-2xl">
+							<div
+								className="absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none"
+								style={{ background: "linear-gradient(to right, rgba(255,255,255,0.78), transparent)" }}
+							/>
+							<div
+								className="absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none"
+								style={{ background: "linear-gradient(to left, rgba(255,255,255,0.78), transparent)" }}
+							/>
+
+							<nav className="flex items-center gap-1 h-10 px-4 overflow-x-auto scrollbar-hide">
+								{getMobileItems().map((item) => (
+									<MobilePill
+										key={item.path}
+										label={t(item.labelKey)}
+										isActive={isActive(item.path)}
+										onClick={() => navigate(item.path)}
+									/>
+								))}
+							</nav>
+						</div>
+					</div>
+				)}
+			</header>
+
+			{/* Spacer: accounts for floating pill + top padding */}
+			<div className={section !== "hub" ? "h-[108px] md:h-[72px]" : "h-[64px] md:h-[72px]"} />
+
 			<Snackbar
-				open={showLoginSnackbar}
+				open={loginSnackbar}
 				autoHideDuration={3000}
-				onClose={() => setShowLoginSnackbar(false)}
+				onClose={() => setLoginSnackbar(false)}
 				message={t("navbar.loginPrompt")}
 				anchorOrigin={{ vertical: "top", horizontal: "center" }}
 			/>
 		</>
 	);
 }
-
-export default NavBar;
