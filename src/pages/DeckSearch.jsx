@@ -18,6 +18,7 @@ import {
 	Alert,
 	TextField,
 	Autocomplete,
+	Container,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import EditIcon from "@mui/icons-material/Edit";
@@ -35,7 +36,7 @@ import { apiRequest } from "../utils/api.js";
 
 const DeckSearch = () => {
 	const { t } = useLocale();
-	const { token, username } = useAuth();
+	const { token } = useAuth();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -461,7 +462,6 @@ const DeckSearch = () => {
 	};
 	const buildCardEffectText = (deck) => {
 		if (!deck?.cards?.length) return "暂无卡片数据";
-		console.log("Building card effect text for deck:", deck);
 		return deck.cards
 			.map((card) => {
 				const info =
@@ -501,12 +501,8 @@ const DeckSearch = () => {
 
 	// 打开编辑页面
 	const handleEditDeck = (deck) => {
-		console.log("准备编辑卡组:", deck);
-		console.log("卡组ID:", deck._id || deck.id);
-
 		const deckId = deck._id || deck.id;
 		if (!deckId) {
-			console.error("❌ 卡组缺少ID");
 			setSnackbar({
 				open: true,
 				message: t("deckSearch.messages.dataError"),
@@ -515,7 +511,6 @@ const DeckSearch = () => {
 			return;
 		}
 
-		console.log("跳转到编辑页面，传递ID:", deckId);
 		navigate("/deck-edit", {
 			state: {
 				deckId: deckId,
@@ -533,19 +528,13 @@ const DeckSearch = () => {
 	const handleConfirmDelete = async () => {
 		if (!deletingDeck || isDeleting) return;
 
-		console.log(
-			`🗑️ 开始删除卡组: ${deletingDeck.name} (ID: ${deletingDeck.id})`
-		);
 		setIsDeleting(true);
 		try {
 			const response = await apiRequest(`/api/decks/${deletingDeck.id}`, {
 				method: "DELETE",
 			});
 
-			console.log(`📡 删除请求响应状态: ${response.status}`);
-
-			const result = await response.json();
-			console.log(`✅ 删除成功:`, result);
+			await response.json();
 
 			setSnackbar({
 				open: true,
@@ -576,35 +565,15 @@ const DeckSearch = () => {
 	};
 
 	return (
-		<Box
-			sx={{
-				maxWidth: 960,
-				mx: "auto",
-				mt: 4,
-				mb: 8,
-				px: { xs: 1.5, md: 4 },
-			}}>
-			<Stack
-				direction="row"
-				justifyContent="space-between"
-				alignItems="center">
-				<Box>
-					<Typography
-						variant="h5"
-						gutterBottom
-						sx={{ fontWeight: 700, letterSpacing: 0.4 }}>
-						{t("deckSearch.myDecks")}
-					</Typography>
-					<Typography
-						variant="body2"
-						color="text.secondary"
-						sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}>
-						{token
-							? `当前账号：${username || "未知用户"}`
-							: t("deckSearch.loginRequired")}
-					</Typography>
-				</Box>
-				<Box sx={{ display: "flex", gap: 1 }}>
+		<Container maxWidth="lg" sx={{ py: 4 }}>
+			<Box textAlign="center" mb={4}>
+				<Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
+					{t("deckSearch.title")}
+				</Typography>
+			</Box>
+
+			<Box sx={{ mt: 3 }}>
+				<Box display="flex" justifyContent="flex-end" mb={1}>
 					<PrimaryButton
 						variant="contained"
 						size="small"
@@ -614,9 +583,6 @@ const DeckSearch = () => {
 						刷新
 					</PrimaryButton>
 				</Box>
-			</Stack>
-
-			<Box sx={{ mt: 3 }}>
 				{loading ? (
 					<Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
 						<CircularProgress />
@@ -1275,7 +1241,7 @@ const DeckSearch = () => {
 					{snackbar.message}
 				</Alert>
 			</Snackbar>
-		</Box>
+		</Container>
 	);
 };
 

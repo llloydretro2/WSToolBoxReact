@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
 	Box,
-	Button,
 	Container,
 	Typography,
 	Dialog,
@@ -14,6 +13,11 @@ import {
 	Divider,
 	Chip,
 } from "@mui/material";
+import {
+	PrimaryButton,
+	SecondaryButton,
+	DangerButton,
+} from "../components/ButtonVariants";
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
 import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
 import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
@@ -97,12 +101,6 @@ function ChessClock() {
 		? t("chessClock.statusRunning", { player: activePlayerLabel })
 		: t("chessClock.statusPaused");
 
-	const GREEN_MAIN = "var(--primary)";
-	const GREEN_DARK = "var(--primary-hover)";
-	const GREEN_TEXT = "var(--text)";
-	const ACCENT_RED = "#760f10";
-	const ACCENT_RED_DARK = "#5c0f10";
-
 	const handlePlayerTap = (targetSide) => {
 		setSide(targetSide);
 		setIsRunning(true);
@@ -144,7 +142,7 @@ function ChessClock() {
 					<Typography
 						variant="h4"
 						fontWeight={700}
-						color="#1b4332">
+						color="var(--text)">
 						{t("chessClock.title")}
 					</Typography>
 					<Typography
@@ -172,7 +170,7 @@ function ChessClock() {
 						p: { xs: 3, md: 5 },
 						borderRadius: 4,
 						backgroundColor: "rgba(255, 255, 255, 0)",
-						border: "1px solid rgba(166, 206, 182, 0.45)",
+						border: "1px solid var(--border)",
 						boxShadow: "0 32px 80px -48px rgba(74, 141, 112, 0.45)",
 					}}>
 					<Stack spacing={{ xs: 3, md: 4 }}>
@@ -275,67 +273,48 @@ function ChessClock() {
 								whileTap={{ scale: 0.95 }}
 								transition={{ type: "spring", stiffness: 400, damping: 17 }}
 								style={{ width: "100%" }}>
-								<Button
-									variant="contained"
+								<PrimaryButton
 									startIcon={
 										isRunning ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />
 									}
 									fullWidth
 									sx={{
-										backgroundColor: isRunning ? "var(--warning)" : GREEN_MAIN,
-										color: GREEN_TEXT,
+										backgroundColor: isRunning ? "var(--warning)" : undefined,
 										"&:hover": {
 											backgroundColor: isRunning
 												? "var(--warning-hover)"
-												: GREEN_DARK,
+												: undefined,
 										},
 									}}
 									onClick={togglePause}>
 									{pauseLabel}
-								</Button>
+								</PrimaryButton>
 							</motion.div>
 							<motion.div
 								whileHover={{ scale: 1.05, rotate: 1 }}
 								whileTap={{ scale: 0.95 }}
 								transition={{ type: "spring", stiffness: 400, damping: 17 }}
 								style={{ width: "100%" }}>
-								<Button
+								<SecondaryButton
 									variant="outlined"
 									startIcon={<SwapVertRoundedIcon />}
 									fullWidth
-									sx={{
-										borderColor: GREEN_MAIN,
-										color: GREEN_TEXT,
-										"&:hover": {
-											borderColor: GREEN_DARK,
-											backgroundColor: "var(--primary-light)",
-										},
-									}}
 									onClick={handleSwitchSide}>
 									{t("chessClock.switchButton")}
-								</Button>
+								</SecondaryButton>
 							</motion.div>
 							<motion.div
 								whileHover={{ scale: 1.05, rotate: -1 }}
 								whileTap={{ scale: 0.95 }}
 								transition={{ type: "spring", stiffness: 400, damping: 17 }}
 								style={{ width: "100%" }}>
-								<Button
+								<DangerButton
 									variant="outlined"
 									startIcon={<RestartAltRoundedIcon />}
 									fullWidth
-									sx={{
-										borderColor: ACCENT_RED,
-										color: ACCENT_RED,
-										"&:hover": {
-											borderColor: ACCENT_RED_DARK,
-											color: ACCENT_RED_DARK,
-											backgroundColor: "rgba(118, 15, 16, 0.08)",
-										},
-									}}
 									onClick={() => setShowResetConfirm(true)}>
 									{t("chessClock.resetButton")}
-								</Button>
+								</DangerButton>
 							</motion.div>
 						</Stack>
 
@@ -366,21 +345,15 @@ function ChessClock() {
 					<Typography>{t("chessClock.dialogBody")}</Typography>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setShowResetConfirm(false)}>
+					<SecondaryButton onClick={() => setShowResetConfirm(false)}>
 						{t("chessClock.dialogCancel")}
-					</Button>
-					<Button
+					</SecondaryButton>
+					<DangerButton
+						variant="contained"
 						onClick={handleResetAll}
-						startIcon={<RestartAltRoundedIcon />}
-						sx={{
-							backgroundColor: ACCENT_RED,
-							color: "#fff",
-							"&:hover": {
-								backgroundColor: ACCENT_RED_DARK,
-							},
-						}}>
+						startIcon={<RestartAltRoundedIcon />}>
 						{t("chessClock.dialogConfirm")}
-					</Button>
+					</DangerButton>
 				</DialogActions>
 			</Dialog>
 		</Box>

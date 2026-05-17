@@ -12,6 +12,7 @@ import {
 	Alert,
 	CircularProgress,
 	Grid,
+	Container,
 	Autocomplete,
 	ToggleButtonGroup,
 	ToggleButton,
@@ -78,7 +79,6 @@ const DeckEdit = () => {
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [currentPage, setCurrentPage] = useState(0);
 	const [hasMore, setHasMore] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
 	const [snackbarOpen, setSnackbarOpen] = useState(false);
 	const [snackbarMessage, setSnackbarMessage] = useState("");
 	const pageSize = 20;
@@ -94,17 +94,10 @@ const DeckEdit = () => {
 	// 从后端获取卡组数据
 	useEffect(() => {
 		const fetchDeckData = async () => {
-			console.log("DeckEdit 组件启动");
-			console.log("location:", location);
-			console.log("location.state:", location.state);
-
 			// 从 location.state 获取卡组 ID
 			const deckId = location.state?.deckId;
-			console.log("获取到的 deckId:", deckId);
-			console.log("当前 token:", token ? "存在" : "不存在");
 
 			if (!deckId) {
-				console.error("❌ 缺少卡组ID");
 				setSnackbarMessage("缺少卡组ID，将返回卡组列表");
 				setSnackbarOpen(true);
 				setLoading(false);
@@ -113,7 +106,6 @@ const DeckEdit = () => {
 			}
 
 			if (!token) {
-				console.error("❌ 用户未登录");
 				setSnackbarMessage("请先登录，将返回卡组列表");
 				setSnackbarOpen(true);
 				setLoading(false);
@@ -123,21 +115,8 @@ const DeckEdit = () => {
 
 			setLoading(true);
 			try {
-				console.log("正在获取卡组数据，ID:", deckId);
-
 				const response = await apiRequest(`/api/decks/${deckId}`);
 				const data = await response.json();
-
-				// 显示完整的获取到的信息用于调试
-				console.log("从后端获取的完整卡组数据:", data);
-				console.log("卡组ID:", data._id || data.id);
-				console.log("卡组名称:", data.name);
-				console.log("卡组边:", data.side);
-				console.log("卡组系列:", data.series);
-				console.log("卡组卡片:", data.cards);
-				console.log("创建时间:", data.createdAt);
-				console.log("更新时间:", data.updatedAt);
-				console.log("作者:", data.author);
 
 				setDeckData(data);
 				setDeckName(data.name || "");
@@ -154,10 +133,8 @@ const DeckEdit = () => {
 					});
 				}
 
-				console.log("处理后的卡组数据:", processedDeck);
 				setDeck(processedDeck);
 			} catch (error) {
-				console.error("获取卡组数据失败:", error);
 				setSnackbarMessage(error.message || "获取卡组数据失败");
 				setSnackbarOpen(true);
 			} finally {
@@ -244,8 +221,7 @@ const DeckEdit = () => {
 			setCurrentPage(page);
 			const total = Number(result.total) || incoming.length;
 			setHasMore(page * pageSize < total);
-		} catch (err) {
-			console.error("获取系列数据失败:", err);
+		} catch {
 			if (reset) {
 				setAllCards([]);
 				setFilteredCards([]);
@@ -431,50 +407,6 @@ const DeckEdit = () => {
 			.sort();
 	};
 
-	// 保存卡组的函数
-	const handleSaveDeck = async () => {
-		try {
-			setIsSaving(true);
-
-			// 准备卡片数据
-			const cardsArray = Object.entries(cardCounts)
-				.filter(([_cardNo, count]) => count > 0)
-				.map(([cardNo, count]) => {
-					const cardInfo = allCards.find((card) => card.card_no === cardNo);
-					return {
-						cardNo: cardNo,
-						count: count,
-						imageUrl: cardInfo?.image_path || "",
-						info: cardInfo || {},
-					};
-				});
-
-			const deckDataToSave = {
-				name: deckName,
-				side: side,
-				series: form.series,
-				cards: cardsArray,
-			};
-
-			await apiRequest(`/api/decks/${deckData._id}`, {
-				method: "PUT",
-				body: JSON.stringify(deckDataToSave),
-			});
-
-			setSnackbarMessage("卡组更新成功！");
-			setSnackbarOpen(true);
-
-			// 重新获取卡组数据以更新显示
-			// await fetchDeckData();
-		} catch (error) {
-			console.error("保存卡组失败:", error);
-			setSnackbarMessage("保存卡组失败: " + error.message);
-			setSnackbarOpen(true);
-		} finally {
-			setIsSaving(false);
-		}
-	};
-
 	// 保存卡组
 	const handleSave = async () => {
 		if (!deckData || !deckName.trim()) {
@@ -482,29 +414,27 @@ const DeckEdit = () => {
 			setSnackbarOpen(true);
 			return;
 		}
-
 		setSaving(true);
 		try {
-			const deckEntries = Object.entries(deck).map(([cardNo, count]) => ({
-				cardNo,
-				count,
-			}));
-
+			const cardsArray = Object.entries(cardCounts)
+				.filter(([, count]) => count > 0)
+				.map(([cardNo, count]) => {
+					const cardInfo = allCards.find((card) => card.card_no === cardNo);
+					return { cardNo, count, imageUrl: cardInfo?.image_path || "", info: cardInfo || {} };
+				});
 			await apiRequest(`/api/decks/${deckData._id}`, {
 				method: "PUT",
 				body: JSON.stringify({
 					name: deckName.trim(),
-					series: deckData.series,
-					side: deckData.side,
-					cards: deckEntries,
+					side,
+					series: form.series,
+					cards: cardsArray,
 					isPublic: deckData.isPublic,
 				}),
 			});
-
 			setSnackbarMessage("卡组保存成功");
 			setSnackbarOpen(true);
 		} catch (error) {
-			console.error("保存卡组失败:", error);
 			setSnackbarMessage(error.message || "保存卡组失败");
 			setSnackbarOpen(true);
 		} finally {
@@ -512,19 +442,14 @@ const DeckEdit = () => {
 		}
 	};
 
-	console.log("DeckEdit 组件正在渲染");
-	console.log("当前状态 - loading:", loading, "deckData:", deckData);
-
-	// 简化渲染逻辑，确保基本显示
+	// 渲染
 	return (
-		<Box sx={{ maxWidth: 1200, mx: "auto", p: 3 }}>
-			<Typography
-				variant="h4"
-				component="h1"
-				gutterBottom
-				textAlign="center">
-				编辑卡组
-			</Typography>
+		<Container maxWidth="lg" sx={{ py: 3 }}>
+			<Box textAlign="center" mb={4}>
+				<Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
+					编辑卡组
+				</Typography>
+			</Box>
 
 			{loading ? (
 				<Box
@@ -539,80 +464,7 @@ const DeckEdit = () => {
 				<Grid
 					container
 					spacing={3}>
-					{/* 原生数据展示框 */}
-					<Grid
-						item
-						xs={12}>
-						<Grid
-							container
-							spacing={2}>
-							<Grid
-								item
-								xs={12}
-								md={6}>
-								<Card>
-									<CardContent>
-										<Typography
-											variant="h6"
-											gutterBottom
-											color="primary">
-											🔍 数据库原生数据
-										</Typography>
-										<Box
-											sx={{
-												backgroundColor: "var(--surface)",
-												p: 2,
-												borderRadius: 1,
-												maxHeight: "300px",
-												overflow: "auto",
-												fontFamily: "monospace",
-												fontSize: "12px",
-											}}>
-											<pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-												{deckData
-													? JSON.stringify(deckData, null, 2)
-													: "等待加载..."}
-											</pre>
-										</Box>
-									</CardContent>
-								</Card>
-							</Grid>
-							<Grid
-								item
-								xs={12}
-								md={6}>
-								<Card>
-									<CardContent>
-										<Typography
-											variant="h6"
-											gutterBottom
-											color="secondary">
-											📨 传递的参数数据
-										</Typography>
-										<Box
-											sx={{
-												backgroundColor: "#f0f8ff",
-												p: 2,
-												borderRadius: 1,
-												maxHeight: "300px",
-												overflow: "auto",
-												fontFamily: "monospace",
-												fontSize: "12px",
-											}}>
-											<pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-												{JSON.stringify(location.state, null, 2)}
-											</pre>
-										</Box>
-									</CardContent>
-								</Card>
-							</Grid>
-						</Grid>
-					</Grid>
-
-					<Grid
-						item
-						xs={12}
-						md={6}>
+					<Grid size={{ xs: 12, md: 6 }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -685,10 +537,7 @@ const DeckEdit = () => {
 						</Card>
 					</Grid>
 
-					<Grid
-						item
-						xs={12}
-						md={6}>
+					<Grid size={{ xs: 12, md: 6 }}>
 						<Card>
 							<CardContent>
 								<Typography
@@ -1223,8 +1072,8 @@ const DeckEdit = () => {
 				}}>
 				<PrimaryButton
 					variant="contained"
-					onClick={handleSaveDeck}
-					disabled={isSaving}
+					onClick={handleSave}
+					disabled={saving}
 					sx={{
 						backgroundColor: "var(--primary)",
 						color: "white",
@@ -1233,7 +1082,7 @@ const DeckEdit = () => {
 						},
 						minWidth: 120,
 					}}>
-					{isSaving ? <CircularProgress size={20} /> : "保存卡组"}
+					{saving ? <CircularProgress size={20} /> : "保存卡组"}
 				</PrimaryButton>
 			</Box>
 
@@ -1522,7 +1371,7 @@ const DeckEdit = () => {
 					{snackbarMessage}
 				</Alert>
 			</Snackbar>
-		</Box>
+		</Container>
 	);
 };
 

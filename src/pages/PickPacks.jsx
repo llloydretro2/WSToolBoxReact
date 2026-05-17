@@ -143,7 +143,7 @@ function PickPacks() {
   };
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="md">
       <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
         <Typography
           variant="h4"

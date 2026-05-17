@@ -101,12 +101,6 @@ function Dice() {
 			: "0";
 	const hasResults = results.length > 0 && flattenedResults.length > 0;
 
-	const GREEN_MAIN = "var(--theme-primary)";
-	const GREEN_DARK = "var(--theme-primary-hover)";
-	const GREEN_TEXT = "var(--theme-text)";
-	const ACCENT_RED = "var(--error)";
-	const ACCENT_RED_DARK = "#5c0f10";
-
 	return (
 		<Box
 			sx={{

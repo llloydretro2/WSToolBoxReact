@@ -1,7 +1,7 @@
-import { Container, Typography, Button, Box } from "@mui/material";
+import { Container, Typography, Box } from "@mui/material";
 import React, { useState } from "react";
-import { motion } from "framer-motion";
 import { useLocale } from "../contexts/LocaleContext";
+import { PrimaryButton } from "../components/ButtonVariants";
 import firstCard from "../assets/ims_s.png";
 import secondCard from "../assets/ims_k.png";
 
@@ -32,7 +32,7 @@ function FirstSecond() {
 				<Typography
 					variant="h4"
 					fontWeight={700}
-					color="#1b4332"
+					color="var(--text)"
 					gutterBottom>
 					{t("pages.firstSecond.title")}
 				</Typography>
@@ -54,23 +54,13 @@ function FirstSecond() {
 					/>
 				)}
 
-				<motion.div
-					whileHover={{ scale: 1.05, rotate: 1 }}
-					whileTap={{ scale: 0.95 }}
-					transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-					<Button
-						variant="contained"
-						size="large"
-						onClick={decideOrder}
-						sx={{
-							px: 6,
-							py: 1.5,
-							backgroundColor: "#a6ceb6",
-							"&:hover": { backgroundColor: "#95bfa5" },
-						}}>
-						{t("pages.firstSecond.button")}
-					</Button>
-				</motion.div>
+				<PrimaryButton
+					variant="contained"
+					size="large"
+					onClick={decideOrder}
+					sx={{ px: 6, py: 1.5 }}>
+					{t("pages.firstSecond.button")}
+				</PrimaryButton>
 			</Box>
 		</Container>
 	);

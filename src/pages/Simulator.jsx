@@ -11,6 +11,7 @@ import {
 	DialogTitle,
 	DialogContent,
 	DialogContentText,
+	CircularProgress,
 } from "@mui/material";
 import {
 	PrimaryButton,
@@ -35,6 +36,7 @@ function Simulator() {
 	const [selectedCard, setSelectedCard] = useState(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [sortedRarities, setSortedRarities] = useState([]);
+	const [isLoading, setIsLoading] = useState(false);
 
 	function simulatePacks() {
 		setSimulatedResult([]);
@@ -46,11 +48,7 @@ function Simulator() {
 			if (caseBox > maxCase) maxCase = caseBox;
 		}
 		if (maxCase === 0) maxCase = 1;
-		console.log("最大保底（箱）:", maxCase);
 		const cardPoolSize = packsPerBox * boxesPerCase * maxCase;
-		console.log("卡池大小:", cardPoolSize);
-		console.log("稀有度卡片表:", rarityMap);
-		console.log("稀有度保底:", rarityRates);
 
 		const sortedRarities = Object.entries(rarityRates)
 			.filter(([, val]) => val.pack || val.box || val.case)
@@ -78,7 +76,6 @@ function Simulator() {
 			.map(([key, val]) => [key, val]);
 
 		setSortedRarities(sortedRarities);
-		console.log("排序后稀有度:", Object.fromEntries(sortedRarities));
 		const knownRarities = sortedRarities.map(([rarity]) => rarity);
 		const nonRatedMap = Object.fromEntries(
 			Object.entries(rarityMap).filter(
@@ -89,15 +86,9 @@ function Simulator() {
 		const rareCardPool = [];
 
 		for (const [rarity, rate] of sortedRarities) {
-			console.log(`处理稀有度: ${rarity}，保底:`, rate);
 			const currentRarityPack = rate.pack ? parseInt(rate.pack) : null;
 			const currentRarityBox = rate.box ? parseInt(rate.box) : null;
 			const currentRarityCase = rate.case ? parseInt(rate.case) : null;
-			console.log(`当前稀有度 ${rarity} 的保底设置:`, {
-				包: currentRarityPack,
-				盒: currentRarityBox,
-				箱: currentRarityCase,
-			});
 
 			var numCards;
 			if (currentRarityCase) {
@@ -108,7 +99,6 @@ function Simulator() {
 			} else if (currentRarityPack) {
 				numCards = cardPoolSize / currentRarityPack;
 			}
-			console.log(`当前稀有度 ${rarity} 的卡片数:`, numCards);
 
 			const rarityCards = rarityMap[rarity] || [];
 			for (let i = 0; i < Math.floor(numCards); i++) {
@@ -121,17 +111,6 @@ function Simulator() {
 			}
 			if (rareCardPool.length >= cardPoolSize) break;
 		}
-
-		console.log(
-			"构建的高稀有卡池：",
-			rareCardPool.map((c) => `${c.name} (${c.rarity})`)
-		);
-		const rarityCountMap = rareCardPool.reduce((acc, card) => {
-			if (!acc[card.rarity]) acc[card.rarity] = 0;
-			acc[card.rarity]++;
-			return acc;
-		}, {});
-		console.log("高稀有卡池中每种稀有度数量：", rarityCountMap);
 
 		const resultPacks = [];
 
@@ -159,13 +138,6 @@ function Simulator() {
 			resultPacks.push(pack);
 		}
 
-		console.log("最终模拟结果：", resultPacks);
-		const simulatedRarityCounts = resultPacks.flat().reduce((acc, card) => {
-			if (!acc[card.rarity]) acc[card.rarity] = 0;
-			acc[card.rarity]++;
-			return acc;
-		}, {});
-		console.log("模拟结果中每种稀有度卡片数量：", simulatedRarityCounts);
 		setSimulatedResult(resultPacks);
 	}
 
@@ -184,12 +156,12 @@ function Simulator() {
 
 	return (
 		<Container
-			maxWidth="sm"
+			maxWidth="md"
 			sx={{ textAlign: "center" }}>
 			<Typography
 				variant="h4"
 				fontWeight={700}
-				color="#1b4332"
+				color="var(--text)"
 				gutterBottom>
 				{t("pages.simulator.title")}
 			</Typography>
@@ -212,16 +184,17 @@ function Simulator() {
 					setSelectedProduct(newValue);
 
 					if (newValue) {
+						setIsLoading(true);
 						try {
 							const res = await apiRequest(
 								`/api/cards/by-product?product_name=${encodeURIComponent(newValue)}`
 							);
 							const data = await res.json();
 							setCards(data.data);
-							console.log(data);
-						} catch (error) {
-							console.error("请求出错:", error);
+						} catch {
 							setCards([]);
+						} finally {
+							setIsLoading(false);
 						}
 					}
 				}}
@@ -420,6 +393,12 @@ function Simulator() {
 				}}>
 				{t("pages.simulator.clearResults")}
 			</DangerButton>
+
+			{isLoading && (
+				<Box display="flex" justifyContent="center" mt={3}>
+					<CircularProgress size={36} />
+				</Box>
+			)}
 
 			{simulatedResult.length > 0 && (
 				<Box sx={{ mt: 4 }}>

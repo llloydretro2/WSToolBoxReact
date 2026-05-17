@@ -69,7 +69,7 @@ function RandomShuffle() {
 				<Typography
 					variant="h4"
 					fontWeight={700}
-					color="#1b4332"
+					color="var(--text)"
 					gutterBottom
 					align="center">
 					{t("shuffle.title")}
@@ -94,7 +94,7 @@ function RandomShuffle() {
 						backgroundColor: deck.length
 							? "rgba(166, 206, 182, 0.25)"
 							: "rgba(166, 206, 182, 0.18)",
-						color: "#1b4332",
+						color: "var(--text)",
 					}}
 				/>
 			</Stack>
@@ -146,15 +146,7 @@ function RandomShuffle() {
 							<DangerButton
 								variant="outlined"
 								startIcon={<RemoveCircleOutlineIcon />}
-								sx={{
-									minWidth: 160,
-									borderColor: "#d32f2f",
-									color: "#d32f2f",
-									"&:hover": {
-										borderColor: "#b71c1c",
-										backgroundColor: "rgba(211, 47, 47, 0.08)",
-									},
-								}}
+								sx={{ minWidth: 160 }}
 								onClick={handleDecrease}>
 								{t("shuffle.decreaseButton")}
 							</DangerButton>
@@ -196,7 +188,7 @@ function RandomShuffle() {
 												<Typography
 													variant="h5"
 													fontWeight={600}
-													color="#1b4332"
+													color="var(--text)"
 													component="div"
 													sx={{
 														opacity: card === 0 ? 0.6 : 1,

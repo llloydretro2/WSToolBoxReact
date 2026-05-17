@@ -6,6 +6,7 @@ import {
 	Box,
 	Typography,
 	Autocomplete,
+	Container,
 	Dialog,
 	DialogTitle,
 	DialogContent,
@@ -410,15 +411,12 @@ const DeckCreate = () => {
 	};
 
 	return (
-		<Box
-			display={"flex"}
-			flexDirection="column"
-			alignItems="center">
-			<Typography
-				variant="h6"
-				gutterBottom>
-				{t("deckCreate.title")}
-			</Typography>
+		<Container maxWidth="lg" sx={{ py: 3 }}>
+			<Box textAlign="center" mb={4}>
+				<Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
+					{t("deckCreate.title")}
+				</Typography>
+			</Box>
 			<TextField
 				required
 				label="卡组名称"
@@ -822,7 +820,7 @@ const DeckCreate = () => {
 										<DangerButton
 											variant="outlined"
 											size="small"
-											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
+											sx={{ minWidth: 36, width: 36, height: 36, px: 0.25, py: 0, fontSize: "0.7rem" }}
 											onClick={() => decrementCount(card.cardno)}>
 											-
 										</DangerButton>
@@ -837,7 +835,7 @@ const DeckCreate = () => {
 										<PrimaryButton
 											variant="outlined"
 											size="small"
-											sx={{ minWidth: 22, px: 0.25, py: 0, fontSize: "0.7rem" }}
+											sx={{ minWidth: 36, width: 36, height: 36, px: 0.25, py: 0, fontSize: "0.7rem" }}
 											onClick={() => incrementCount(card.cardno)}>
 											+
 										</PrimaryButton>
@@ -1429,7 +1427,7 @@ const DeckCreate = () => {
 					</PrimaryButton>
 				</DialogActions>
 			</Dialog>
-		</Box>
+		</Container>
 	);
 };
 

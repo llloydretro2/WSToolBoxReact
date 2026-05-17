@@ -13,6 +13,7 @@ import {
 	Typography,
 	Paper,
 	CircularProgress,
+	Container,
 	Tabs,
 	Tab,
 	TextField,
@@ -654,24 +655,16 @@ const Record = () => {
 	};
 
 	return (
-		<Box
-			sx={{
-				p: 3,
-				width: {
-					xs: "80%",
-					sm: "80%",
-					md: "60%",
-					lg: "50%",
-				},
-				mx: "auto",
-			}}>
-			<Typography
-				variant="h4"
-				fontWeight={700}
-				color="var(--text)"
-				gutterBottom>
-				{t("record.title")}
-			</Typography>
+		<Container maxWidth="lg" sx={{ py: 3 }}>
+			<Box textAlign="center" mb={4}>
+				<Typography
+					variant="h4"
+					fontWeight={700}
+					color="var(--text)"
+					gutterBottom>
+					{t("record.title")}
+				</Typography>
+			</Box>
 
 			<Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
 				<Tabs
@@ -727,7 +720,6 @@ const Record = () => {
 						if (formState.tournamentName.trim())
 							data.tournamentName = formState.tournamentName.trim();
 						if (formState.notes.trim()) data.notes = formState.notes.trim();
-						console.log("Submitting match record:", data);
 
 						try {
 							const res = await apiRequest(
@@ -1078,7 +1070,6 @@ const Record = () => {
 							<DangerButton
 								color="error"
 								onClick={() => {
-									console.log("Preparing to delete record:", deleteDialog.record);
 									deleteRecord();
 								}}>
 								{t("record.deleteDialog.confirm")}
@@ -1100,19 +1091,15 @@ const Record = () => {
 							sx={{
 								textAlign: "center",
 								py: 8,
-								backgroundColor: "var(--surface)",
+								px: 2,
+								border: "1px solid var(--border)",
 								borderRadius: 2,
-								boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+								backgroundColor: "var(--card-background)",
 							}}>
-							<Typography
-								variant="h6"
-								color="text.secondary"
-								gutterBottom>
+							<Typography variant="h6" fontWeight={600} color="var(--text)" gutterBottom>
 								{t("record.display.noRecords")}
 							</Typography>
-							<Typography
-								variant="body2"
-								color="text.secondary">
+							<Typography variant="body2" color="text.secondary">
 								{t("record.display.startFirst")}
 							</Typography>
 						</Box>
@@ -1123,7 +1110,7 @@ const Record = () => {
 							sx={{ width: "100%" }}>
 							{records.map((record) => (
 								<Grid
-									xs={12}
+									size={{ xs: 12 }}
 									sx={{ width: "100%" }}
 									key={record._id}>
 									<Card
@@ -1695,7 +1682,7 @@ const Record = () => {
 					</Menu>
 				</>
 			)}
-		</Box>
+		</Container>
 	);
 };
 
