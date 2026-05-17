@@ -100,3 +100,55 @@ When adding UI text, add keys to **both** locale files.
 ## Mobile / Capacitor
 
 Capacitor config (`capacitor.config.ts`) targets `webDir: 'build'`. The production Vite output for mobile is `build/` (not `dist/`). Android project is in `android/`.
+
+---
+
+## Mahjong Yaku Route Trainer
+
+A beginner-oriented Riichi Mahjong yaku-awareness tool added on branch `feature/mahjong-yaku-trainer`.
+
+### Location
+
+| Item | Path |
+|------|------|
+| Page | `src/pages/MahjongTrainer.jsx` |
+| Route | `/mahjong` (added to `src/App.jsx`) |
+| NavBar entry | `menu.mahjong` in `src/components/NavBar.jsx` |
+| Locale keys | `mahjong.*` in `src/locales/zh.json` + `en.json` |
+| Tile images | `public/assets/mahjong-tiles/` (34 SVGs, CC0 from FluffyStuff/riichi-mahjong-tiles) |
+| Tile components | `src/components/mahjong/MahjongTile.jsx`, `MahjongTilePicker.jsx` |
+
+### Calculation engine (all in `src/utils/mahjong/`)
+
+| Module | Responsibility |
+|--------|----------------|
+| `tileParser.js` | Tile model, `parseTiles`, `parseMelds`, `extractHandGroups` (DFS decomposer), `canCompleteHand`, `generateHandString` |
+| `shanten.js` | Accurate 3-way shanten: standard (Neval DFS), Chiitoitsu, Kokushi — `computeShanten(tiles, numMelds)` |
+| `handSimulator.js` | `evaluateYakuFromDecomposition` (14 yaku), `findScenarios` (brute-force 0/1-step), `extractYakuRelevantGroups`, `ALL_34_TILES` |
+| `yakuBFS.js` | Bounded BFS route search — `searchYakuRoute(...)`, `getDiscardCandidates`, `getDrawCandidates`, `makeBFSScenario` |
+| `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — feasibility heuristics, 3-tier scenario pipeline (simulation → BFS → heuristic), EXAMPLES, MEANINGS, `buildTrainerViewModel` adapter |
+
+### Scenario priority in `analyzeHand`
+
+1. **Tier 1 `findScenarios`** — exact 0/1-step via brute-force 34-draw scan; returns `isExactCompletion: true`
+2. **Tier 2 `searchYakuRoute`** — bounded BFS (depth 2, ≤280 states, per-yaku pruned); returns exact route or null
+3. **Tier 3 `SCENARIO_BUILDERS`** — heuristic tile-count rules; always `isExample: true` (shown as "Reference route")
+
+### UI architecture (MahjongTrainer.jsx)
+
+- **`buildTrainerViewModel`** — thin adapter: reshapes `analyzeHand()` output into UI-friendly fields (extracts `shanten`, sorts routes, splits regular / yakuman). No new calculation logic.
+- **`FixedHandBar`** — `position: fixed` below AppBar, shows live concealed tiles + open melds, tile count, status badges. Rendered outside `<Container>`.
+- **Collapsible `RouteCard`** — collapsed shows name + meaning + example hand; expanded shows Need/Discard/Target/Why scenarios.
+
+### Known limitations (do not paper over in UI)
+
+- **`extractHandGroups` is first-decomposition-only** (DFS returns the first valid split, not all valid splits). Ambiguous hands (e.g. `223344m`) may miss some yaku. `extractAllHandGroups` not yet implemented.
+- **No ukeire** — the system does not enumerate all tiles that improve shanten.
+- **No scoring** — no fu/han calculation, no riichi/dora/ippatsu mechanics.
+- **Pinfu wait check simplified** — all-sequence + non-value pair is labelled Pinfu without verifying two-sided (ryanmen) wait.
+- **Sanankou win-method not enforced** — does not distinguish tsumo vs ron for the completing triplet.
+- **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles (demonstrated in TC1 Yakuhai case).
+
+### ⚠️ Critical rule
+
+**Do not modify calculation engine files** (`tileParser.js`, `shanten.js`, `handSimulator.js`, `yakuBFS.js`, `yakuAnalyzer.js`) when making UI-only changes. The page consumes engine output via `buildTrainerViewModel`; UI layout changes belong in `MahjongTrainer.jsx` and the component files only.
