@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
-import { Box, Stack, Typography, Button, Chip, Divider, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { Box, Stack, Typography, Button, Divider } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ClearIcon from '@mui/icons-material/Clear';
 import MahjongTile from './MahjongTile';
@@ -40,10 +40,9 @@ const GROUPS = [
  *
  * Props:
  *   allTiles            tile[]       all tiles across hand + melds + builder (for count badges)
- *   onTileClick         fn(tile)     left-click (add)
- *   onTileRightClick    fn(tile)     right-click (remove one copy)
- *   mode                'hand'|'meld'
- *   onModeChange        fn(mode)
+ *   onTileClick         fn(tile)     left-click on main grid → add to hand
+ *   onTileRightClick    fn(tile)     right-click on main grid → remove from hand
+ *   onMeldTileClick     fn(tile)     click in meld builder grid → add to meld builder
  *   meldBuilder         tile[]       tiles being staged for next meld
  *   onAddMeld           fn()         finalise meldBuilder as a meld
  *   onClearMeldBuilder  fn()
@@ -55,8 +54,7 @@ function MahjongTilePicker({
   allTiles = [],
   onTileClick,
   onTileRightClick,
-  mode = 'hand',
-  onModeChange,
+  onMeldTileClick,
   meldBuilder = [],
   onAddMeld,
   onClearMeldBuilder,
@@ -71,110 +69,16 @@ function MahjongTilePicker({
     counts[k] = (counts[k] ?? 0) + 1;
   }
 
-  const isMeldMode = mode === 'meld';
   const canAddMeld = meldBuilder.length >= 3 && meldBuilder.length <= 4;
-
-  const toggleSx = {
-    fontSize: '0.78rem',
-    px: 1.25,
-    py: 0.4,
-    '&.Mui-selected': { backgroundColor: 'var(--primary)', color: 'var(--text)', fontWeight: 700 },
-    '&.Mui-selected:hover': { backgroundColor: 'var(--primary-hover)' },
-  };
 
   return (
     <Box>
-      {/* Mode toggle */}
-      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
-        <Typography variant="caption" fontWeight={700} color="var(--text-secondary)">
-          {locale === 'zh' ? '添加到：' : 'Add to:'}
-        </Typography>
-        <ToggleButtonGroup
-          value={mode}
-          exclusive
-          onChange={(_, v) => v && onModeChange?.(v)}
-          size="small"
-        >
-          <ToggleButton value="hand" sx={toggleSx}>
-            {locale === 'zh' ? '暗手' : 'Hand'}
-          </ToggleButton>
-          <ToggleButton value="meld" sx={toggleSx}>
-            {locale === 'zh' ? '副露' : 'Meld'}
-          </ToggleButton>
-        </ToggleButtonGroup>
-        {!isMeldMode && (
-          <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-            {locale === 'zh' ? '左键添加 · 右键移除一张' : 'Left-click add · Right-click remove'}
-          </Typography>
-        )}
-      </Stack>
+      {/* ── Main hand tile grid ── */}
+      <Typography variant="caption" color="text.secondary"
+        sx={{ fontStyle: 'italic', display: 'block', mb: 1 }}>
+        {locale === 'zh' ? '左键添加到暗手 · 右键移除一张' : 'Left-click to add to hand · Right-click to remove'}
+      </Typography>
 
-      {/* Meld builder (only in meld mode) */}
-      {isMeldMode && (
-        <Box sx={{
-          mb: 1.5, p: 1.25,
-          backgroundColor: 'rgba(255,210,160,0.15)',
-          border: '1px dashed #f0a060',
-          borderRadius: 1.5,
-        }}>
-          <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-            sx={{ display: 'block', mb: 0.75 }}>
-            {locale === 'zh'
-              ? `副露构建中（${meldBuilder.length}/3-4张，点击牌移除，点击"确认副露"添加）`
-              : `Meld builder (${meldBuilder.length}/3–4 tiles, click tile to remove, then "Add Meld")`}
-          </Typography>
-
-          <Stack direction="row" alignItems="center" gap={0.5} flexWrap="wrap">
-            {meldBuilder.length === 0 ? (
-              <Typography variant="caption" color="text.disabled">
-                {locale === 'zh' ? '点击下方牌面添加到副露' : 'Click tiles below to build a meld'}
-              </Typography>
-            ) : (
-              meldBuilder.map((tile, i) => (
-                <MahjongTile
-                  key={i}
-                  tile={tile}
-                  size={size}
-                  onClick={() => onRemoveFromBuilder?.(i)}
-                />
-              ))
-            )}
-
-            <Box sx={{ flexGrow: 1 }} />
-
-            <Stack direction="row" spacing={0.75}>
-              <Button
-                variant="contained"
-                size="small"
-                disabled={!canAddMeld}
-                startIcon={<AddCircleOutlineIcon />}
-                onClick={onAddMeld}
-                sx={{
-                  fontSize: '0.72rem',
-                  backgroundColor: canAddMeld ? 'var(--primary)' : undefined,
-                  color: canAddMeld ? 'var(--text)' : undefined,
-                  '&:hover': { backgroundColor: 'var(--primary-hover)' },
-                }}
-              >
-                {locale === 'zh' ? '确认副露' : 'Add Meld'}
-              </Button>
-              {meldBuilder.length > 0 && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<ClearIcon />}
-                  onClick={onClearMeldBuilder}
-                  sx={{ fontSize: '0.72rem' }}
-                >
-                  {locale === 'zh' ? '清空' : 'Clear'}
-                </Button>
-              )}
-            </Stack>
-          </Stack>
-        </Box>
-      )}
-
-      {/* Tile grid */}
       <Stack spacing={1.25}>
         {GROUPS.map(({ key, labelZh, labelEn, tiles }) => (
           <Box key={key}>
@@ -209,6 +113,97 @@ function MahjongTilePicker({
           ? '右键点击牌面可移除一张 · 红色数字表示已满4张'
           : 'Right-click a tile to remove one copy · Red badge = 4 copies (full)'}
       </Typography>
+
+      {/* ── Meld builder — always visible ── */}
+      <Divider sx={{ my: 1.5 }} />
+      <Box sx={{
+        p: 1.25,
+        backgroundColor: 'rgba(255,210,160,0.15)',
+        border: '1px dashed #f0a060',
+        borderRadius: 1.5,
+      }}>
+        <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
+          sx={{ display: 'block', mb: 0.75 }}>
+          {locale === 'zh'
+            ? `副露构建（${meldBuilder.length}/3-4张，点击已加入的牌可移除）`
+            : `Meld builder (${meldBuilder.length}/3–4 tiles — click staged tile to remove)`}
+        </Typography>
+
+        {/* Staged tiles + action buttons */}
+        <Stack direction="row" alignItems="center" gap={0.5} flexWrap="wrap" sx={{ mb: 1.25 }}>
+          {meldBuilder.length === 0 ? (
+            <Typography variant="caption" color="text.disabled">
+              {locale === 'zh' ? '点击下方牌面添加到副露' : 'Click tiles below to build a meld'}
+            </Typography>
+          ) : (
+            meldBuilder.map((tile, i) => (
+              <MahjongTile
+                key={i}
+                tile={tile}
+                size={size}
+                onClick={() => onRemoveFromBuilder?.(i)}
+              />
+            ))
+          )}
+          <Box sx={{ flexGrow: 1 }} />
+          <Stack direction="row" spacing={0.75}>
+            <Button
+              variant="contained"
+              size="small"
+              disabled={!canAddMeld}
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={onAddMeld}
+              sx={{
+                fontSize: '0.72rem',
+                backgroundColor: canAddMeld ? 'var(--primary)' : undefined,
+                color: canAddMeld ? 'var(--text)' : undefined,
+                '&:hover': { backgroundColor: 'var(--primary-hover)' },
+              }}
+            >
+              {locale === 'zh' ? '确认副露' : 'Add Meld'}
+            </Button>
+            {meldBuilder.length > 0 && (
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ClearIcon />}
+                onClick={onClearMeldBuilder}
+                sx={{ fontSize: '0.72rem' }}
+              >
+                {locale === 'zh' ? '清空' : 'Clear'}
+              </Button>
+            )}
+          </Stack>
+        </Stack>
+
+        {/* Compact tile grid for adding to meld builder */}
+        <Stack spacing={0.75}>
+          {GROUPS.map(({ key, labelZh, labelEn, tiles }) => (
+            <Box key={key}>
+              <Typography variant="caption" color="var(--text-secondary)"
+                sx={{ display: 'block', mb: 0.25, fontSize: '0.6rem' }}>
+                {locale === 'zh' ? labelZh : labelEn}
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={0.4}>
+                {tiles.map((tile) => {
+                  const cnt = counts[tileKey(tile)] ?? 0;
+                  return (
+                    <MahjongTile
+                      key={tileKey(tile)}
+                      tile={tile}
+                      size="xs"
+                      onClick={onMeldTileClick}
+                      count={cnt}
+                      maxCount={4}
+                      disabled={cnt >= 4}
+                    />
+                  );
+                })}
+              </Stack>
+            </Box>
+          ))}
+        </Stack>
+      </Box>
     </Box>
   );
 }

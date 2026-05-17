@@ -5,6 +5,7 @@ import {
   ToggleButton, ToggleButtonGroup, FormControlLabel, Switch,
   Collapse, Alert, AlertTitle, IconButton, Tooltip, Snackbar, Fab,
 } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ExpandMoreIcon        from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon        from "@mui/icons-material/ExpandLess";
 import SearchIcon            from "@mui/icons-material/Search";
@@ -21,8 +22,14 @@ import { analyzeHand, FEASIBILITY } from "../utils/mahjong/yakuAnalyzer";
 
 // ── Feasibility config ────────────────────────────────────────────────────────
 
+// Local extension: yaku structure is already present in the hand (not yet a
+// complete winning hand, but the required tile pattern is satisfied).
+// Computed in buildTrainerViewModel; not part of the engine's FEASIBILITY enum.
+const FEASIBILITY_ACHIEVED = 'achieved';
+
 const FEASIBILITY_CONFIG = {
   [FEASIBILITY.CONFIRMED]: { color: '#1b4332', bg: '#a6ceb6', labelZh: '已确立', labelEn: 'Confirmed' },
+  [FEASIBILITY_ACHIEVED]:  { color: '#0d3b20', bg: '#52b788', labelZh: '已达成', labelEn: 'Achieved'  },
   [FEASIBILITY.HIGH]:      { color: '#1b4332', bg: '#bdeacf', labelZh: '高可行', labelEn: 'High'      },
   [FEASIBILITY.MEDIUM]:    { color: '#7c4a00', bg: '#ffe0a0', labelZh: '可行',   labelEn: 'Medium'    },
   [FEASIBILITY.LOW]:       { color: '#7c2d00', bg: '#ffd0a8', labelZh: '较低',   labelEn: 'Low'       },
@@ -31,7 +38,7 @@ const FEASIBILITY_CONFIG = {
 };
 
 const FEASIBILITY_ORDER = [
-  FEASIBILITY.CONFIRMED, FEASIBILITY.HIGH, FEASIBILITY.MEDIUM,
+  FEASIBILITY.CONFIRMED, FEASIBILITY_ACHIEVED, FEASIBILITY.HIGH, FEASIBILITY.MEDIUM,
   FEASIBILITY.LOW, FEASIBILITY.VERY_LOW, FEASIBILITY.IMPOSSIBLE,
 ];
 
@@ -53,8 +60,28 @@ function buildTrainerViewModel(analysis, concealedTiles, openMelds) {
         FEASIBILITY_ORDER.indexOf(b.feasibility)
     );
 
-  const regularRoutes  = sortByFeasibility(routes.filter((r) => !r.isYakuman));
-  const yakumanRoutes  = sortByFeasibility(routes.filter((r) => r.isYakuman));
+  // Upgrade HIGH routes whose yaku structure is already present to ACHIEVED.
+  // Criteria: engine marks it HIGH AND the "needed" text is empty (nothing more
+  // needed for the yaku itself) or starts with "Keep" (just maintain what's there).
+  const upgradeToAchieved = (arr) => arr.map((r) => {
+    if (r.feasibility !== FEASIBILITY.HIGH) return r;
+    const needed = r.en?.needed ?? '';
+    if (needed === '' || needed.startsWith('Keep')) {
+      return { ...r, feasibility: FEASIBILITY_ACHIEVED };
+    }
+    return r;
+  });
+
+  const regularRoutes = sortByFeasibility(upgradeToAchieved(routes.filter((r) => !r.isYakuman)));
+  const yakumanRoutes = sortByFeasibility(upgradeToAchieved(routes.filter((r) => r.isYakuman)));
+
+  const achievedRoutes = [...regularRoutes, ...yakumanRoutes].filter(
+    (r) => r.feasibility === FEASIBILITY.CONFIRMED || r.feasibility === FEASIBILITY_ACHIEVED
+  );
+  const achievedHan = achievedRoutes.reduce((acc, r) => {
+    const h = handStatus.isOpen ? r.han.open : r.han.closed;
+    return typeof h === 'number' ? acc + h : acc;
+  }, 0);
 
   return {
     hand: {
@@ -70,6 +97,8 @@ function buildTrainerViewModel(analysis, concealedTiles, openMelds) {
       shanten,
       confirmedRoutes:  handStatus.confirmedRoutes,
       confirmedHan:     handStatus.confirmedHan,
+      achievedRoutes,
+      achievedHan,
       errors:           handStatus.errors,
     },
     warnings,
@@ -230,12 +259,13 @@ function ScenarioDisplay({ scenario, locale }) {
  *
  * Individual tiles are clickable for removal; melds have a × button.
  */
-function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, locale }) {
+function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, onClearAll, locale }) {
   if (!concealedTiles?.length && !openMelds?.length) return null;
 
-  const isOpen  = openMelds.length > 0;
-  const shanten = vm?.hand?.shanten ?? null;
-  const hasNoYaku = vm && isOpen && !(vm.hand?.confirmedRoutes?.length);
+  const isOpen         = openMelds.length > 0;
+  const shanten        = vm?.hand?.shanten ?? null;
+  const hasNoYaku      = vm && isOpen && !(vm.hand?.achievedRoutes?.length);
+  const achievedRoutes = vm?.hand?.achievedRoutes ?? [];
 
   const concealedCount = concealedTiles.length;
   const meldTileCount  = openMelds.reduce((s, m) => s + m.length, 0);
@@ -246,7 +276,6 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
     <Box sx={{
       position: 'fixed',
       top: { xs: 'calc(56px + 8px)', sm: 'calc(64px + 8px)' },
-      // Inset left/right so the bar floats rather than being edge-to-edge
       left: { xs: 8, sm: 16, md: 24 },
       right: { xs: 8, sm: 16, md: 24 },
       zIndex: 900,
@@ -265,12 +294,13 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
         maxWidth: 'lg',
         mx: 'auto',
       }}>
-        <Stack direction="row" alignItems="center" flexWrap="wrap" gap={0.75}>
+        <Stack direction="row" alignItems="flex-start" flexWrap="nowrap" gap={0.75}>
 
           {/* ── Tile count indicator ── */}
           <Stack direction="column" alignItems="center" sx={{
-            flexShrink: 0, mr: 0.5,
-            borderRight: '1px solid var(--border)', pr: 1,
+            flexShrink: 0,
+            borderRight: '1px solid var(--border)', pr: 1, mr: 0.25,
+            pt: 0.25,
           }}>
             <Typography sx={{ fontSize: '0.58rem', color: 'var(--text-secondary)', lineHeight: 1.2 }}>
               {locale === 'zh' ? '手' : 'Hnd'} {concealedCount}
@@ -285,8 +315,8 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
             </Typography>
           </Stack>
 
-          {/* ── Status badges ── */}
-          <Stack direction="row" alignItems="center" gap={0.5} sx={{ flexShrink: 0 }}>
+          {/* ── Status badges — vertical stack ── */}
+          <Stack direction="column" alignItems="flex-start" gap={0.4} sx={{ flexShrink: 0 }}>
             <Chip size="small"
               label={isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
               sx={{
@@ -300,6 +330,13 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
               <Chip size="small" label={locale === 'zh' ? '⚠️ 无役' : '⚠️ No yaku'}
                 sx={{ backgroundColor: '#ffd0a8', color: '#7c2d00', fontWeight: 700, fontSize: '0.62rem', height: 20 }} />
             )}
+            {/* Achieved yaku chips — shown whenever the yaku structure is satisfied */}
+            {achievedRoutes.map((r) => (
+              <Chip key={r.id} size="small"
+                label={locale === 'zh' ? r.nameZh : r.nameEn}
+                sx={{ backgroundColor: '#a6ceb6', color: '#1b4332', fontWeight: 700, fontSize: '0.62rem', height: 20 }}
+              />
+            ))}
           </Stack>
 
           {/* ── Live tile display — click tile to remove, × to remove whole meld ── */}
@@ -340,6 +377,14 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
               )}
             </Stack>
           </Box>
+
+          {/* ── Clear all button ── */}
+          <Tooltip title={locale === 'zh' ? '清空所有手牌' : 'Clear all tiles'}>
+            <IconButton size="small" onClick={onClearAll}
+              sx={{ flexShrink: 0, color: 'error.main', alignSelf: 'center' }}>
+              <DeleteOutlineIcon sx={{ fontSize: '1.1rem' }} />
+            </IconButton>
+          </Tooltip>
 
         </Stack>
       </Paper>
@@ -459,13 +504,63 @@ function RouteCard({ route, isOpen, locale }) {
   );
 }
 
+// ── Completed hand panel (replaces route analysis when hand is already won) ───
+
+function CompletedHandPanel({ vm, locale }) {
+  const { achievedRoutes, achievedHan } = vm.hand;
+  return (
+    <Paper elevation={0} sx={{
+      p: { xs: 2, md: 2.5 }, mb: 2,
+      border: '1px solid var(--success)',
+      borderLeft: '4px solid var(--success)',
+      borderRadius: 2,
+      backgroundColor: 'rgba(76,175,80,0.04)',
+    }}>
+      <Typography fontWeight={700} fontSize="1rem" color="var(--success)" sx={{ mb: 0.75 }}>
+        {locale === 'zh' ? '✓ 已和牌！' : '✓ Hand Complete!'}
+      </Typography>
+      <Typography variant="body2" color="text.secondary"
+        sx={{ mb: achievedRoutes?.length > 0 ? 1.5 : 0 }}>
+        {locale === 'zh'
+          ? '此手牌已完整和牌，无需进一步路线分析。'
+          : 'This hand is complete. No further route analysis needed.'}
+      </Typography>
+      {achievedRoutes?.length > 0 && (
+        <>
+          <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
+            sx={{ display: 'block', mb: 0.75, fontSize: '0.7rem' }}>
+            {locale === 'zh'
+              ? `达成役种（${achievedHan}番）：`
+              : `Achieved yaku (${achievedHan} han):`}
+          </Typography>
+          <Stack direction="row" flexWrap="wrap" gap={0.75}>
+            {achievedRoutes.map((r) => (
+              <Chip key={r.id} size="small"
+                label={locale === 'zh' ? r.nameZh : r.nameEn}
+                sx={{ backgroundColor: '#a6ceb6', color: '#1b4332', fontWeight: 700, fontSize: '0.75rem', height: 24 }}
+              />
+            ))}
+          </Stack>
+        </>
+      )}
+      {(!achievedRoutes || achievedRoutes.length === 0) && (
+        <Typography variant="caption" color="warning.main">
+          {locale === 'zh'
+            ? '⚠️ 未检测到达成役种（可能是役满或特殊情况）'
+            : '⚠️ No achieved yaku detected (may be yakuman or special case)'}
+        </Typography>
+      )}
+    </Paper>
+  );
+}
+
 // ── Hand status panel ─────────────────────────────────────────────────────────
 
 function HandStatusPanel({ vm, locale }) {
   const { hand } = vm;
   const {
     tileCountStatus, concealedCount, numMelds, expectedWaiting, expectedComplete,
-    isOpen, isComplete, shanten, confirmedRoutes, confirmedHan,
+    isOpen, isComplete, shanten, achievedRoutes, achievedHan,
   } = hand;
   const totalTiles = concealedCount + numMelds * 3;
 
@@ -511,25 +606,25 @@ function HandStatusPanel({ vm, locale }) {
         )}
       </Stack>
 
-      {/* Confirmed yaku */}
-      {confirmedRoutes?.length > 0 && (
+      {/* Achieved yaku (confirmed or structure already present) */}
+      {achievedRoutes?.length > 0 && (
         <Box>
           <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
             sx={{ display: 'block', mb: 0.4, fontSize: '0.65rem' }}>
-            {locale === 'zh' ? `已确立役种（${confirmedHan}番）：` : `Confirmed yaku (${confirmedHan} han):`}
+            {locale === 'zh' ? `已达成役种（${achievedHan}番）：` : `Achieved yaku (${achievedHan} han):`}
           </Typography>
           <Stack direction="row" flexWrap="wrap" gap={0.5}>
-            {confirmedRoutes.map((r) => (
+            {achievedRoutes.map((r) => (
               <Chip key={r.id} size="small"
                 label={locale === 'zh' ? r.nameZh : r.nameEn}
-                sx={{ backgroundColor: '#a6ceb6', color: '#1b4332', fontWeight: 700, fontSize: '0.68rem', height: 22 }}
+                sx={{ backgroundColor: '#52b788', color: '#0d3b20', fontWeight: 700, fontSize: '0.68rem', height: 22 }}
               />
             ))}
           </Stack>
         </Box>
       )}
 
-      {confirmedRoutes?.length === 0 && isOpen && (
+      {achievedRoutes?.length === 0 && isOpen && (
         <Typography variant="caption" color="error">
           {locale === 'zh' ? '❌ 当前无确立役种' : '❌ No confirmed yaku'}
         </Typography>
@@ -675,7 +770,6 @@ function MahjongTrainer() {
   // ── State ──────────────────────────────────────────────────────────────────
   const [concealedTiles, setConcealedTiles] = useState([]);
   const [openMelds,      setOpenMelds]      = useState([]);
-  const [pickerMode,     setPickerMode]     = useState('hand');
   const [meldBuilder,    setMeldBuilder]    = useState([]);
   const [showPicker,     setShowPicker]     = useState(true);
   const [seatWind,       setSeatWind]       = useState(1);
@@ -705,26 +799,30 @@ function MahjongTrainer() {
       );
       return;
     }
-    if (pickerMode === 'hand') {
-      setConcealedTiles((prev) => [...prev, tile]);
-    } else {
-      setMeldBuilder((prev) => [...prev, tile]);
+    setConcealedTiles((prev) => [...prev, tile]);
+  };
+
+  const handleMeldTileClick = (tile) => {
+    const total = tileCounts[tileKey(tile)] ?? 0;
+    if (total >= 4) {
+      setTileWarning(
+        locale === 'zh'
+          ? `${tileName(tile, 'zh')}已有4张，不能再添加！`
+          : `Already 4 ${tileName(tile, 'en')} — cannot add more.`
+      );
+      return;
     }
+    setMeldBuilder((prev) => [...prev, tile]);
   };
 
   const handleTileRightClick = (tile) => {
-    const removeLastOf = (arr, match) => {
-      const copy = [...arr];
+    setConcealedTiles((prev) => {
+      const copy = [...prev];
       for (let i = copy.length - 1; i >= 0; i--) {
-        if (tileKey(copy[i]) === tileKey(match)) { copy.splice(i, 1); break; }
+        if (tileKey(copy[i]) === tileKey(tile)) { copy.splice(i, 1); break; }
       }
       return copy;
-    };
-    if (pickerMode === 'hand') {
-      setConcealedTiles((prev) => removeLastOf(prev, tile));
-    } else {
-      setMeldBuilder((prev) => removeLastOf(prev, tile));
-    }
+    });
   };
 
   const handleRemoveFromHand = (tile) => {
@@ -762,9 +860,14 @@ function MahjongTrainer() {
     setResult({ vm });
   };
 
+  const handleClearAll = () => {
+    setConcealedTiles([]); setOpenMelds([]); setMeldBuilder([]);
+    setResult(null); setAnalyzeError('');
+  };
+
   const handleReset = () => {
     setConcealedTiles([]); setOpenMelds([]); setMeldBuilder([]);
-    setPickerMode('hand'); setShowPicker(true);
+    setShowPicker(true);
     setSeatWind(1); setRoundWind(1);
     setOpenTanyao(true); setTwoHanMin(false);
     setResult(null); setAnalyzeError('');
@@ -801,15 +904,16 @@ function MahjongTrainer() {
           vm={result?.vm ?? null}
           onRemoveTile={handleRemoveFromHand}
           onRemoveMeld={handleRemoveMeld}
+          onClearAll={handleClearAll}
           locale={locale}
         />
       )}
 
       <Container maxWidth="lg">
 
-        {/* Spacer: 8px AppBar gap + ~48px floating bar height */}
+        {/* Spacer: 8px AppBar gap + floating bar height (taller to accommodate vertical badge stack) */}
         {(concealedTiles.length > 0 || openMelds.length > 0) && (
-          <Box sx={{ height: { xs: '66px', sm: '62px' } }} />
+          <Box sx={{ height: { xs: '80px', sm: '76px' } }} />
         )}
 
         {/* Title */}
@@ -855,8 +959,7 @@ function MahjongTrainer() {
                 allTiles={allTiles}
                 onTileClick={handleTileClick}
                 onTileRightClick={handleTileRightClick}
-                mode={pickerMode}
-                onModeChange={setPickerMode}
+                onMeldTileClick={handleMeldTileClick}
                 meldBuilder={meldBuilder}
                 onAddMeld={handleAddMeld}
                 onClearMeldBuilder={handleClearMeldBuilder}
@@ -925,14 +1028,18 @@ function MahjongTrainer() {
           </Stack>
         </Paper>
 
-        {/* ── B + C. Results: Hand Status + Yaku Routes ───────────────────── */}
+        {/* ── B + C. Results: Hand Status + Yaku Routes / Completion ─────── */}
         {result && (
           <Box>
             <WarningsSection warnings={result.vm.warnings} locale={locale} />
             <HandStatusPanel vm={result.vm} locale={locale} />
-            <Paper elevation={8} sx={paperSx}>
-              <YakuRoutesPanel vm={result.vm} locale={locale} />
-            </Paper>
+            {result.vm.hand.isComplete ? (
+              <CompletedHandPanel vm={result.vm} locale={locale} />
+            ) : (
+              <Paper elevation={8} sx={paperSx}>
+                <YakuRoutesPanel vm={result.vm} locale={locale} />
+              </Paper>
+            )}
           </Box>
         )}
       </Container>

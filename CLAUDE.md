@@ -105,7 +105,7 @@ Capacitor config (`capacitor.config.ts`) targets `webDir: 'build'`. The producti
 
 ## Mahjong Yaku Route Trainer
 
-A beginner-oriented Riichi Mahjong yaku-awareness tool added on branch `feature/mahjong-yaku-trainer`.
+A beginner-oriented Riichi Mahjong yaku-awareness tool merged into `main`.
 
 ### Location
 
@@ -126,7 +126,7 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool added on branch `feature/
 | `shanten.js` | Accurate 3-way shanten: standard (Neval DFS), Chiitoitsu, Kokushi — `computeShanten(tiles, numMelds)` |
 | `handSimulator.js` | `evaluateYakuFromDecomposition` (14 yaku), `findScenarios` (brute-force 0/1-step), `extractYakuRelevantGroups`, `ALL_34_TILES` |
 | `yakuBFS.js` | Bounded BFS route search — `searchYakuRoute(...)`, `getDiscardCandidates`, `getDrawCandidates`, `makeBFSScenario` |
-| `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — feasibility heuristics, 3-tier scenario pipeline (simulation → BFS → heuristic), EXAMPLES, MEANINGS, `buildTrainerViewModel` adapter |
+| `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — feasibility heuristics, 3-tier scenario pipeline (simulation → BFS → heuristic), EXAMPLES, MEANINGS |
 
 ### Scenario priority in `analyzeHand`
 
@@ -136,9 +136,12 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool added on branch `feature/
 
 ### UI architecture (MahjongTrainer.jsx)
 
-- **`buildTrainerViewModel`** — thin adapter: reshapes `analyzeHand()` output into UI-friendly fields (extracts `shanten`, sorts routes, splits regular / yakuman). No new calculation logic.
-- **`FixedHandBar`** — `position: fixed` below AppBar, shows live concealed tiles + open melds, tile count, status badges. Rendered outside `<Container>`.
-- **Collapsible `RouteCard`** — collapsed shows name + meaning + example hand; expanded shows Need/Discard/Target/Why scenarios.
+- **`buildTrainerViewModel`** — thin adapter: reshapes `analyzeHand()` output into UI-friendly fields. Also computes `achievedRoutes` (routes with `CONFIRMED` feasibility or `HIGH` feasibility where the yaku structure is already present) and `achievedHan`. Upgrades qualifying `HIGH` routes to the local `FEASIBILITY_ACHIEVED` tier before sorting so `FeasibilityChip` renders them correctly.
+- **`FEASIBILITY_ACHIEVED = 'achieved'`** — a UI-only feasibility tier defined in `MahjongTrainer.jsx` (not in the engine). Sits between `CONFIRMED` and `HIGH`. Styled in dark green (`#52b788`). Applied to routes where `en.needed === ''` or `en.needed.startsWith('Keep')`, meaning the yaku tile structure is already present in the hand.
+- **`FixedHandBar`** — `position: fixed` below AppBar. Shows tile count, status badges (门清/向听/役种 stacked **vertically**), live tile row, and a clear-all button. Displays `achievedRoutes` chips whenever the analysis is available, even for incomplete hands. Rendered outside `<Container>`.
+- **`CompletedHandPanel`** — shown instead of `YakuRoutesPanel` when `hand.isComplete === true`. Displays achieved yaku list and han total; no route suggestions.
+- **`MahjongTilePicker`** — mode toggle removed. Main tile grid always adds to the concealed hand (left-click add, right-click remove). Meld builder section is always visible with its own compact tile grid (`onMeldTileClick`).
+- **Collapsible `RouteCard`** — collapsed shows name + meaning + example hand + feasibility chip (may show "已达成"); expanded shows Need/Discard/Target/Why scenarios.
 
 ### Known limitations (do not paper over in UI)
 
