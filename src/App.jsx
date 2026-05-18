@@ -17,7 +17,6 @@ const Home = lazy(() => import("./pages/Home.jsx"));
 const LoginPage = lazy(() => import("./pages/Login.jsx"));
 
 const Dice = lazy(() => import("./pages/Dice.jsx"));
-const Tracker = lazy(() => import("./pages/Tracker.jsx"));
 const PickPacks = lazy(() => import("./pages/PickPacks.jsx"));
 const FirstSecond = lazy(() => import("./pages/FirstSecond.jsx"));
 const ChessClock = lazy(() => import("./pages/ChessClock.jsx"));
@@ -71,7 +70,7 @@ function AnimatedRoutes() {
 				<Route path="/ws/deck/edit" element={withPageTransition(DeckEdit)} />
 				<Route path="/ws/record" element={withPageTransition(Record)} />
 				<Route path="/ws/audio" element={withPageTransition(AudioBoard)} />
-				<Route path="/ws/first-second" element={withPageTransition(FirstSecond)} />
+				<Route path="/tools/first-second" element={withPageTransition(FirstSecond)} />
 			<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
 
 				{/* Mahjong */}
@@ -91,15 +90,15 @@ function AnimatedRoutes() {
 				<Route path="/deck-edit" element={<Navigate to="/ws/deck/edit" replace />} />
 				<Route path="/record" element={<Navigate to="/ws/record" replace />} />
 				<Route path="/audio" element={<Navigate to="/ws/audio" replace />} />
-				<Route path="/first_second" element={<Navigate to="/ws/first-second" replace />} />
+				<Route path="/first_second" element={<Navigate to="/tools/first-second" replace />} />
+			<Route path="/ws/first-second" element={<Navigate to="/tools/first-second" replace />} />
 				<Route path="/mahjong" element={<Navigate to="/mahjong/trainer" replace />} />
 				<Route path="/dice" element={<Navigate to="/tools/dice" replace />} />
 				<Route path="/chess_clock" element={<Navigate to="/tools/clock" replace />} />
 				<Route path="/shuffle" element={<Navigate to="/ws/shuffle" replace />} />
 
 				{/* Hidden / dev */}
-				<Route path="/tracker" element={withPageTransition(Tracker)} />
-				<Route path="/options-test" element={withPageTransition(OptionsApiTest)} />
+					<Route path="/options-test" element={withPageTransition(OptionsApiTest)} />
 			</Routes>
 		</AnimatePresence>
 	);

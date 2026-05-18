@@ -3,7 +3,7 @@
   "close": "Close",
   "menu": {
     "home": "Home",
-    "tracker": "Tracker",
+
     "cardSearch": "Card Search",
     "battleTools": "Battle Tools",
     "pack": "Packs",
@@ -326,9 +326,6 @@
       "sideLabel": "Side",
       "seriesLabel": "Series",
       "notSet": "Not Set"
-    },
-    "tracker": {
-      "title": "This is the Tracker Page"
     },
     "deckCreate": {
       "title": "Create New Deck",

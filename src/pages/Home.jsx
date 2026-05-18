@@ -157,6 +157,7 @@ function Home() {
 									name={t("pages.home.tools.name")}
 									desc={t("pages.home.tools.desc")}
 									chips={[
+										t("menu.firstSecond"),
 										t("menu.dice"),
 										t("menu.chessClock"),
 									]}

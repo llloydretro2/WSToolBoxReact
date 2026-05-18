@@ -3,7 +3,7 @@
   "close": "关闭",
   "menu": {
     "home": "主页",
-    "tracker": "记录器",
+
     "cardSearch": "卡片查询",
     "battleTools": "对战工具",
     "pack": "开包",
@@ -20,7 +20,8 @@
     "deckSearch": "卡组列表"
     ,
     "audio": "音效",
-    "mahjong": "麻将役种"
+    "mahjong": "麻将役种",
+    "firstSecond": "先后攻"
   },
   "common": {
     "language": {
@@ -314,9 +315,6 @@
     "sideLabel": "边",
     "seriesLabel": "系列",
     "notSet": "未设置"
-  },
-  "tracker": {
-    "title": "This is the Tracker Page"
   },
   "login": {
     "title": "登陆",

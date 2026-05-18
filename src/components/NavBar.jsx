@@ -23,7 +23,6 @@ const WS_NAV = {
 	battleTools: {
 		labelKey: "menu.battleTools",
 		items: [
-			{ labelKey: "menu.firstSecond", path: "/ws/first-second" },
 			{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
 			{ labelKey: "menu.audio", path: "/ws/audio" },
 		],
@@ -37,6 +36,7 @@ const MAHJONG_NAV = {
 
 const TOOLS_NAV = {
 	primary: [
+		{ labelKey: "menu.firstSecond", path: "/tools/first-second" },
 		{ labelKey: "menu.dice", path: "/tools/dice" },
 		{ labelKey: "menu.chessClock", path: "/tools/clock" },
 	],
@@ -291,7 +291,6 @@ export default function NavBar() {
 				{ labelKey: "menu.cardSearch", path: "/ws/cards" },
 				{ labelKey: "menu.pickPacks", path: "/ws/packs" },
 				{ labelKey: "menu.simulator", path: "/ws/simulator" },
-				{ labelKey: "menu.firstSecond", path: "/ws/first-second" },
 				{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
 				{ labelKey: "menu.audio", path: "/ws/audio" },
 			];
