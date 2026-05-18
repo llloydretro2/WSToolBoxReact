@@ -23,7 +23,7 @@ const ChessClock = lazy(() => import("./pages/ChessClock.jsx"));
 const RandomShuffle = lazy(() => import("./pages/RandomShuffle.jsx"));
 const AudioBoard = lazy(() => import("./pages/AudioBoard.jsx"));
 const Record = lazy(() => import("./pages/Record.jsx"));
-const OptionsApiTest = lazy(() => import("./pages/OptionsApiTest.jsx"));
+
 
 const CardList = lazy(() => import("./pages/CardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
@@ -97,8 +97,7 @@ function AnimatedRoutes() {
 				<Route path="/chess_clock" element={<Navigate to="/tools/clock" replace />} />
 				<Route path="/shuffle" element={<Navigate to="/ws/shuffle" replace />} />
 
-				{/* Hidden / dev */}
-					<Route path="/options-test" element={withPageTransition(OptionsApiTest)} />
+
 			</Routes>
 		</AnimatePresence>
 	);

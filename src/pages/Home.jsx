@@ -161,7 +161,7 @@ function Home() {
 										t("menu.dice"),
 										t("menu.chessClock"),
 									]}
-									path="/tools/dice"
+									path="/tools/first-second"
 									onNavigate={navigate}
 								/>
 							</Box>

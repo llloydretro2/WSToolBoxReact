@@ -102,7 +102,6 @@ function PickPacks() {
     const open = parseInt(openPacks);
 
     const { baziStr, seed } = generateFixedBaziSeed();
-    console.log("八字:", baziStr, "种子:", seed);
     setSeed(seed);
 
     if (
