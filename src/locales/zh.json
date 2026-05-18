@@ -3,7 +3,6 @@
   "close": "关闭",
   "menu": {
     "home": "主页",
-
     "cardSearch": "卡片查询",
     "battleTools": "对战工具",
     "pack": "开包",
@@ -17,11 +16,9 @@
     "record": "对战记录",
     "deck": "卡组",
     "deckCreate": "创建卡组",
-    "deckSearch": "卡组列表"
-    ,
+    "deckSearch": "卡组列表",
     "audio": "音效",
-    "mahjong": "麻将役种",
-    "firstSecond": "先后攻"
+    "mahjong": "麻将役种"
   },
   "common": {
     "language": {
@@ -114,7 +111,7 @@
         "seriesNumber": "系列编号",
         "series": "系列名",
         "product": "产品名",
-  "side": "边",
+        "side": "边",
         "keyword": "搜索关键词",
         "color": "颜色",
         "level": "等级",
@@ -176,6 +173,10 @@
       "noResultsTitle": "没有找到符合条件的卡片",
       "noResultsDescription": "尝试调整筛选条件，或点击下方按钮重置筛选以查看全部内容。",
       "noResultsAction": "重置筛选"
+    },
+    "deck": {
+      "createTab": "创建卡组",
+      "searchTab": "查询卡组"
     }
   },
   "dice": {
@@ -318,7 +319,9 @@
   },
   "login": {
     "title": "登陆",
+    "subtitle": "登录您的账户以继续",
     "registerTitle": "注册",
+    "registerSubtitle": "创建新账户，开始你的旅程",
     "username": "用户名",
     "password": "密码",
     "loginButton": "登录账户",
@@ -368,10 +371,6 @@
       "deleteSuccess": "卡组删除成功",
       "dataError": "卡组数据异常，缺少ID"
     }
-  },
-  "deck": {
-    "createTab": "创建卡组",
-    "searchTab": "查询卡组"
   },
   "audio": {
     "title": "音效面板",
