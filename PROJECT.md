@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-18
+> Last updated: 2026-05-18 (session 3)
 
 ## Deployment
 
@@ -170,6 +170,33 @@ Systematic review of all active pages and locale files.
 - `Home.jsx`: Tools card entry now navigates to `/tools/first-second` (first item in section).
 - Moved `FirstSecond` from WS section to Tools section (`/tools/first-second`).
 - Deleted `src/pages/Tracker.jsx` (empty stub).
+
+---
+
+### Home page redesign & spacing standardisation (2026-05-18 session 3)
+
+#### Home hub card redesign
+
+Replaced the plain equal-card layout with visually distinct section cards:
+- **Top accent bar** (5px): each section has an image-sampled colour — WS `#5c4f6b`, Mahjong `#5a3f45`, Tools `#7a6552`
+- **Icon + title + count row**: `StyleIcon` / `GridViewIcon` / `TuneIcon` in a tinted box; tool count displayed in accent colour
+- **Chips** tinted in each section's accent colour with matching border
+- **Hover**: `translateY(-5px)` + coloured shadow + accent border
+- Grid: `xs:12 md:4` — adding a new section just adds another card, no layout changes needed
+- Added `pages.home.*.count` locale keys to zh/en.json
+
+#### Background images
+
+Added `public/assets/home/{ws,mahjong,tools}.webp` as card backgrounds.
+- White overlay `rgba(255,255,255,0.58)` keeps text readable; `0.44` on hover lets image show through more
+- Accent colours were extracted from the images using ImageMagick histogram analysis
+
+#### Page spacing standardisation
+
+All active pages now consistently use `py: 3` (24px) on their root Container:
+- `Home.jsx`: reduced from `py: 5` → `py: 3`; header `mb: 6 → 4`
+- `Dice`, `ChessClock`, `RandomShuffle`, `PickPacks`, `FirstSecond`, `Simulator`: added `py: 3` (were missing entirely)
+- Pages that were already correct: `AudioBoard`, `Record`, `DeckEdit`
 
 ---
 
