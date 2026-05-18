@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-17 (session 2)
+> Last updated: 2026-05-18
 
 ## Deployment
 
@@ -143,6 +143,33 @@ Replaced the secondary scrollable pill (second row below the primary pill) with 
 - Easing: `[0.4, 0, 0.2, 1]` (Material ease-in-out) for height, separate 0.15s opacity fade
 - Backdrop (`fixed inset-0 z-40`) closes the menu on outside tap; route changes also close it
 - Spacer height simplified to `h-[64px] md:h-[72px]` always (no more conditional secondary-bar height)
+
+---
+
+### Codebase audit & cleanup (2026-05-18)
+
+Systematic review of all active pages and locale files.
+
+#### Locale file restructure
+- **Root cause fixed**: `en.json` had `dice`, `chessClock`, `shuffle`, `record`, `deckEdit`, `deckCreate`, `deckSearch`, `deck` nested inside `pages.*`, but all pages use top-level keys like `t("dice.title")`. This meant every English translation for those pages silently fell back to the key name. Moved all affected keys to the top level to match `zh.json`.
+- Removed duplicate `deckCreate` entry in `en.json` (`pages.deckCreate` was a duplicate of top-level).
+- Both files now have identical key structure.
+- Fixed `menu.firstSecond` duplicate in `zh.json`.
+- Fixed stray comma formatting in both files.
+- Updated `en.json` `login.registerSubtitle` to remove WS-specific copy.
+
+#### NavBar mobile dropdown (completed)
+- Replaced horizontal-scroll secondary pill with a Raycast-style hamburger dropdown.
+- `height: 0 → auto` framer-motion animation with `overflow: hidden` gives a "grow from pill" feel.
+- `AnimatePresence` handles exit animation; backdrop closes on outside tap.
+
+#### Minor fixes
+- `PickPacks.jsx`: removed `console.log` leaking seed algorithm internals to console.
+- `App.jsx`: removed `/options-test` route and its lazy import (dev-only page).
+- Deleted `src/components/LanguageToggle.jsx` (unused since NavBar switched to inline toggle).
+- `Home.jsx`: Tools card entry now navigates to `/tools/first-second` (first item in section).
+- Moved `FirstSecond` from WS section to Tools section (`/tools/first-second`).
+- Deleted `src/pages/Tracker.jsx` (empty stub).
 
 ---
 
