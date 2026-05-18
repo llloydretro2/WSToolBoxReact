@@ -39,9 +39,9 @@
       "subtitle": "卡牌与桌游多合一工具集",
       "description": "致力于为卡牌与桌游爱好者提供简单易用且人性化的游戏工具",
       "contactTitle": "联系我",
-      "ws": { "name": "Weiss Schwarz", "desc": "卡片查询、卡组构筑、开包模拟与对战记录" },
-      "mahjong": { "name": "麻将", "desc": "立直麻将役种路线训练" },
-      "tools": { "name": "通用工具", "desc": "骰子、棋钟、随机洗牌等对战辅助" }
+      "ws":     { "name": "Weiss Schwarz", "desc": "卡片查询、开包模拟与对战记录", "count": "6 个工具" },
+      "mahjong":{ "name": "麻将",          "desc": "立直麻将役种路线训练",        "count": "1 个工具" },
+      "tools":  { "name": "通用工具",       "desc": "先后攻、骰子、棋钟等对战辅助", "count": "3 个工具" }
     },
     "firstSecond": {
       "title": "先后攻",

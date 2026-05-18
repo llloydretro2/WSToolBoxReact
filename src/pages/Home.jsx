@@ -5,247 +5,257 @@ import {
 	Container,
 	Box,
 	Typography,
-	Paper,
 	Chip,
 	Grid,
 	IconButton,
 	Link,
 	Fade,
 } from "@mui/material";
+import StyleIcon from "@mui/icons-material/Style";
+import GridViewIcon from "@mui/icons-material/GridView";
+import TuneIcon from "@mui/icons-material/Tune";
 import { GitHub as GitHubIcon, Email as EmailIcon } from "@mui/icons-material";
 import { useLocale } from "../contexts/LocaleContext";
 
-function GameCard({ name, desc, chips, path, accent, onNavigate }) {
+// ─── Section config ────────────────────────────────────────────────────────────
+
+const SECTIONS = [
+	{
+		key: "ws",
+		Icon: StyleIcon,
+		accent: "#5a8a6e",
+		path: "/ws/cards",
+		chipKeys: ["menu.cardSearch", "menu.pack", "menu.record"],
+	},
+	{
+		key: "mahjong",
+		Icon: GridViewIcon,
+		accent: "#c17a3a",
+		path: "/mahjong/trainer",
+		chipKeys: ["menu.mahjong"],
+	},
+	{
+		key: "tools",
+		Icon: TuneIcon,
+		accent: "#5a7896",
+		path: "/tools/first-second",
+		chipKeys: ["menu.firstSecond", "menu.dice", "menu.chessClock"],
+	},
+];
+
+// ─── SectionCard ───────────────────────────────────────────────────────────────
+
+function SectionCard({ section, t, onNavigate }) {
+	const { key, Icon, accent, path, chipKeys } = section;
+
 	return (
-		<Paper
+		<Box
 			onClick={() => onNavigate(path)}
-			elevation={0}
 			sx={{
-				p: 3,
-				height: "100%",
 				cursor: "pointer",
-				border: "1px solid var(--border)",
 				borderRadius: 3,
-				background: accent
-					? "linear-gradient(135deg, var(--primary-light), var(--primary))"
-					: "var(--surface)",
-				transition: "all 0.25s ease",
+				border: "1px solid var(--border)",
+				backgroundColor: "var(--surface)",
+				overflow: "hidden",
+				height: "100%",
+				display: "flex",
+				flexDirection: "column",
+				transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
 				"&:hover": {
-					transform: "translateY(-4px)",
-					boxShadow: "0 12px 30px rgba(0,0,0,0.15)",
+					transform: "translateY(-5px)",
+					boxShadow: `0 16px 40px ${accent}22`,
+					borderColor: accent,
 				},
 			}}>
-			<Typography
-				variant="h5"
-				fontWeight={700}
-				color="var(--text)"
-				gutterBottom>
-				{name}
-			</Typography>
-			<Typography
-				variant="body2"
-				color="text.secondary"
-				sx={{ mb: 2, minHeight: 40 }}>
-				{desc}
-			</Typography>
-			<Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-				{chips.map((chip) => (
-					<Chip
-						key={chip}
-						label={chip}
-						size="small"
+
+			{/* Accent bar */}
+			<Box sx={{ height: 5, backgroundColor: accent, flexShrink: 0 }} />
+
+			{/* Body */}
+			<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1 }}>
+
+				{/* Icon + title + count */}
+				<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
+					<Box
 						sx={{
-							backgroundColor: "rgba(255,255,255,0.45)",
-							color: "var(--text)",
-							fontWeight: 500,
-						}}
-					/>
-				))}
-			</Box>
-		</Paper>
-	);
-}
-
-GameCard.propTypes = {
-	name: PropTypes.string.isRequired,
-	desc: PropTypes.string.isRequired,
-	chips: PropTypes.arrayOf(PropTypes.string).isRequired,
-	path: PropTypes.string.isRequired,
-	accent: PropTypes.bool,
-	onNavigate: PropTypes.func.isRequired,
-};
-
-function Home() {
-	const { t } = useLocale();
-	const navigate = useNavigate();
-
-	return (
-		<Box sx={{ minHeight: "100%" }}>
-			<Box
-				sx={{
-					color: "var(--text)",
-					py: 4,
-					textAlign: "center",
-				}}>
-				<Container maxWidth="md">
-					<Fade in timeout={1200}>
+							width: 42,
+							height: 42,
+							borderRadius: 2,
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							backgroundColor: `${accent}18`,
+							flexShrink: 0,
+						}}>
+						<Icon sx={{ fontSize: 22, color: accent }} />
+					</Box>
+					<Box>
 						<Typography
-							variant="h2"
-							fontWeight={900}
-							sx={{
-								mb: 2,
-								color: "var(--text)",
-								fontSize: { xs: "2.5rem", md: "3.5rem" },
-							}}>
-							{t("pages.home.title")}
-						</Typography>
-					</Fade>
-					<Fade in timeout={1400}>
-						<Typography
-							variant="h5"
-							sx={{
-								mb: 2,
-								opacity: 0.8,
-								fontWeight: 300,
-								letterSpacing: 1,
-								fontSize: { xs: "1.2rem", md: "1.5rem" },
-								color: "text.secondary",
-							}}>
-							{t("pages.home.subtitle")}
-						</Typography>
-					</Fade>
-				</Container>
-			</Box>
-
-			<Container maxWidth="md" sx={{ py: 2 }}>
-				<Grid container spacing={3} sx={{ mb: 4 }}>
-					<Grid size={{ xs: 12, md: 4 }}>
-						<Fade in timeout={1000}>
-							<Box sx={{ height: "100%" }}>
-								<GameCard
-									name={t("pages.home.ws.name")}
-									desc={t("pages.home.ws.desc")}
-									chips={[
-										t("menu.cardSearch"),
-										t("menu.pack"),
-										t("menu.record"),
-									]}
-									path="/ws/cards"
-									accent
-									onNavigate={navigate}
-								/>
-							</Box>
-						</Fade>
-					</Grid>
-					<Grid size={{ xs: 12, md: 4 }}>
-						<Fade in timeout={1200}>
-							<Box sx={{ height: "100%" }}>
-								<GameCard
-									name={t("pages.home.mahjong.name")}
-									desc={t("pages.home.mahjong.desc")}
-									chips={[t("menu.mahjong")]}
-									path="/mahjong/trainer"
-									onNavigate={navigate}
-								/>
-							</Box>
-						</Fade>
-					</Grid>
-					<Grid size={{ xs: 12, md: 4 }}>
-						<Fade in timeout={1400}>
-							<Box sx={{ height: "100%" }}>
-								<GameCard
-									name={t("pages.home.tools.name")}
-									desc={t("pages.home.tools.desc")}
-									chips={[
-										t("menu.firstSecond"),
-										t("menu.dice"),
-										t("menu.chessClock"),
-									]}
-									path="/tools/first-second"
-									onNavigate={navigate}
-								/>
-							</Box>
-						</Fade>
-					</Grid>
-				</Grid>
-
-				<Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-					<Box sx={{ textAlign: "center", py: 2 }}>
-						<Typography
-							variant="body2"
-							fontWeight={600}
+							variant="h6"
+							fontWeight={700}
 							color="var(--text)"
-							sx={{ mb: 1 }}>
-							{t("pages.home.contactTitle")}
+							sx={{ lineHeight: 1.25, mb: 0.25 }}>
+							{t(`pages.home.${key}.name`)}
 						</Typography>
-						<Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
-							<IconButton
-								component={Link}
-								href="https://github.com/llloydretro2/WSToolBoxReact"
-								target="_blank"
-								rel="noopener"
-								sx={{
-									width: 40,
-									height: 40,
-									background:
-										"linear-gradient(135deg, var(--text), var(--text-secondary))",
-									color: "white",
-									"&:hover": {
-										transform: "scale(1.1)",
-										boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-									},
-									transition: "all 0.3s ease",
-								}}>
-								<GitHubIcon sx={{ fontSize: 20 }} />
-							</IconButton>
-							<IconButton
-								component={Link}
-								href="https://space.bilibili.com/13365744"
-								target="_blank"
-								rel="noopener"
-								sx={{
-									width: 40,
-									height: 40,
-									background:
-										"linear-gradient(135deg, var(--info), var(--primary-dark))",
-									color: "white",
-									"&:hover": {
-										transform: "scale(1.1)",
-										boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-									},
-									transition: "all 0.3s ease",
-								}}>
-								<img
-									src="bilibili.svg"
-									alt="Bilibili"
-									width={18}
-									height={18}
-									style={{ filter: "brightness(0) invert(1)" }}
-								/>
-							</IconButton>
-							<IconButton
-								component={Link}
-								href="mailto:lloydretro2@gmail.com"
-								sx={{
-									width: 40,
-									height: 40,
-									background:
-										"linear-gradient(135deg, var(--primary), var(--primary-hover))",
-									color: "white",
-									"&:hover": {
-										transform: "scale(1.1)",
-										boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
-									},
-									transition: "all 0.3s ease",
-								}}>
-								<EmailIcon sx={{ fontSize: 20 }} />
-							</IconButton>
-						</Box>
+						<Typography
+							variant="caption"
+							sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
+							{t(`pages.home.${key}.count`)}
+						</Typography>
 					</Box>
 				</Box>
-			</Container>
+
+				{/* Description */}
+				<Typography
+					variant="body2"
+					color="text.secondary"
+					sx={{ mb: 2.5, lineHeight: 1.65, fontSize: "0.825rem", flex: 1 }}>
+					{t(`pages.home.${key}.desc`)}
+				</Typography>
+
+				{/* Chips */}
+				<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+					{chipKeys.map((chipKey) => (
+						<Chip
+							key={chipKey}
+							label={t(chipKey)}
+							size="small"
+							sx={{
+								fontSize: "0.7rem",
+								height: 22,
+								backgroundColor: `${accent}14`,
+								color: accent,
+								fontWeight: 600,
+								border: `1px solid ${accent}30`,
+							}}
+						/>
+					))}
+				</Box>
+			</Box>
 		</Box>
 	);
 }
 
-export default Home;
+SectionCard.propTypes = {
+	section: PropTypes.shape({
+		key: PropTypes.string.isRequired,
+		Icon: PropTypes.elementType.isRequired,
+		accent: PropTypes.string.isRequired,
+		path: PropTypes.string.isRequired,
+		chipKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
+	}).isRequired,
+	t: PropTypes.func.isRequired,
+	onNavigate: PropTypes.func.isRequired,
+};
+
+// ─── Home ──────────────────────────────────────────────────────────────────────
+
+export default function Home() {
+	const { t } = useLocale();
+	const navigate = useNavigate();
+
+	return (
+		<Container maxWidth="md" sx={{ py: 5 }}>
+
+			{/* Header */}
+			<Fade in timeout={800}>
+				<Box textAlign="center" mb={6}>
+					<Typography
+						variant="h2"
+						fontWeight={900}
+						color="var(--text)"
+						sx={{ fontSize: { xs: "2.2rem", md: "3rem" }, mb: 1.5, letterSpacing: "-0.5px" }}>
+						{t("pages.home.title")}
+					</Typography>
+					<Typography
+						variant="body1"
+						color="text.secondary"
+						sx={{ fontSize: "1rem", opacity: 0.75 }}>
+						{t("pages.home.subtitle")}
+					</Typography>
+				</Box>
+			</Fade>
+
+			{/* Section cards */}
+			<Grid container spacing={3}>
+				{SECTIONS.map((section, idx) => (
+					<Grid key={section.key} size={{ xs: 12, md: 4 }}>
+						<Fade in timeout={600 + idx * 150}>
+							<Box sx={{ height: "100%" }}>
+								<SectionCard
+									section={section}
+									t={t}
+									onNavigate={navigate}
+								/>
+							</Box>
+						</Fade>
+					</Grid>
+				))}
+			</Grid>
+
+			{/* Contact */}
+			<Fade in timeout={1100}>
+				<Box textAlign="center" mt={8}>
+					<Typography
+						variant="body2"
+						fontWeight={600}
+						color="var(--text-muted)"
+						mb={1.5}>
+						{t("pages.home.contactTitle")}
+					</Typography>
+					<Box sx={{ display: "flex", justifyContent: "center", gap: 1.5 }}>
+						<IconButton
+							component={Link}
+							href="https://github.com/llloydretro2/WSToolBoxReact"
+							target="_blank"
+							rel="noopener"
+							size="small"
+							sx={{
+								width: 36, height: 36,
+								backgroundColor: "rgba(0,0,0,0.06)",
+								color: "var(--text-secondary)",
+								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
+								transition: "all 0.2s ease",
+							}}>
+							<GitHubIcon sx={{ fontSize: 18 }} />
+						</IconButton>
+						<IconButton
+							component={Link}
+							href="https://space.bilibili.com/13365744"
+							target="_blank"
+							rel="noopener"
+							size="small"
+							sx={{
+								width: 36, height: 36,
+								backgroundColor: "rgba(0,0,0,0.06)",
+								color: "var(--text-secondary)",
+								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
+								transition: "all 0.2s ease",
+							}}>
+							<img
+								src="bilibili.svg"
+								alt="Bilibili"
+								width={16}
+								height={16}
+								style={{ opacity: 0.6 }}
+							/>
+						</IconButton>
+						<IconButton
+							component={Link}
+							href="mailto:lloydretro2@gmail.com"
+							size="small"
+							sx={{
+								width: 36, height: 36,
+								backgroundColor: "rgba(0,0,0,0.06)",
+								color: "var(--text-secondary)",
+								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
+								transition: "all 0.2s ease",
+							}}>
+							<EmailIcon sx={{ fontSize: 18 }} />
+						</IconButton>
+					</Box>
+				</Box>
+			</Fade>
+		</Container>
+	);
+}
