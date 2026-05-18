@@ -21,7 +21,7 @@ function FirstSecond() {
 	return (
 		<Container
 			maxWidth="sm"
-			sx={{ textAlign: "center" }}>
+			sx={{ textAlign: "center", py: 3 }}>
 			<Box
 				sx={{
 					display: "flex",

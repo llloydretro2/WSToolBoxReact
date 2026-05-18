@@ -133,7 +133,7 @@ function ChessClock() {
 			sx={{
 				minHeight: "100%", // 使用100%而不是视口高度
 			}}>
-			<Container maxWidth="md">
+			<Container maxWidth="md" sx={{ py: 3 }}>
 				{/* 页面标题和副标题 */}
 				<Stack
 					spacing={1.5}

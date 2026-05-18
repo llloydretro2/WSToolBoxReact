@@ -60,7 +60,7 @@ function RandomShuffle() {
 	const GREEN_TEXT = "var(--text-secondary)";
 
 	return (
-		<Container maxWidth="md">
+		<Container maxWidth="md" sx={{ py: 3 }}>
 			{/* 页面标题和副标题 */}
 			<Stack
 				spacing={1.5}

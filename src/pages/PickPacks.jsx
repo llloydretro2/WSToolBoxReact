@@ -142,7 +142,7 @@ function PickPacks() {
   };
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="md" sx={{ py: 3 }}>
       <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
         <Typography
           variant="h4"

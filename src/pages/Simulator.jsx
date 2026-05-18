@@ -157,7 +157,7 @@ function Simulator() {
 	return (
 		<Container
 			maxWidth="md"
-			sx={{ textAlign: "center" }}>
+			sx={{ textAlign: "center", py: 3 }}>
 			<Typography
 				variant="h4"
 				fontWeight={700}

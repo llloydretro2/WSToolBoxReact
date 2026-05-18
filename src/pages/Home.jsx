@@ -23,21 +23,21 @@ const SECTIONS = [
 	{
 		key: "ws",
 		Icon: StyleIcon,
-		accent: "#5a8a6e",
+		accent: "#5c4f6b",   // 深紫玫瑰，来自 WS 图片的石板蓝紫调
 		path: "/ws/cards",
 		chipKeys: ["menu.cardSearch", "menu.pack", "menu.record"],
 	},
 	{
 		key: "mahjong",
 		Icon: GridViewIcon,
-		accent: "#c17a3a",
+		accent: "#5a3f45",   // 深暖棕炭，来自麻将图片的暗调
 		path: "/mahjong/trainer",
 		chipKeys: ["menu.mahjong"],
 	},
 	{
 		key: "tools",
 		Icon: TuneIcon,
-		accent: "#5a7896",
+		accent: "#7a6552",   // 深暖褐，来自 Tools 图片的沙漠色调
 		path: "/tools/first-second",
 		chipKeys: ["menu.firstSecond", "menu.dice", "menu.chessClock"],
 	},
@@ -55,24 +55,41 @@ function SectionCard({ section, t, onNavigate }) {
 				cursor: "pointer",
 				borderRadius: 3,
 				border: "1px solid var(--border)",
-				backgroundColor: "var(--surface)",
 				overflow: "hidden",
 				height: "100%",
 				display: "flex",
 				flexDirection: "column",
+				position: "relative",
+				backgroundImage: `url('/assets/home/${key}.webp')`,
+				backgroundSize: "cover",
+				backgroundPosition: "center",
 				transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
 				"&:hover": {
 					transform: "translateY(-5px)",
-					boxShadow: `0 16px 40px ${accent}22`,
+					boxShadow: `0 16px 40px ${accent}44`,
 					borderColor: accent,
+				},
+				"&:hover .card-overlay": {
+					backgroundColor: "rgba(255,255,255,0.44)",
 				},
 			}}>
 
+			{/* Overlay — keeps text readable over any background image */}
+			<Box
+				className="card-overlay"
+				sx={{
+					position: "absolute",
+					inset: 0,
+					backgroundColor: "rgba(255,255,255,0.58)",
+					transition: "background-color 0.2s ease",
+				}}
+			/>
+
 			{/* Accent bar */}
-			<Box sx={{ height: 5, backgroundColor: accent, flexShrink: 0 }} />
+			<Box sx={{ height: 5, backgroundColor: accent, flexShrink: 0, position: "relative", zIndex: 1 }} />
 
 			{/* Body */}
-			<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1 }}>
+			<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 1 }}>
 
 				{/* Icon + title + count */}
 				<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
@@ -155,16 +172,16 @@ export default function Home() {
 	const navigate = useNavigate();
 
 	return (
-		<Container maxWidth="md" sx={{ py: 5 }}>
+		<Container maxWidth="md" sx={{ py: 3 }}>
 
 			{/* Header */}
 			<Fade in timeout={800}>
-				<Box textAlign="center" mb={6}>
+				<Box textAlign="center" mb={4}>
 					<Typography
 						variant="h2"
 						fontWeight={900}
 						color="var(--text)"
-						sx={{ fontSize: { xs: "2.2rem", md: "3rem" }, mb: 1.5, letterSpacing: "-0.5px" }}>
+						sx={{ fontSize: { xs: "2rem", md: "2.6rem" }, mb: 1, letterSpacing: "-0.5px" }}>
 						{t("pages.home.title")}
 					</Typography>
 					<Typography
