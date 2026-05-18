@@ -3,7 +3,6 @@
   "close": "关闭",
   "menu": {
     "home": "主页",
-
     "cardSearch": "卡片查询",
     "battleTools": "对战工具",
     "pack": "开包",
@@ -17,11 +16,9 @@
     "record": "对战记录",
     "deck": "卡组",
     "deckCreate": "创建卡组",
-    "deckSearch": "卡组列表"
-    ,
+    "deckSearch": "卡组列表",
     "audio": "音效",
-    "mahjong": "麻将役种",
-    "firstSecond": "先后攻"
+    "mahjong": "麻将役种"
   },
   "common": {
     "language": {
@@ -114,7 +111,7 @@
         "seriesNumber": "系列编号",
         "series": "系列名",
         "product": "产品名",
-  "side": "边",
+        "side": "边",
         "keyword": "搜索关键词",
         "color": "颜色",
         "level": "等级",
@@ -316,29 +313,6 @@
     "seriesLabel": "系列",
     "notSet": "未设置"
   },
-  "login": {
-    "title": "登陆",
-    "registerTitle": "注册",
-    "username": "用户名",
-    "password": "密码",
-    "loginButton": "登录账户",
-    "registerButton": "立即注册",
-    "switchToRegister": "创建新账户",
-    "switchToLogin": "点击登录",
-    "or": "或者",
-    "hasAccount": "已经有账户了？",
-    "noAccount": "还没有账户？",
-    "loading": "处理中...",
-    "error": {
-      "emptyFields": "请输入用户名和密码",
-      "loginFailed": "登录失败",
-      "registerFailed": "注册失败"
-    },
-    "success": {
-      "login": "登录成功！跳转到首页",
-      "register": "注册成功，请登录"
-    }
-  },
   "deckCreate": {
     "title": "创建新的卡组",
     "createButton": "创建",
@@ -372,6 +346,29 @@
   "deck": {
     "createTab": "创建卡组",
     "searchTab": "查询卡组"
+  },
+  "login": {
+    "title": "登陆",
+    "registerTitle": "注册",
+    "username": "用户名",
+    "password": "密码",
+    "loginButton": "登录账户",
+    "registerButton": "立即注册",
+    "switchToRegister": "创建新账户",
+    "switchToLogin": "点击登录",
+    "or": "或者",
+    "hasAccount": "已经有账户了？",
+    "noAccount": "还没有账户？",
+    "loading": "处理中...",
+    "error": {
+      "emptyFields": "请输入用户名和密码",
+      "loginFailed": "登录失败",
+      "registerFailed": "注册失败"
+    },
+    "success": {
+      "login": "登录成功！跳转到首页",
+      "register": "注册成功，请登录"
+    }
   },
   "audio": {
     "title": "音效面板",
