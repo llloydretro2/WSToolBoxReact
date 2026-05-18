@@ -9,6 +9,7 @@ CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwa
 ## Commands
 
 ```bash
+npm install       # install dependencies (required on first clone / fresh container)
 npm run dev       # dev server on port 3000 (auto-opens browser)
 npm run build     # production build → dist/
 npm run preview   # preview production build
@@ -40,9 +41,9 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 | Prefix | Section | Example routes |
 |--------|---------|----------------|
 | `/` | Hub (game selector) | `/` |
-| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/first-second`, `/ws/shuffle`, `/ws/deck/edit` |
+| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/shuffle`, `/ws/deck/edit` |
 | `/mahjong/*` | Mahjong | `/mahjong/trainer` |
-| `/tools/*` | General tools | `/tools/dice`, `/tools/clock` |
+| `/tools/*` | General tools | `/tools/first-second`, `/tools/dice`, `/tools/clock` |
 | `/login` | Auth | `/login` |
 
 Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new paths via `<Navigate replace>` in `App.jsx`.
@@ -168,6 +169,15 @@ t("deck.cardCount", { count: 50 })
 
 When adding UI text, add keys to **both** locale files.
 
+### Key namespace rules
+
+Keys must be placed at the same level in both files. The current convention:
+
+- **`pages.*`** — keys used only by page components that already live under `pages/`: `pages.home`, `pages.firstSecond`, `pages.pickPacks`, `pages.simulator`, `pages.cardList`, `pages.deck`
+- **Root level** — all other page and feature keys: `audio`, `chessClock`, `dice`, `shuffle`, `record`, `deckEdit`, `deckCreate`, `deckSearch`, `mahjong`, `login`, `menu`, `navbar`, `common`
+
+**Do not move root-level keys into `pages.*`** — the code calls `t("chessClock.title")`, not `t("pages.chessClock.title")`.
+
 ## Mobile / Capacitor
 
 Capacitor config (`capacitor.config.ts`) targets `webDir: 'build'`. The production Vite output for mobile is `build/` (not `dist/`). Android project is in `android/`.
@@ -237,7 +247,7 @@ getGameSection(pathname) → "hub" | "ws" | "mahjong" | "tools"
 
 - **Floating pill** — `position: fixed`, `pointer-events-none` on the outer header so content scrolls under the margins; each pill has `pointer-events-auto`.
 - **Primary pill** — 3-column CSS grid (`auto 1fr auto`): brand+chip | centered desktop nav | lang toggle + auth.
-- **Secondary pill** — mobile only, game sections only. Horizontally scrollable flat nav items. Hidden with `md:hidden`.
+- **Secondary pill** — mobile only, game sections only. Animated dropdown menu. Hidden with `md:hidden`.
 
 ### Nav configs
 
