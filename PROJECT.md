@@ -133,6 +133,19 @@ DeckCreate and DeckSearch removed from routes and NavBar (pages pending redesign
 
 ---
 
+### NavBar mobile dropdown (2026-05-17 session 2, cont.)
+
+Replaced the secondary scrollable pill (second row below the primary pill) with a hamburger-triggered dropdown menu, matching Raycast.com's single-pill-with-dropdown pattern.
+
+- Mobile only: `≡` / `✕` toggle button in the primary pill (right side, game sections only)
+- Dropdown panel: `position: absolute`, same frosted-glass style as the pill, anchored 6px below
+- Animation: `height: 0 → auto` with `overflow: hidden` via framer-motion `AnimatePresence` — content grows downward from the pill edge rather than appearing as a separate floating window
+- Easing: `[0.4, 0, 0.2, 1]` (Material ease-in-out) for height, separate 0.15s opacity fade
+- Backdrop (`fixed inset-0 z-40`) closes the menu on outside tap; route changes also close it
+- Spacer height simplified to `h-[64px] md:h-[72px]` always (no more conditional secondary-bar height)
+
+---
+
 ## Recommended next work
 
 ### Mahjong engine improvements
