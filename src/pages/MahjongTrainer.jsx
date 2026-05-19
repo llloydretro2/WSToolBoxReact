@@ -6,8 +6,10 @@ import {
 import MahjongTile       from "../components/mahjong/MahjongTile";
 import MahjongTilePicker from "../components/mahjong/MahjongTilePicker";
 import { useLocale }     from "../contexts/LocaleContext";
-import { sortTiles, tileName, tileKey, groupTiles } from "../utils/mahjong/tileParser";
+import { sortTiles, tileName, tileKey, groupTiles, extractAllHandGroups } from "../utils/mahjong/tileParser";
 import { analyzeHand, FEASIBILITY } from "../utils/mahjong/yakuAnalyzer";
+import { evaluateYakuFromDecomposition } from "../utils/mahjong/handSimulator";
+import { computeScore } from "../utils/mahjong/scoring";
 
 // ── Feasibility ───────────────────────────────────────────────────────────────
 
@@ -385,8 +387,9 @@ function ResultsSummary({ vm, locale }) {
   );
 }
 
-function CompletedPanel({ vm, locale }) {
+function CompletedPanel({ vm, locale, scoreResult }) {
   const { achievedRoutes, achievedHan } = vm.hand;
+  const p = scoreResult?.points;
   return (
     <div className="p-5 border border-gray-200 rounded-2xl" style={{ borderLeftWidth: 3, borderLeftColor: '#111' }}>
       <p className="font-black text-lg text-gray-950 mb-1">
@@ -400,7 +403,7 @@ function CompletedPanel({ vm, locale }) {
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
             {locale === 'zh' ? `达成役种 · ${achievedHan}番` : `Achieved · ${achievedHan} han`}
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mb-4">
             {achievedRoutes.map((r) => (
               <Pill key={r.id} className="bg-gray-950 text-white text-xs px-2.5 py-1">
                 {locale === 'zh' ? r.nameZh : r.nameEn}
@@ -408,6 +411,42 @@ function CompletedPanel({ vm, locale }) {
             ))}
           </div>
         </>
+      )}
+
+      {/* Score display */}
+      {scoreResult && p && (
+        <div className="border-t border-gray-100 pt-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+            {locale === 'zh' ? '得点' : 'Score'}
+            {scoreResult.han !== 'yakuman' && (
+              <span className="ml-2 font-normal normal-case text-gray-400">
+                {scoreResult.han}{locale === 'zh' ? '番' : 'han'} · {scoreResult.fu}{locale === 'zh' ? '符' : 'fu'}
+                {p.limitName ? ` · ${p.limitName}` : ''}
+              </span>
+            )}
+            {scoreResult.han === 'yakuman' && (
+              <span className="ml-2 font-normal normal-case text-gray-400">{p.limitName}</span>
+            )}
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            <div>
+              <span className="text-gray-400">{locale === 'zh' ? '荣和（非庄）' : 'Ron (non-dealer)'}</span>
+              <span className="ml-1.5 font-bold text-gray-900">{p.ron.nonDealer.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">{locale === 'zh' ? '荣和（庄家）' : 'Ron (dealer)'}</span>
+              <span className="ml-1.5 font-bold text-gray-900">{p.ron.dealer.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">{locale === 'zh' ? '自摸（庄付）' : 'Tsumo (dealer pays)'}</span>
+              <span className="ml-1.5 font-bold text-gray-900">{p.tsumo.dealer.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">{locale === 'zh' ? '自摸（闲付）' : 'Tsumo (others pay)'}</span>
+              <span className="ml-1.5 font-bold text-gray-900">{p.tsumo.nonDealer.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -663,7 +702,17 @@ function MahjongTrainer() {
     const rules    = { openTanyao, twoHanMin };
     const analysis = analyzeHand(concealedTiles, openMelds, seatWind, roundWind, rules);
     const vm       = buildTrainerViewModel(analysis, [...concealedTiles], [...openMelds]);
-    setResult({ vm });
+
+    // Compute score for complete hands
+    let scoreResult = null;
+    if (analysis.handStatus.isComplete) {
+      const groups = extractAllHandGroups(concealedTiles, openMelds.length);
+      if (groups.length > 0) {
+        const yakuIds = evaluateYakuFromDecomposition(groups[0], openMelds, seatWind, roundWind, rules);
+        scoreResult = computeScore(groups[0], openMelds, yakuIds, seatWind, roundWind, 'ron', null);
+      }
+    }
+    setResult({ vm, scoreResult });
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
 
@@ -781,7 +830,7 @@ function MahjongTrainer() {
             <ResultsSummary vm={result.vm} locale={locale} />
 
             {result.vm.hand.isComplete ? (
-              <CompletedPanel vm={result.vm} locale={locale} />
+              <CompletedPanel vm={result.vm} locale={locale} scoreResult={result.scoreResult} />
             ) : (
               <YakuRoutes vm={result.vm} locale={locale} />
             )}

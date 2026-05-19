@@ -5,8 +5,10 @@ import { X, ArrowUp, Shuffle } from 'lucide-react';
 import MahjongTile       from '../components/mahjong/MahjongTile';
 import MahjongTilePicker from '../components/mahjong/MahjongTilePicker';
 import { useLocale }     from '../contexts/LocaleContext';
-import { sortTiles, tileName, tileKey, groupTiles, parseTiles, generateHandString } from '../utils/mahjong/tileParser';
+import { sortTiles, tileName, tileKey, groupTiles, parseTiles, generateHandString, extractAllHandGroups } from '../utils/mahjong/tileParser';
 import { analyzeEfficiency } from '../utils/mahjong/ukeire.js';
+import { evaluateYakuFromDecomposition } from '../utils/mahjong/handSimulator.js';
+import { computeScore } from '../utils/mahjong/scoring.js';
 
 // All 34 tile types used for random draw
 const ALL_34 = [
@@ -49,25 +51,74 @@ function ShantenBadge({ shanten, locale }) {
 
 // ── Waits panel (tenpai) ──────────────────────────────────────────────────────
 
-function WaitsPanel({ waits, locale }) {
+function WaitsPanel({ waits, concealedTiles, openMelds, locale }) {
   if (!waits || waits.length === 0) return (
     <div className="border border-gray-200 rounded-2xl p-5 text-sm text-gray-400">
       {locale === 'zh' ? '当前手牌无和牌方式' : 'No winning tiles found'}
     </div>
   );
   const total = waits.reduce((s, e) => s + e.remaining, 0);
+
+  // Compute score for each wait tile
+  const waitScores = useMemo(() => waits.map(w => {
+    try {
+      const full = [...concealedTiles, w.tile];
+      const groups = extractAllHandGroups(full, openMelds.length);
+      if (!groups.length) return null;
+      const ids = evaluateYakuFromDecomposition(groups[0], openMelds, 1, 1, { openTanyao: true });
+      return computeScore(groups[0], openMelds, ids, 1, 1, 'ron', w.tile);
+    } catch { return null; }
+  }), [waits, concealedTiles, openMelds]);
+
   return (
     <div className="border border-gray-200 rounded-2xl p-5 sm:p-6">
       <p className="text-[10px] font-black tracking-widest uppercase text-gray-400 mb-4">
         {locale === 'zh' ? `待ち牌 · ${waits.length}种 · ${total}张` : `Waits · ${waits.length} kinds · ${total} tiles`}
       </p>
-      <div className="flex flex-wrap gap-4">
-        {waits.map((w, i) => (
-          <div key={i} className="flex flex-col items-center gap-1">
-            <MahjongTile tile={w.tile} size="md" />
-            <span className="text-[11px] font-bold text-gray-500">×{w.remaining}</span>
-          </div>
-        ))}
+      <div className="flex flex-col gap-3">
+        {waits.map((w, i) => {
+          const sc = waitScores[i];
+          const p  = sc?.points;
+          return (
+            <div key={i} className="flex items-center gap-3">
+              {/* Tile + remaining */}
+              <div className="flex flex-col items-center gap-0.5 w-12 shrink-0">
+                <MahjongTile tile={w.tile} size="md" />
+                <span className="text-[10px] font-bold text-gray-400">×{w.remaining}</span>
+              </div>
+              {/* Score info */}
+              {sc && p ? (
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-gray-500">
+                    {sc.han === 'yakuman'
+                      ? p.limitName
+                      : `${sc.han}${locale === 'zh' ? '番' : 'han'} ${sc.fu}${locale === 'zh' ? '符' : 'fu'}${p.limitName ? ' · ' + p.limitName : ''}`}
+                  </p>
+                  <p className="text-xs font-bold text-gray-800">
+                    {locale === 'zh' ? '荣' : 'Ron'} {p.ron.nonDealer.toLocaleString()}
+                    <span className="font-normal text-gray-400 ml-1">
+                      ({locale === 'zh' ? '庄' : 'dlr'} {p.ron.dealer.toLocaleString()})
+                    </span>
+                  </p>
+                  {!p.isLimit && (
+                    <p className="text-[10px] text-gray-400">
+                      {locale === 'zh' ? '自摸' : 'Tsumo'} {p.tsumo.nonDealer.toLocaleString()} / {p.tsumo.dealer.toLocaleString()}
+                    </p>
+                  )}
+                  {p.isLimit && (
+                    <p className="text-[10px] text-gray-400">
+                      {locale === 'zh' ? '自摸' : 'Tsumo'} {p.tsumo.nonDealer.toLocaleString()} / {p.tsumo.dealer.toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1">
+                  <p className="text-[11px] text-gray-300">{locale === 'zh' ? '无役' : 'No yaku'}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -554,7 +605,12 @@ function MahjongEfficiency() {
             )}
 
             {analysis.shanten === 0 && (
-              <WaitsPanel waits={analysis.waits} locale={locale} />
+              <WaitsPanel
+                waits={analysis.waits}
+                concealedTiles={concealedTiles}
+                openMelds={openMelds}
+                locale={locale}
+              />
             )}
 
             {analysis.shanten > 0 && analysis.ukeire.length > 0 && (
