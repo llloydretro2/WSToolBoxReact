@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-19 (session 6)
+> Last updated: 2026-05-19 (session 7)
 
 ## Deployment
 
@@ -301,7 +301,19 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 - Tenpai badge on rows where discard leads to tenpai
 - Bad discards (worsen shanten) shown dimmed at bottom
 
-### Backlog (after Phase 2)
+### Phase 3 — 牌理页面 Tenhou 完整对齐 ✅ DONE
+
+| 项目 | 状态 | 说明 |
+|---|---|---|
+| URL 状态保存 (`?q=`) | ✅ | 刷新保留手牌，可分享链接，格式与 Tenhou 一致 |
+| 14张摸牌视觉提示 | ❌ 取消 | 13张无"摸牌"概念，任务无意义 |
+| 赤五支持 (`0m/0p/0s`) | ✅ | 牌面模型 `{red:true}`，选牌器新增赤五行，红色边框显示 |
+| 随机摸牌按钮 | ✅ | 13张时显示「随机摸牌」按钮，按剩余张数加权随机 |
+| 点击有效牌摸入 | ✅ | 点击分析列表中的有效牌直接加入手牌，继续分析 |
+
+**主页导航动态化**：`chipKeys` 和工具数量从 `NavBar.jsx` NAV 配置自动派生，不再硬编码。新增麻将页面只需改 NavBar 配置一处。
+
+### Backlog
 
 - **`extractAllHandGroups`** — enumerate all valid decompositions; fixes ambiguous hands like `223344m`
 - **Pinfu wait check** — verify ryanmen wait condition

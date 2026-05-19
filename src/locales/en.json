@@ -48,8 +48,8 @@
       },
       "mahjong": {
         "name": "Mahjong",
-        "desc": "Riichi Mahjong yaku route trainer",
-        "count": "1 tool"
+        "desc": "Yaku route trainer & ukeire efficiency",
+        "count": "2 tools"
       },
       "tools": {
         "name": "General Tools",

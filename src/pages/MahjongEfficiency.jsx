@@ -1,11 +1,20 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, ArrowUp } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
+import { X, ArrowUp, Shuffle } from 'lucide-react';
 import MahjongTile       from '../components/mahjong/MahjongTile';
 import MahjongTilePicker from '../components/mahjong/MahjongTilePicker';
 import { useLocale }     from '../contexts/LocaleContext';
-import { sortTiles, tileName, tileKey, groupTiles, parseTiles } from '../utils/mahjong/tileParser';
+import { sortTiles, tileName, tileKey, groupTiles, parseTiles, generateHandString } from '../utils/mahjong/tileParser';
 import { analyzeEfficiency } from '../utils/mahjong/ukeire.js';
+
+// All 34 tile types used for random draw
+const ALL_34 = [
+  ...Array.from({ length: 9 }, (_, i) => ({ suit: 'm', value: i + 1 })),
+  ...Array.from({ length: 9 }, (_, i) => ({ suit: 'p', value: i + 1 })),
+  ...Array.from({ length: 9 }, (_, i) => ({ suit: 's', value: i + 1 })),
+  ...Array.from({ length: 7 }, (_, i) => ({ suit: 'z', value: i + 1 })),
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -149,7 +158,7 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
 
 // ── Ukeire list (compact horizontal layout) ──────────────────────────────────
 
-function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expandedKey, onToggle }) {
+function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expandedKey, onToggle, onDrawTile }) {
   const good = ukeire.filter(e => e.shantenAfter <= shanten);
   const bad  = ukeire.filter(e => e.shantenAfter >  shanten);
 
@@ -175,11 +184,24 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
           {/* Arrow */}
           <span className="text-gray-300 text-xs shrink-0">→</span>
 
-          {/* Effective tiles — horizontal wrap */}
-          <div className="flex flex-wrap gap-x-1.5 gap-y-1 flex-1 min-w-0 items-end">
+          {/* Effective tiles — horizontal wrap, clickable to draw */}
+          <div
+            className="flex flex-wrap gap-x-1.5 gap-y-1 flex-1 min-w-0 items-end"
+            onClick={e => e.stopPropagation()}
+          >
             {entry.effectiveTiles.map((e, i) => (
-              <div key={i} className="flex flex-col items-center gap-px">
-                <MahjongTile tile={e.tile} size="xs" />
+              <div
+                key={i}
+                className="flex flex-col items-center gap-px"
+                title={onDrawTile
+                  ? (locale === 'zh' ? `摸入${e.tile.value}${['','万','饼','索','z']['mpsz'.indexOf(e.tile.suit)+1]||''}` : `Draw this tile`)
+                  : undefined}
+              >
+                <MahjongTile
+                  tile={e.tile}
+                  size="xs"
+                  onClick={onDrawTile ? () => onDrawTile(e.tile) : undefined}
+                />
                 <span className="text-[9px] text-gray-400 leading-none">×{e.remaining}</span>
               </div>
             ))}
@@ -238,6 +260,7 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
 
 function MahjongEfficiency() {
   const { t, locale } = useLocale();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [concealedTiles, setConcealedTiles] = useState([]);
   const [openMelds,      setOpenMelds]      = useState([]);
@@ -260,7 +283,10 @@ function MahjongEfficiency() {
   const tileCounts = useMemo(() => groupTiles(allTiles), [allTiles]);
   const totalCount = allTiles.length;
   const isHandFull = totalCount >= 14;
-  const hasHand    = concealedTiles.length > 0 || openMelds.length > 0;
+  const hasHand       = concealedTiles.length > 0 || openMelds.length > 0;
+  // Waiting count: 13 tiles for 0 melds, 10 for 1, 7 for 2, 4 for 3
+  const waitingCount  = 13 - 3 * openMelds.length;
+  const isWaitingForDraw = concealedTiles.length === waitingCount;
 
   // Auto-compute analysis whenever hand changes
   const analysis = useMemo(() => {
@@ -270,6 +296,30 @@ function MahjongEfficiency() {
 
   // Reset drill-down when hand changes
   useEffect(() => { setExpandedKey(null); }, [concealedTiles, openMelds]);
+
+  // Restore hand from URL on mount (?q=123m456p789s11z)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (!q) return;
+    try {
+      const tiles = parseTiles(q);
+      if (tiles.length > 0 && tiles.length <= 14) {
+        const counts = groupTiles(tiles);
+        if (!Object.values(counts).some(n => n > 4)) {
+          setConcealedTiles(tiles);
+        }
+      }
+    } catch { /* ignore malformed URL param */ }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync hand → URL whenever tiles change
+  useEffect(() => {
+    const handStr = concealedTiles.length > 0 ? generateHandString(concealedTiles) : '';
+    const current = searchParams.get('q') ?? '';
+    if (handStr !== current) {
+      setSearchParams(handStr ? { q: handStr } : {}, { replace: true });
+    }
+  }, [concealedTiles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleTileClick = (tile) => {
@@ -306,7 +356,7 @@ function MahjongEfficiency() {
     setTextInput(''); setTextError('');
     setConcealedTiles(prev => {
       const copy = [...prev];
-      const idx = copy.findIndex(t => tileKey(t) === tileKey(tile));
+      const idx  = copy.findIndex(t => tileKey(t) === tileKey(tile));
       if (idx >= 0) copy.splice(idx, 1);
       return copy;
     });
@@ -321,6 +371,28 @@ function MahjongEfficiency() {
   const handleClearAll = () => {
     setConcealedTiles([]); setOpenMelds([]); setMeldBuilder([]);
     setTextInput(''); setTextError('');
+  };
+
+  // Draw a specific tile (clicked from effective tile list)
+  const handleDrawTile = (tile) => {
+    if (isHandFull) return;
+    if ((tileCounts[tileKey(tile)] ?? 0) >= 4) return;
+    setTextInput(''); setTextError('');
+    setConcealedTiles(prev => [...prev, tile]);
+  };
+
+  // Random draw: pick a tile from the remaining wall (weighted by remaining count)
+  const handleRandomDraw = () => {
+    const inHand = groupTiles([...concealedTiles, ...openMelds.flat()]);
+    // Build candidate pool weighted by remaining count
+    const pool = ALL_34.flatMap(tile => {
+      const remaining = 4 - (inHand[tileKey(tile)] || 0);
+      return Array.from({ length: remaining }, () => tile);
+    });
+    if (pool.length === 0) return;
+    const drawn = pool[Math.floor(Math.random() * pool.length)];
+    setTextInput(''); setTextError('');
+    setConcealedTiles(prev => [...prev, drawn]);
   };
 
   // Real-time text → tiles sync
@@ -385,8 +457,8 @@ function MahjongEfficiency() {
             )}
             <p className="text-[10px] text-gray-300 mt-1.5">
               {locale === 'zh'
-                ? '格式：数字+花色  m=万 p=饼 s=索 z=字(1东2南3西4北5白6发7中)'
-                : 'Format: digits + suit  m=man p=pin s=sou z=honours(1-7)'}
+                ? '格式：数字+花色  m=万 p=饼 s=索 z=字(1-7)  0m/0p/0s=赤五'
+                : 'Format: digits+suit  m=man p=pin s=sou z=honours(1-7)  0m/0p/0s=red five'}
             </p>
           </div>
 
@@ -433,9 +505,20 @@ function MahjongEfficiency() {
                 </>
               )}
             </div>
-            {hasHand && (
-              <p className="text-[10px] text-gray-300 mt-1.5">{t('efficiency.removeHint')}</p>
-            )}
+            <div className="flex items-center justify-between mt-1.5">
+              {hasHand && (
+                <p className="text-[10px] text-gray-300">{t('efficiency.removeHint')}</p>
+              )}
+              {isWaitingForDraw && (
+                <button
+                  onClick={handleRandomDraw}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors ml-auto"
+                >
+                  <Shuffle size={11} />
+                  {locale === 'zh' ? '随机摸牌' : 'Random Draw'}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Tile picker */}
@@ -483,6 +566,7 @@ function MahjongEfficiency() {
                 locale={locale}
                 expandedKey={expandedKey}
                 onToggle={setExpandedKey}
+                onDrawTile={!isHandFull ? handleDrawTile : null}
               />
             )}
           </div>

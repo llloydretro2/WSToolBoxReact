@@ -136,6 +136,7 @@ function MahjongTile({
     ? (e) => { e.preventDefault(); onRightClick(tile); }
     : undefined;
 
+  const isRed = !!tile.red;
   const containerStyle = {
     position: 'relative',
     width: cfg.w,
@@ -145,10 +146,12 @@ function MahjongTile({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: useImage
-      ? (isDisabled ? '#e0e0e0' : '#fffef5')
+      ? (isDisabled ? '#e0e0e0' : isRed ? '#fff5f5' : '#fffef5')
       : (isDisabled ? '#e8e8e8' : fbStyle.bg),
     border: selected
       ? '2px solid #111'
+      : isRed && !isDisabled
+      ? '1.5px solid #ef4444'
       : `1.5px solid ${isDisabled ? '#ccc' : (useImage ? '#d1d5db' : fbStyle.border)}`,
     borderRadius: cfg.r,
     boxShadow: isDisabled

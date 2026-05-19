@@ -64,6 +64,17 @@ const GROUPS = [
     tiles: Array.from({ length: 9 }, (_, i) => ({ suit: 's', value: i + 1 })),
   },
   {
+    key: 'redFives',
+    short: '赤',
+    labelZh: '赤五',
+    labelEn: 'Red 5s',
+    tiles: [
+      { suit: 'm', value: 5, red: true },
+      { suit: 'p', value: 5, red: true },
+      { suit: 's', value: 5, red: true },
+    ],
+  },
+  {
     key: 'honors',
     short: '字',
     labelZh: '字牌',

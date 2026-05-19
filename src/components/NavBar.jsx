@@ -14,7 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 // ─── Nav configs ───────────────────────────────────────────────────────────────
 
-const WS_NAV = {
+export const WS_NAV = {
 	primary: [{ labelKey: "menu.cardSearch", path: "/ws/cards" }],
 	pack: {
 		labelKey: "menu.pack",
@@ -33,14 +33,14 @@ const WS_NAV = {
 	userItems: [{ labelKey: "menu.record", path: "/ws/record" }],
 };
 
-const MAHJONG_NAV = {
+export const MAHJONG_NAV = {
 	primary: [
 		{ labelKey: "menu.mahjongTrainer",    path: "/mahjong/trainer" },
 		{ labelKey: "menu.mahjongEfficiency", path: "/mahjong/efficiency" },
 	],
 };
 
-const TOOLS_NAV = {
+export const TOOLS_NAV = {
 	primary: [
 		{ labelKey: "menu.firstSecond", path: "/tools/first-second" },
 		{ labelKey: "menu.dice", path: "/tools/dice" },

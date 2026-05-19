@@ -24,9 +24,10 @@ export function tileName(tile, lang = 'zh') {
   if (tile.suit === 'z') {
     return lang === 'zh' ? HONOR_ZH[tile.value] : HONOR_EN[tile.value];
   }
+  const prefix = tile.red ? (lang === 'zh' ? '赤' : 'r') : '';
   return lang === 'zh'
-    ? `${tile.value}${SUIT_ZH[tile.suit]}`
-    : `${tile.value}${SUIT_EN[tile.suit]}`;
+    ? `${prefix}${tile.value}${SUIT_ZH[tile.suit]}`
+    : `${prefix}${tile.value}${SUIT_EN[tile.suit]}`;
 }
 
 export function parseTiles(str) {
@@ -55,6 +56,7 @@ export function parseTiles(str) {
     if (['m', 'p', 's', 'z'].includes(ch)) {
       for (const v of pending) {
         if (ch === 'z' && v >= 1 && v <= 7) tiles.push({ suit: 'z', value: v });
+        else if (ch !== 'z' && v === 0) tiles.push({ suit: ch, value: 5, red: true }); // 赤五
         else if (ch !== 'z' && v >= 1 && v <= 9) tiles.push({ suit: ch, value: v });
       }
       pending = [];
@@ -100,7 +102,7 @@ export function generateHandString(tiles) {
   const sorted = sortTiles(tiles);
   let result = '';
   for (const suit of ['m', 'p', 's']) {
-    const vals = sorted.filter((t) => t.suit === suit).map((t) => t.value);
+    const vals = sorted.filter((t) => t.suit === suit).map((t) => t.red ? 0 : t.value);
     if (vals.length > 0) result += vals.join('') + suit;
   }
   const honors = sorted.filter((t) => t.suit === 'z');

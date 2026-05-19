@@ -16,36 +16,40 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import TuneIcon from "@mui/icons-material/Tune";
 import { GitHub as GitHubIcon, Email as EmailIcon } from "@mui/icons-material";
 import { useLocale } from "../contexts/LocaleContext";
+import { WS_NAV, MAHJONG_NAV, TOOLS_NAV } from "../components/NavBar";
 
 // ─── Section config ────────────────────────────────────────────────────────────
+// chipKeys for WS is curated (nav has nested dropdowns, not all items suit the card).
+// chipKeys for Mahjong and Tools are auto-derived from their primary nav items —
+// adding a new page only requires updating NavBar's NAV config.
 
 const SECTIONS = [
 	{
 		key: "ws",
 		Icon: StyleIcon,
-		accent: "#5c4f6b",   // 深紫玫瑰，来自 WS 图片的石板蓝紫调
+		accent: "#5c4f6b",
 		path: "/ws/cards",
 		chipKeys: ["menu.cardSearch", "menu.pack", "menu.record"],
 	},
 	{
 		key: "mahjong",
 		Icon: GridViewIcon,
-		accent: "#5a3f45",   // 深暖棕炭，来自麻将图片的暗调
-		path: "/mahjong/trainer",
-		chipKeys: ["menu.mahjong"],
+		accent: "#5a3f45",
+		path: MAHJONG_NAV.primary[0].path,
+		chipKeys: MAHJONG_NAV.primary.map(i => i.labelKey),
 	},
 	{
 		key: "tools",
 		Icon: TuneIcon,
-		accent: "#7a6552",   // 深暖褐，来自 Tools 图片的沙漠色调
-		path: "/tools/first-second",
-		chipKeys: ["menu.firstSecond", "menu.dice", "menu.chessClock"],
+		accent: "#7a6552",
+		path: TOOLS_NAV.primary[0].path,
+		chipKeys: TOOLS_NAV.primary.map(i => i.labelKey),
 	},
 ];
 
 // ─── SectionCard ───────────────────────────────────────────────────────────────
 
-function SectionCard({ section, t, onNavigate }) {
+function SectionCard({ section, t, locale, onNavigate }) {
 	const { key, Icon, accent, path, chipKeys } = section;
 
 	return (
@@ -117,7 +121,7 @@ function SectionCard({ section, t, onNavigate }) {
 						<Typography
 							variant="caption"
 							sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
-							{t(`pages.home.${key}.count`)}
+							{chipKeys.length}{locale === 'zh' ? ' 个工具' : ` tool${chipKeys.length !== 1 ? 's' : ''}`}
 						</Typography>
 					</Box>
 				</Box>
@@ -168,7 +172,7 @@ SectionCard.propTypes = {
 // ─── Home ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-	const { t } = useLocale();
+	const { t, locale } = useLocale();
 	const navigate = useNavigate();
 
 	return (
@@ -202,6 +206,7 @@ export default function Home() {
 								<SectionCard
 									section={section}
 									t={t}
+									locale={locale}
 									onNavigate={navigate}
 								/>
 							</Box>
