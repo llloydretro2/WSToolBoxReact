@@ -761,7 +761,7 @@ const Record = () => {
 								sx={{ fontWeight: 600 }}>
 								{t("record.form.myInfo")}
 							</Typography>
-							<Tooltip title={"重置我方信息"}>
+							<Tooltip title={t("record.resetMyInfo")}>
 								<IconButton
 									size="small"
 									onClick={resetMyInfo}
@@ -841,7 +841,7 @@ const Record = () => {
 								sx={{ fontWeight: 700 }}>
 								{t("record.form.opponentInfo")}
 							</Typography>
-							<Tooltip title={"重置对手信息"}>
+							<Tooltip title={t("record.resetOpponentInfo")}>
 								<IconButton
 									size="small"
 									onClick={resetOpponentInfo}

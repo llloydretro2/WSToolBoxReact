@@ -282,7 +282,9 @@ function PickPacks() {
             sx={{ mb: 3, textAlign: "center", color: "var(--text)" }}
           >
             包选择结果 (
-            {results.length > 0 ? `已选择 ${results.length} 包` : "等待选择"})
+            {results.length > 0
+              ? t("pickPacks.selectionStatus", { count: results.length })
+              : t("pickPacks.waitingSelection")})
           </Typography>
           <Box
             sx={{

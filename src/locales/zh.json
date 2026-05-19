@@ -237,90 +237,8 @@
     "cardCaption": "数量"
   },
   "record": {
-    "title": "战绩管理",
-    "tabs": {
-      "create": "创建记录",
-      "query": "查询记录"
-    },
-    "form": {
-      "matchName": "比赛名（可选）",
-      "notes": "备注（可选）",
-      "myDeckName": "我方卡组名称",
-      "mySeries": "我方系列",
-      "opponentDeckName": "对方卡组名称",
-      "opponentSeries": "对手系列",
-      "resultLabel": "胜负",
-      "startDate": "起始日期",
-      "endDate": "结束日期",
-      "filterButton": "筛选",
-      "myInfo": "我方信息",
-      "opponentInfo": "对手信息",
-      "submitButton": "提交",
-      "resetButton": "重置",
-      "result": {
-        "win": "胜利",
-        "lose": "失败",
-        "doubleLose": "双败"
-      }
-    },
-    "display": {
-      "noRecords": "暂无比赛记录",
-      "startFirst": "开始你的第一场比赛吧！",
-      "myDeck": "我的牌组",
-      "opponentDeck": "对手牌组",
-      "notesLabel": "备注：",
-      "deleteTooltip": "删除记录",
-      "unknownSeries": "未知系列",
-      "unknownDeck": "未知牌组"
-    },
-    "stats": {
-      "dialogTitle": "📊 对战数据统计",
-      "menuItem": "对战数据统计",
-      "noData": "无数据",
-      "basicSection": "基础统计",
-      "playerSection": "我方系列统计",
-      "opponentSection": "敌方系列统计",
-      "totalMatches": "总对局数：{{count}}",
-      "wins": "胜场：{{count}}",
-      "losses": "负场：{{count}}",
-      "draws": "平局：{{count}}",
-      "winRateDetailed": "总胜率：{{percentage}}%（胜 {{wins}} · 负 {{losses}} · 平 {{draws}}）",
-      "winRateEmpty": "总胜率：0%（暂无对局）",
-      "playerTop": "最常用系列：{{series}}（{{count}} 次）",
-      "playerTopEmpty": "最常用系列：暂无记录",
-      "playerTotal": "使用系列总数：{{count}} 种",
-      "playerTotalEmpty": "使用系列总数：暂无系列数据",
-      "opponentTop": "最常遇到系列：{{series}}（{{count}} 次）",
-      "opponentTopEmpty": "最常遇到系列：暂无记录",
-      "opponentTotal": "遇到系列总数：{{count}} 种",
-      "opponentTotalEmpty": "遇到系列总数：暂无系列数据",
-      "emptyStateTitle": "暂无数据可显示",
-      "emptyStateSubtitle": "请先添加对战记录以查看统计数据",
-      "close": "关闭"
-    },
-    "charts": {
-      "showMySeriesDistribution": "显示我方系列分布",
-      "showOpponentSeriesDistribution": "显示对手系列分布",
-      "showWinRateTable": "显示胜率统计表格",
-      "playerDialogTitle": "我方系列分布",
-      "opponentDialogTitle": "敌方系列分布",
-      "noData": "暂无数据可显示",
-      "legendFull": "{{series}} ({{count}}个, {{percentage}}%)",
-      "legendShort": "{{count}}个 ({{percentage}}%)",
-      "legendCount": "{{count}}个"
-    },
-    "deleteDialog": {
-      "title": "确认删除",
-      "content": "确定要删除该记录吗？此操作不可撤销。",
-      "cancel": "取消",
-      "confirm": "删除"
-    },
-    "resetDialog": {
-      "title": "确认重置",
-      "content": "您确定要重置表单吗？所有已填写的内容将会被清空。",
-      "cancel": "取消",
-      "confirm": "确认重置"
-    }
+    "resetMyInfo": "重置我方信息",
+    "resetOpponentInfo": "重置对手信息"
   },
   "deckEdit": {
     "sideLabel": "边",
@@ -426,5 +344,9 @@
     "drillTitle": "打出后",
     "drillTenpai": "听牌，待ち牌",
     "drillEffective": "有效摸牌"
+  },
+  "pickPacks": {
+    "selectionStatus": "已选择 {count} 包",
+    "waitingSelection": "等待选择"
   }
 }

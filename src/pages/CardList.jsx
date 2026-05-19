@@ -101,7 +101,7 @@ function CardList() {
 			.filter((level) => level !== "-")
 			.map((level) => Number(level))
 			.sort((a, b) => a - b);
-	}, []);
+	}, [productList.level]);
 
 	// level scale函数
 	const levelScale = useCallback(
@@ -122,7 +122,7 @@ function CardList() {
 			.filter((power) => power !== "-")
 			.map((power) => Number(power))
 			.sort((a, b) => a - b);
-	}, []);
+	}, [productList.power]);
 
 	// power scale函数
 	const powerScale = useCallback(
@@ -143,7 +143,7 @@ function CardList() {
 			.filter((cost) => cost !== "-")
 			.map((cost) => Number(cost))
 			.sort((a, b) => a - b);
-	}, []);
+	}, [productList.cost]);
 
 	// cost scale函数
 	const costScale = useCallback(
