@@ -313,6 +313,30 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 **主页导航动态化**：`chipKeys` 和工具数量从 `NavBar.jsx` NAV 配置自动派生，不再硬编码。新增麻将页面只需改 NavBar 配置一处。
 
+---
+
+### 牌理页面完善 & 主页导航重构 (2026-05-19 session 7)
+
+#### 牌理页面 Tenhou 对齐补全
+
+- **URL 状态保存**：手牌同步到 `?q=` URL 参数（`useSearchParams`），刷新页面后自动还原，可分享链接，格式与 Tenhou 牌理一致
+- **随机摸牌按钮**：手牌达到等待张数（13/10/7/4，取决于副露数）时出现「随机摸牌」按钮，从剩余牌墙按权重随机抽一张，变为 14 张进入打牌决策分析
+- **点击有效牌摸入**：分析结果里每张有效牌可点击，点击后该牌加入手牌，自动切换到 14 张打牌分析模式（`stopPropagation` 阻止触发行展开）
+- **赤五（赤牌）支持**：
+  - `tileParser.js`：解析 `0m/0p/0s` → `{suit, value:5, red:true}`；`generateHandString` 输出 `0` 表示赤五；`tileName` 返回"赤5万"等
+  - `MahjongTile.jsx`：`tile.red` 时显示红色边框 + 浅红背景
+  - `MahjongTilePicker.jsx`：新增「赤」行，含赤5万/赤5饼/赤5索三枚选牌
+  - 赤五与普通五共享 `tileKey`，向听数/有效牌计算完全透明
+
+#### 主页导航动态化
+
+- 将 `WS_NAV`、`MAHJONG_NAV`、`TOOLS_NAV` 从 `NavBar.jsx` 导出（`export const`）
+- `Home.jsx` 从 MAHJONG_NAV/TOOLS_NAV 的 `primary` 数组自动派生 `chipKeys` 和工具数量，不再硬编码
+- WS 仍手动维护（结构复杂，含嵌套下拉）
+- 新增麻将/工具页面只需更新 `NavBar.jsx` 一处，主页自动更新
+
+---
+
 ### Backlog
 
 - **`extractAllHandGroups`** — enumerate all valid decompositions; fixes ambiguous hands like `223344m`
