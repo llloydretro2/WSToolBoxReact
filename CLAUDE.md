@@ -47,7 +47,7 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 
 Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new paths via `<Navigate replace>` in `App.jsx`.
 
-**Note:** DeckCreate and DeckSearch pages exist as files but are not routed or linked — they are incomplete and pending a redesign.
+**Note:** All deck management pages (DeckCreate, DeckSearch, Deck, DeckEdit) have been deleted (session 9). Only DeckEdit route `/ws/deck/edit` existed; it is now removed. Code preserved in git history.
 
 ### Key hooks
 

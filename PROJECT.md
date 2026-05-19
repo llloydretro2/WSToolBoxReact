@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-19 (session 8)
+> Last updated: 2026-05-19 (session 9)
 
 ## Deployment
 
@@ -357,9 +357,22 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
   - 在 `findTenpaiWins` 和 `findDiscardThenWin` 中，平和场景生成后加校验，非两面待则跳过
 - 验证：`[23p]→1p/4p` 有精确场景 ✓；`[24p]→3p` 无精确场景 ✓；`[89m]→7m` 无精确场景 ✓
 
-### Backlog
+---
 
-- **Scoring** — fu/han calculation, basic point table
+### 代码清理 & Backlog 清零 (2026-05-19 session 9)
+
+#### 评分系统 UI 集成
+
+- **MahjongTrainer**：`CompletedPanel` 在完整和牌时显示得点（番数、符数、荣和/自摸四种情境点数）
+- **MahjongEfficiency**：`WaitsPanel` 为每张待ち牌单独计算并显示荣和/自摸得点
+
+#### Backlog 清零
+
+- **删除所有卡组管理页面**：DeckCreate、DeckSearch、Deck、DeckEdit 全部删除（无开发计划，git 历史保留）；App.jsx 移除相关路由和 lazy import
+- **CardList useMemo deps**：`validLevels`/`validPowers`/`validCosts` 三个 `useMemo` 补充 `productList.level/power/cost` 依赖，消除 3 个 lint warning
+- **i18n 补全**：PickPacks「已选择 N 包/等待选择」、Record「重置我方/对手信息」tooltip 提取为 locale key（zh + en）
+
+**Backlog 现已清空**，项目处于无已知技术债状态。
 - **i18n completion** — PickPacks, Record tooltips still have hardcoded Chinese strings
 - **DeckCreate / DeckSearch redesign** — currently unrouted; needs design before re-enabling
 - **CardList `useMemo` deps** — 3 pre-existing `react-hooks/exhaustive-deps` warnings
