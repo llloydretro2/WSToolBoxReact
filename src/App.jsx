@@ -30,7 +30,6 @@ const Simulator = lazy(() => import("./pages/Simulator.jsx"));
 const MahjongTrainer    = lazy(() => import("./pages/MahjongTrainer.jsx"));
 const MahjongEfficiency = lazy(() => import("./pages/MahjongEfficiency.jsx"));
 
-const DeckEdit = lazy(() => import("./pages/DeckEdit.jsx"));
 
 const LoadingFallback = () => (
 	<div
@@ -88,7 +87,6 @@ function AnimatedRoutes() {
 				<Route path="/ws/cards" element={withPageTransition(CardList)} />
 				<Route path="/ws/packs" element={withPageTransition(PickPacks)} />
 				<Route path="/ws/simulator" element={withPageTransition(Simulator)} />
-				<Route path="/ws/deck/edit" element={withPageTransition(DeckEdit)} />
 				<Route path="/ws/record" element={withPageTransition(Record)} />
 				<Route path="/ws/audio" element={withPageTransition(AudioBoard)} />
 				<Route path="/tools/first-second" element={withPageTransition(FirstSecond)} />
@@ -109,7 +107,6 @@ function AnimatedRoutes() {
 				<Route path="/cardlist" element={<Navigate to="/ws/cards" replace />} />
 				<Route path="/pick_packs" element={<Navigate to="/ws/packs" replace />} />
 				<Route path="/simulator" element={<Navigate to="/ws/simulator" replace />} />
-				<Route path="/deck-edit" element={<Navigate to="/ws/deck/edit" replace />} />
 				<Route path="/record" element={<Navigate to="/ws/record" replace />} />
 				<Route path="/audio" element={<Navigate to="/ws/audio" replace />} />
 				<Route path="/first_second" element={<Navigate to="/tools/first-second" replace />} />
