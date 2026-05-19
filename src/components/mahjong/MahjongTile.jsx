@@ -10,10 +10,8 @@
  * Falls back to CSS/text rendering when an image fails to load.
  */
 import React, { useState } from 'react';
-import { Box, Typography } from '@mui/material';
 
 // ── Image asset map ───────────────────────────────────────────────────────────
-// Maps tile key (suit+value) → public path served from /assets/mahjong-tiles/
 
 const TILE_IMAGE = {
   m1: '/assets/mahjong-tiles/Man1.svg',
@@ -53,11 +51,10 @@ const TILE_IMAGE = {
 };
 
 // ── CSS fallback display ──────────────────────────────────────────────────────
-// Used when image fails to load.
 
-const MAN_CHARS  = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
-const PIN_CHARS  = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
-const SOU_CHARS  = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const MAN_CHARS   = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+const PIN_CHARS   = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
+const SOU_CHARS   = ['', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const HONOR_CHARS = { 1: '東', 2: '南', 3: '西', 4: '北', 5: '白', 6: '發', 7: '中' };
 const SUIT_LABEL  = { m: '万', p: '饼', s: '索' };
 
@@ -92,23 +89,23 @@ function getFallbackStyle(tile) {
 // Tile images have a 3:4 aspect ratio (300×400).
 
 const SIZE = {
-  xs: { w: 24, h: 32,  imgP: '4px',  primaryFs: '0.82rem', labelFs: null,     honorFs: '0.88rem', r: 2 },
-  sm: { w: 30, h: 40,  imgP: '3px',  primaryFs: '1.0rem',  labelFs: '0.5rem', honorFs: '1.05rem', r: 2 },
-  md: { w: 38, h: 51,  imgP: '4px',  primaryFs: '1.25rem', labelFs: '0.62rem',honorFs: '1.3rem',  r: 3 },
-  lg: { w: 50, h: 67,  imgP: '5px',  primaryFs: '1.65rem', labelFs: '0.8rem', honorFs: '1.7rem',  r: 3 },
+  xs: { w: 24, h: 32,  imgP: '4px',  primaryFs: '0.82rem', labelFs: null,      honorFs: '0.88rem', r: 2 },
+  sm: { w: 30, h: 40,  imgP: '3px',  primaryFs: '1.0rem',  labelFs: '0.5rem',  honorFs: '1.05rem', r: 2 },
+  md: { w: 38, h: 51,  imgP: '4px',  primaryFs: '1.25rem', labelFs: '0.62rem', honorFs: '1.3rem',  r: 3 },
+  lg: { w: 50, h: 67,  imgP: '5px',  primaryFs: '1.65rem', labelFs: '0.8rem',  honorFs: '1.7rem',  r: 3 },
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
 /**
  * Props:
- *   tile        {suit, value}            required
- *   size        'xs'|'sm'|'md'|'lg'     default 'md'
- *   onClick     fn(tile)                 left-click (makes tile interactive)
- *   onRightClick fn(tile)               right-click / context-menu
+ *   tile        {suit, value}           required
+ *   size        'xs'|'sm'|'md'|'lg'    default 'md'
+ *   onClick     fn(tile)                left-click
+ *   onRightClick fn(tile)              right-click / context-menu
  *   disabled    bool
- *   selected    bool                     highlighted border
- *   count       number                   badge — current copies in hand
- *   maxCount    number                   default 4; count >= maxCount → disabled
+ *   selected    bool                    highlighted border
+ *   count       number                  badge — current copies in hand
+ *   maxCount    number                  default 4; count >= maxCount → disabled
  */
 function MahjongTile({
   tile,
@@ -124,14 +121,13 @@ function MahjongTile({
 
   if (!tile) return null;
 
-  const cfg       = SIZE[size] ?? SIZE.md;
-  const tileKey   = tile.suit + tile.value;
-  const imageSrc  = TILE_IMAGE[tileKey];
-  const useImage  = !!imageSrc && !imgFailed;
-
-  const fbStyle   = getFallbackStyle(tile);
-  const isHonor   = tile.suit === 'z';
-  const isAtMax   = count !== undefined && count >= maxCount;
+  const cfg        = SIZE[size] ?? SIZE.md;
+  const key        = tile.suit + tile.value;
+  const imageSrc   = TILE_IMAGE[key];
+  const useImage   = !!imageSrc && !imgFailed;
+  const fbStyle    = getFallbackStyle(tile);
+  const isHonor    = tile.suit === 'z';
+  const isAtMax    = count !== undefined && count >= maxCount;
   const isDisabled = disabled || isAtMax;
   const isClickable = !isDisabled && !!onClick;
 
@@ -140,52 +136,45 @@ function MahjongTile({
     ? (e) => { e.preventDefault(); onRightClick(tile); }
     : undefined;
 
-  const containerSx = {
+  const containerStyle = {
     position: 'relative',
-    width:  cfg.w,
+    width: cfg.w,
     height: cfg.h,
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    // Use cream background for image tiles; suit-tinted for fallback
     backgroundColor: useImage
       ? (isDisabled ? '#e0e0e0' : '#fffef5')
       : (isDisabled ? '#e8e8e8' : fbStyle.bg),
     border: selected
-      ? '2px solid var(--primary)'
-      : `1.5px solid ${isDisabled ? '#ccc' : (useImage ? '#bbb' : fbStyle.border)}`,
+      ? '2px solid #111'
+      : `1.5px solid ${isDisabled ? '#ccc' : (useImage ? '#d1d5db' : fbStyle.border)}`,
     borderRadius: cfg.r,
     boxShadow: isDisabled
       ? 'none'
       : selected
-      ? '0 0 0 2px var(--primary-light), 2px 3px 6px rgba(0,0,0,0.2)'
-      : '1px 2px 5px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.9)',
+      ? '0 0 0 2px #e5e7eb, 2px 3px 6px rgba(0,0,0,0.2)'
+      : '1px 2px 5px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.9)',
     cursor: isClickable ? 'pointer' : 'default',
     userSelect: 'none',
     opacity: isDisabled ? 0.4 : 1,
-    // 'visible' lets the count badge render outside the tile bounds.
-    // Image/text content won't overflow thanks to objectFit + centering.
     overflow: 'visible',
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease',
-    '&:hover': isClickable ? {
-      transform: 'translateY(-3px)',
-      boxShadow: '1px 5px 10px rgba(0,0,0,0.22)',
-      borderColor: 'var(--primary)',
-    } : {},
-    '&:active': isClickable ? { transform: 'translateY(-1px)' } : {},
   };
 
   return (
-    <Box onClick={handleClick} onContextMenu={handleContextMenu} sx={containerSx}>
-      {/* ── Image tile ── */}
+    <div
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
+      style={containerStyle}
+      className={isClickable ? 'mj-tile-interactive' : ''}
+    >
       {useImage && (
-        <Box
-          component="img"
+        <img
           src={imageSrc}
-          alt={tileKey}
+          alt={key}
           onError={() => setImgFailed(true)}
-          sx={{
+          style={{
             width: '100%',
             height: '100%',
             objectFit: 'contain',
@@ -196,10 +185,9 @@ function MahjongTile({
         />
       )}
 
-      {/* ── CSS fallback ── */}
       {!useImage && (
         isHonor ? (
-          <Typography sx={{
+          <span style={{
             fontSize: cfg.honorFs,
             fontWeight: 800,
             color: isDisabled ? '#bbb' : fbStyle.color,
@@ -207,10 +195,10 @@ function MahjongTile({
             fontFamily: fbStyle.font,
           }}>
             {getFallbackChar(tile)}
-          </Typography>
+          </span>
         ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
-            <Typography sx={{
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px' }}>
+            <span style={{
               fontSize: cfg.primaryFs,
               fontWeight: tile.suit === 'm' ? 700 : 600,
               color: isDisabled ? '#bbb' : fbStyle.color,
@@ -218,9 +206,9 @@ function MahjongTile({
               fontFamily: fbStyle.font,
             }}>
               {getFallbackChar(tile)}
-            </Typography>
+            </span>
             {cfg.labelFs && (
-              <Typography sx={{
+              <span style={{
                 fontSize: cfg.labelFs,
                 fontWeight: 600,
                 color: isDisabled ? '#ccc' : fbStyle.color,
@@ -229,20 +217,19 @@ function MahjongTile({
                 opacity: 0.75,
               }}>
                 {SUIT_LABEL[tile.suit]}
-              </Typography>
+              </span>
             )}
-          </Box>
+          </div>
         )
       )}
 
-      {/* ── Count badge ── */}
       {count !== undefined && count > 0 && (
-        <Box sx={{
+        <div style={{
           position: 'absolute',
           top: -5, right: -5,
           width: 15, height: 15,
           borderRadius: '50%',
-          backgroundColor: isAtMax ? '#c41c24' : 'var(--primary-dark)',
+          backgroundColor: isAtMax ? '#dc2626' : '#374151',
           color: '#fff',
           fontSize: '0.52rem',
           fontWeight: 700,
@@ -253,9 +240,9 @@ function MahjongTile({
           pointerEvents: 'none',
         }}>
           {count}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 

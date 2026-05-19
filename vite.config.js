@@ -74,6 +74,13 @@ export default defineConfig({
 	server: {
 		port: 3000,
 		open: true,
+		headers: {
+			"Content-Security-Policy": "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+		},
+		watch: {
+			usePolling: true,
+			interval: 300,
+		},
 		proxy: {
 			"/api": {
 				target: "http://localhost:4000",

@@ -145,6 +145,19 @@ body {
     src: url("./assets/fonts/BIZUDPMincho-Regular.ttf") format("truetype");
 }
 
+/* Mahjong tile interactive hover */
+.mj-tile-interactive {
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.mj-tile-interactive:hover {
+    transform: translateY(-3px);
+    box-shadow: 1px 5px 10px rgba(0, 0, 0, 0.22);
+    border-color: #374151 !important;
+}
+.mj-tile-interactive:active {
+    transform: translateY(-1px);
+}
+
 @font-face {
     font-family: "name_font";
     src: url("./assets/fonts/NotoSansJP-VariableFont_wght.ttf")

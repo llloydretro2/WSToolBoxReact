@@ -291,12 +291,12 @@ function analyzeToitoi(ctx) {
   const setsHaveOrLikely = confirmedTriplets + concealedPairs;
 
   if (confirmedTriplets >= totalSetsNeeded && confirmedTriplets + (Object.values(cg).filter(c => c >= 2).length) >= totalSetsNeeded + 1) {
-    // Has enough triplets and a pair
+    // Has enough triplets and a pair — structure is already present
     return {
       id: 'toitoi', nameZh: '对对和', nameEn: 'Toitoi', nameJa: '対々和',
       han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '凑齐雀头和剩余刻子', explanation: '手牌刻子结构较强，对对和路线明确。' },
-      en: { needed: 'Complete the pair and any remaining triplets', explanation: 'Strong triplet structure — Toitoi path is clear.' },
+      zh: { needed: '', explanation: '手牌刻子结构完整，对对和路线确立。' },
+      en: { needed: '', explanation: 'Strong triplet structure with pair — Toitoi path is clear.' },
       openAllowed: true, impossibleReason: null, isYakuman: false,
     };
   }
@@ -357,11 +357,11 @@ function analyzeChiitoitsu(ctx) {
     id: 'chiitoitsu', nameZh: '七对子', nameEn: 'Chiitoitsu', nameJa: '七対子',
     han: { closed: 2, open: null }, feasibility,
     zh: {
-      needed: pairsToFind > 0 ? `还需要${pairsToFind}个对子` : '凑齐7个对子',
+      needed: pairsToFind > 0 ? `还需要${pairsToFind}个对子` : '',
       explanation: `当前手中有${pairs}个对子。七对子需要7个不同的对子。${dupNote ? dupNote.zh : ''}`,
     },
     en: {
-      needed: pairsToFind > 0 ? `Need ${pairsToFind} more pair(s)` : 'Complete 7 pairs',
+      needed: pairsToFind > 0 ? `Need ${pairsToFind} more pair(s)` : '',
       explanation: `${pairs} pair(s) currently. Chiitoitsu needs 7 unique pairs. ${dupNote ? dupNote.en : ''}`,
     },
     openAllowed: false, impossibleReason: null, isYakuman: false,
@@ -491,6 +491,80 @@ function analyzeSanshokuDoujun(ctx) {
     han: { closed: 2, open: 1 }, feasibility: FEASIBILITY.VERY_LOW,
     zh: { needed: '在三种花色中各建立一组相同数值的顺子', explanation: '当前手牌没有明显的三色同顺结构，改向难度大。' },
     en: { needed: 'Build the same sequence in all three suits from scratch', explanation: 'No matching sequence structure detected — very hard to build from current hand.' },
+    openAllowed: true, impossibleReason: null, isYakuman: false,
+  };
+}
+
+function analyzeSanshokuDoukou(ctx) {
+  const { concealedTiles, openMelds, allTiles } = ctx;
+  const allCounts = groupTiles(allTiles);
+
+  // Build sets of values that have confirmed triplets per suit
+  const tripled = { m: new Set(), p: new Set(), s: new Set() };
+  for (const meld of openMelds) {
+    if (meld.length >= 3 && meld.every(t => tileKey(t) === tileKey(meld[0]))) {
+      const { suit, value } = meld[0];
+      if (tripled[suit]) tripled[suit].add(value);
+    }
+  }
+  const concCounts = groupTiles(concealedTiles);
+  for (const [key, cnt] of Object.entries(concCounts)) {
+    if (cnt >= 3) {
+      const suit = key[0]; const value = parseInt(key.slice(1));
+      if (tripled[suit]) tripled[suit].add(value);
+    }
+  }
+
+  for (let v = 1; v <= 9; v++) {
+    if (tripled.m.has(v) && tripled.p.has(v) && tripled.s.has(v)) {
+      return {
+        id: 'sanshoku_doukou', nameZh: '三色同刻', nameEn: 'Sanshoku Doukou', nameJa: '三色同刻',
+        han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.HIGH,
+        zh: { needed: '保持三种花色的同值刻子', explanation: `万/饼/索三色均已有${v}的刻子，三色同刻确立。` },
+        en: { needed: 'Keep all three same-value triplets', explanation: `Triplets of ${v} confirmed in all three suits — Sanshoku Doukou is set.` },
+        openAllowed: true, impossibleReason: null, isYakuman: false,
+      };
+    }
+  }
+
+  for (let v = 1; v <= 9; v++) {
+    const suitsWith = ['m', 'p', 's'].filter(s => tripled[s].has(v));
+    if (suitsWith.length === 2) {
+      const missingSuit = ['m', 'p', 's'].find(s => !tripled[s].has(v));
+      const SUIT_ZH = { m: '万', p: '饼', s: '索' };
+      return {
+        id: 'sanshoku_doukou', nameZh: '三色同刻', nameEn: 'Sanshoku Doukou', nameJa: '三色同刻',
+        han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.MEDIUM,
+        zh: { needed: `在${SUIT_ZH[missingSuit]}色中再凑${v}的刻子`, explanation: `已有两种花色的${v}刻子，在${SUIT_ZH[missingSuit]}色中收集第三组即可。` },
+        en: { needed: `Build a triplet of ${v} in ${missingSuit} suit`, explanation: `Two suits have triplets of ${v}. One more triplet in ${missingSuit} suit completes Sanshoku Doukou.` },
+        openAllowed: true, impossibleReason: null, isYakuman: false,
+      };
+    }
+  }
+
+  // Find best target value based on how many copies exist across suits
+  let bestV = null; let bestScore = 0;
+  for (let v = 1; v <= 9; v++) {
+    const score = ['m', 'p', 's'].filter(s => (allCounts[s + v] || 0) >= 2).length;
+    if (score > bestScore) { bestScore = score; bestV = v; }
+  }
+
+  const feasibility = bestScore >= 2 ? FEASIBILITY.LOW : FEASIBILITY.VERY_LOW;
+  return {
+    id: 'sanshoku_doukou', nameZh: '三色同刻', nameEn: 'Sanshoku Doukou', nameJa: '三色同刻',
+    han: { closed: 2, open: 2 }, feasibility,
+    zh: {
+      needed: '在三种花色中各凑相同数值的刻子',
+      explanation: bestV
+        ? `当前最有希望的数值是${bestV}，在万/饼/索三色中各收集3张即可完成三色同刻。`
+        : '三色同刻需要万/饼/索三色各有一组相同数字的刻子，当前手牌无明显刻子结构。',
+    },
+    en: {
+      needed: 'Build same-value triplets in all three suits',
+      explanation: bestV
+        ? `Most promising value: ${bestV}. Collect 3 of that value in each of the three suits.`
+        : 'Sanshoku Doukou needs triplets of the same value in all three suits — no obvious structure detected.',
+    },
     openAllowed: true, impossibleReason: null, isYakuman: false,
   };
 }
@@ -656,8 +730,8 @@ function analyzeShousangen(ctx) {
     return {
       id: 'shousangen', nameZh: '小三元', nameEn: 'Shousangen', nameJa: '小三元',
       han: { closed: 4, open: 4 }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '保持两个三元刻子和一个三元雀头', explanation: '已有两个三元牌刻子，小三元路线非常明确。' },
-      en: { needed: 'Maintain two dragon triplets and one dragon pair', explanation: 'Two dragon triplets confirmed — Shousangen is very close.' },
+      zh: { needed: '', explanation: '已有两个三元牌刻子，小三元路线非常明确。' },
+      en: { needed: '', explanation: 'Two dragon triplets confirmed — Shousangen is very close.' },
       openAllowed: true, impossibleReason: null, isYakuman: false,
     };
   }
@@ -721,12 +795,24 @@ function analyzeChanta(ctx) {
   const hasSequence = openMelds.some(meldIsSequence) ||
     ['m', 'p', 's'].some((s) => sequencesPresent(concealedTiles, s).length > 0);
 
-  if (!hasSequence && isOpen) {
+  if (!hasSequence) {
+    if (isOpen) {
+      return {
+        id: 'chanta', nameZh: '混全带幺九', nameEn: 'Chanta', nameJa: '混全帯么九',
+        han: { closed: 2, open: 1 }, feasibility: FEASIBILITY.LOW,
+        zh: { needed: '需要至少一组含端牌的顺子', explanation: '混全带幺九需要至少有一组顺子（不能全刻子），否则变为对对和。' },
+        en: { needed: 'Need at least one sequence containing a terminal', explanation: 'Chanta requires at least one sequence — otherwise it becomes Toitoi.' },
+        openAllowed: true, impossibleReason: null, isYakuman: false,
+      };
+    }
+    // Closed hand with no sequences: need to restructure to add a terminal sequence
+    const internalTiles = allTiles.filter(t => !isTerminalOrHonor(t));
+    const feasibility = internalTiles.length >= 1 ? FEASIBILITY.MEDIUM : FEASIBILITY.LOW;
     return {
       id: 'chanta', nameZh: '混全带幺九', nameEn: 'Chanta', nameJa: '混全帯么九',
-      han: { closed: 2, open: 1 }, feasibility: FEASIBILITY.LOW,
-      zh: { needed: '需要至少一组含端牌的顺子', explanation: '混全带幺九需要至少有一组顺子（不能全刻子），否则变为对对和。' },
-      en: { needed: 'Need at least one sequence containing a terminal', explanation: 'Chanta requires at least one sequence — otherwise it becomes Toitoi.' },
+      han: { closed: 2, open: 1 }, feasibility,
+      zh: { needed: '需要在手牌中建立含端牌的顺子（如1-2-3或7-8-9）', explanation: '混全带幺九需要至少有一组顺子，目前手牌全为刻子，需要改造结构。' },
+      en: { needed: 'Build at least one terminal sequence (e.g. 1-2-3 or 7-8-9)', explanation: 'Chanta requires at least one sequence — current hand is all triplets, needs restructuring.' },
       openAllowed: true, impossibleReason: null, isYakuman: false,
     };
   }
@@ -796,6 +882,47 @@ function analyzeJunchan(ctx) {
   };
 }
 
+function analyzeHonroutou(ctx) {
+  const { allTiles, openMelds } = ctx;
+
+  const meldHasMiddle = openMelds.some(m => m.some(t => !isTerminalOrHonor(t)));
+  if (meldHasMiddle) {
+    return {
+      id: 'honroutou', nameZh: '混老头', nameEn: 'Honroutou', nameJa: '混老頭',
+      han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.IMPOSSIBLE,
+      zh: { needed: '', explanation: '' }, en: { needed: '', explanation: '' },
+      openAllowed: true,
+      impossibleReason: { zh: '副露中含有中张牌，混老头已不可能', en: 'Open meld contains a middle tile — Honroutou is blocked.' },
+      isYakuman: false,
+    };
+  }
+
+  const middle = allTiles.filter(t => !isTerminalOrHonor(t));
+
+  if (middle.length === 0) {
+    // Only mark as achieved (needed:'') when the hand is complete (14 tiles).
+    // A 13-tile waiting hand has the structure but hasn't won yet — keep as HIGH.
+    const isComplete = ctx.allTiles.length === 14;
+    return {
+      id: 'honroutou', nameZh: '混老头', nameEn: 'Honroutou', nameJa: '混老頭',
+      han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.HIGH,
+      zh: { needed: isComplete ? '' : '摸到幺九字牌即可和牌', explanation: '手牌已全为幺九字牌，混老头路线确立，同时必然满足对对和（+2番）。' },
+      en: { needed: isComplete ? '' : 'Draw a terminal or honour tile to complete', explanation: 'All tiles are terminals/honours — Honroutou confirmed. Always co-scores with Toitoi (+2 han).' },
+      openAllowed: true, impossibleReason: null, isYakuman: false,
+    };
+  }
+
+  const n = middle.length;
+  const feasibility = n <= 2 ? FEASIBILITY.MEDIUM : n <= 5 ? FEASIBILITY.LOW : FEASIBILITY.VERY_LOW;
+  return {
+    id: 'honroutou', nameZh: '混老头', nameEn: 'Honroutou', nameJa: '混老頭',
+    han: { closed: 2, open: 2 }, feasibility,
+    zh: { needed: `打出${n}张中张，换成幺九字牌`, explanation: `混老头需要全部为1、9或字牌。当前有${n}张中张需替换，且须同时凑成全刻子或七对子结构。` },
+    en: { needed: `Discard ${n} middle tile(s) and replace with terminals/honours`, explanation: `Honroutou needs all tiles to be 1s, 9s, or honours. ${n} middle tile(s) to replace — hand must also form all triplets or seven pairs.` },
+    openAllowed: true, impossibleReason: null, isYakuman: false,
+  };
+}
+
 function analyzeSanankou(ctx) {
   const { concealedTiles } = ctx;
 
@@ -807,8 +934,8 @@ function analyzeSanankou(ctx) {
     return {
       id: 'sanankou', nameZh: '三暗刻', nameEn: 'Sanankou', nameJa: '三暗刻',
       han: { closed: 2, open: 2 }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '保持三个暗刻结构', explanation: '手中已有三个暗刻，三暗刻路线明确（需摸切和牌）。' },
-      en: { needed: 'Maintain three concealed triplets', explanation: '3 concealed triplets confirmed — Sanankou path is clear (win by tsumo for full effect).' },
+      zh: { needed: '', explanation: '手中已有三个暗刻，三暗刻路线明确（需摸切和牌）。' },
+      en: { needed: '', explanation: '3 concealed triplets confirmed — Sanankou path is clear (win by tsumo for full effect).' },
       openAllowed: true, impossibleReason: null, isYakuman: false,
     };
   }
@@ -905,8 +1032,8 @@ function analyzeKokushi(ctx) {
     return {
       id: 'kokushi', nameZh: '国士无双', nameEn: 'Kokushi Musou', nameJa: '国士無双',
       han: { closed: 'yakuman', open: null }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '保持结构不变，等待和牌', explanation: '13张幺九字牌齐全且有重复，国士无双待和！' },
-      en: { needed: 'Wait for the winning tile', explanation: 'All 13 terminal/honour types present with a duplicate — Kokushi ready!' },
+      zh: { needed: '', explanation: '13张幺九字牌齐全且有重复，国士无双待和！' },
+      en: { needed: '', explanation: 'All 13 terminal/honour types present with a duplicate — Kokushi ready!' },
       openAllowed: false, impossibleReason: null, isYakuman: true,
     };
   }
@@ -933,8 +1060,8 @@ function analyzeDaisangen(ctx) {
     return {
       id: 'daisangen', nameZh: '大三元', nameEn: 'Daisangen', nameJa: '大三元',
       han: { closed: 'yakuman', open: 'yakuman' }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '保持三个三元刻子', explanation: '三种三元牌各有3张，大三元待和！' },
-      en: { needed: 'Maintain all three dragon triplets', explanation: 'All three dragon triplets confirmed — Daisangen is ready!' },
+      zh: { needed: '', explanation: '三种三元牌各有3张，大三元待和！' },
+      en: { needed: '', explanation: 'All three dragon triplets confirmed — Daisangen is ready!' },
       openAllowed: true, impossibleReason: null, isYakuman: true,
     };
   }
@@ -1026,8 +1153,8 @@ function analyzeShousuushii(ctx) {
     return {
       id: 'shousuushii', nameZh: '小四喜', nameEn: 'Shousuushii', nameJa: '小四喜',
       han: { closed: 'yakuman', open: 'yakuman' }, feasibility,
-      zh: { needed: '三个风刻子+一个风对子', explanation: '小四喜结构完善，役满路线确立！' },
-      en: { needed: 'Three wind triplets + one wind pair', explanation: 'Strong wind tile structure — Shousuushii is close!' },
+      zh: { needed: '', explanation: '小四喜结构完善，役满路线确立！' },
+      en: { needed: '', explanation: 'Strong wind tile structure — Shousuushii is close!' },
       openAllowed: true, impossibleReason: null, isYakuman: true,
     };
   }
@@ -1052,8 +1179,8 @@ function analyzeDaisuushii(ctx) {
     return {
       id: 'daisuushii', nameZh: '大四喜', nameEn: 'Daisuushii', nameJa: '大四喜',
       han: { closed: 'yakuman', open: 'yakuman' }, feasibility: FEASIBILITY.HIGH,
-      zh: { needed: '保持四种风牌刻子', explanation: '四种风牌各有刻子，大四喜！极为罕见的役满。' },
-      en: { needed: 'Maintain all four wind triplets', explanation: 'All four wind triplets confirmed — Daisuushii!' },
+      zh: { needed: '', explanation: '四种风牌各有刻子，大四喜！极为罕见的役满。' },
+      en: { needed: '', explanation: 'All four wind triplets confirmed — Daisuushii!' },
       openAllowed: true, impossibleReason: null, isYakuman: true,
     };
   }
@@ -1145,8 +1272,8 @@ function analyzeChuuren(ctx) {
         return {
           id: 'chuuren', nameZh: '九莲宝灯', nameEn: 'Chuuren Poutou', nameJa: '九蓮宝燈',
           han: { closed: 'yakuman', open: null }, feasibility: FEASIBILITY.HIGH,
-          zh: { needed: '保持九莲结构，等待和牌', explanation: '九莲宝灯结构完整，等待九面待！' },
-          en: { needed: 'Maintain the Chuuren structure and win', explanation: 'Chuuren Poutou structure confirmed — nine-way wait!' },
+          zh: { needed: '', explanation: '九莲宝灯结构完整，等待九面待！' },
+          en: { needed: '', explanation: 'Chuuren Poutou structure confirmed — nine-way wait!' },
           openAllowed: false, impossibleReason: null, isYakuman: true,
         };
       }
@@ -1253,6 +1380,8 @@ const EXAMPLES = {
   ittsu:           [mk('m',1,2,3), mk('m',4,5,6), mk('m',7,8,9), mk('p',5,5,5), mk('s',3,3)],
   honitsu:         [mk('z',1,1,1), mk('m',2,3,4), mk('m',5,6,7), mk('m',8,8,8), mk('m',1,1)],
   chinitsu:        [mk('p',1,2,3), mk('p',4,5,6), mk('p',7,8,9), mk('p',3,3,3), mk('p',5,5)],
+  honroutou:       [mk('m',1,1,1), mk('m',9,9,9), mk('p',1,1,1), mk('s',9,9,9), mk('z',7,7)],
+  sanshoku_doukou: [mk('m',5,5,5), mk('p',5,5,5), mk('s',5,5,5), mk('z',1,1,1), mk('m',3,3)],
   shousangen:      [mk('z',5,5,5), mk('z',6,6,6), mk('m',2,3,4), mk('s',6,6,6), mk('z',7,7)],
   chanta:          [mk('m',1,2,3), mk('p',7,8,9), mk('z',1,1,1), mk('s',1,1,1), mk('m',9,9)],
   junchan:         [mk('m',1,2,3), mk('p',7,8,9), mk('s',1,2,3), mk('m',9,9,9), mk('p',1,1)],
@@ -1282,6 +1411,8 @@ const MEANINGS = {
   ittsu:           { zh: '同一花色内含1-2-3、4-5-6、7-8-9三段连续顺子。', en: 'One suit contains all three sequences: 1-2-3, 4-5-6, and 7-8-9.' },
   honitsu:         { zh: '手牌仅含一种数牌花色加字牌，不含其他花色数牌。', en: 'Only one suit of numbered tiles plus honour tiles — no other numbered suits.' },
   chinitsu:        { zh: '手牌全为同一花色数牌，不含字牌或其他花色。', en: 'All tiles are from a single suit — no honours or other suits.' },
+  honroutou:       { zh: '全部面子和雀头均由幺九牌（1和9）或字牌构成，须为全刻子或七对子形式。', en: 'Every set and the pair consist only of terminal (1/9) or honour tiles, forming all triplets or seven pairs.' },
+  sanshoku_doukou: { zh: '万、饼、索三种花色中各有一组数值完全相同的刻子/杠子。', en: 'A triplet or quad of the same number appears in each of the three suits: characters, circles, and bamboo.' },
   shousangen:      { zh: '三元牌（白发中）中两种凑成刻子，第三种作为对子雀头。', en: 'Two dragon triplets or quads, with the third dragon as the pair.' },
   chanta:          { zh: '每组面子和雀头各含至少一张幺九字牌，且至少有一组顺子。', en: 'Every set and the pair contain a terminal or honour tile, with at least one sequence.' },
   junchan:         { zh: '每组面子和雀头含端牌（1或9），字牌刻子不算，至少一组顺子。', en: 'Every set and the pair contain a terminal (1 or 9). Honour-only sets do not count. Needs at least one sequence.' },
@@ -1644,6 +1775,46 @@ function computeAfterStep(ctx, neededTiles, discardTiles) {
   };
 }
 
+function buildHonroutouScenarios(ctx) {
+  const { allTiles } = ctx;
+  const middle = allTiles.filter(t => !isTerminalOrHonor(t));
+  if (middle.length === 0) return [];
+  return [{
+    title: { zh: `打出${middle.length}张中张`, en: `Discard ${middle.length} middle tile(s)` },
+    drawOrCall: [], discard: middle.slice(0, 4), result: [], distance: middle.length,
+    targetYakuGroups: null, targetType: 'example',
+    zh: { explanation: `混老头要求全部为1、9和字牌。打出这${middle.length}张中张，手牌即满足结构，同时须凑成全刻子或七对子。` },
+    en: { explanation: `Honroutou requires all 1s, 9s, and honour tiles. Discard these ${middle.length} middle tile(s) — also form all triplets or seven pairs.` },
+  }];
+}
+
+function buildSanshokuDoukouScenarios(ctx) {
+  const { allTiles } = ctx;
+  const allCounts = groupTiles(allTiles);
+
+  let bestV = 5; let bestScore = 0;
+  for (let v = 1; v <= 9; v++) {
+    const score = ['m', 'p', 's'].reduce((s, suit) => s + Math.min(allCounts[suit + v] || 0, 3), 0);
+    if (score > bestScore) { bestScore = score; bestV = v; }
+  }
+
+  const triplets = ['m', 'p', 's'].map(suit => [
+    { suit, value: bestV }, { suit, value: bestV }, { suit, value: bestV },
+  ]);
+  const neededTiles = ['m', 'p', 's'].flatMap(suit => {
+    const have = Math.min(allCounts[suit + bestV] || 0, 3);
+    return Array.from({ length: 3 - have }, () => ({ suit, value: bestV }));
+  });
+
+  return [{
+    title: { zh: `在三色中各凑${bestV}的刻子`, en: `Build triplets of ${bestV} in all three suits` },
+    drawOrCall: neededTiles.slice(0, 6), discard: [], result: triplets,
+    distance: neededTiles.length, targetYakuGroups: triplets, targetType: 'example',
+    zh: { explanation: `以${bestV}为目标，在万/饼/索三色各凑3张，即可完成三色同刻。` },
+    en: { explanation: `Target value ${bestV}: collect 3 in each of the three suits to complete Sanshoku Doukou.` },
+  }];
+}
+
 const SCENARIO_BUILDERS = {
   yakuhai: buildYakuhaiScenarios,
   tanyao: buildTanyaoScenarios,
@@ -1651,9 +1822,11 @@ const SCENARIO_BUILDERS = {
   chiitoitsu: buildChiitoitsuScenarios,
   pinfu: buildPinfuScenarios,
   sanshoku_doujun: buildSanshokuScenarios,
+  sanshoku_doukou: buildSanshokuDoukouScenarios,
   ittsu: buildIttsuScenarios,
   honitsu: buildHonitsuScenarios,
   chinitsu: buildChinitsuScenarios,
+  honroutou: buildHonroutouScenarios,
 };
 
 // ── MAIN EXPORT ───────────────────────────────────────────────────────────────
@@ -1678,12 +1851,14 @@ export function analyzeHand(concealedTiles, openMelds, seatWind, roundWind, rule
     analyzeChiitoitsu(ctx),
     analyzePinfu(ctx),
     analyzeSanshokuDoujun(ctx),
+    analyzeSanshokuDoukou(ctx),
     analyzeIttsu(ctx),
     analyzeHonitsu(ctx),
     analyzeChinitsu(ctx),
     analyzeShousangen(ctx),
     analyzeChanta(ctx),
     analyzeJunchan(ctx),
+    analyzeHonroutou(ctx),
     analyzeSanankou(ctx),
     analyzeIipeikou(ctx),
     // Yakuman (recognition only)

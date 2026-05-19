@@ -27,7 +27,8 @@ const Record = lazy(() => import("./pages/Record.jsx"));
 
 const CardList = lazy(() => import("./pages/CardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
-const MahjongTrainer = lazy(() => import("./pages/MahjongTrainer.jsx"));
+const MahjongTrainer    = lazy(() => import("./pages/MahjongTrainer.jsx"));
+const MahjongEfficiency = lazy(() => import("./pages/MahjongEfficiency.jsx"));
 
 const DeckEdit = lazy(() => import("./pages/DeckEdit.jsx"));
 
@@ -54,6 +55,26 @@ const withPageTransition = (Component) => (
 	</PageTransition>
 );
 
+function WSBackground() {
+	const { pathname } = useLocation();
+	if (!pathname.startsWith("/ws/")) return null;
+	return (
+		<div
+			style={{
+				backgroundImage: "url(/bg.webp)",
+				backgroundSize: "cover",
+				backgroundPosition: "center",
+				backgroundRepeat: "no-repeat",
+				width: "100%",
+				height: "100vh",
+				position: "fixed",
+				opacity: 0.2,
+				zIndex: -1,
+			}}
+		/>
+	);
+}
+
 function AnimatedRoutes() {
 	const location = useLocation();
 
@@ -74,7 +95,8 @@ function AnimatedRoutes() {
 			<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
 
 				{/* Mahjong */}
-				<Route path="/mahjong/trainer" element={withPageTransition(MahjongTrainer)} />
+				<Route path="/mahjong/trainer"    element={withPageTransition(MahjongTrainer)} />
+				<Route path="/mahjong/efficiency" element={withPageTransition(MahjongEfficiency)} />
 
 				{/* Tools */}
 				<Route path="/tools/dice" element={withPageTransition(Dice)} />
@@ -115,6 +137,7 @@ function App() {
 				<AuthProvider>
 					<OptionsProvider>
 						<Router>
+							<WSBackground />
 							<NavBar />
 							<AnimatedRoutes />
 						</Router>

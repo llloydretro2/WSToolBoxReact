@@ -33,6 +33,11 @@ function isTerminal(t) { return t.suit !== 'z' && (t.value === 1 || t.value === 
 function isHonor(t) { return t.suit === 'z'; }
 function isTerminalOrHonor(t) { return isTerminal(t) || isHonor(t); }
 function isDragon(t) { return t.suit === 'z' && t.value >= 5; }
+function isWind(t)   { return t.suit === 'z' && t.value <= 4; }
+function isGreen(t)  {
+  return (t.suit === 'z' && t.value === 6) ||
+         (t.suit === 's' && [2, 3, 4, 6, 8].includes(t.value));
+}
 
 function isTripletGroup(g) {
   return g.length >= 3 && g.every(t => tileKey(t) === tileKey(g[0]));
@@ -130,10 +135,26 @@ export function evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWi
     }
   }
 
+  // ── Sanshoku Doukou ───────────────────────────────────────────────────────
+  // Same numbered triplet in all three suits. 2 han, no reduction for open.
+  if (!isChiitoitsu) {
+    const trips = allSets.filter(isTripletGroup);
+    for (let v = 1; v <= 9; v++) {
+      if (
+        trips.some(s => s[0].suit === 'm' && s[0].value === v) &&
+        trips.some(s => s[0].suit === 'p' && s[0].value === v) &&
+        trips.some(s => s[0].suit === 's' && s[0].value === v)
+      ) { yaku.push('sanshoku_doukou'); break; }
+    }
+  }
+
   // ── Honitsu ───────────────────────────────────────────────────────────────
+  // Requires exactly one numbered suit AND at least one honour tile.
+  // A hand with no honours is Chinitsu, not Honitsu.
   if (!isChiitoitsu) {
     const numberedSuits = [...new Set(allTiles.filter(t => !isHonor(t)).map(t => t.suit))];
-    if (numberedSuits.length === 1) yaku.push('honitsu');
+    const hasHonours    = allTiles.some(isHonor);
+    if (numberedSuits.length === 1 && hasHonours) yaku.push('honitsu');
   }
 
   // ── Chinitsu ──────────────────────────────────────────────────────────────
@@ -156,6 +177,10 @@ export function evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWi
     }
   }
 
+  // ── Honroutou ─────────────────────────────────────────────────────────────
+  // All tiles are terminals (1/9) or honours. Always co-scores with Toitoi or Chiitoitsu.
+  if (allTiles.every(isTerminalOrHonor)) yaku.push('honroutou');
+
   // ── Sanankou ──────────────────────────────────────────────────────────────
   const concealedTripletCount = concealedSets.filter(isTripletGroup).length;
   if (concealedTripletCount >= 3) yaku.push('sanankou');
@@ -174,6 +199,44 @@ export function evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWi
   const dragonTriplets = allSets.filter(s => isTripletGroup(s) && isDragon(s[0])).length;
   const dragonPair     = isDragon(pair[0]) && pair.length === 2 && tileKey(pair[0]) === tileKey(pair[1]);
   if (dragonTriplets === 2 && dragonPair) yaku.push('shousangen');
+
+  // ── Yakuman ───────────────────────────────────────────────────────────────
+  const windTriplets = allSets.filter(s => isTripletGroup(s) && isWind(s[0])).length;
+
+  // 大三元 — triplets of all 3 dragons
+  if (dragonTriplets === 3) yaku.push('daisangen');
+
+  // 四暗刻 — 4 concealed triplets, closed only
+  if (!isOpen && concealedTripletCount === 4) yaku.push('suuankou');
+
+  // 字一色 — all honour tiles
+  if (allTiles.every(isHonor)) yaku.push('tsuuiisou');
+
+  // 小四喜 — 3 wind triplets + wind pair
+  if (windTriplets === 3 && isWind(pair[0])) yaku.push('shousuushii');
+
+  // 大四喜 — all 4 wind triplets
+  if (windTriplets === 4) yaku.push('daisuushii');
+
+  // 清老头 — all terminals only (1 and 9, no honours)
+  if (allTiles.every(isTerminal)) yaku.push('chinroutou');
+
+  // 绿一色 — all green tiles (2/3/4/6/8 sou + hatsu)
+  if (allTiles.every(isGreen)) yaku.push('ryuuiisou');
+
+  // 九莲宝灯 — 1112345678999 in one suit + one extra, closed
+  // Checked against raw tile counts, independent of decomposition.
+  if (!isOpen) {
+    const tileSuits = [...new Set(allTiles.map(t => t.suit))];
+    if (tileSuits.length === 1 && tileSuits[0] !== 'z') {
+      const cnt = {};
+      for (const t of allTiles) cnt[t.value] = (cnt[t.value] || 0) + 1;
+      if ((cnt[1] || 0) >= 3 && (cnt[9] || 0) >= 3 &&
+          [2, 3, 4, 5, 6, 7, 8].every(v => (cnt[v] || 0) >= 1)) {
+        yaku.push('chuuren');
+      }
+    }
+  }
 
   return yaku;
 }
@@ -232,14 +295,44 @@ export function extractYakuRelevantGroups(yakuId, concealedGroups, openMelds, se
     }
     case 'honitsu':
     case 'chinitsu':
-      // Whole-hand yaku: same-suit nature applies to every group
+    case 'honroutou':
       return allGroups;
+    case 'sanshoku_doukou': {
+      const trips = allSets.filter(isTripletGroup);
+      for (let v = 1; v <= 9; v++) {
+        const match = ['m', 'p', 's']
+          .map(s => trips.find(t => t[0].suit === s && t[0].value === v))
+          .filter(Boolean);
+        if (match.length === 3) return match;
+      }
+      return null;
+    }
     case 'shousangen': {
-      // Two dragon triplets + one dragon pair (2–3 groups)
       const dTrips = allSets.filter(s => isTripletGroup(s) && isDragon(s[0]));
       const dPair  = isDragon(pair[0]) ? [pair] : [];
       const res    = [...dTrips, ...dPair];
       return res.length >= 2 ? res : null;
+    }
+    case 'daisangen': {
+      const trips = allSets.filter(s => isTripletGroup(s) && isDragon(s[0]));
+      return trips.length === 3 ? trips : null;
+    }
+    case 'suuankou': {
+      const trips = concSets.filter(isTripletGroup);
+      return trips.length === 4 ? trips : null;
+    }
+    case 'tsuuiisou':
+    case 'chinroutou':
+    case 'ryuuiisou':
+      return allGroups;
+    case 'shousuushii': {
+      const wTrips = allSets.filter(s => isTripletGroup(s) && isWind(s[0]));
+      const wPair  = isWind(pair[0]) ? [pair] : [];
+      return [...wTrips, ...wPair];
+    }
+    case 'daisuushii': {
+      const wTrips = allSets.filter(s => isTripletGroup(s) && isWind(s[0]));
+      return wTrips.length === 4 ? [...wTrips, pair] : null;
     }
     case 'chanta':
     case 'junchan':

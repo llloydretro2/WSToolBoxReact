@@ -245,5 +245,13 @@ export function canCompleteHand(concealedTiles, numMelds) {
     if (vals.length === 7 && vals.every((v) => v === 2)) return true;
   }
 
+  // Kokushi Musou (closed only, 14 tiles)
+  // Requires all 13 terminal/honour types present + at least one duplicate
+  if (numMelds === 0 && concealedTiles.length === 14) {
+    const KOKUSHI = ['m1','m9','p1','p9','s1','s9','z1','z2','z3','z4','z5','z6','z7'];
+    if (KOKUSHI.every(k => (groups[k] || 0) >= 1) &&
+        KOKUSHI.some(k  => (groups[k] || 0) >= 2)) return true;
+  }
+
   return false;
 }

@@ -41,7 +41,7 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 |--------|---------|----------------|
 | `/` | Hub (game selector) | `/` |
 | `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/first-second`, `/ws/shuffle`, `/ws/deck/edit` |
-| `/mahjong/*` | Mahjong | `/mahjong/trainer` |
+| `/mahjong/*` | Mahjong | `/mahjong/trainer`, `/mahjong/efficiency` |
 | `/tools/*` | General tools | `/tools/dice`, `/tools/clock` |
 | `/login` | Auth | `/login` |
 
@@ -176,28 +176,56 @@ Capacitor config (`capacitor.config.ts`) targets `webDir: 'build'`. The producti
 
 ## Mahjong Yaku Route Trainer
 
-A beginner-oriented Riichi Mahjong yaku-awareness tool merged into `main`.
+A beginner-oriented Riichi Mahjong yaku-awareness tool at `/mahjong/trainer`.
 
 ### Location
 
 | Item | Path |
 |------|------|
 | Page | `src/pages/MahjongTrainer.jsx` |
-| Route | `/mahjong/trainer` (added to `src/App.jsx`) |
+| Route | `/mahjong/trainer` |
 | NavBar entry | `menu.mahjong` in `src/components/NavBar.jsx` (under `MAHJONG_NAV`) |
 | Locale keys | `mahjong.*` in `src/locales/zh.json` + `en.json` |
 | Tile images | `public/assets/mahjong-tiles/` (34 SVGs, CC0 from FluffyStuff/riichi-mahjong-tiles) |
 | Tile components | `src/components/mahjong/MahjongTile.jsx`, `MahjongTilePicker.jsx` |
 
-### Calculation engine (all in `src/utils/mahjong/`)
+### UI stack — Mahjong pages are Tailwind-only, zero MUI
+
+All mahjong files use **Tailwind CSS only**. No MUI components, no `sx` props, no `var(--primary)` or other WS theme colours. Background is plain white. The WS background image (`/bg.webp`) is scoped to `/ws/*` via `WSBackground` in `App.jsx` and must not appear on mahjong pages.
+
+**Button style (mahjong pages):** all action buttons use the black rounded-full pill:
+```jsx
+className="text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors"
+```
+Disabled state: `text-gray-300 cursor-not-allowed` (no background). Do not use bordered/rectangular buttons or MUI `Button` on mahjong pages.
+
+### Calculation engine (`src/utils/mahjong/`)
 
 | Module | Responsibility |
 |--------|----------------|
-| `tileParser.js` | Tile model, `parseTiles`, `parseMelds`, `extractHandGroups` (DFS decomposer), `canCompleteHand`, `generateHandString` |
-| `shanten.js` | Accurate 3-way shanten: standard (Neval DFS), Chiitoitsu, Kokushi — `computeShanten(tiles, numMelds)` |
-| `handSimulator.js` | `evaluateYakuFromDecomposition` (14 yaku), `findScenarios` (brute-force 0/1-step), `extractYakuRelevantGroups`, `ALL_34_TILES` |
+| `tileParser.js` | Tile model, `parseTiles`, `parseMelds`, `extractHandGroups` (DFS — first decomposition only), `canCompleteHand`, `generateHandString` |
+| `shanten.js` | 3-way shanten: standard (Neval DFS), Chiitoitsu, Kokushi — `computeShanten(tiles, numMelds)`. Based on MahjongRepository/mahjong (MIT). |
+| `handSimulator.js` | `evaluateYakuFromDecomposition` (16 standard yaku + 8 yakuman — see coverage below), `findScenarios` (brute-force 0/1-step), `extractYakuRelevantGroups`, `ALL_34_TILES` |
 | `yakuBFS.js` | Bounded BFS route search — `searchYakuRoute(...)`, `getDiscardCandidates`, `getDrawCandidates`, `makeBFSScenario` |
-| `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — feasibility heuristics, 3-tier scenario pipeline (simulation → BFS → heuristic), EXAMPLES, MEANINGS |
+| `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — 3-tier pipeline (simulation → BFS → heuristic), per-yaku analyzers, EXAMPLES, MEANINGS |
+
+### Engine coverage
+
+**`evaluateYakuFromDecomposition` detects — 16 standard yaku:**
+役牌、断幺九、对对和、七对子、平和、三色同顺、**三色同刻**、一气通贯、混一色、清一色、**混老头**、小三元、混全带幺九、纯全带幺九、三暗刻、一杯口
+
+**Yakuman in evaluator — 8 kinds (tile-count or decomposition-based):**
+大三元、四暗刻（门清）、字一色、小四喜、大四喜、清老头、绿一色、九莲宝灯
+
+**`canCompleteHand` handles:** 标准手、七对子、**国士无双**
+
+**`yakuAnalyzer.js` route analyzers:** above 16 standard + 9 yakuman (all implemented)
+
+**Test suite — 156 cases, all passing:**
+`test-shanten.js`(17) · `test-yaku.js`(54) · `test-yakuman.js`(33) · `test-agari.js`(33) · `test-shanten-extended.js`(19)
+Data sourced from riichi.wiki and MahjongRepository/mahjong (validated against 26M Tenhou phoenix games).
+
+**Test coverage note:** yaku tests check "contains ID" not "exactly these IDs". Negative tests cover false-positives; unexpected extra yaku would not be caught.
 
 ### Scenario priority in `analyzeHand`
 
@@ -207,21 +235,65 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool merged into `main`.
 
 ### UI architecture (MahjongTrainer.jsx)
 
-- **`buildTrainerViewModel`** — thin adapter: reshapes `analyzeHand()` output into UI-friendly fields. Also computes `achievedRoutes` (routes with `CONFIRMED` feasibility or `HIGH` feasibility where the yaku structure is already present) and `achievedHan`. Upgrades qualifying `HIGH` routes to the local `FEASIBILITY_ACHIEVED` tier before sorting so `FeasibilityChip` renders them correctly.
-- **`FEASIBILITY_ACHIEVED = 'achieved'`** — a UI-only feasibility tier defined in `MahjongTrainer.jsx` (not in the engine). Sits between `CONFIRMED` and `HIGH`. Styled in dark green (`#52b788`). Applied to routes where `en.needed === ''` or `en.needed.startsWith('Keep')`, meaning the yaku tile structure is already present in the hand.
-- **`FixedHandBar`** — `position: fixed` below AppBar. Shows tile count, status badges (门清/向听/役种 stacked **vertically**), live tile row, and a clear-all button. Displays `achievedRoutes` chips whenever the analysis is available, even for incomplete hands. Rendered outside `<Container>`.
-- **`CompletedHandPanel`** — shown instead of `YakuRoutesPanel` when `hand.isComplete === true`. Displays achieved yaku list and han total; no route suggestions.
-- **`MahjongTilePicker`** — mode toggle removed. Main tile grid always adds to the concealed hand (left-click add, right-click remove). Meld builder section is always visible with its own compact tile grid (`onMeldTileClick`).
-- **Collapsible `RouteCard`** — collapsed shows name + meaning + example hand + feasibility chip (may show "已达成"); expanded shows Need/Discard/Target/Why scenarios.
+- **Two-card layout**: input card (settings + analyze CTA) + picker card (tile grid + meld builder). Results appear below after analysis with `scrollIntoView` auto-scroll.
+- **`FixedHandBar`** — `position: fixed` at `top-[64px] md:top-[72px]`. Multi-line wrapped tile row, shanten status, open/closed badge, tile count, clear button. Height measured via `ResizeObserver`; page `paddingTop` adjusts dynamically.
+- **`buildTrainerViewModel`** — reshapes `analyzeHand()` output. Upgrades `HIGH` feasibility routes whose yaku structure is already present to local `FEASIBILITY_ACHIEVED` tier.
+- **`FEASIBILITY_ACHIEVED = 'achieved'`** — UI-only tier. Applied when `en.needed === ''` or starts with `'Keep'`. Feasibility chip uses dark gray styling.
+- **`CompletedHandPanel`** — shown when `hand.isComplete === true`. Lists achieved yaku and han total; no route suggestions.
+- **`MahjongTilePicker`** — suit rows with single-char label (万/饼/索/字). 14-tile global limit (`isHandFull`) disables all tiles when reached. Meld builder is a collapsible section with centred pill toggle button; `validateMeld()` enforces legal meld types (刻子/顺子/杠) before confirming.
+- **`RouteCard`** — collapsed: name + Japanese name + feasibility chip + han display + meaning + example hand. Expanded: scenarios (Need/Discard/Target/Why).
 
 ### Known limitations (do not paper over in UI)
 
-- **`extractHandGroups` is first-decomposition-only** (DFS returns the first valid split, not all valid splits). Ambiguous hands (e.g. `223344m`) may miss some yaku. `extractAllHandGroups` not yet implemented.
-- **No ukeire** — the system does not enumerate all tiles that improve shanten.
-- **No scoring** — no fu/han calculation, no riichi/dora/ippatsu mechanics.
-- **Pinfu wait check simplified** — all-sequence + non-value pair is labelled Pinfu without verifying two-sided (ryanmen) wait.
+- **`extractHandGroups` is first-decomposition-only** — ambiguous hands (e.g. `223344m`) may miss some yaku. `extractAllHandGroups` not yet implemented.
+- **No ukeire in trainer** — the trainer page does not enumerate effective tiles; use `/mahjong/efficiency` for that.
+- **No scoring** — no fu/han/point calculation, no riichi/dora/ippatsu mechanics.
+- **Pinfu wait check simplified** — all-sequence + non-value pair is labelled Pinfu without verifying ryanmen wait.
 - **Sanankou win-method not enforced** — does not distinguish tsumo vs ron for the completing triplet.
-- **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles (demonstrated in TC1 Yakuhai case).
+- **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles.
+- **Yakuman not confirmed in evaluator** — complete yakuman hands are not marked as achieved in `CompletedHandPanel`.
+
+## Mahjong Efficiency Page (`/mahjong/efficiency`)
+
+Standalone ukeire (有効牌) analysis tool aligned with Tenhou 牌理. **Separate from the yaku trainer** — does not share state or components beyond `MahjongTile` and `MahjongTilePicker`.
+
+### Key files
+
+| File | Purpose |
+|---|---|
+| `src/utils/mahjong/ukeire.js` | Core algorithm: `computeUkeire`, `computeWaits`, `analyzeEfficiency` |
+| `src/pages/MahjongEfficiency.jsx` | Page (Tailwind-only, B&W) |
+
+### Algorithm (`ukeire.js`)
+
+**Effective tile condition (Tenhou-exact):**
+```js
+// Tile p is effective for discard k if:
+shanten(original - k + p) < originalShanten
+// NOT: shanten(afterDiscard + p) < shantenAfterDiscard
+// Using post-discard shanten incorrectly includes "recovery" tiles for bad discards.
+```
+
+**`shantenAfter`** = min shanten achievable by drawing any effective tile (not the 12-tile intermediate shanten).
+
+**Sort**: totalCount descending (matches Tenhou 牌理's `t.sort((a,b) => b.n - a.n)`).
+
+### Input modes
+
+- **14 tiles** (post-draw): primary mode, shows which tile to discard → Tenhou 牌理 equivalent
+- **13 tiles** (pre-draw): shows waits for tenpai or effective draws for non-tenpai
+- Text notation: real-time sync — typing `123m456p` updates tiles and picker immediately
+
+### Verification
+
+Algorithm extracted from Tenhou's `1008.js` (directly downloaded, not guessed). Cross-validated against MahjongRepository/mahjong Python reference. Run:
+```bash
+python3 validate-ukeire.py > /tmp/ukeire-reference.json
+npx vite-node validate-ukeire.js
+npx vite-node test-ukeire.js
+```
+
+---
 
 ## NavBar architecture
 

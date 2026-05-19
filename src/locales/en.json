@@ -18,7 +18,9 @@
     "deckCreate": "Create Deck",
     "deckSearch": "Deck List",
     "audio": "Audio",
-    "mahjong": "Mahjong Yaku"
+    "mahjong": "Mahjong Yaku",
+    "mahjongTrainer": "Yaku Trainer",
+    "mahjongEfficiency": "Efficiency"
   },
   "common": {
     "language": {
@@ -39,9 +41,21 @@
       "subtitle": "All-in-one tools for card & board games",
       "description": "Tools for card game and board game enthusiasts",
       "contactTitle": "Contact Me",
-      "ws":     { "name": "Weiss Schwarz", "desc": "Card search, pack simulation & match records", "count": "6 tools" },
-      "mahjong":{ "name": "Mahjong",       "desc": "Riichi Mahjong yaku route trainer",           "count": "1 tool"  },
-      "tools":  { "name": "General Tools", "desc": "First/second, dice, chess clock and more",    "count": "3 tools" }
+      "ws": {
+        "name": "Weiss Schwarz",
+        "desc": "Card search, pack simulation & match records",
+        "count": "6 tools"
+      },
+      "mahjong": {
+        "name": "Mahjong",
+        "desc": "Riichi Mahjong yaku route trainer",
+        "count": "1 tool"
+      },
+      "tools": {
+        "name": "General Tools",
+        "desc": "First/second, dice, chess clock and more",
+        "count": "3 tools"
+      }
     },
     "firstSecond": {
       "title": "First/Second",
@@ -395,5 +409,24 @@
     "twoHanMin": "Two-han minimum rule",
     "analyzeButton": "Analyze",
     "resetButton": "Reset"
+  },
+  "efficiency": {
+    "title": "Efficiency",
+    "subtitle": "Effective tile enumeration · Optimal discard analysis",
+    "shantenLabel": "Shanten",
+    "tenpai": "Tenpai",
+    "complete": "Complete",
+    "discardCol": "Discard",
+    "shantenAfterCol": "After",
+    "kindsCol": "Kinds",
+    "totalCol": "Count",
+    "effectiveCol": "Effective tiles",
+    "waitsTitle": "Waits",
+    "noHand": "Select tiles below to begin ↓",
+    "removeHint": "Click a tile to remove it",
+    "clearAll": "Clear",
+    "drillTitle": "After discarding",
+    "drillTenpai": "Tenpai — waits",
+    "drillEffective": "Effective draws"
   }
 }

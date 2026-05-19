@@ -1,57 +1,80 @@
 /* eslint-disable react/prop-types */
-import React from 'react';
-import { Box, Stack, Typography, Button, Divider } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import ClearIcon from '@mui/icons-material/Clear';
+import React, { useState } from 'react';
+import { X, ChevronDown } from 'lucide-react';
 import MahjongTile from './MahjongTile';
 import { tileKey } from '../../utils/mahjong/tileParser';
 
+// ── Meld validator ────────────────────────────────────────────────────────────
+
+function validateMeld(tiles) {
+  const n = tiles.length;
+  if (n < 3) return { valid: false, reason: null };
+  if (n > 4) return { valid: false, reason: { zh: '副露最多4张', en: 'Max 4 tiles per meld' } };
+
+  const sorted = [...tiles].sort((a, b) =>
+    a.suit !== b.suit ? a.suit.localeCompare(b.suit) : a.value - b.value
+  );
+
+  const allSame = sorted.every(t => t.suit === sorted[0].suit && t.value === sorted[0].value);
+  if (allSame) {
+    if (n === 3) return { valid: true, label: { zh: '刻子 ✓', en: 'Triplet ✓' } };
+    if (n === 4) return { valid: true, label: { zh: '杠 ✓',   en: 'Quad ✓'    } };
+  }
+
+  if (n === 4) {
+    return { valid: false, reason: { zh: '杠须为4张相同的牌', en: 'Kan requires 4 identical tiles' } };
+  }
+
+  // Sequence check (3 tiles only)
+  const allSameSuit = sorted.every(t => t.suit === sorted[0].suit);
+  if (!allSameSuit) {
+    return { valid: false, reason: { zh: '顺子须为同一花色', en: 'Sequence must be same suit' } };
+  }
+  if (sorted[0].suit === 'z') {
+    return { valid: false, reason: { zh: '字牌不能组成顺子', en: 'Honors cannot form sequences' } };
+  }
+  if (sorted[1].value === sorted[0].value + 1 && sorted[2].value === sorted[0].value + 2) {
+    return { valid: true, label: { zh: '顺子 ✓', en: 'Sequence ✓' } };
+  }
+  return { valid: false, reason: { zh: '须为连续数字', en: 'Numbers must be consecutive' } };
+}
+
 // ── Tile catalog ──────────────────────────────────────────────────────────────
+
 const GROUPS = [
   {
     key: 'manzu',
-    labelZh: '万子（1-9万）',
-    labelEn: 'Manzu (1–9m)',
+    short: '万',
+    labelZh: '万子',
+    labelEn: 'Manzu',
     tiles: Array.from({ length: 9 }, (_, i) => ({ suit: 'm', value: i + 1 })),
   },
   {
     key: 'pinzu',
-    labelZh: '饼子（1-9饼）',
-    labelEn: 'Pinzu (1–9p)',
+    short: '饼',
+    labelZh: '饼子',
+    labelEn: 'Pinzu',
     tiles: Array.from({ length: 9 }, (_, i) => ({ suit: 'p', value: i + 1 })),
   },
   {
     key: 'souzu',
-    labelZh: '索子（1-9索）',
-    labelEn: 'Souzu (1–9s)',
+    short: '索',
+    labelZh: '索子',
+    labelEn: 'Souzu',
     tiles: Array.from({ length: 9 }, (_, i) => ({ suit: 's', value: i + 1 })),
   },
   {
     key: 'honors',
-    labelZh: '字牌（风/三元）',
-    labelEn: 'Honours (Winds / Dragons)',
+    short: '字',
+    labelZh: '字牌',
+    labelEn: 'Honors',
     tiles: [1, 2, 3, 4, 5, 6, 7].map((v) => ({ suit: 'z', value: v })),
   },
 ];
 
-// ── Component ─────────────────────────────────────────────────────────────────
-/**
- * MahjongTilePicker
- *
- * Props:
- *   allTiles            tile[]       all tiles across hand + melds + builder (for count badges)
- *   onTileClick         fn(tile)     left-click on main grid → add to hand
- *   onTileRightClick    fn(tile)     right-click on main grid → remove from hand
- *   onMeldTileClick     fn(tile)     click in meld builder grid → add to meld builder
- *   meldBuilder         tile[]       tiles being staged for next meld
- *   onAddMeld           fn()         finalise meldBuilder as a meld
- *   onClearMeldBuilder  fn()
- *   onRemoveFromBuilder fn(idx)      remove tile at index from meldBuilder
- *   locale              'zh'|'en'
- *   size                tile size   default 'sm'
- */
 function MahjongTilePicker({
   allTiles = [],
+  totalCount = 0,
   onTileClick,
   onTileRightClick,
   onMeldTileClick,
@@ -62,31 +85,40 @@ function MahjongTilePicker({
   locale = 'zh',
   size = 'sm',
 }) {
-  // Per-tile count across all tiles (hand + melds + builder)
+  const [meldOpen, setMeldOpen] = useState(false);
+
   const counts = {};
   for (const t of allTiles) {
     const k = tileKey(t);
     counts[k] = (counts[k] ?? 0) + 1;
   }
 
-  const canAddMeld = meldBuilder.length >= 3 && meldBuilder.length <= 4;
+  const isHandFull = totalCount >= 14;
+  const meldValidation = validateMeld(meldBuilder);
+  const canAddMeld = meldValidation.valid;
 
   return (
-    <Box>
-      {/* ── Main hand tile grid ── */}
-      <Typography variant="caption" color="text.secondary"
-        sx={{ fontStyle: 'italic', display: 'block', mb: 1 }}>
-        {locale === 'zh' ? '左键添加到暗手 · 右键移除一张' : 'Left-click to add to hand · Right-click to remove'}
-      </Typography>
+    <div>
+      {/* Hint + counter */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[11px] text-gray-400">
+          {locale === 'zh'
+            ? '左键添加到暗手 · 右键移除一张'
+            : 'Left-click to add · Right-click to remove'}
+        </p>
+        <span className={`text-[11px] font-bold tabular-nums ${isHandFull ? 'text-red-400' : 'text-gray-400'}`}>
+          {totalCount} / 14
+        </span>
+      </div>
 
-      <Stack spacing={1.25}>
-        {GROUPS.map(({ key, labelZh, labelEn, tiles }) => (
-          <Box key={key}>
-            <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-              sx={{ display: 'block', mb: 0.6, letterSpacing: '0.02em' }}>
-              {locale === 'zh' ? labelZh : labelEn}
-            </Typography>
-            <Stack direction="row" flexWrap="wrap" gap={0.6}>
+      {/* Suit rows */}
+      <div className="flex flex-col gap-3">
+        {GROUPS.map(({ key, short, tiles }) => (
+          <div key={key} className="flex items-center gap-3">
+            <span className="w-5 text-center text-[11px] font-black text-gray-300 shrink-0 select-none">
+              {short}
+            </span>
+            <div className="flex flex-wrap gap-1.5">
               {tiles.map((tile) => {
                 const cnt = counts[tileKey(tile)] ?? 0;
                 return (
@@ -98,113 +130,116 @@ function MahjongTilePicker({
                     onRightClick={onTileRightClick}
                     count={cnt}
                     maxCount={4}
-                    disabled={cnt >= 4}
+                    disabled={cnt >= 4 || isHandFull}
                   />
                 );
               })}
-            </Stack>
-          </Box>
+            </div>
+          </div>
         ))}
-      </Stack>
+      </div>
 
-      <Typography variant="caption" color="text.disabled"
-        sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}>
-        {locale === 'zh'
-          ? '右键点击牌面可移除一张 · 红色数字表示已满4张'
-          : 'Right-click a tile to remove one copy · Red badge = 4 copies (full)'}
-      </Typography>
-
-      {/* ── Meld builder — always visible ── */}
-      <Divider sx={{ my: 1.5 }} />
-      <Box sx={{
-        p: 1.25,
-        backgroundColor: 'rgba(255,210,160,0.15)',
-        border: '1px dashed #f0a060',
-        borderRadius: 1.5,
-      }}>
-        <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-          sx={{ display: 'block', mb: 0.75 }}>
-          {locale === 'zh'
-            ? `副露构建（${meldBuilder.length}/3-4张，点击已加入的牌可移除）`
-            : `Meld builder (${meldBuilder.length}/3–4 tiles — click staged tile to remove)`}
-        </Typography>
-
-        {/* Staged tiles + action buttons */}
-        <Stack direction="row" alignItems="center" gap={0.5} flexWrap="wrap" sx={{ mb: 1.25 }}>
-          {meldBuilder.length === 0 ? (
-            <Typography variant="caption" color="text.disabled">
-              {locale === 'zh' ? '点击下方牌面添加到副露' : 'Click tiles below to build a meld'}
-            </Typography>
-          ) : (
-            meldBuilder.map((tile, i) => (
-              <MahjongTile
-                key={i}
-                tile={tile}
-                size={size}
-                onClick={() => onRemoveFromBuilder?.(i)}
-              />
-            ))
+      {/* Meld builder — toggle */}
+      <div className="mt-6 flex items-center gap-3">
+        <div className="flex-1 h-px bg-gray-100" />
+        <button
+          onClick={() => setMeldOpen((v) => !v)}
+          className="flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors shrink-0"
+        >
+          {locale === 'zh' ? '副露构建' : 'Meld Builder'}
+          {meldBuilder.length > 0 && (
+            <span className="opacity-70">({meldBuilder.length})</span>
           )}
-          <Box sx={{ flexGrow: 1 }} />
-          <Stack direction="row" spacing={0.75}>
-            <Button
-              variant="contained"
-              size="small"
-              disabled={!canAddMeld}
-              startIcon={<AddCircleOutlineIcon />}
-              onClick={onAddMeld}
-              sx={{
-                fontSize: '0.72rem',
-                backgroundColor: canAddMeld ? 'var(--primary)' : undefined,
-                color: canAddMeld ? 'var(--text)' : undefined,
-                '&:hover': { backgroundColor: 'var(--primary-hover)' },
-              }}
-            >
-              {locale === 'zh' ? '确认副露' : 'Add Meld'}
-            </Button>
-            {meldBuilder.length > 0 && (
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ClearIcon />}
-                onClick={onClearMeldBuilder}
-                sx={{ fontSize: '0.72rem' }}
-              >
-                {locale === 'zh' ? '清空' : 'Clear'}
-              </Button>
-            )}
-          </Stack>
-        </Stack>
+          <ChevronDown
+            size={11}
+            className={`transition-transform duration-200 ${meldOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        <div className="flex-1 h-px bg-gray-100" />
+      </div>
 
-        {/* Compact tile grid for adding to meld builder */}
-        <Stack spacing={0.75}>
-          {GROUPS.map(({ key, labelZh, labelEn, tiles }) => (
-            <Box key={key}>
-              <Typography variant="caption" color="var(--text-secondary)"
-                sx={{ display: 'block', mb: 0.25, fontSize: '0.6rem' }}>
-                {locale === 'zh' ? labelZh : labelEn}
-              </Typography>
-              <Stack direction="row" flexWrap="wrap" gap={0.4}>
-                {tiles.map((tile) => {
-                  const cnt = counts[tileKey(tile)] ?? 0;
-                  return (
+        {meldOpen && (
+          <div className="mt-3">
+            {/* Staged tiles */}
+            <div className="flex items-center gap-2 flex-wrap min-h-[32px]">
+              {meldBuilder.length === 0 ? (
+                <span className="text-[11px] text-gray-300">
+                  {locale === 'zh' ? '从下方选牌加入副露' : 'Click tiles below to build a meld'}
+                </span>
+              ) : (
+                <div className="flex items-center gap-1 flex-wrap">
+                  {meldBuilder.map((tile, i) => (
                     <MahjongTile
-                      key={tileKey(tile)}
+                      key={i}
                       tile={tile}
                       size="xs"
-                      onClick={onMeldTileClick}
-                      count={cnt}
-                      maxCount={4}
-                      disabled={cnt >= 4}
+                      onClick={() => onRemoveFromBuilder?.(i)}
                     />
-                  );
-                })}
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-      </Box>
-    </Box>
+                  ))}
+                </div>
+              )}
+              <div className="flex-1" />
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={!canAddMeld}
+                  onClick={onAddMeld}
+                  className={`text-[11px] font-bold px-3 py-1 rounded-full transition-colors ${
+                    canAddMeld ? 'bg-black text-white hover:bg-gray-700' : 'text-gray-300 cursor-not-allowed'
+                  }`}
+                >
+                  {locale === 'zh' ? '+ 确认副露' : '+ Confirm'}
+                </button>
+                {meldBuilder.length > 0 && (
+                  <button
+                    onClick={onClearMeldBuilder}
+                    className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {locale === 'zh' ? '清空' : 'Clear'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Validation message */}
+            {meldBuilder.length >= 3 && (
+              <p className={`text-[11px] mt-1.5 mb-2 ${meldValidation.valid ? 'text-gray-500' : 'text-red-400'}`}>
+                {meldValidation.valid
+                  ? (locale === 'zh' ? meldValidation.label.zh : meldValidation.label.en)
+                  : meldValidation.reason
+                    ? (locale === 'zh' ? meldValidation.reason.zh : meldValidation.reason.en)
+                    : null}
+              </p>
+            )}
+
+            {/* Compact xs picker for meld */}
+            <div className="flex flex-col gap-2">
+              {GROUPS.map(({ key, short, tiles }) => (
+                <div key={key} className="flex items-center gap-2">
+                  <span className="w-4 text-center text-[10px] font-black text-gray-300 shrink-0">
+                    {short}
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {tiles.map((tile) => {
+                      const cnt = counts[tileKey(tile)] ?? 0;
+                      return (
+                        <MahjongTile
+                          key={tileKey(tile)}
+                          tile={tile}
+                          size="xs"
+                          onClick={onMeldTileClick}
+                          count={cnt}
+                          maxCount={4}
+                          disabled={cnt >= 4 || isHandFull}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+    </div>
   );
 }
 

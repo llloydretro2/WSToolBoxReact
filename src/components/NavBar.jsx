@@ -34,7 +34,10 @@ const WS_NAV = {
 };
 
 const MAHJONG_NAV = {
-	primary: [{ labelKey: "menu.mahjong", path: "/mahjong/trainer" }],
+	primary: [
+		{ labelKey: "menu.mahjongTrainer",    path: "/mahjong/trainer" },
+		{ labelKey: "menu.mahjongEfficiency", path: "/mahjong/efficiency" },
+	],
 };
 
 const TOOLS_NAV = {

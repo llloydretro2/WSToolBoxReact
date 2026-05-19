@@ -18,7 +18,9 @@
     "deckCreate": "创建卡组",
     "deckSearch": "卡组列表",
     "audio": "音效",
-    "mahjong": "麻将役种"
+    "mahjong": "麻将役种",
+    "mahjongTrainer": "役种分析",
+    "mahjongEfficiency": "牌理"
   },
   "common": {
     "language": {
@@ -39,9 +41,21 @@
       "subtitle": "卡牌与桌游多合一工具集",
       "description": "致力于为卡牌与桌游爱好者提供简单易用且人性化的游戏工具",
       "contactTitle": "联系我",
-      "ws":     { "name": "Weiss Schwarz", "desc": "卡片查询、开包模拟与对战记录", "count": "6 个工具" },
-      "mahjong":{ "name": "麻将",          "desc": "立直麻将役种路线训练",        "count": "1 个工具" },
-      "tools":  { "name": "通用工具",       "desc": "先后攻、骰子、棋钟等对战辅助", "count": "3 个工具" }
+      "ws": {
+        "name": "Weiss Schwarz",
+        "desc": "卡片查询、开包模拟与对战记录",
+        "count": "6 个工具"
+      },
+      "mahjong": {
+        "name": "麻将",
+        "desc": "立直麻将役种路线训练",
+        "count": "1 个工具"
+      },
+      "tools": {
+        "name": "通用工具",
+        "desc": "先后攻、骰子、棋钟等对战辅助",
+        "count": "3 个工具"
+      }
     },
     "firstSecond": {
       "title": "先后攻",
@@ -393,5 +407,24 @@
     "twoHanMin": "两番起和规则",
     "analyzeButton": "分析役种",
     "resetButton": "重置"
+  },
+  "efficiency": {
+    "title": "牌理",
+    "subtitle": "有效牌枚举 · 最优打法分析",
+    "shantenLabel": "向听数",
+    "tenpai": "听牌",
+    "complete": "和牌",
+    "discardCol": "打出",
+    "shantenAfterCol": "向听后",
+    "kindsCol": "种类",
+    "totalCol": "张数",
+    "effectiveCol": "有效牌",
+    "waitsTitle": "待ち牌",
+    "noHand": "在下方选择牌面开始分析 ↓",
+    "removeHint": "点击牌面可移除一张",
+    "clearAll": "清空",
+    "drillTitle": "打出后",
+    "drillTenpai": "听牌，待ち牌",
+    "drillEffective": "有效摸牌"
   }
 }

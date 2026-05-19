@@ -1,40 +1,26 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
-  Box, Container, Typography, Paper, Grid, Stack, Chip, Divider,
-  ToggleButton, ToggleButtonGroup, FormControlLabel, Switch,
-  Collapse, Alert, AlertTitle, IconButton, Tooltip, Snackbar, Fab,
-} from "@mui/material";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import ExpandMoreIcon        from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon        from "@mui/icons-material/ExpandLess";
-import SearchIcon            from "@mui/icons-material/Search";
-import RefreshRoundedIcon    from "@mui/icons-material/RefreshRounded";
-import GridViewRoundedIcon   from "@mui/icons-material/GridViewRounded";
-import CloseRoundedIcon      from "@mui/icons-material/CloseRounded";
-import KeyboardArrowUpIcon   from "@mui/icons-material/KeyboardArrowUp";
-import { PrimaryButton, DangerButton, SecondaryButton } from "../components/ButtonVariants";
+  Search, RefreshCw, X, ChevronDown, ChevronUp, ArrowUp,
+} from "lucide-react";
 import MahjongTile       from "../components/mahjong/MahjongTile";
 import MahjongTilePicker from "../components/mahjong/MahjongTilePicker";
 import { useLocale }     from "../contexts/LocaleContext";
 import { sortTiles, tileName, tileKey, groupTiles } from "../utils/mahjong/tileParser";
 import { analyzeHand, FEASIBILITY } from "../utils/mahjong/yakuAnalyzer";
 
-// ── Feasibility config ────────────────────────────────────────────────────────
+// ── Feasibility ───────────────────────────────────────────────────────────────
 
-// Local extension: yaku structure is already present in the hand (not yet a
-// complete winning hand, but the required tile pattern is satisfied).
-// Computed in buildTrainerViewModel; not part of the engine's FEASIBILITY enum.
 const FEASIBILITY_ACHIEVED = 'achieved';
 
 const FEASIBILITY_CONFIG = {
-  [FEASIBILITY.CONFIRMED]: { color: '#1b4332', bg: '#a6ceb6', labelZh: '已确立', labelEn: 'Confirmed' },
-  [FEASIBILITY_ACHIEVED]:  { color: '#0d3b20', bg: '#52b788', labelZh: '已达成', labelEn: 'Achieved'  },
-  [FEASIBILITY.HIGH]:      { color: '#1b4332', bg: '#bdeacf', labelZh: '高可行', labelEn: 'High'      },
-  [FEASIBILITY.MEDIUM]:    { color: '#7c4a00', bg: '#ffe0a0', labelZh: '可行',   labelEn: 'Medium'    },
-  [FEASIBILITY.LOW]:       { color: '#7c2d00', bg: '#ffd0a8', labelZh: '较低',   labelEn: 'Low'       },
-  [FEASIBILITY.VERY_LOW]:  { color: '#6a1a1a', bg: '#ffc0c0', labelZh: '极低',   labelEn: 'Very Low'  },
-  [FEASIBILITY.IMPOSSIBLE]:{ color: '#555',    bg: '#ddd',    labelZh: '不可能', labelEn: 'Impossible' },
+  [FEASIBILITY.CONFIRMED]: { label: { zh: '已确立', en: 'Confirmed' }, badgeCls: 'bg-gray-950 text-white',                          borderColor: '#111111' },
+  [FEASIBILITY_ACHIEVED]:  { label: { zh: '已达成', en: 'Achieved'  }, badgeCls: 'bg-gray-700 text-white',                          borderColor: '#374151' },
+  [FEASIBILITY.HIGH]:      { label: { zh: '高可行', en: 'High'      }, badgeCls: 'bg-gray-500 text-white',                          borderColor: '#9ca3af' },
+  [FEASIBILITY.MEDIUM]:    { label: { zh: '可行',   en: 'Medium'    }, badgeCls: 'bg-gray-200 text-gray-700',                       borderColor: '#d1d5db' },
+  [FEASIBILITY.LOW]:       { label: { zh: '较低',   en: 'Low'       }, badgeCls: 'bg-gray-100 text-gray-500',                       borderColor: '#e5e7eb' },
+  [FEASIBILITY.VERY_LOW]:  { label: { zh: '极低',   en: 'Very Low'  }, badgeCls: 'border border-gray-200 text-gray-400 bg-white',   borderColor: '#f3f4f6' },
+  [FEASIBILITY.IMPOSSIBLE]:{ label: { zh: '不可能', en: 'Impossible' }, badgeCls: 'border border-gray-100 text-gray-300 bg-white',  borderColor: '#f9fafb' },
 };
 
 const FEASIBILITY_ORDER = [
@@ -42,33 +28,21 @@ const FEASIBILITY_ORDER = [
   FEASIBILITY.LOW, FEASIBILITY.VERY_LOW, FEASIBILITY.IMPOSSIBLE,
 ];
 
-// ── Engine output → UI view-model adapter ─────────────────────────────────────
-/**
- * Thin adapter: reshapes raw analyzeHand() output into UI-friendly fields.
- * No new calculation logic — only data restructuring.
- */
+// ── View-model adapter ────────────────────────────────────────────────────────
+
 function buildTrainerViewModel(analysis, concealedTiles, openMelds) {
   const { handStatus, routes, warnings } = analysis;
-
-  // Shanten is computed once and stored on every route; extract from the first.
   const shanten = routes.length > 0 ? (routes[0].shanten ?? null) : null;
 
   const sortByFeasibility = (arr) =>
-    [...arr].sort(
-      (a, b) =>
-        FEASIBILITY_ORDER.indexOf(a.feasibility) -
-        FEASIBILITY_ORDER.indexOf(b.feasibility)
+    [...arr].sort((a, b) =>
+      FEASIBILITY_ORDER.indexOf(a.feasibility) - FEASIBILITY_ORDER.indexOf(b.feasibility)
     );
 
-  // Upgrade HIGH routes whose yaku structure is already present to ACHIEVED.
-  // Criteria: engine marks it HIGH AND the "needed" text is empty (nothing more
-  // needed for the yaku itself) or starts with "Keep" (just maintain what's there).
   const upgradeToAchieved = (arr) => arr.map((r) => {
     if (r.feasibility !== FEASIBILITY.HIGH) return r;
     const needed = r.en?.needed ?? '';
-    if (needed === '' || needed.startsWith('Keep')) {
-      return { ...r, feasibility: FEASIBILITY_ACHIEVED };
-    }
+    if (needed === '' || needed.startsWith('Keep')) return { ...r, feasibility: FEASIBILITY_ACHIEVED };
     return r;
   });
 
@@ -85,693 +59,509 @@ function buildTrainerViewModel(analysis, concealedTiles, openMelds) {
 
   return {
     hand: {
-      concealedTiles,
-      openMelds,
-      isOpen:           handStatus.isOpen,
-      isComplete:       handStatus.isComplete,
-      tileCountStatus:  handStatus.tileCountStatus,
-      concealedCount:   handStatus.concealedCount,
-      numMelds:         handStatus.numMelds,
-      expectedWaiting:  handStatus.expectedWaiting,
-      expectedComplete: handStatus.expectedComplete,
-      shanten,
-      confirmedRoutes:  handStatus.confirmedRoutes,
-      confirmedHan:     handStatus.confirmedHan,
-      achievedRoutes,
-      achievedHan,
-      errors:           handStatus.errors,
+      concealedTiles, openMelds,
+      isOpen: handStatus.isOpen, isComplete: handStatus.isComplete,
+      tileCountStatus: handStatus.tileCountStatus,
+      concealedCount: handStatus.concealedCount, numMelds: handStatus.numMelds,
+      expectedWaiting: handStatus.expectedWaiting, expectedComplete: handStatus.expectedComplete,
+      shanten, achievedRoutes, achievedHan, errors: handStatus.errors,
     },
-    warnings,
-    regularRoutes,
-    yakumanRoutes,
+    warnings, regularRoutes, yakumanRoutes,
   };
 }
 
-// ── Small display helpers ─────────────────────────────────────────────────────
+// ── Primitives ────────────────────────────────────────────────────────────────
+
+function Pill({ children, className = '' }) {
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold whitespace-nowrap ${className}`}>
+      {children}
+    </span>
+  );
+}
 
 function FeasibilityChip({ feasibility, locale }) {
   const cfg = FEASIBILITY_CONFIG[feasibility] ?? FEASIBILITY_CONFIG[FEASIBILITY.IMPOSSIBLE];
-  return (
-    <Chip label={locale === 'zh' ? cfg.labelZh : cfg.labelEn} size="small"
-      sx={{ backgroundColor: cfg.bg, color: cfg.color, fontWeight: 700, fontSize: '0.68rem', height: 20 }} />
-  );
+  return <Pill className={cfg.badgeCls}>{cfg.label[locale] ?? cfg.label.en}</Pill>;
 }
 
 function HanDisplay({ han, isOpen, locale }) {
   if (han.closed === 'yakuman') {
-    return <Chip size="small" label={locale === 'zh' ? '役满' : 'Yakuman'}
-      sx={{ backgroundColor: '#ffd700', color: '#4a3000', fontWeight: 700, fontSize: '0.68rem', height: 20 }} />;
+    return <Pill className="bg-gray-950 text-white">{locale === 'zh' ? '役满' : 'Yakuman'}</Pill>;
   }
   const v = isOpen
-    ? (han.open != null ? `${han.open}${locale === 'zh' ? '番' : 'han (open)'}` : (locale === 'zh' ? '仅门清' : 'closed only'))
+    ? (han.open != null
+        ? `${han.open}${locale === 'zh' ? '番' : 'han (open)'}`
+        : (locale === 'zh' ? '仅门清' : 'closed only'))
     : `${han.closed}${locale === 'zh' ? '番' : 'han'}`;
-  return <Chip size="small" variant="outlined" label={v}
-    sx={{ fontWeight: 600, fontSize: '0.68rem', height: 20 }} />;
+  return <Pill className="border border-gray-200 text-gray-500 bg-white">{v}</Pill>;
 }
 
-/** Compact shanten label displayed prominently in the hand status panel. */
-function ShantenBadge({ shanten, locale }) {
+function ShantenLine({ shanten, locale }) {
   if (shanten === null || shanten === undefined) return null;
-  if (shanten === -1)
-    return <Chip size="small" label={locale === 'zh' ? '✓ 完整和牌' : '✓ Complete'}
-      sx={{ backgroundColor: '#4caf50', color: '#fff', fontWeight: 700, fontSize: '0.7rem', height: 22 }} />;
-  if (shanten === 0)
-    return <Chip size="small" label={locale === 'zh' ? '听牌' : 'Tenpai'}
-      sx={{ backgroundColor: '#1a5fac', color: '#fff', fontWeight: 700, fontSize: '0.7rem', height: 22 }} />;
-  const col = shanten === 1 ? '#d97706' : '#888';
-  return <Chip size="small"
-    label={locale === 'zh' ? `${shanten}向听` : `${shanten}-shanten`}
-    sx={{ backgroundColor: col, color: '#fff', fontWeight: 700, fontSize: '0.7rem', height: 22 }} />;
+  if (shanten === -1) return <span className="text-[11px] font-bold text-gray-950">✓ {locale === 'zh' ? '和牌' : 'Complete'}</span>;
+  if (shanten === 0)  return <span className="text-[11px] font-bold text-gray-700">{locale === 'zh' ? '听牌' : 'Tenpai'}</span>;
+  return <span className="text-[11px] text-gray-500">{shanten}{locale === 'zh' ? '向听' : '-shanten'}</span>;
 }
 
-/** A single row of tiles within one group (meld / pair). */
-function TileGroup({ tiles, size = 'xs' }) {
+// ── Tile display helpers ──────────────────────────────────────────────────────
+
+function TileRow({ tiles, size = 'xs' }) {
   return (
-    <Stack direction="row" flexWrap="wrap" gap={0.2}>
-      {tiles.map((tile, i) => <MahjongTile key={i} tile={tile} size={size} />)}
-    </Stack>
+    <div className="flex flex-wrap gap-0.5">
+      {tiles.map((t, i) => <MahjongTile key={i} tile={t} size={size} />)}
+    </div>
   );
 }
 
-/** Several tile groups with spacing between them, wrapping on narrow screens. */
-function TileGroupRow({ groups, size = 'xs' }) {
+function TileGroups({ groups, size = 'xs' }) {
   if (!groups?.length) return null;
   return (
-    <Box sx={{ maxWidth: '100%', overflowX: 'auto' }}>
-      <Stack direction="row" alignItems="flex-start" flexWrap="wrap" gap={1.25}>
-        {groups.map((group, gi) => <TileGroup key={gi} tiles={group} size={size} />)}
-      </Stack>
-    </Box>
+    <div className="flex flex-wrap gap-2">
+      {groups.map((g, i) => <TileRow key={i} tiles={g} size={size} />)}
+    </div>
   );
 }
 
-/** Inline label + tile row (for Need / Discard). */
-function LabeledTileRow({ label, labelColor, tiles, size = 'xs' }) {
+function LabeledTiles({ label, labelCls, tiles }) {
   if (!tiles?.length) return null;
   return (
-    <Stack direction="row" alignItems="flex-start" gap={0.5} sx={{ minWidth: 0 }}>
-      <Typography variant="caption" fontWeight={700} color={labelColor ?? 'text.secondary'}
-        sx={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.65rem', lineHeight: '22px' }}>
-        {label}
-      </Typography>
-      <Stack direction="row" gap={0.2} flexWrap="wrap" sx={{ minWidth: 0 }}>
-        {tiles.map((t, i) => <MahjongTile key={i} tile={t} size={size} />)}
-      </Stack>
-    </Stack>
+    <div className="flex items-start gap-1.5">
+      <span className={`text-[10px] font-bold shrink-0 leading-[22px] ${labelCls ?? 'text-gray-500'}`}>{label}</span>
+      <div className="flex flex-wrap gap-0.5">{tiles.map((t, i) => <MahjongTile key={i} tile={t} size="xs" />)}</div>
+    </div>
   );
 }
 
-// ── Scenario display (spec layout: Need · Discard · Target · Why) ─────────────
+// ── Scenario ──────────────────────────────────────────────────────────────────
 
-function ScenarioDisplay({ scenario, locale }) {
-  const text          = locale === 'zh' ? scenario.zh  : scenario.en;
-  const neededTiles   = scenario.neededTiles  ?? scenario.drawOrCall ?? scenario.needed ?? [];
-  const discardTiles  = scenario.discardTiles ?? scenario.discard ?? [];
-  const targetGroups  = scenario.targetYakuGroups ?? null;
-  const routeType     = scenario.routeType;
-  const isExample     = !!scenario.isExample;
+function Scenario({ scenario, locale }) {
+  const text         = locale === 'zh' ? scenario.zh  : scenario.en;
+  const neededTiles  = scenario.neededTiles  ?? scenario.drawOrCall ?? scenario.needed ?? [];
+  const discardTiles = scenario.discardTiles ?? scenario.discard ?? [];
+  const targetGroups = scenario.targetYakuGroups ?? null;
+  const routeType    = scenario.routeType;
+  const isExample    = !!scenario.isExample;
 
-  const badgeLabel = routeType === 'one-step' ? null
-    : routeType === 'short'        ? (locale === 'zh' ? '短期路线' : 'Short route')
-    : routeType === 'longer-term'  ? (locale === 'zh' ? '较长路线' : 'Longer-term route')
-    : (isExample                   ? (locale === 'zh' ? '参考路线' : 'Reference route') : null);
+  const typeLabel = routeType === 'one-step'    ? null
+    : routeType === 'short'                     ? (locale === 'zh' ? '短期路线' : 'Short route')
+    : routeType === 'longer-term'               ? (locale === 'zh' ? '较长路线' : 'Longer-term')
+    : isExample                                 ? (locale === 'zh' ? '参考路线' : 'Reference')
+    : null;
 
   return (
-    <Box sx={{
-      mt: 0.75, p: 1,
-      border: '1px solid var(--border)', borderRadius: 1.5,
-      backgroundColor: 'rgba(166,206,182,0.06)',
-      minWidth: 0, overflow: 'hidden',
-    }}>
-      {badgeLabel && (
-        <Chip label={badgeLabel} size="small"
-          sx={{ fontSize: '0.58rem', height: 16, mb: 0.5, backgroundColor: 'rgba(0,0,0,0.07)' }} />
+    <div className="mt-2 p-3 rounded-xl bg-gray-50 border border-gray-100">
+      {typeLabel && (
+        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mr-1">
+          {typeLabel}
+        </span>
       )}
-
-      {/* Need + Discard on one row where space allows */}
       {(neededTiles.length > 0 || discardTiles.length > 0) && (
-        <Stack direction="row" flexWrap="wrap" gap={1.5} sx={{ mt: 0.25 }}>
-          <LabeledTileRow
-            label={locale === 'zh' ? '摸/碰：' : 'Need:'}
-            labelColor="success.main"
-            tiles={neededTiles}
-          />
-          <LabeledTileRow
-            label={locale === 'zh' ? '打出：' : 'Discard:'}
-            labelColor="error.main"
-            tiles={discardTiles}
-          />
-        </Stack>
+        <div className="flex flex-wrap gap-3 mt-1">
+          <LabeledTiles label={locale === 'zh' ? '摸：' : 'Need:'} labelCls="text-gray-700" tiles={neededTiles} />
+          <LabeledTiles label={locale === 'zh' ? '打：' : 'Discard:'} labelCls="text-red-400" tiles={discardTiles} />
+        </div>
       )}
-
-      {/* Target yaku structure */}
       {targetGroups?.length > 0 && (
-        <Box sx={{ mt: 0.6 }}>
-          <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-            sx={{ display: 'block', fontSize: '0.62rem', mb: 0.3 }}>
-            {locale === 'zh' ? '目标役种结构：' : 'Target yaku structure:'}
-          </Typography>
-          <TileGroupRow groups={targetGroups} />
-        </Box>
+        <div className="mt-2">
+          <p className="text-[10px] font-semibold text-gray-400 mb-1">
+            {locale === 'zh' ? '目标役种结构' : 'Target structure'}
+          </p>
+          <TileGroups groups={targetGroups} />
+        </div>
       )}
-
-      {/* Why explanation */}
       {text?.explanation && (
-        <Typography variant="caption" color="text.secondary"
-          sx={{ display: 'block', mt: 0.5, lineHeight: 1.55 }}>
-          {text.explanation}
-        </Typography>
+        <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">{text.explanation}</p>
       )}
-    </Box>
+    </div>
   );
 }
 
-// ── Fixed hand summary bar ────────────────────────────────────────────────────
-/**
- * Always fixed below the AppBar as soon as the user has added any tiles.
- * Shows the live current hand (concealedTiles + openMelds from component state)
- * so it is visible at all times — while building the hand AND while scrolling
- * through yaku route cards.
- *
- * Rendered OUTSIDE the Container so it spans the full viewport width.
- * A compensating spacer is added at the top of the Container when this bar
- * is visible, preventing the page title from sliding behind it.
- *
- * Individual tiles are clickable for removal; melds have a × button.
- */
-function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, onClearAll, locale }) {
-  if (!concealedTiles?.length && !openMelds?.length) return null;
+// ── Fixed hand bar ────────────────────────────────────────────────────────────
 
-  const isOpen         = openMelds.length > 0;
-  const shanten        = vm?.hand?.shanten ?? null;
-  const hasNoYaku      = vm && isOpen && !(vm.hand?.achievedRoutes?.length);
-  const achievedRoutes = vm?.hand?.achievedRoutes ?? [];
+function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, onClearAll, locale, barRef }) {
+  if (!concealedTiles.length && !openMelds.length) return null;
 
-  const concealedCount = concealedTiles.length;
-  const meldTileCount  = openMelds.reduce((s, m) => s + m.length, 0);
-  const totalCount     = concealedCount + meldTileCount;
+  const shanten    = vm?.hand?.shanten ?? null;
+  const isOpen     = openMelds.length > 0;
+  const totalCount = concealedTiles.length + openMelds.reduce((s, m) => s + m.length, 0);
 
   return (
-    // Outer wrapper: full-width, fixed, gives the 8px breathing gap from the AppBar
-    <Box sx={{
-      position: 'fixed',
-      top: { xs: 'calc(56px + 8px)', sm: 'calc(64px + 8px)' },
-      left: { xs: 8, sm: 16, md: 24 },
-      right: { xs: 8, sm: 16, md: 24 },
-      zIndex: 900,
-    }}>
-      {/* Floating panel */}
-      <Paper elevation={0} sx={{
-        borderRadius: 2.5,
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--border)',
-        borderLeft: '4px solid var(--primary)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06)',
-        px: { xs: 1.25, sm: 1.75 },
-        py: 0.75,
-        maxWidth: 'lg',
-        mx: 'auto',
-      }}>
-        <Stack direction="row" alignItems="flex-start" flexWrap="nowrap" gap={0.75}>
+    <div
+      ref={barRef}
+      className="fixed top-[64px] md:top-[72px] left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200"
+    >
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5">
 
-          {/* ── Tile count indicator ── */}
-          <Stack direction="column" alignItems="center" sx={{
-            flexShrink: 0,
-            borderRight: '1px solid var(--border)', pr: 1, mr: 0.25,
-            pt: 0.25,
-          }}>
-            <Typography sx={{ fontSize: '0.58rem', color: 'var(--text-secondary)', lineHeight: 1.2 }}>
-              {locale === 'zh' ? '手' : 'Hnd'} {concealedCount}
-              {openMelds.length > 0 ? `  +${meldTileCount}` : ''}
-            </Typography>
-            <Typography sx={{
-              fontSize: '0.7rem', fontWeight: 800,
-              color: totalCount === 14 ? 'var(--success)' : totalCount > 14 ? 'var(--error)' : 'var(--text)',
-              lineHeight: 1.2,
-            }}>
-              {locale === 'zh' ? '共' : 'Tot'} {totalCount}
-            </Typography>
-          </Stack>
+        {/* Status row + clear */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <ShantenLine shanten={shanten} locale={locale} />
+          <span className="text-[10px] text-gray-300">·</span>
+          <span className="text-[10px] text-gray-400">
+            {isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
+          </span>
+          <span className="text-[10px] text-gray-300">·</span>
+          <span className={`text-[10px] font-bold ${totalCount === 14 ? 'text-gray-900' : totalCount > 14 ? 'text-red-400' : 'text-gray-400'}`}>
+            {totalCount}{locale === 'zh' ? '张' : ''}
+          </span>
+          <div className="flex-1" />
+          <button
+            onClick={onClearAll}
+            className="text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors shrink-0"
+          >
+            {locale === 'zh' ? '清空' : 'Clear'}
+          </button>
+        </div>
 
-          {/* ── Status badges — vertical stack ── */}
-          <Stack direction="column" alignItems="flex-start" gap={0.4} sx={{ flexShrink: 0 }}>
-            <Chip size="small"
-              label={isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
-              sx={{
-                backgroundColor: isOpen ? '#ffd0a8' : '#a6ceb6',
-                color: isOpen ? '#7c2d00' : '#1b4332',
-                fontWeight: 700, fontSize: '0.62rem', height: 20,
-              }}
-            />
-            {shanten !== null && <ShantenBadge shanten={shanten} locale={locale} />}
-            {hasNoYaku && (
-              <Chip size="small" label={locale === 'zh' ? '⚠️ 无役' : '⚠️ No yaku'}
-                sx={{ backgroundColor: '#ffd0a8', color: '#7c2d00', fontWeight: 700, fontSize: '0.62rem', height: 20 }} />
-            )}
-            {/* Achieved yaku chips — shown whenever the yaku structure is satisfied */}
-            {achievedRoutes.map((r) => (
-              <Chip key={r.id} size="small"
-                label={locale === 'zh' ? r.nameZh : r.nameEn}
-                sx={{ backgroundColor: '#a6ceb6', color: '#1b4332', fontWeight: 700, fontSize: '0.62rem', height: 20 }}
-              />
-            ))}
-          </Stack>
-
-          {/* ── Live tile display — click tile to remove, × to remove whole meld ── */}
-          <Box sx={{ overflowX: 'auto', flex: 1, minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" gap={0.5} flexWrap="wrap">
-              {/* Concealed hand — click to remove one copy */}
-              {sortTiles(concealedTiles).map((tile, i) => (
-                <Tooltip key={i}
-                  title={locale === 'zh' ? `移除一张${tileName(tile, 'zh')}` : `Remove one ${tileName(tile, 'en')}`}>
-                  <Box>
-                    <MahjongTile tile={tile} size="xs" onClick={onRemoveTile} />
-                  </Box>
-                </Tooltip>
+        {/* Tiles — wrapped */}
+        <div className="flex flex-wrap gap-1">
+          {sortTiles(concealedTiles).map((tile, i) => (
+            <div key={i} title={locale === 'zh' ? `移除${tileName(tile, 'zh')}` : `Remove ${tileName(tile, 'en')}`}>
+              <MahjongTile tile={tile} size="xs" onClick={onRemoveTile} />
+            </div>
+          ))}
+          {openMelds.length > 0 && (
+            <>
+              <span className="text-[10px] text-gray-300 self-end pb-0.5 mx-0.5 shrink-0">+</span>
+              {openMelds.map((meld, mi) => (
+                <div key={mi} className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-gray-200 bg-gray-50 shrink-0">
+                  {meld.map((tile, ti) => <MahjongTile key={ti} tile={tile} size="xs" />)}
+                  <button onClick={() => onRemoveMeld(mi)} className="ml-0.5 p-0.5 text-gray-400 hover:text-gray-600 transition-colors">
+                    <X size={9} />
+                  </button>
+                </div>
               ))}
-              {/* Open melds — × button removes whole meld */}
-              {openMelds.length > 0 && (
-                <>
-                  <Typography variant="caption" color="text.disabled"
-                    fontWeight={700} sx={{ lineHeight: '22px', flexShrink: 0 }}>+</Typography>
-                  <Stack direction="row" gap={0.6} flexWrap="wrap">
-                    {openMelds.map((meld, mi) => (
-                      <Stack key={mi} direction="row" alignItems="center" gap={0.1} sx={{
-                        px: 0.4, py: '2px',
-                        backgroundColor: 'rgba(255,210,160,0.3)',
-                        border: '1px solid #f0c88a', borderRadius: 1,
-                      }}>
-                        {meld.map((tile, ti) => (
-                          <MahjongTile key={ti} tile={tile} size="xs" />
-                        ))}
-                        <IconButton size="small" onClick={() => onRemoveMeld(mi)}
-                          sx={{ p: 0.1, color: 'error.main' }}>
-                          <CloseRoundedIcon sx={{ fontSize: '0.7rem' }} />
-                        </IconButton>
-                      </Stack>
-                    ))}
-                  </Stack>
-                </>
-              )}
-            </Stack>
-          </Box>
+            </>
+          )}
+        </div>
 
-          {/* ── Clear all button ── */}
-          <Tooltip title={locale === 'zh' ? '清空所有手牌' : 'Clear all tiles'}>
-            <IconButton size="small" onClick={onClearAll}
-              sx={{ flexShrink: 0, color: 'error.main', alignSelf: 'center' }}>
-              <DeleteOutlineIcon sx={{ fontSize: '1.1rem' }} />
-            </IconButton>
-          </Tooltip>
-
-        </Stack>
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 }
 
-// ── Yaku route card (collapsible) ─────────────────────────────────────────────
-// Collapsed (default): yaku name + meaning + example hand + feasibility badge.
-// Expanded:            adds Need / Discard / Target yaku structure / Why.
+// ── Route card ────────────────────────────────────────────────────────────────
 
 function RouteCard({ route, isOpen, locale }) {
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const {
     feasibility, nameZh, nameEn, nameJa, zh, en,
-    openAllowed, impossibleReason, han, exampleHand,
-    meaning, scenarios,
+    openAllowed, impossibleReason, han, exampleHand, meaning, scenarios,
   } = route;
 
   const name        = locale === 'zh' ? nameZh : nameEn;
   const text        = locale === 'zh' ? zh : en;
   const meaningText = meaning ? (locale === 'zh' ? meaning.zh : meaning.en) : null;
-  const reason      = impossibleReason
-    ? (locale === 'zh' ? impossibleReason.zh : impossibleReason.en) : null;
-  const cfg          = FEASIBILITY_CONFIG[feasibility] ?? FEASIBILITY_CONFIG[FEASIBILITY.IMPOSSIBLE];
+  const reason      = impossibleReason ? (locale === 'zh' ? impossibleReason.zh : impossibleReason.en) : null;
+  const cfg         = FEASIBILITY_CONFIG[feasibility] ?? FEASIBILITY_CONFIG[FEASIBILITY.IMPOSSIBLE];
   const isImpossible = feasibility === FEASIBILITY.IMPOSSIBLE;
-
-  // Whether there is expandable detail (scenarios or explanation text)
-  const hasDetail = !isImpossible && (scenarios?.length > 0 || !!text?.explanation);
+  const hasDetail    = !isImpossible && (scenarios?.length > 0 || !!text?.explanation);
 
   return (
-    <Paper elevation={0} sx={{
-      border: `1px solid ${isImpossible ? '#ddd' : 'var(--border)'}`,
-      borderLeft: `4px solid ${cfg.bg}`,
-      borderRadius: 2,
-      backgroundColor: isImpossible ? 'rgba(0,0,0,0.02)' : 'transparent',
-      opacity: isImpossible ? 0.7 : 1,
-      minWidth: 0, overflow: 'hidden',
-    }}>
-
-      {/* ── Collapsed summary — always visible, click to expand ── */}
-      <Box
-        onClick={() => hasDetail && setExpanded((v) => !v)}
-        sx={{
-          p: 1.5,
-          cursor: hasDetail ? 'pointer' : 'default',
-          userSelect: 'none',
-          '&:hover': hasDetail ? { backgroundColor: 'rgba(0,0,0,0.018)' } : {},
-        }}
+    <div
+      className={`rounded-xl border border-gray-200 overflow-hidden ${isImpossible ? 'opacity-50' : ''}`}
+      style={{ borderLeftWidth: 3, borderLeftColor: cfg.borderColor }}
+    >
+      {/* Header — always visible */}
+      <div
+        onClick={() => hasDetail && setOpen((v) => !v)}
+        className={`p-4 ${hasDetail ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : ''} select-none`}
       >
-        {/* Header */}
-        <Stack direction="row" alignItems="center" flexWrap="wrap" gap={0.5} sx={{ mb: 0.35 }}>
-          <Typography fontWeight={700} fontSize="0.9rem" color="var(--text)">{name}</Typography>
-          <Typography variant="caption" color="text.secondary"
-            sx={{ fontStyle: 'italic', fontSize: '0.7rem' }}>{nameJa}</Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          <FeasibilityChip feasibility={feasibility} locale={locale} />
-          <HanDisplay han={han} isOpen={isOpen} locale={locale} />
-          {!openAllowed && (
-            <Chip size="small" variant="outlined"
-              label={locale === 'zh' ? '门清限定' : 'Closed only'}
-              sx={{ fontSize: '0.6rem', height: 18 }} />
-          )}
-          {hasDetail && (
-            <IconButton size="small" tabIndex={-1} sx={{ p: 0.3, ml: 0.25 }}
-              onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
-              aria-label={expanded ? 'Collapse' : 'Expand'}>
-              {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </IconButton>
-          )}
-        </Stack>
+        {/* Name row */}
+        <div className="flex items-start gap-2 flex-wrap mb-1">
+          <span className="font-bold text-sm text-gray-950 leading-tight">{name}</span>
+          <span className="text-[11px] text-gray-400 italic leading-tight mt-[1px]">{nameJa}</span>
+          <div className="flex-1" />
+          <div className="flex items-center gap-1 flex-wrap justify-end">
+            <FeasibilityChip feasibility={feasibility} locale={locale} />
+            <HanDisplay han={han} isOpen={isOpen} locale={locale} />
+            {!openAllowed && (
+              <Pill className="border border-gray-200 text-gray-400 bg-white">
+                {locale === 'zh' ? '门清限定' : 'Closed'}
+              </Pill>
+            )}
+            {hasDetail && (
+              <span className="text-gray-300 ml-0.5">
+                {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </span>
+            )}
+          </div>
+        </div>
 
-        {/* Meaning — always visible */}
+        {/* Meaning */}
         {meaningText && (
-          <Typography variant="caption" color="text.secondary"
-            sx={{ display: 'block', fontStyle: 'italic', mb: 0.5, lineHeight: 1.5 }}>
-            {meaningText}
-          </Typography>
+          <p className="text-[11px] text-gray-400 italic leading-relaxed mb-2">{meaningText}</p>
         )}
 
         {/* Impossible reason */}
         {isImpossible && reason && (
-          <Typography variant="caption" color="error" sx={{ display: 'block', mb: 0.4 }}>
-            {locale === 'zh' ? '无法达成：' : 'Blocked: '}{reason}
-          </Typography>
+          <p className="text-[11px] text-red-400 mb-1">{locale === 'zh' ? '不可达：' : 'Blocked: '}{reason}</p>
         )}
 
-        {/* Example yaku hand — always visible for quick recognition */}
+        {/* Example hand */}
         {exampleHand?.length > 0 && (
-          <Box>
-            <Typography variant="caption" fontWeight={600} color="var(--text-secondary)"
-              sx={{ display: 'block', fontSize: '0.62rem', mb: 0.3 }}>
-              {locale === 'zh' ? '示例和牌型：' : 'Example yaku hand:'}
-            </Typography>
-            <TileGroupRow groups={exampleHand} />
-          </Box>
+          <div>
+            <p className="text-[10px] font-semibold text-gray-300 mb-1">
+              {locale === 'zh' ? '示例牌型' : 'Example hand'}
+            </p>
+            <TileGroups groups={exampleHand} />
+          </div>
         )}
-      </Box>
+      </div>
 
-      {/* ── Expanded detail: Need / Discard / Target / Why ── */}
-      <Collapse in={expanded} timeout="auto" unmountOnExit>
-        <Divider />
-        <Box sx={{ p: 1.5, pt: 1 }}>
-          {!isImpossible && scenarios?.length > 0 && (
-            scenarios.map((s, i) => <ScenarioDisplay key={i} scenario={s} locale={locale} />)
-          )}
-          {!isImpossible && !scenarios?.length && text?.explanation && (
-            <Typography variant="caption" color="text.secondary"
-              sx={{ display: 'block', lineHeight: 1.55 }}>
-              {text.explanation}
-            </Typography>
-          )}
-        </Box>
-      </Collapse>
-    </Paper>
-  );
-}
-
-// ── Completed hand panel (replaces route analysis when hand is already won) ───
-
-function CompletedHandPanel({ vm, locale }) {
-  const { achievedRoutes, achievedHan } = vm.hand;
-  return (
-    <Paper elevation={0} sx={{
-      p: { xs: 2, md: 2.5 }, mb: 2,
-      border: '1px solid var(--success)',
-      borderLeft: '4px solid var(--success)',
-      borderRadius: 2,
-      backgroundColor: 'rgba(76,175,80,0.04)',
-    }}>
-      <Typography fontWeight={700} fontSize="1rem" color="var(--success)" sx={{ mb: 0.75 }}>
-        {locale === 'zh' ? '✓ 已和牌！' : '✓ Hand Complete!'}
-      </Typography>
-      <Typography variant="body2" color="text.secondary"
-        sx={{ mb: achievedRoutes?.length > 0 ? 1.5 : 0 }}>
-        {locale === 'zh'
-          ? '此手牌已完整和牌，无需进一步路线分析。'
-          : 'This hand is complete. No further route analysis needed.'}
-      </Typography>
-      {achievedRoutes?.length > 0 && (
+      {/* Expanded detail */}
+      {open && (
         <>
-          <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-            sx={{ display: 'block', mb: 0.75, fontSize: '0.7rem' }}>
-            {locale === 'zh'
-              ? `达成役种（${achievedHan}番）：`
-              : `Achieved yaku (${achievedHan} han):`}
-          </Typography>
-          <Stack direction="row" flexWrap="wrap" gap={0.75}>
-            {achievedRoutes.map((r) => (
-              <Chip key={r.id} size="small"
-                label={locale === 'zh' ? r.nameZh : r.nameEn}
-                sx={{ backgroundColor: '#a6ceb6', color: '#1b4332', fontWeight: 700, fontSize: '0.75rem', height: 24 }}
-              />
-            ))}
-          </Stack>
+          <div className="border-t border-gray-100" />
+          <div className="px-4 pb-4 pt-1">
+            {scenarios?.length > 0
+              ? scenarios.map((s, i) => <Scenario key={i} scenario={s} locale={locale} />)
+              : text?.explanation && (
+                  <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">{text.explanation}</p>
+                )}
+          </div>
         </>
       )}
-      {(!achievedRoutes || achievedRoutes.length === 0) && (
-        <Typography variant="caption" color="warning.main">
-          {locale === 'zh'
-            ? '⚠️ 未检测到达成役种（可能是役满或特殊情况）'
-            : '⚠️ No achieved yaku detected (may be yakuman or special case)'}
-        </Typography>
-      )}
-    </Paper>
+    </div>
   );
 }
 
-// ── Hand status panel ─────────────────────────────────────────────────────────
+// ── Results sub-components ────────────────────────────────────────────────────
 
-function HandStatusPanel({ vm, locale }) {
-  const { hand } = vm;
-  const {
-    tileCountStatus, concealedCount, numMelds, expectedWaiting, expectedComplete,
-    isOpen, isComplete, shanten, achievedRoutes, achievedHan,
-  } = hand;
-  const totalTiles = concealedCount + numMelds * 3;
-
-  const statusLabel = tileCountStatus === 'complete' && isComplete
-    ? null  // already shown by ShantenBadge
-    : tileCountStatus === 'waiting'
-      ? (locale === 'zh' ? '等待摸牌' : 'Waiting')
-      : tileCountStatus === 'low'
-        ? (locale === 'zh'
-            ? `暗手${concealedCount}张，期望${expectedWaiting}–${expectedComplete}张`
-            : `${concealedCount} tiles — expected ${expectedWaiting}–${expectedComplete}`)
-        : (locale === 'zh'
-            ? `暗手${concealedCount}张，可能过多`
-            : `${concealedCount} tiles — may be too many`);
-
-  return (
-    <Paper elevation={0} sx={{
-      p: { xs: 2, md: 2.5 }, mb: 2,
-      border: '1px solid var(--border)', borderRadius: 2,
-      backgroundColor: 'transparent',
-    }}>
-      {/* Top row: open/closed + shanten + tile count */}
-      <Stack direction="row" flexWrap="wrap" alignItems="center" gap={0.75} sx={{ mb: 1 }}>
-        <Chip size="small"
-          label={isOpen ? (locale === 'zh' ? '副露手' : 'Open') : (locale === 'zh' ? '门清手' : 'Closed')}
-          sx={{
-            backgroundColor: isOpen ? '#ffd0a8' : '#a6ceb6',
-            color: isOpen ? '#7c2d00' : '#1b4332',
-            fontWeight: 700, fontSize: '0.7rem', height: 22,
-          }}
-        />
-        <ShantenBadge shanten={shanten} locale={locale} />
-        <Chip size="small" variant="outlined"
-          label={locale === 'zh'
-            ? `暗手${concealedCount} · 副露${numMelds}组 · 共${totalTiles}张`
-            : `${concealedCount} concealed · ${numMelds} meld(s) · ${totalTiles} total`}
-          sx={{ fontSize: '0.62rem', height: 20 }}
-        />
-        {statusLabel && (
-          <Typography variant="caption" color={tileCountStatus === 'low' || tileCountStatus === 'high' ? 'warning.main' : 'text.secondary'}>
-            {statusLabel}
-          </Typography>
-        )}
-      </Stack>
-
-      {/* Achieved yaku (confirmed or structure already present) */}
-      {achievedRoutes?.length > 0 && (
-        <Box>
-          <Typography variant="caption" fontWeight={700} color="var(--text-secondary)"
-            sx={{ display: 'block', mb: 0.4, fontSize: '0.65rem' }}>
-            {locale === 'zh' ? `已达成役种（${achievedHan}番）：` : `Achieved yaku (${achievedHan} han):`}
-          </Typography>
-          <Stack direction="row" flexWrap="wrap" gap={0.5}>
-            {achievedRoutes.map((r) => (
-              <Chip key={r.id} size="small"
-                label={locale === 'zh' ? r.nameZh : r.nameEn}
-                sx={{ backgroundColor: '#52b788', color: '#0d3b20', fontWeight: 700, fontSize: '0.68rem', height: 22 }}
-              />
-            ))}
-          </Stack>
-        </Box>
-      )}
-
-      {achievedRoutes?.length === 0 && isOpen && (
-        <Typography variant="caption" color="error">
-          {locale === 'zh' ? '❌ 当前无确立役种' : '❌ No confirmed yaku'}
-        </Typography>
-      )}
-    </Paper>
-  );
-}
-
-// ── Warnings ──────────────────────────────────────────────────────────────────
-
-function WarningsSection({ warnings, locale }) {
+function Warnings({ warnings, locale }) {
   if (!warnings?.length) return null;
+  const sev = {
+    error:   'border-red-200 bg-red-50 text-red-700',
+    warning: 'border-amber-200 bg-amber-50 text-amber-700',
+    info:    'border-gray-200 bg-gray-50 text-gray-600',
+  };
   return (
-    <Stack spacing={1.5} sx={{ mb: 2 }}>
+    <div className="flex flex-col gap-2 mb-4">
       {warnings.map((w) => {
         const txt = locale === 'zh' ? w.zh : w.en;
         return (
-          <Alert key={w.id} severity={w.severity ?? 'info'} sx={{ borderRadius: 2 }}>
-            <AlertTitle sx={{ fontWeight: 700 }}>{txt.title}</AlertTitle>
-            {txt.body}
-          </Alert>
+          <div key={w.id} className={`p-3 rounded-xl border text-xs ${sev[w.severity ?? 'info']}`}>
+            <p className="font-bold mb-0.5">{txt.title}</p>
+            <p>{txt.body}</p>
+          </div>
         );
       })}
-    </Stack>
+    </div>
   );
 }
 
-// ── Yaku routes panel ─────────────────────────────────────────────────────────
+function ResultsSummary({ vm, locale }) {
+  const { achievedRoutes, achievedHan, isOpen, shanten, concealedCount, numMelds } = vm.hand;
+  const totalTiles = concealedCount + numMelds * 3;
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-gray-100">
+      <ShantenLine shanten={shanten} locale={locale} />
+      <span className="text-gray-200">·</span>
+      <span className="text-[11px] text-gray-500">
+        {isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
+      </span>
+      <span className="text-gray-200">·</span>
+      <span className="text-[11px] text-gray-400">{totalTiles}{locale === 'zh' ? '张' : ' tiles'}</span>
+      {achievedRoutes?.length > 0 && (
+        <>
+          <span className="text-gray-200">·</span>
+          <span className="text-[11px] font-semibold text-gray-950">
+            {locale === 'zh' ? `已达成 ${achievedHan}番` : `${achievedHan} han achieved`}
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {achievedRoutes.map((r) => (
+              <Pill key={r.id} className="bg-gray-900 text-white">
+                {locale === 'zh' ? r.nameZh : r.nameEn}
+              </Pill>
+            ))}
+          </div>
+        </>
+      )}
+      {isOpen && achievedRoutes?.length === 0 && (
+        <span className="text-[11px] text-red-400">{locale === 'zh' ? '无确立役种' : 'No confirmed yaku'}</span>
+      )}
+    </div>
+  );
+}
 
-function YakuRoutesPanel({ vm, locale }) {
+function CompletedPanel({ vm, locale }) {
+  const { achievedRoutes, achievedHan } = vm.hand;
+  return (
+    <div className="p-5 border border-gray-200 rounded-2xl" style={{ borderLeftWidth: 3, borderLeftColor: '#111' }}>
+      <p className="font-black text-lg text-gray-950 mb-1">
+        {locale === 'zh' ? '✓ 和牌！' : '✓ Complete hand!'}
+      </p>
+      <p className="text-xs text-gray-400 mb-4">
+        {locale === 'zh' ? '手牌已完整和牌，无需进一步分析。' : 'This hand is complete. No further analysis needed.'}
+      </p>
+      {achievedRoutes?.length > 0 && (
+        <>
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+            {locale === 'zh' ? `达成役种 · ${achievedHan}番` : `Achieved · ${achievedHan} han`}
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {achievedRoutes.map((r) => (
+              <Pill key={r.id} className="bg-gray-950 text-white text-xs px-2.5 py-1">
+                {locale === 'zh' ? r.nameZh : r.nameEn}
+              </Pill>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function YakuRoutes({ vm, locale }) {
   const { regularRoutes, yakumanRoutes, hand } = vm;
-  const [showImpossible, setShowImpossible] = useState(false);
-  const [showYakuman,    setShowYakuman]    = useState(false);
-  const [showImpYakuman, setShowImpYakuman] = useState(false);
+  const [showImp,    setShowImp]    = useState(false);
+  const [showYk,     setShowYk]     = useState(false);
+  const [showImpYk,  setShowImpYk]  = useState(false);
 
-  const feasibleRoutes   = regularRoutes.filter((r) => r.feasibility !== FEASIBILITY.IMPOSSIBLE);
-  const impossibleRoutes = regularRoutes.filter((r) => r.feasibility === FEASIBILITY.IMPOSSIBLE);
-  const yakumanFeasible  = yakumanRoutes.filter((r) => r.feasibility !== FEASIBILITY.IMPOSSIBLE);
-  const yakumanImpossible = yakumanRoutes.filter((r) => r.feasibility === FEASIBILITY.IMPOSSIBLE);
-  const isOpen = hand.isOpen;
+  const feasible   = regularRoutes.filter((r) => r.feasibility !== FEASIBILITY.IMPOSSIBLE);
+  const impossible = regularRoutes.filter((r) => r.feasibility === FEASIBILITY.IMPOSSIBLE);
+  const ykFeasible = yakumanRoutes.filter((r) => r.feasibility !== FEASIBILITY.IMPOSSIBLE);
+  const ykImp      = yakumanRoutes.filter((r) => r.feasibility === FEASIBILITY.IMPOSSIBLE);
+  const isOpen     = hand.isOpen;
+
+  const ToggleBtn = ({ onClick, active, children }) => (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      {active ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+      {children}
+    </button>
+  );
 
   return (
-    <Box>
-      <Typography fontWeight={700} fontSize="1rem" color="var(--text)" sx={{ mb: 1.5 }}>
-        {locale === 'zh' ? '役种路线分析' : 'Yaku Route Analysis'}
-      </Typography>
-
-      {/* Feasible regular routes — 2-column on desktop */}
-      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-        {feasibleRoutes.map((r) => (
-          <Grid key={r.id} size={{ xs: 12, md: 6 }}>
-            <RouteCard route={r} isOpen={isOpen} locale={locale} />
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Impossible regular routes (collapsed) */}
-      {impossibleRoutes.length > 0 && (
-        <Box sx={{ mb: 1.5 }}>
-          <SecondaryButton variant="outlined" size="small"
-            onClick={() => setShowImpossible((v) => !v)}
-            endIcon={showImpossible ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            sx={{ mb: 1, fontSize: '0.78rem' }}>
-            {locale === 'zh'
-              ? `${showImpossible ? '收起' : '显示'}不可达役种（${impossibleRoutes.length}）`
-              : `${showImpossible ? 'Hide' : 'Show'} impossible yaku (${impossibleRoutes.length})`}
-          </SecondaryButton>
-          <Collapse in={showImpossible}>
-            <Grid container spacing={1.5}>
-              {impossibleRoutes.map((r) => (
-                <Grid key={r.id} size={{ xs: 12, md: 6 }}>
-                  <RouteCard route={r} isOpen={isOpen} locale={locale} />
-                </Grid>
-              ))}
-            </Grid>
-          </Collapse>
-        </Box>
+    <div>
+      {/* Feasible routes */}
+      {feasible.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          {feasible.map((r) => (
+            <RouteCard key={r.id} route={r} isOpen={isOpen} locale={locale} />
+          ))}
+        </div>
       )}
 
-      <Divider sx={{ my: 1.5 }} />
+      {/* Impossible routes */}
+      {impossible.length > 0 && (
+        <div className="mb-4">
+          <ToggleBtn onClick={() => setShowImp((v) => !v)} active={showImp}>
+            {locale === 'zh'
+              ? `${showImp ? '收起' : '显示'}不可达役种（${impossible.length}）`
+              : `${showImp ? 'Hide' : 'Show'} impossible (${impossible.length})`}
+          </ToggleBtn>
+          {showImp && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              {impossible.map((r) => (
+                <RouteCard key={r.id} route={r} isOpen={isOpen} locale={locale} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Yakuman routes (collapsed) */}
-      <SecondaryButton variant="outlined" size="small"
-        onClick={() => setShowYakuman((v) => !v)}
-        endIcon={showYakuman ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        sx={{ mb: 1, fontSize: '0.78rem' }}>
-        {locale === 'zh'
-          ? `${showYakuman ? '收起' : '显示'}役满参考（${yakumanFeasible.length + yakumanImpossible.length}种）`
-          : `${showYakuman ? 'Hide' : 'Show'} Yakuman reference (${yakumanFeasible.length + yakumanImpossible.length})`}
-      </SecondaryButton>
+      {/* Yakuman divider */}
+      <div className="border-t border-gray-100 pt-4">
+        <ToggleBtn onClick={() => setShowYk((v) => !v)} active={showYk}>
+          {locale === 'zh'
+            ? `${showYk ? '收起' : '显示'}役满参考（${ykFeasible.length + ykImp.length}种）`
+            : `${showYk ? 'Hide' : 'Show'} Yakuman reference (${ykFeasible.length + ykImp.length})`}
+        </ToggleBtn>
 
-      <Collapse in={showYakuman}>
-        {yakumanFeasible.length > 0 && (
-          <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-            {yakumanFeasible.map((r) => (
-              <Grid key={r.id} size={{ xs: 12, md: 6 }}>
-                <RouteCard route={r} isOpen={isOpen} locale={locale} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-        {yakumanImpossible.length > 0 && (
-          <Box>
-            <SecondaryButton variant="outlined" size="small"
-              onClick={() => setShowImpYakuman((v) => !v)}
-              endIcon={showImpYakuman ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{ mb: 1, fontSize: '0.78rem' }}>
-              {locale === 'zh'
-                ? `${showImpYakuman ? '收起' : '显示'}不可达役满（${yakumanImpossible.length}）`
-                : `${showImpYakuman ? 'Hide' : 'Show'} impossible yakuman (${yakumanImpossible.length})`}
-            </SecondaryButton>
-            <Collapse in={showImpYakuman}>
-              <Grid container spacing={1.5}>
-                {yakumanImpossible.map((r) => (
-                  <Grid key={r.id} size={{ xs: 12, md: 6 }}>
-                    <RouteCard route={r} isOpen={isOpen} locale={locale} />
-                  </Grid>
+        {showYk && (
+          <div className="mt-3">
+            {ykFeasible.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                {ykFeasible.map((r) => (
+                  <RouteCard key={r.id} route={r} isOpen={isOpen} locale={locale} />
                 ))}
-              </Grid>
-            </Collapse>
-          </Box>
+              </div>
+            )}
+            {ykImp.length > 0 && (
+              <div>
+                <ToggleBtn onClick={() => setShowImpYk((v) => !v)} active={showImpYk}>
+                  {locale === 'zh'
+                    ? `${showImpYk ? '收起' : '显示'}不可达役满（${ykImp.length}）`
+                    : `${showImpYk ? 'Hide' : 'Show'} impossible yakuman (${ykImp.length})`}
+                </ToggleBtn>
+                {showImpYk && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                    {ykImp.map((r) => (
+                      <RouteCard key={r.id} route={r} isOpen={isOpen} locale={locale} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
-      </Collapse>
-    </Box>
+      </div>
+    </div>
+  );
+}
+
+// ── Toggle group ──────────────────────────────────────────────────────────────
+
+function ToggleGroup({ options, value, onChange, locale }) {
+  return (
+    <div className="inline-flex border border-gray-200 rounded-lg overflow-hidden">
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`px-3 py-1 text-[11px] font-bold transition-colors border-r border-gray-200 last:border-r-0
+              ${active ? 'bg-gray-950 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+          >
+            {locale === 'zh' ? opt.zh : opt.en}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ToggleSwitch({ checked, onChange, label }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none">
+      <button
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative w-8 h-[18px] rounded-full transition-colors shrink-0 ${checked ? 'bg-gray-950' : 'bg-gray-200'}`}
+      >
+        <span className={`absolute top-[1px] left-[1px] w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : ''}`} />
+      </button>
+      <span className="text-[11px] text-gray-600 whitespace-nowrap">{label}</span>
+    </label>
   );
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const WIND_OPTIONS = [
-  { value: 1, zh: '东', en: 'East'  },
-  { value: 2, zh: '南', en: 'South' },
-  { value: 3, zh: '西', en: 'West'  },
-  { value: 4, zh: '北', en: 'North' },
+  { value: 1, zh: '东', en: 'E' },
+  { value: 2, zh: '南', en: 'S' },
+  { value: 3, zh: '西', en: 'W' },
+  { value: 4, zh: '北', en: 'N' },
 ];
 
-
-// ── Main page component ───────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 function MahjongTrainer() {
   const { t, locale } = useLocale();
+  const resultRef  = useRef(null);
+  const handBarRef = useRef(null);
+  const [handBarHeight, setHandBarHeight] = useState(0);
 
-  // ── State ──────────────────────────────────────────────────────────────────
   const [concealedTiles, setConcealedTiles] = useState([]);
   const [openMelds,      setOpenMelds]      = useState([]);
   const [meldBuilder,    setMeldBuilder]    = useState([]);
-  const [showPicker,     setShowPicker]     = useState(true);
   const [seatWind,       setSeatWind]       = useState(1);
   const [roundWind,      setRoundWind]      = useState(1);
   const [openTanyao,     setOpenTanyao]     = useState(true);
@@ -780,36 +570,53 @@ function MahjongTrainer() {
   const [analyzeError,   setAnalyzeError]   = useState('');
   const [tileWarning,    setTileWarning]    = useState('');
 
-  // ── Derived ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!tileWarning) return;
+    const t = setTimeout(() => setTileWarning(''), 2200);
+    return () => clearTimeout(t);
+  }, [tileWarning]);
+
+  // Keep page content below the fixed hand bar as its height changes
+  useEffect(() => {
+    const el = handBarRef.current;
+    if (!el) { setHandBarHeight(0); return; }
+    const ro = new ResizeObserver(([entry]) => setHandBarHeight(entry.contentRect.height));
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+
   const allTiles = useMemo(
     () => [...concealedTiles, ...openMelds.flat(), ...meldBuilder],
     [concealedTiles, openMelds, meldBuilder]
   );
   const tileCounts = useMemo(() => groupTiles(allTiles), [allTiles]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  const hasHand    = concealedTiles.length > 0 || openMelds.length > 0;
+  const totalCount = allTiles.length;
 
   const handleTileClick = (tile) => {
-    const total = tileCounts[tileKey(tile)] ?? 0;
-    if (total >= 4) {
-      setTileWarning(
-        locale === 'zh'
-          ? `${tileName(tile, 'zh')}已有4张，不能再添加！`
-          : `Already 4 ${tileName(tile, 'en')} — cannot add more.`
-      );
+    if (totalCount >= 14) {
+      setTileWarning(locale === 'zh' ? '手牌已达上限（14张）' : 'Hand is full (14 tiles max)');
+      return;
+    }
+    if ((tileCounts[tileKey(tile)] ?? 0) >= 4) {
+      setTileWarning(locale === 'zh'
+        ? `${tileName(tile, 'zh')}已有4张`
+        : `Already 4 ${tileName(tile, 'en')}`);
       return;
     }
     setConcealedTiles((prev) => [...prev, tile]);
   };
 
   const handleMeldTileClick = (tile) => {
-    const total = tileCounts[tileKey(tile)] ?? 0;
-    if (total >= 4) {
-      setTileWarning(
-        locale === 'zh'
-          ? `${tileName(tile, 'zh')}已有4张，不能再添加！`
-          : `Already 4 ${tileName(tile, 'en')} — cannot add more.`
-      );
+    if (totalCount >= 14) {
+      setTileWarning(locale === 'zh' ? '手牌已达上限（14张）' : 'Hand is full (14 tiles max)');
+      return;
+    }
+    if ((tileCounts[tileKey(tile)] ?? 0) >= 4) {
+      setTileWarning(locale === 'zh'
+        ? `${tileName(tile, 'zh')}已有4张`
+        : `Already 4 ${tileName(tile, 'en')}`);
       return;
     }
     setMeldBuilder((prev) => [...prev, tile]);
@@ -834,7 +641,6 @@ function MahjongTrainer() {
     });
   };
 
-
   const handleAddMeld = () => {
     if (meldBuilder.length < 3) {
       setTileWarning(locale === 'zh' ? '副露至少需要3张牌' : 'A meld needs at least 3 tiles.');
@@ -844,13 +650,13 @@ function MahjongTrainer() {
     setMeldBuilder([]);
   };
 
-  const handleClearMeldBuilder   = () => setMeldBuilder([]);
-  const handleRemoveFromBuilder   = (idx) => setMeldBuilder((prev) => prev.filter((_, i) => i !== idx));
-  const handleRemoveMeld          = (idx) => setOpenMelds((prev) => prev.filter((_, i) => i !== idx));
+  const handleClearMeldBuilder  = () => setMeldBuilder([]);
+  const handleRemoveFromBuilder  = (idx) => setMeldBuilder((prev) => prev.filter((_, i) => i !== idx));
+  const handleRemoveMeld         = (idx) => setOpenMelds((prev) => prev.filter((_, i) => i !== idx));
 
   const handleAnalyze = () => {
     setAnalyzeError('');
-    if (concealedTiles.length === 0 && openMelds.length === 0) {
+    if (!hasHand) {
       setAnalyzeError(locale === 'zh' ? '请先用选择器添加手牌' : 'Please add tiles using the picker first.');
       return;
     }
@@ -858,6 +664,7 @@ function MahjongTrainer() {
     const analysis = analyzeHand(concealedTiles, openMelds, seatWind, roundWind, rules);
     const vm       = buildTrainerViewModel(analysis, [...concealedTiles], [...openMelds]);
     setResult({ vm });
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
 
   const handleClearAll = () => {
@@ -866,213 +673,139 @@ function MahjongTrainer() {
   };
 
   const handleReset = () => {
-    setConcealedTiles([]); setOpenMelds([]); setMeldBuilder([]);
-    setShowPicker(true);
+    handleClearAll();
     setSeatWind(1); setRoundWind(1);
     setOpenTanyao(true); setTwoHanMin(false);
-    setResult(null); setAnalyzeError('');
   };
-
-  // ── Shared sx ──────────────────────────────────────────────────────────────
-
-  const paperSx = {
-    p: { xs: 2.5, md: 3.5 }, backgroundColor: 'transparent',
-    border: '1px solid var(--border)',
-    boxShadow: '0 20px 45px -18px rgba(0,0,0,0.15)',
-    borderRadius: 2, mb: 3,
-  };
-  const toggleButtonSx = {
-    fontSize: '0.82rem', px: 1.25, py: 0.5,
-    '&.Mui-selected': { backgroundColor: 'var(--primary)', color: 'var(--text)', fontWeight: 700 },
-    '&.Mui-selected:hover': { backgroundColor: 'var(--primary-hover)' },
-  };
-  const switchSx = {
-    '& .MuiSwitch-switchBase.Mui-checked': { color: 'var(--primary)' },
-    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: 'var(--primary)' },
-  };
-
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ minHeight: '100%' }}>
-      {/* Fixed hand bar — live state, visible as soon as the user adds any tile.
-          Spans the full viewport width, sits below the AppBar, shows at all times. */}
-      {(concealedTiles.length > 0 || openMelds.length > 0) && (
-        <FixedHandBar
-          concealedTiles={concealedTiles}
-          openMelds={openMelds}
-          vm={result?.vm ?? null}
-          onRemoveTile={handleRemoveFromHand}
-          onRemoveMeld={handleRemoveMeld}
-          onClearAll={handleClearAll}
-          locale={locale}
-        />
-      )}
-
-      <Container maxWidth="lg">
-
-        {/* Spacer: 8px AppBar gap + floating bar height (taller to accommodate vertical badge stack) */}
-        {(concealedTiles.length > 0 || openMelds.length > 0) && (
-          <Box sx={{ height: { xs: '80px', sm: '76px' } }} />
-        )}
-
-        {/* Title */}
-        <Box textAlign="center" mb={4}>
-          <Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
-            {t('mahjong.title')}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {t('mahjong.subtitle')}
-          </Typography>
-        </Box>
-
-        {/* ── A. Hand Input Panel ──────────────────────────────────────────── */}
-        <Paper elevation={8} sx={paperSx}>
-
-          {/* Hand tiles are displayed in the fixed bar at top.
-              Inline hint shown only before the first tile is added. */}
-          {concealedTiles.length === 0 && openMelds.length === 0 && (
-            <Typography variant="caption" color="text.disabled"
-              sx={{ display: 'block', mb: 1.5 }}>
-              {locale === 'zh'
-                ? '使用下方选择器添加手牌，牌面会显示在页面顶部。'
-                : 'Add tiles with the picker. Your hand appears fixed at the top of the page.'}
-            </Typography>
-          )}
-
-          {/* — Tile picker (default visible) — */}
-          <Divider sx={{ mb: 1.5 }} />
-          <Stack direction="row" alignItems="center" sx={{ mb: showPicker ? 1.5 : 0 }}>
-            <SecondaryButton variant="outlined" size="small"
-              onClick={() => setShowPicker((v) => !v)}
-              startIcon={<GridViewRoundedIcon />}
-              endIcon={showPicker ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              sx={{ fontSize: '0.78rem' }}>
-              {locale === 'zh'
-                ? `${showPicker ? '收起' : '展开'}牌面选择器`
-                : `${showPicker ? 'Hide' : 'Show'} tile picker`}
-            </SecondaryButton>
-          </Stack>
-          <Collapse in={showPicker}>
-            <Box sx={{ p: 2, backgroundColor: 'rgba(166,206,182,0.06)', border: '1px solid var(--border)', borderRadius: 1.5 }}>
-              <MahjongTilePicker
-                allTiles={allTiles}
-                onTileClick={handleTileClick}
-                onTileRightClick={handleTileRightClick}
-                onMeldTileClick={handleMeldTileClick}
-                meldBuilder={meldBuilder}
-                onAddMeld={handleAddMeld}
-                onClearMeldBuilder={handleClearMeldBuilder}
-                onRemoveFromBuilder={handleRemoveFromBuilder}
-                locale={locale}
-                size="sm"
-              />
-            </Box>
-          </Collapse>
-
-          {/* — Settings — */}
-          <Divider sx={{ my: 2 }} />
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="subtitle2" color="var(--text-secondary)" sx={{ mb: 0.75 }}>
-                {t('mahjong.seatWind')}
-              </Typography>
-              <ToggleButtonGroup value={seatWind} exclusive size="small"
-                onChange={(_, v) => v && setSeatWind(v)}>
-                {WIND_OPTIONS.map((w) => (
-                  <ToggleButton key={w.value} value={w.value} sx={toggleButtonSx}>
-                    {locale === 'zh' ? w.zh : w.en}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Typography variant="subtitle2" color="var(--text-secondary)" sx={{ mb: 0.75 }}>
-                {t('mahjong.roundWind')}
-              </Typography>
-              <ToggleButtonGroup value={roundWind} exclusive size="small"
-                onChange={(_, v) => v && setRoundWind(v)}>
-                {WIND_OPTIONS.slice(0, 2).map((w) => (
-                  <ToggleButton key={w.value} value={w.value} sx={toggleButtonSx}>
-                    {locale === 'zh' ? w.zh : w.en}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-            </Grid>
-          </Grid>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2.5 }}>
-            <FormControlLabel
-              control={<Switch checked={openTanyao} onChange={(e) => setOpenTanyao(e.target.checked)} sx={switchSx} />}
-              label={<Typography variant="body2">{t('mahjong.openTanyao')}</Typography>}
-            />
-            <FormControlLabel
-              control={<Switch checked={twoHanMin} onChange={(e) => setTwoHanMin(e.target.checked)} sx={switchSx} />}
-              label={<Typography variant="body2">{t('mahjong.twoHanMin')}</Typography>}
-            />
-          </Stack>
-
-          {analyzeError && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }}>{analyzeError}</Alert>
-          )}
-
-          {/* — Actions — */}
-          <Stack direction="row" spacing={2} justifyContent="center">
-            <PrimaryButton variant="contained" onClick={handleAnalyze}
-              startIcon={<SearchIcon />} sx={{ minWidth: 140 }}>
-              {t('mahjong.analyzeButton')}
-            </PrimaryButton>
-            <DangerButton variant="outlined" onClick={handleReset}
-              startIcon={<RefreshRoundedIcon />} sx={{ minWidth: 100 }}>
-              {t('mahjong.resetButton')}
-            </DangerButton>
-          </Stack>
-        </Paper>
-
-        {/* ── B + C. Results: Hand Status + Yaku Routes / Completion ─────── */}
-        {result && (
-          <Box>
-            <WarningsSection warnings={result.vm.warnings} locale={locale} />
-            <HandStatusPanel vm={result.vm} locale={locale} />
-            {result.vm.hand.isComplete ? (
-              <CompletedHandPanel vm={result.vm} locale={locale} />
-            ) : (
-              <Paper elevation={8} sx={paperSx}>
-                <YakuRoutesPanel vm={result.vm} locale={locale} />
-              </Paper>
-            )}
-          </Box>
-        )}
-      </Container>
-
-      {/* Tile warning snackbar */}
-      <Snackbar
-        open={!!tileWarning}
-        autoHideDuration={2200}
-        onClose={() => setTileWarning('')}
-        message={tileWarning}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        slotProps={{ content: { sx: { backgroundColor: '#c41c24', color: '#fff', fontWeight: 600 } } }}
+    <div className="min-h-screen bg-white">
+      {/* Fixed hand bar */}
+      <FixedHandBar
+        concealedTiles={concealedTiles}
+        openMelds={openMelds}
+        vm={result?.vm ?? null}
+        onRemoveTile={handleRemoveFromHand}
+        onRemoveMeld={handleRemoveMeld}
+        onClearAll={handleClearAll}
+        locale={locale}
+        barRef={handBarRef}
       />
 
-      {/* Back-to-top Fab — fixed bottom-right, scrolls smoothly to the tile picker */}
-      <Fab
-        size="small"
-        aria-label={locale === 'zh' ? '返回顶部' : 'Back to top'}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        sx={{
-          position: 'fixed',
-          bottom: { xs: 20, sm: 28 },
-          right:  { xs: 16, sm: 28 },
-          zIndex: 800,
-          backgroundColor: 'var(--primary)',
-          color: 'var(--text)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          '&:hover': { backgroundColor: 'var(--primary-hover)' },
-        }}
+      <div
+        className="max-w-3xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-10 sm:pb-14"
+        style={hasHand ? { paddingTop: handBarHeight + 16 } : undefined}
       >
-        <KeyboardArrowUpIcon />
-      </Fab>
-    </Box>
+
+        {/* ── Title ── */}
+        <div className="mb-10">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-gray-950 leading-none mb-2">
+            {t('mahjong.title')}
+          </h1>
+          <p className="text-sm text-gray-400">{t('mahjong.subtitle')}</p>
+        </div>
+
+        {/* ── Input card ── */}
+        <div className="border border-gray-200 rounded-2xl overflow-hidden mb-4">
+
+          {/* Settings */}
+          <div className="px-5 sm:px-6 py-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">
+                {t('mahjong.seatWind')}
+              </span>
+              <ToggleGroup options={WIND_OPTIONS} value={seatWind} onChange={setSeatWind} locale={locale} />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wider">
+                {t('mahjong.roundWind')}
+              </span>
+              <ToggleGroup options={WIND_OPTIONS.slice(0, 2)} value={roundWind} onChange={setRoundWind} locale={locale} />
+            </div>
+            <ToggleSwitch checked={openTanyao} onChange={setOpenTanyao} label={t('mahjong.openTanyao')} />
+            <ToggleSwitch checked={twoHanMin}  onChange={setTwoHanMin}  label={t('mahjong.twoHanMin')} />
+          </div>
+
+          {/* CTA */}
+          <div className="px-5 sm:px-6 py-4 border-t border-gray-100">
+            {analyzeError && (
+              <p className="text-xs text-red-400 mb-3">{analyzeError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={handleAnalyze}
+                className="flex-1 py-3 bg-gray-950 text-white text-sm font-bold rounded-xl hover:bg-gray-800 active:bg-black transition-colors flex items-center justify-center gap-2"
+              >
+                <Search size={14} />
+                {t('mahjong.analyzeButton')}
+              </button>
+              <button
+                onClick={handleReset}
+                title={locale === 'zh' ? '重置' : 'Reset'}
+                className="px-4 py-3 border border-gray-200 rounded-xl text-gray-400 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+              >
+                <RefreshCw size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Tile picker card ── */}
+        <div className="border border-gray-200 rounded-2xl p-5 sm:p-6 mb-4">
+          <MahjongTilePicker
+            allTiles={allTiles}
+            totalCount={totalCount}
+            onTileClick={handleTileClick}
+            onTileRightClick={handleTileRightClick}
+            onMeldTileClick={handleMeldTileClick}
+            meldBuilder={meldBuilder}
+            onAddMeld={handleAddMeld}
+            onClearMeldBuilder={handleClearMeldBuilder}
+            onRemoveFromBuilder={handleRemoveFromBuilder}
+            locale={locale}
+            size="sm"
+          />
+        </div>
+
+        {/* ── Results ── */}
+        {result && (
+          <div ref={resultRef} className="pt-2">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-[10px] font-black tracking-widest uppercase text-gray-300">
+                {locale === 'zh' ? '分析结果' : 'Analysis'}
+              </span>
+              <div className="flex-1 border-t border-gray-100" />
+            </div>
+
+            <Warnings warnings={result.vm.warnings} locale={locale} />
+            <ResultsSummary vm={result.vm} locale={locale} />
+
+            {result.vm.hand.isComplete ? (
+              <CompletedPanel vm={result.vm} locale={locale} />
+            ) : (
+              <YakuRoutes vm={result.vm} locale={locale} />
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {/* Tile warning toast */}
+      {tileWarning && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-950 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap">
+          {tileWarning}
+        </div>
+      )}
+
+      {/* Back to top */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        aria-label={locale === 'zh' ? '返回顶部' : 'Back to top'}
+        className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 w-9 h-9 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center hover:bg-gray-300 transition-colors"
+      >
+        <ArrowUp size={15} />
+      </button>
+    </div>
   );
 }
 
