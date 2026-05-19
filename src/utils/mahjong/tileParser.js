@@ -226,6 +226,93 @@ function extractSets(tiles, setsNeeded) {
   return null;
 }
 
+// Returns ALL valid ways to form exactly `setsNeeded` complete sets from `tiles`.
+// Unlike the greedy `extractSets`, this explores both triplet and sequence options
+// at every step, so ambiguous hands (e.g. 223344m) produce multiple results.
+function extractAllSets(tiles, setsNeeded) {
+  if (setsNeeded === 0) return tiles.length === 0 ? [[]] : [];
+  if (tiles.length < 3) return [];
+
+  const sorted = sortTiles(tiles);
+  const first  = sorted[0];
+  const g      = groupTiles(sorted);
+  const fk     = tileKey(first);
+  const all    = [];
+
+  // Option A: triplet starting with first tile
+  if ((g[fk] || 0) >= 3) {
+    const triplet = [first, first, first];
+    const rem     = removeTilesByKey(sorted, fk, 3);
+    for (const rest of extractAllSets(rem, setsNeeded - 1)) {
+      all.push([triplet, ...rest]);
+    }
+  }
+
+  // Option B: sequence starting with first tile (numbered suits, value ≤ 7)
+  if (first.suit !== 'z' && first.value <= 7) {
+    const k2 = first.suit + (first.value + 1);
+    const k3 = first.suit + (first.value + 2);
+    if ((g[k2] || 0) >= 1 && (g[k3] || 0) >= 1) {
+      const seq = [
+        first,
+        { suit: first.suit, value: first.value + 1 },
+        { suit: first.suit, value: first.value + 2 },
+      ];
+      let rem = removeTilesByKey(sorted, fk, 1);
+      rem = removeTilesByKey(rem, k2, 1);
+      rem = removeTilesByKey(rem, k3, 1);
+      for (const rest of extractAllSets(rem, setsNeeded - 1)) {
+        all.push([seq, ...rest]);
+      }
+    }
+  }
+
+  return all; // empty = first tile cannot start any valid set in this path
+}
+
+// Safety cap — prevents exponential blowup on pathological inputs.
+const MAX_DECOMPS = 20;
+
+/**
+ * Returns ALL valid decompositions of concealedTiles into (4-numMelds) sets + 1 pair.
+ * Each decomposition is a tile[][] where sets come first and the pair is last.
+ * Most hands return exactly 1 decomposition; ambiguous hands (e.g. 223344m) may return 2–4.
+ * Includes chiitoitsu when applicable.
+ */
+export function extractAllHandGroups(concealedTiles, numMelds) {
+  const setsNeeded = 4 - numMelds;
+  if (setsNeeded < 0 || setsNeeded > 4) return [];
+
+  const g       = groupTiles(concealedTiles);
+  const results = [];
+
+  // Standard form: try every unique tile type as the pair (jantai)
+  for (const [key, cnt] of Object.entries(g)) {
+    if (results.length >= MAX_DECOMPS) break;
+    if (cnt < 2) continue;
+
+    const pairTile  = parseTileKey(key);
+    const pair      = [pairTile, pairTile];
+    const remaining = removeTilesByKey(concealedTiles, key, 2);
+
+    for (const sets of extractAllSets(remaining, setsNeeded)) {
+      results.push([...sets, pair]); // pair last (convention)
+      if (results.length >= MAX_DECOMPS) break;
+    }
+  }
+
+  // Chiitoitsu: 7 unique pairs, closed only
+  if (numMelds === 0 && concealedTiles.length === 14) {
+    const vals = Object.values(g);
+    if (vals.length === 7 && vals.every(v => v === 2) && results.length < MAX_DECOMPS) {
+      const chiitoi = Object.keys(g).map(k => { const t = parseTileKey(k); return [t, t]; });
+      results.push(chiitoi);
+    }
+  }
+
+  return results;
+}
+
 // Check if concealedTiles can form (4 - numMelds) sets + 1 pair
 export function canCompleteHand(concealedTiles, numMelds) {
   const setsNeeded = 4 - numMelds;

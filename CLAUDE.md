@@ -219,6 +219,10 @@ Disabled state: `text-gray-300 cursor-not-allowed` (no background). Do not use b
 
 **`canCompleteHand` handles:** 标准手、七对子、**国士无双**
 
+**`extractAllHandGroups`:** 枚举所有合法分解（上限 20），修复 `223344m` 等歧义手牌漏役问题。`handSimulator.js` 和 `yakuBFS.js` 中所有场景生成路径均使用。
+
+**平和两面待验证:** `checkRyanmenWait(concealedGroups, drawnTile)` 确保平和场景仅在真正两面待时生成。坎张/边张赢牌不再被错误标记为平和。
+
 **`yakuAnalyzer.js` route analyzers:** above 16 standard + 9 yakuman (all implemented)
 
 **Test suite — 156 cases, all passing:**
@@ -245,10 +249,10 @@ Data sourced from riichi.wiki and MahjongRepository/mahjong (validated against 2
 
 ### Known limitations (do not paper over in UI)
 
-- **`extractHandGroups` is first-decomposition-only** — ambiguous hands (e.g. `223344m`) may miss some yaku. `extractAllHandGroups` not yet implemented.
+- ~~**`extractHandGroups` is first-decomposition-only**~~ — **Fixed (session 8)**: `extractAllHandGroups` now enumerates all valid decompositions (cap 20). All scenario-generation paths use it.
 - **No ukeire in trainer** — the trainer page does not enumerate effective tiles; use `/mahjong/efficiency` for that.
 - **No scoring** — no fu/han/point calculation, no riichi/dora/ippatsu mechanics.
-- **Pinfu wait check simplified** — all-sequence + non-value pair is labelled Pinfu without verifying ryanmen wait.
+- ~~**Pinfu wait check simplified**~~ — **Fixed (session 8)**: `checkRyanmenWait` verifies the drawn tile gives two-sided (ryanmen) wait before creating a pinfu scenario.
 - **Sanankou win-method not enforced** — does not distinguish tsumo vs ron for the completing triplet.
 - **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles.
 - **Yakuman not confirmed in evaluator** — complete yakuman hands are not marked as achieved in `CompletedHandPanel`.

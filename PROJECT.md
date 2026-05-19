@@ -1,6 +1,6 @@
 # WSToolBox Frontend — Project Status
 
-> Last updated: 2026-05-19 (session 7)
+> Last updated: 2026-05-19 (session 8)
 
 ## Deployment
 
@@ -337,10 +337,28 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+---
+
+### 引擎改进：歧义分解 & 平和验证 (2026-05-19 session 8)
+
+#### `extractAllHandGroups` — 歧义手牌修复
+
+- **问题**：原 `extractHandGroups` 只返回第一个合法分解（DFS 首路径）。`223344m` 等歧义手牌漏掉依赖特定分解才能识别的役种（如对对和 vs 一杯口）
+- **修复**：新增私有 `extractAllSets`（收集所有合法面子组合）和导出函数 `extractAllHandGroups`（枚举所有分解，上限 20 个）
+- `handSimulator.js`：加 `findDecompWithYaku` helper，`findScenarios` 三处调用点升级为遍历所有分解
+- `yakuBFS.js`：BFS 胜利判断也升级为遍历所有分解
+- 验证：`111222333m+444p+55z` 正确返回 2 条分解，役种并集包含对对和 + 一杯口
+
+#### 平和两面待验证
+
+- **问题**：平和检测只验证「全顺子 + 非役牌雀头」，坎张/边张待（如 `[24p]→3p`）也被错误标记
+- **修复**：新增 `checkRyanmenWait(concealedGroups, drawnTile)` 函数
+  - 摸入低端（low ≤ 6）→ 两面待 ✓；摸入高端（high ≥ 4）→ 两面待 ✓；摸入中间 → 坎张 ✗
+  - 在 `findTenpaiWins` 和 `findDiscardThenWin` 中，平和场景生成后加校验，非两面待则跳过
+- 验证：`[23p]→1p/4p` 有精确场景 ✓；`[24p]→3p` 无精确场景 ✓；`[89m]→7m` 无精确场景 ✓
+
 ### Backlog
 
-- **`extractAllHandGroups`** — enumerate all valid decompositions; fixes ambiguous hands like `223344m`
-- **Pinfu wait check** — verify ryanmen wait condition
 - **Scoring** — fu/han calculation, basic point table
 - **i18n completion** — PickPacks, Record tooltips still have hardcoded Chinese strings
 - **DeckCreate / DeckSearch redesign** — currently unrouted; needs design before re-enabling

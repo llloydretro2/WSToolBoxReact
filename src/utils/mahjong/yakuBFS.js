@@ -25,7 +25,7 @@
 
 import {
   groupTiles, tileKey, parseTileKey, tileName,
-  extractHandGroups,
+  extractHandGroups, extractAllHandGroups,
 } from './tileParser';
 import {
   evaluateYakuFromDecomposition, extractYakuRelevantGroups,
@@ -251,13 +251,14 @@ export function searchYakuRoute(
         if (afterDraw.length !== completeN) continue;
         if ((groupTiles(afterDraw)[tileKey(drawTile)] ?? 0) > 4) continue;
 
-        const groups = extractHandGroups(afterDraw, numMelds);
+        // Try all valid decompositions — fixes ambiguous hands like 223344m
+        let groups = null;
+        for (const decomp of extractAllHandGroups(afterDraw, numMelds)) {
+          if (evaluateYakuFromDecomposition(decomp, openMelds, seatWind, roundWind, rules).includes(yakuId)) {
+            groups = decomp; break;
+          }
+        }
         if (!groups) continue;
-
-        const yakuPresent = evaluateYakuFromDecomposition(
-          groups, openMelds, seatWind, roundWind, rules
-        );
-        if (!yakuPresent.includes(yakuId)) continue;
 
         // ✓ Found a valid route — build result
         const targetYakuGroups = extractYakuRelevantGroups(

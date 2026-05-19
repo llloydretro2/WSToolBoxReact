@@ -15,8 +15,19 @@
  */
 
 import {
-  groupTiles, tileKey, parseTileKey, tileName, extractHandGroups,
+  groupTiles, tileKey, parseTileKey, tileName, extractHandGroups, extractAllHandGroups,
 } from './tileParser';
+
+// Helper: find the first decomposition of `hand` that contains `yakuId`.
+// Returns null if no valid decomposition has the yaku.
+function findDecompWithYaku(hand, numMelds, yakuId, openMelds, seatWind, roundWind, rules) {
+  for (const groups of extractAllHandGroups(hand, numMelds)) {
+    if (evaluateYakuFromDecomposition(groups, openMelds, seatWind, roundWind, rules).includes(yakuId)) {
+      return groups;
+    }
+  }
+  return null;
+}
 
 // ── All 34 riichi tile types ──────────────────────────────────────────────────
 
@@ -41,6 +52,34 @@ function isGreen(t)  {
 
 function isTripletGroup(g) {
   return g.length >= 3 && g.every(t => tileKey(t) === tileKey(g[0]));
+}
+
+/**
+ * Returns true if `drawnTile` completed a sequence in the decomposition
+ * via a RYANMEN (two-sided) wait.
+ *
+ * Ryanmen conditions for sequence [low, mid, high]:
+ *   - Drew the low end  → partial [mid, high] → ryanmen iff low+3 ≤ 9 (low ≤ 6)
+ *   - Drew the high end → partial [low, mid]  → ryanmen iff high-3 ≥ 1 (high ≥ 4)
+ *   - Drew the middle   → partial [low, high] → always kanchan (never ryanmen)
+ *
+ * Returns false if drawnTile is an honor or only completes kanchan/penchan waits.
+ */
+function checkRyanmenWait(concealedGroups, drawnTile) {
+  if (drawnTile.suit === 'z') return false; // honors cannot form sequences
+  const allSets = concealedGroups.slice(0, -1); // exclude pair (last element)
+  const v = drawnTile.value;
+  const s = drawnTile.suit;
+
+  for (const set of allSets) {
+    if (!isSequenceGroup(set) || set[0].suit !== s) continue;
+    const vals = set.map(t => t.value).sort((a, b) => a - b);
+    const [low, , high] = vals;
+    if (v === low  && low  <= 6) return true; // drew low end;  partial [mid,high] ryanmen iff low+3≤9
+    if (v === high && high >= 4) return true; // drew high end; partial [low,mid]  ryanmen iff high-3≥1
+    // v === mid → kanchan, skip
+  }
+  return false;
 }
 
 function isSequenceGroup(g) {
@@ -413,11 +452,8 @@ function checkAlreadyComplete(concealedTiles, openMelds, yakuId, yakuNameZh, yak
   const completeCount = 14 - 3 * numMelds;
   if (concealedTiles.length !== completeCount) return [];
 
-  const concealedGroups = extractHandGroups(concealedTiles, numMelds);
+  const concealedGroups = findDecompWithYaku(concealedTiles, numMelds, yakuId, openMelds, seatWind, roundWind, rules);
   if (!concealedGroups) return [];
-
-  const yakuPresent = evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWind, roundWind, rules);
-  if (!yakuPresent.includes(yakuId)) return [];
 
   return [makeScenario({ drawTile: null, discardTile: null, concealedGroups, openMelds, yakuNameZh, yakuNameEn, yakuId, seatWind, roundWind })];
 }
@@ -436,12 +472,12 @@ function findTenpaiWins(concealedTiles, openMelds, yakuId, yakuNameZh, yakuNameE
     if (results.length >= limit) break;
     if ((existingCounts[tileKey(drawTile)] ?? 0) >= 4) continue;
 
-    const testHand       = [...concealedTiles, drawTile];
-    const concealedGroups = extractHandGroups(testHand, numMelds);
+    const testHand        = [...concealedTiles, drawTile];
+    const concealedGroups = findDecompWithYaku(testHand, numMelds, yakuId, openMelds, seatWind, roundWind, rules);
     if (!concealedGroups) continue;
 
-    const yakuPresent = evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWind, roundWind, rules);
-    if (!yakuPresent.includes(yakuId)) continue;
+    // Pinfu requires ryanmen wait — verify the drawn tile actually gives two-sided wait
+    if (yakuId === 'pinfu' && !checkRyanmenWait(concealedGroups, drawTile)) continue;
 
     results.push(makeScenario({ drawTile, discardTile: null, concealedGroups, openMelds, yakuNameZh, yakuNameEn, yakuId, seatWind, roundWind }));
   }
@@ -456,7 +492,7 @@ function findDiscardThenWin(concealedTiles, openMelds, yakuId, yakuNameZh, yakuN
   // Only applies when at the "after draw" tile count but not yet winning
   if (concealedTiles.length !== completeCount) return [];
   // If already complete, checkAlreadyComplete handles it
-  if (extractHandGroups(concealedTiles, numMelds)) return [];
+  if (extractAllHandGroups(concealedTiles, numMelds).length > 0) return [];
 
   const results = [];
   const triedDiscards = new Set();
@@ -479,12 +515,12 @@ function findDiscardThenWin(concealedTiles, openMelds, yakuId, yakuNameZh, yakuN
       if (drawKey === discardKey) continue; // skip drawing the tile we just discarded
       if ((postDiscardCounts[drawKey] ?? 0) >= 4) continue;
 
-      const testHand       = [...handAfterDiscard, drawTile];
-      const concealedGroups = extractHandGroups(testHand, numMelds);
+      const testHand        = [...handAfterDiscard, drawTile];
+      const concealedGroups = findDecompWithYaku(testHand, numMelds, yakuId, openMelds, seatWind, roundWind, rules);
       if (!concealedGroups) continue;
 
-      const yakuPresent = evaluateYakuFromDecomposition(concealedGroups, openMelds, seatWind, roundWind, rules);
-      if (!yakuPresent.includes(yakuId)) continue;
+      // Pinfu requires ryanmen wait
+      if (yakuId === 'pinfu' && !checkRyanmenWait(concealedGroups, drawTile)) continue;
 
       results.push(makeScenario({ drawTile, discardTile, concealedGroups, openMelds, yakuNameZh, yakuNameEn, yakuId, seatWind, roundWind }));
     }
