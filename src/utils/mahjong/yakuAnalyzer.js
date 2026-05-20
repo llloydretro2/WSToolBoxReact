@@ -1,7 +1,7 @@
-import { groupTiles, tileKey, tileName, canCompleteHand, extractHandGroups, sortTiles } from './tileParser';
-import { findScenarios } from './handSimulator';
-import { searchYakuRoute, makeBFSScenario } from './yakuBFS';
-import { computeShanten } from './shanten';
+import { groupTiles, tileKey, tileName, canCompleteHand, extractHandGroups, sortTiles } from './tileParser.js';
+import { findScenarios } from './handSimulator.js';
+import { searchYakuRoute, makeBFSScenario } from './yakuBFS.js';
+import { computeShanten } from './shanten.js';
 
 export const FEASIBILITY = {
   CONFIRMED: 'confirmed',

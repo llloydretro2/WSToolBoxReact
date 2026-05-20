@@ -25,15 +25,15 @@
 
 import {
   groupTiles, tileKey, parseTileKey, tileName,
-  extractHandGroups, extractAllHandGroups,
-} from './tileParser';
+  extractAllHandGroups,
+} from './tileParser.js';
 import {
   evaluateYakuFromDecomposition, extractYakuRelevantGroups,
   ALL_34_TILES,
-} from './handSimulator';
+} from './handSimulator.js';
 // Re-export the accurate shanten implementation so callers that import it
 // from yakuBFS continue to work without change.
-export { computeShanten } from './shanten';
+export { computeShanten } from './shanten.js';
 
 // ── Search constants ──────────────────────────────────────────────────────────
 

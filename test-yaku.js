@@ -6,7 +6,7 @@
  * Tests our evaluateYakuFromDecomposition + extractHandGroups against the same
  * hand cases used by a library validated on 26 million Tenhou phoenix-lobby games.
  *
- * Run: npx vite-node test-yaku.js
+ * Run: node test-yaku.js
  */
 import { evaluateYakuFromDecomposition } from './src/utils/mahjong/handSimulator.js';
 import { extractHandGroups, canCompleteHand } from './src/utils/mahjong/tileParser.js';
@@ -222,3 +222,4 @@ if (failures.length > 0) {
   failures.forEach(f => console.log(f));
 }
 console.log(`${'─'.repeat(60)}\n`);
+if (failed > 0) process.exitCode = 1;

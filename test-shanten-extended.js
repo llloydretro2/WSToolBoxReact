@@ -6,7 +6,7 @@
  * NOT from test_calculate_shanten_for_regular_hand (single-path only).
  * Single-path expected values differ from our 3-way minimum engine.
  *
- * Run: npx vite-node test-shanten-extended.js
+ * Run: node test-shanten-extended.js
  */
 import { computeShanten } from './src/utils/mahjong/shanten.js';
 
@@ -132,3 +132,4 @@ console.log(`\n${'─'.repeat(60)}`);
 console.log(`  ${pass}/${pass + fail} passed${fail > 0 ? ` — ${fail} FAILED` : ' ✅'}`);
 if (failures.length) { console.log('\nFailures:'); failures.forEach(f => console.log(f)); }
 console.log(`${'─'.repeat(60)}\n`);
+if (fail > 0) process.exitCode = 1;

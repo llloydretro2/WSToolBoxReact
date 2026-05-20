@@ -112,12 +112,12 @@ function MahjongTilePicker({
     <div>
       {/* Hint + counter */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[11px] text-gray-400">
+        <p className="text-[11px] text-black">
           {locale === 'zh'
             ? '左键添加到暗手 · 右键移除一张'
             : 'Left-click to add · Right-click to remove'}
         </p>
-        <span className={`text-[11px] font-bold tabular-nums ${isHandFull ? 'text-red-400' : 'text-gray-400'}`}>
+        <span className={`text-[11px] font-bold tabular-nums text-black`}>
           {totalCount} / 14
         </span>
       </div>
@@ -126,7 +126,7 @@ function MahjongTilePicker({
       <div className="flex flex-col gap-3">
         {GROUPS.map(({ key, short, tiles }) => (
           <div key={key} className="flex items-center gap-3">
-            <span className="w-5 text-center text-[11px] font-black text-gray-300 shrink-0 select-none">
+            <span className="w-5 text-center text-[11px] font-black text-black shrink-0 select-none">
               {short}
             </span>
             <div className="flex flex-wrap gap-1.5">
@@ -152,7 +152,7 @@ function MahjongTilePicker({
 
       {/* Meld builder — toggle */}
       <div className="mt-6 flex items-center gap-3">
-        <div className="flex-1 h-px bg-gray-100" />
+        <div className="flex-1 h-px bg-black" />
         <button
           onClick={() => setMeldOpen((v) => !v)}
           className="flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors shrink-0"
@@ -166,7 +166,7 @@ function MahjongTilePicker({
             className={`transition-transform duration-200 ${meldOpen ? 'rotate-180' : ''}`}
           />
         </button>
-        <div className="flex-1 h-px bg-gray-100" />
+        <div className="flex-1 h-px bg-black" />
       </div>
 
         {meldOpen && (
@@ -174,7 +174,7 @@ function MahjongTilePicker({
             {/* Staged tiles */}
             <div className="flex items-center gap-2 flex-wrap min-h-[32px]">
               {meldBuilder.length === 0 ? (
-                <span className="text-[11px] text-gray-300">
+                <span className="text-[11px] text-black">
                   {locale === 'zh' ? '从下方选牌加入副露' : 'Click tiles below to build a meld'}
                 </span>
               ) : (
@@ -195,7 +195,7 @@ function MahjongTilePicker({
                   disabled={!canAddMeld}
                   onClick={onAddMeld}
                   className={`text-[11px] font-bold px-3 py-1 rounded-full transition-colors ${
-                    canAddMeld ? 'bg-black text-white hover:bg-gray-700' : 'text-gray-300 cursor-not-allowed'
+                    canAddMeld ? 'bg-black text-white hover:bg-gray-700' : 'text-black cursor-not-allowed'
                   }`}
                 >
                   {locale === 'zh' ? '+ 确认副露' : '+ Confirm'}
@@ -203,7 +203,7 @@ function MahjongTilePicker({
                 {meldBuilder.length > 0 && (
                   <button
                     onClick={onClearMeldBuilder}
-                    className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-[11px] text-black hover:text-black transition-colors"
                   >
                     {locale === 'zh' ? '清空' : 'Clear'}
                   </button>
@@ -213,7 +213,7 @@ function MahjongTilePicker({
 
             {/* Validation message */}
             {meldBuilder.length >= 3 && (
-              <p className={`text-[11px] mt-1.5 mb-2 ${meldValidation.valid ? 'text-gray-500' : 'text-red-400'}`}>
+              <p className={`text-[11px] mt-1.5 mb-2 ${meldValidation.valid ? 'text-black' : 'text-black'}`}>
                 {meldValidation.valid
                   ? (locale === 'zh' ? meldValidation.label.zh : meldValidation.label.en)
                   : meldValidation.reason
@@ -226,7 +226,7 @@ function MahjongTilePicker({
             <div className="flex flex-col gap-2">
               {GROUPS.map(({ key, short, tiles }) => (
                 <div key={key} className="flex items-center gap-2">
-                  <span className="w-4 text-center text-[10px] font-black text-gray-300 shrink-0">
+                  <span className="w-4 text-center text-[10px] font-black text-black shrink-0">
                     {short}
                   </span>
                   <div className="flex flex-wrap gap-1">

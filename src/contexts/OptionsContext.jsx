@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import localProductList from "../data/productList.json";
 import localTranslations from "../data/filter_translations.json";
 import localDeckRulesWeiss from "../data/deck_rules_weiss.json";
@@ -73,6 +75,10 @@ export const OptionsProvider = ({ children }) => {
 			{children}
 		</OptionsContext.Provider>
 	);
+};
+
+OptionsProvider.propTypes = {
+	children: PropTypes.node.isRequired,
 };
 
 export const useOptions = () => useContext(OptionsContext);

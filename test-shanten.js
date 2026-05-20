@@ -80,3 +80,4 @@ for (const { hand, expected, note } of CASES) {
 console.log(`\n${'─'.repeat(60)}`);
 console.log(`  ${passed}/${CASES.length} passed${failed > 0 ? `  —  ${failed} FAILED` : '  — all correct ✅'}`);
 console.log(`${'─'.repeat(60)}\n`);
+if (failed > 0) process.exitCode = 1;

@@ -130,6 +130,19 @@ body {
     border-bottom: 1px solid var(--divider);
 }
 
+/* Mahjong pages need a black border palette so utility borders stay visible
+   over the translucent backgrounds. */
+.mahjong-black-theme {
+    --border: #111111;
+    --divider: #111111;
+    --primary: #111111;
+    --primary-hover: #111111;
+    --primary-light: #111111;
+    --primary-dark: #111111;
+    --text-secondary: #111111;
+    --text-muted: #111111;
+}
+
 @font-face {
     font-family: "agfa_rotis_semi_serif";
     src: url("./assets/fonts/agfa_rotis_semi_serif.ttf") format("truetype");

@@ -6,7 +6,17 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", "build", "android", "ios", "generateSymbolMap.js"]),
+  globalIgnores([
+    ".claude",
+    "dist",
+    "build",
+    "android",
+    "ios",
+    "compare-ukeire.js",
+    "generateSymbolMap.js",
+    "test-*.js",
+    "validate-ukeire.js",
+  ]),
   {
     files: ["**/*.{js,jsx}"],
     extends: [

@@ -59,18 +59,18 @@ const HONOR_CHARS = { 1: '東', 2: '南', 3: '西', 4: '北', 5: '白', 6: '發'
 const SUIT_LABEL  = { m: '万', p: '饼', s: '索' };
 
 const SUIT_STYLE = {
-  m: { color: '#c41c24', bg: '#fff5f5', border: '#f0c8c8', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  p: { color: '#1a4fa8', bg: '#f5f7ff', border: '#c0cef0', font: '"Helvetica Neue","Arial",sans-serif' },
-  s: { color: '#1a7a3a', bg: '#f5fff7', border: '#c0e8cc', font: '"Helvetica Neue","Arial",monospace' },
+  m: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  p: { color: '#111', bg: '#fff', border: '#111', font: '"Helvetica Neue","Arial",sans-serif' },
+  s: { color: '#111', bg: '#fff', border: '#111', font: '"Helvetica Neue","Arial",monospace' },
 };
 const HONOR_STYLE = {
-  1: { color: '#333', bg: '#fafafa', border: '#ccc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  2: { color: '#333', bg: '#fafafa', border: '#ccc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  3: { color: '#333', bg: '#fafafa', border: '#ccc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  4: { color: '#333', bg: '#fafafa', border: '#ccc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  5: { color: '#777', bg: '#fafafa', border: '#ccc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  6: { color: '#1a7a3a', bg: '#f5fff7', border: '#c0e8cc', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
-  7: { color: '#c41c24', bg: '#fff5f5', border: '#f0c8c8', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  1: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  2: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  3: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  4: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  5: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  6: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
+  7: { color: '#111', bg: '#fff', border: '#111', font: '"BIZUDPMincho","Noto Serif CJK SC",serif' },
 };
 
 function getFallbackChar(tile) {
@@ -136,7 +136,6 @@ function MahjongTile({
     ? (e) => { e.preventDefault(); onRightClick(tile); }
     : undefined;
 
-  const isRed = !!tile.red;
   const containerStyle = {
     position: 'relative',
     width: cfg.w,
@@ -146,13 +145,11 @@ function MahjongTile({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: useImage
-      ? (isDisabled ? '#e0e0e0' : isRed ? '#fff5f5' : '#fffef5')
-      : (isDisabled ? '#e8e8e8' : fbStyle.bg),
+      ? '#fff'
+      : '#fff',
     border: selected
       ? '2px solid #111'
-      : isRed && !isDisabled
-      ? '1.5px solid #ef4444'
-      : `1.5px solid ${isDisabled ? '#ccc' : (useImage ? '#d1d5db' : fbStyle.border)}`,
+      : '1.5px solid #111',
     borderRadius: cfg.r,
     boxShadow: isDisabled
       ? 'none'
@@ -193,7 +190,7 @@ function MahjongTile({
           <span style={{
             fontSize: cfg.honorFs,
             fontWeight: 800,
-            color: isDisabled ? '#bbb' : fbStyle.color,
+            color: '#111',
             lineHeight: 1,
             fontFamily: fbStyle.font,
           }}>
@@ -204,7 +201,7 @@ function MahjongTile({
             <span style={{
               fontSize: cfg.primaryFs,
               fontWeight: tile.suit === 'm' ? 700 : 600,
-              color: isDisabled ? '#bbb' : fbStyle.color,
+              color: '#111',
               lineHeight: 1,
               fontFamily: fbStyle.font,
             }}>
@@ -214,7 +211,7 @@ function MahjongTile({
               <span style={{
                 fontSize: cfg.labelFs,
                 fontWeight: 600,
-                color: isDisabled ? '#ccc' : fbStyle.color,
+                color: '#111',
                 lineHeight: 1,
                 fontFamily: '"BIZUDPMincho","Noto Serif CJK SC",serif',
                 opacity: 0.75,
@@ -232,13 +229,14 @@ function MahjongTile({
           top: -5, right: -5,
           width: 15, height: 15,
           borderRadius: '50%',
-          backgroundColor: isAtMax ? '#dc2626' : '#374151',
-          color: '#fff',
+          backgroundColor: '#fff',
+          color: '#111',
           fontSize: '0.52rem',
           fontWeight: 700,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          border: '1px solid #111',
           boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
           pointerEvents: 'none',
         }}>

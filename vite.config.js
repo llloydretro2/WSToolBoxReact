@@ -12,9 +12,9 @@ export default defineConfig({
 				maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
 			},
 			manifest: {
-				name: "WSToolBox",
-				short_name: "WSToolBox",
-				description: "Weiss Schwarz 工具箱",
+				name: "CardToolBox",
+				short_name: "CardToolBox",
+				description: "卡牌与桌游多合一工具集",
 				theme_color: "#ffffff",
 				icons: [
 					{

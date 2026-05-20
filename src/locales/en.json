@@ -20,7 +20,8 @@
     "audio": "Audio",
     "mahjong": "Mahjong Yaku",
     "mahjongTrainer": "Yaku Trainer",
-    "mahjongEfficiency": "Efficiency"
+    "mahjongEfficiency": "Efficiency",
+    "mahjongCentrepiece": "Centrepiece"
   },
   "common": {
     "language": {
@@ -41,6 +42,11 @@
       "subtitle": "All-in-one tools for card & board games",
       "description": "Tools for card game and board game enthusiasts",
       "contactTitle": "Contact Me",
+      "recentUpdates": {
+        "eyebrow": "Recent Updates",
+        "title": "Development Notes",
+        "subtitle": "Recent feature updates, refactors, and fixes will be listed here."
+      },
       "ws": {
         "name": "Weiss Schwarz",
         "desc": "Card search, pack simulation & match records",
@@ -48,8 +54,8 @@
       },
       "mahjong": {
         "name": "Mahjong",
-        "desc": "Yaku route trainer & ukeire efficiency",
-        "count": "2 tools"
+        "desc": "Yaku trainer, efficiency, and a shared table centrepiece",
+        "count": "3 tools"
       },
       "tools": {
         "name": "General Tools",
@@ -240,6 +246,38 @@
     "resetMyInfo": "Reset my info",
     "resetOpponentInfo": "Reset opponent info"
   },
+  "mahjongCentrepiece": {
+    "title": "Centrepiece",
+    "subtitle": "A shared table board for live play or screen sharing",
+    "description": "Track the current hand, honba, riichi sticks, seats, and scores. Adjust the table state directly and keep it visible in the center of the table.",
+    "modes": {
+      "four": "4-player",
+      "three": "3-player"
+    },
+    "lengths": {
+      "east": "East-only",
+      "half": "Half game",
+      "full": "Full game"
+    },
+    "labels": {
+      "round": "Hand",
+      "honba": "Honba",
+      "kyotaku": "Riichi sticks",
+      "seat": "Seat",
+      "score": "Score",
+      "dealer": "Dealer",
+      "currentDealer": "Current dealer",
+      "name": "Player name",
+      "namePlaceholder": "Type a name"
+    },
+    "actions": {
+      "previousRound": "Previous hand",
+      "nextRound": "Next hand",
+      "reset": "Reset",
+      "minus": "Minus",
+      "plus": "Plus"
+    }
+  },
   "deckEdit": {
     "sideLabel": "Side",
     "seriesLabel": "Series",
@@ -330,7 +368,7 @@
   },
   "efficiency": {
     "title": "Efficiency",
-    "subtitle": "Effective tile enumeration · Optimal discard analysis",
+    "subtitle": "Effective tile enumeration · Optimal discard analysis · Algorithm reference: tenhou.net",
     "shantenLabel": "Shanten",
     "tenpai": "Tenpai",
     "complete": "Complete",

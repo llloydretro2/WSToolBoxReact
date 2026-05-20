@@ -14,7 +14,7 @@
  */
 
 import { computeShanten }                    from './shanten.js';
-import { groupTiles, tileKey, parseTileKey } from './tileParser.js';
+import { groupTiles, tileKey }               from './tileParser.js';
 
 // ── All 34 tile types ─────────────────────────────────────────────────────────
 

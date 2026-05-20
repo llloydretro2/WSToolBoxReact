@@ -1,11 +1,13 @@
 # 前端性能优化总结
 
+> 说明：本文记录的是某一阶段的性能优化结果，属于历史基线，不是当前实时测量值。页面体积、chunk 划分和首屏数据应在重新执行 `npm run build` 后再确认。
+
 ## 🎯 优化成果
 
 ### Chunk 分割优化
 
-- **优化前**: 主chunk 599KB + Record chunk 819KB
-- **优化后**: 所有chunk < 500KB，实现了5个vendor chunk
+- **优化前**: 主 chunk 599KB + Record chunk 819KB
+- **优化后**: 当时的构建结果将 bundle 拆分为 5 个 vendor chunk
   - react-vendor: 44.6KB
   - mui-vendor: 213.5KB
   - charts-vendor: 538.1KB
@@ -20,9 +22,9 @@
 
 ## 📈 性能提升
 
-- **首屏加载**: 主chunk从599KB减少到213KB (-64%)
-- **缓存效率**: 用户访问特定功能时才加载对应vendor chunk
-- **并发加载**: 多个小chunk可以并行下载
+- **首屏加载**: 当时主 chunk 从 599KB 减少到 213KB
+- **缓存效率**: 用户访问特定功能时才加载对应 vendor chunk
+- **并发加载**: 多个小 chunk 可以并行下载
 
 ## 🔧 实施的优化
 
@@ -50,6 +52,11 @@ build: {
 - 核心页面立即加载
 - 工具页面按需加载
 - 功能相关页面分组
+
+### 3. 现状说明
+
+- 这个项目后续又增加了麻将页面、站点结构配置和更多文档/测试脚本，bundle 体积和 chunk 形态已经不是本文记录时的状态。
+- 如果要继续做性能优化，请先重新跑一次 `npm run build` 并以当前产物为准，再决定是否需要更新 manual chunk 划分。
 
 ## 🚀 进一步优化建议
 
@@ -91,5 +98,4 @@ npm install --save-dev rollup-plugin-visualizer
 3. **Bundle 分析器** 定期检查
 4. **真实用户监控** (RUM)
 
-这些优化显著提升了应用的加载性能和用户体验！</content>
-<parameter name="filePath">/Users/amon/WSToolBox/WSToolBoxFrontend/PERFORMANCE_OPTIMIZATION.md
+这些优化显著提升了应用的加载性能和用户体验。

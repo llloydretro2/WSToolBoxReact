@@ -2,7 +2,7 @@
  * Comprehensive fu calculation test suite.
  * Source: MahjongRepository/mahjong — tests/hand_calculating/tests_fu_calculation.py
  *
- * Run: npx vite-node test-fu-comprehensive.js
+ * Run: node test-fu.js
  */
 import { computeFu } from './src/utils/mahjong/scoring.js';
 import { extractAllHandGroups } from './src/utils/mahjong/tileParser.js';
@@ -278,3 +278,4 @@ console.log(`\n${'─'.repeat(60)}`);
 console.log(`  ${pass}/${pass+fail} passed${fail > 0 ? ` — ${fail} FAILED` : ' ✅'}`);
 if (failures.length) { console.log('\nFailures:'); failures.forEach(f => console.log(f)); }
 console.log(`${'─'.repeat(60)}\n`);
+if (fail > 0) process.exitCode = 1;

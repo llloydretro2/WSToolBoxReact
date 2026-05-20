@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocale } from "../contexts/LocaleContext";
 import {
@@ -31,6 +31,7 @@ function LoginPage() {
 	const { t } = useLocale();
 	const { login } = useAuth();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [isRegister, setIsRegister] = useState(false);
@@ -56,14 +57,15 @@ function LoginPage() {
 
 			if (!isRegister) {
 				setSnackbar({ open: true, message: t("login.success.login"), severity: "success" });
-				setTimeout(() => {
-					navigate("/");
-				}, 1000);
-				login({
+				await login({
 					token: data.token,
 					username: data.user.username,
 					userData: data.user,
 				});
+				const redirectTo = location.state?.from?.pathname || "/";
+				setTimeout(() => {
+					navigate(redirectTo, { replace: true });
+				}, 1000);
 			} else {
 				setSnackbar({ open: true, message: t("login.success.register"), severity: "success" });
 				setIsRegister(false);

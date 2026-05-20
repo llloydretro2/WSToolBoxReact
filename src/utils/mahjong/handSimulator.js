@@ -15,8 +15,8 @@
  */
 
 import {
-  groupTiles, tileKey, parseTileKey, tileName, extractHandGroups, extractAllHandGroups,
-} from './tileParser';
+  groupTiles, tileKey, parseTileKey, tileName, extractAllHandGroups,
+} from './tileParser.js';
 
 // Helper: find the first decomposition of `hand` that contains `yakuId`.
 // Returns null if no valid decomposition has the yaku.

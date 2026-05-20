@@ -16,41 +16,29 @@ import GridViewIcon from "@mui/icons-material/GridView";
 import TuneIcon from "@mui/icons-material/Tune";
 import { GitHub as GitHubIcon, Email as EmailIcon } from "@mui/icons-material";
 import { useLocale } from "../contexts/LocaleContext";
-import { WS_NAV, MAHJONG_NAV, TOOLS_NAV } from "../components/NavBar";
+import { useAuth } from "../contexts/AuthContext";
+import { SITE_SECTIONS, getHomeChips } from "../config/siteStructure";
+import { RECENT_UPDATES, getLocalizedUpdateField } from "../data/recentUpdates";
 
 // ─── Section config ────────────────────────────────────────────────────────────
-// chipKeys for WS is curated (nav has nested dropdowns, not all items suit the card).
-// chipKeys for Mahjong and Tools are auto-derived from their primary nav items —
-// adding a new page only requires updating NavBar's NAV config.
+// chipKeys are derived directly from section nav items.
 
-const SECTIONS = [
-	{
-		key: "ws",
-		Icon: StyleIcon,
-		accent: "#5c4f6b",
-		path: "/ws/cards",
-		chipKeys: ["menu.cardSearch", "menu.pack", "menu.record"],
-	},
-	{
-		key: "mahjong",
-		Icon: GridViewIcon,
-		accent: "#5a3f45",
-		path: MAHJONG_NAV.primary[0].path,
-		chipKeys: MAHJONG_NAV.primary.map(i => i.labelKey),
-	},
-	{
-		key: "tools",
-		Icon: TuneIcon,
-		accent: "#7a6552",
-		path: TOOLS_NAV.primary[0].path,
-		chipKeys: TOOLS_NAV.primary.map(i => i.labelKey),
-	},
-];
+const SECTION_ICONS = {
+	ws: StyleIcon,
+	mahjong: GridViewIcon,
+	tools: TuneIcon,
+};
+
+const SECTIONS = SITE_SECTIONS.map((section) => ({
+	...section,
+	Icon: SECTION_ICONS[section.key],
+	path: section.defaultPath,
+}));
 
 // ─── SectionCard ───────────────────────────────────────────────────────────────
 
 function SectionCard({ section, t, locale, onNavigate }) {
-	const { key, Icon, accent, path, chipKeys } = section;
+	const { Icon, accent, path, chipKeys, homeImage } = section;
 
 	return (
 		<Box
@@ -64,7 +52,7 @@ function SectionCard({ section, t, locale, onNavigate }) {
 				display: "flex",
 				flexDirection: "column",
 				position: "relative",
-				backgroundImage: `url('/assets/home/${key}.webp')`,
+				backgroundImage: `url('${homeImage}')`,
 				backgroundSize: "cover",
 				backgroundPosition: "center",
 				transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
@@ -92,67 +80,70 @@ function SectionCard({ section, t, locale, onNavigate }) {
 			{/* Accent bar */}
 			<Box sx={{ height: 5, backgroundColor: accent, flexShrink: 0, position: "relative", zIndex: 1 }} />
 
-			{/* Body */}
-			<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 1 }}>
+				{/* Body */}
+				<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 1 }}>
 
-				{/* Icon + title + count */}
-				<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
-					<Box
-						sx={{
-							width: 42,
-							height: 42,
-							borderRadius: 2,
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							backgroundColor: `${accent}18`,
-							flexShrink: 0,
-						}}>
-						<Icon sx={{ fontSize: 22, color: accent }} />
+					{/* Icon + title + count */}
+					<Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5, mb: 1.75 }}>
+						<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, minWidth: 0 }}>
+							<Box
+								sx={{
+									width: 42,
+									height: 42,
+									borderRadius: 2,
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									backgroundColor: `${accent}18`,
+									flexShrink: 0,
+								}}>
+								<Icon sx={{ fontSize: 22, color: accent }} />
+							</Box>
+							<Box>
+								<Typography
+									variant="h6"
+									fontWeight={700}
+									color="var(--text)"
+									sx={{ lineHeight: 1.25, mb: 0.25 }}>
+									{t(section.labelKey)}
+								</Typography>
+								<Typography
+									variant="caption"
+									sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
+									{chipKeys.length}{locale === 'zh' ? ' 个工具' : ` tool${chipKeys.length !== 1 ? 's' : ''}`}
+								</Typography>
+							</Box>
+						</Box>
 					</Box>
-					<Box>
-						<Typography
-							variant="h6"
-							fontWeight={700}
-							color="var(--text)"
-							sx={{ lineHeight: 1.25, mb: 0.25 }}>
-							{t(`pages.home.${key}.name`)}
-						</Typography>
-						<Typography
-							variant="caption"
-							sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
-							{chipKeys.length}{locale === 'zh' ? ' 个工具' : ` tool${chipKeys.length !== 1 ? 's' : ''}`}
-						</Typography>
+
+					{/* Description */}
+					<Typography
+						variant="body2"
+						color="text.secondary"
+						sx={{ mb: 2, lineHeight: 1.65, fontSize: "0.825rem", flex: 1 }}>
+						{t(section.descKey)}
+					</Typography>
+
+					{/* Chips */}
+					<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+						{chipKeys.map((chipKey) => (
+							<Chip
+								key={chipKey}
+								label={t(chipKey)}
+								size="small"
+								variant="outlined"
+								sx={{
+									fontSize: "0.7rem",
+									height: 22,
+									backgroundColor: `${accent}14`,
+									color: accent,
+									fontWeight: 600,
+									border: `1px solid ${accent}30`,
+								}}
+							/>
+						))}
 					</Box>
 				</Box>
-
-				{/* Description */}
-				<Typography
-					variant="body2"
-					color="text.secondary"
-					sx={{ mb: 2.5, lineHeight: 1.65, fontSize: "0.825rem", flex: 1 }}>
-					{t(`pages.home.${key}.desc`)}
-				</Typography>
-
-				{/* Chips */}
-				<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-					{chipKeys.map((chipKey) => (
-						<Chip
-							key={chipKey}
-							label={t(chipKey)}
-							size="small"
-							sx={{
-								fontSize: "0.7rem",
-								height: 22,
-								backgroundColor: `${accent}14`,
-								color: accent,
-								fontWeight: 600,
-								border: `1px solid ${accent}30`,
-							}}
-						/>
-					))}
-				</Box>
-			</Box>
 		</Box>
 	);
 }
@@ -163,10 +154,111 @@ SectionCard.propTypes = {
 		Icon: PropTypes.elementType.isRequired,
 		accent: PropTypes.string.isRequired,
 		path: PropTypes.string.isRequired,
+		labelKey: PropTypes.string.isRequired,
+		descKey: PropTypes.string.isRequired,
+		homeImage: PropTypes.string.isRequired,
 		chipKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
 	}).isRequired,
 	t: PropTypes.func.isRequired,
+	locale: PropTypes.string.isRequired,
 	onNavigate: PropTypes.func.isRequired,
+};
+
+// ─── Recent updates ───────────────────────────────────────────────────────────
+
+function RecentUpdates({ t, locale }) {
+	const updates = RECENT_UPDATES;
+
+	if (updates.length === 0) return null;
+
+	return (
+		<Fade in timeout={1000}>
+			<Box
+				mt={5}
+				sx={{
+					border: "1px solid var(--border)",
+					borderRadius: 3,
+					background:
+						"linear-gradient(135deg, rgba(255,255,255,0.82), rgba(240,250,244,0.7))",
+					backdropFilter: "blur(18px)",
+					boxShadow: "0 14px 36px rgba(80,140,106,0.08)",
+					overflow: "hidden",
+				}}>
+				<Box
+					sx={{
+						height: 4,
+						background:
+							"linear-gradient(90deg, #4f9b78, #d26a6a, #5b84d6)",
+					}}
+				/>
+				<Box sx={{ p: { xs: 2.5, md: 3 } }}>
+					<Typography
+						variant="overline"
+						sx={{
+							color: "var(--text-muted)",
+							fontWeight: 800,
+							letterSpacing: "0.12em",
+						}}>
+						{t("pages.home.recentUpdates.eyebrow")}
+					</Typography>
+					<Typography
+						variant="h6"
+						fontWeight={800}
+						color="var(--text)"
+						sx={{ mt: 0.25, mb: 0.75 }}>
+						{t("pages.home.recentUpdates.title")}
+					</Typography>
+					<Typography
+						variant="body2"
+						color="text.secondary"
+						sx={{ lineHeight: 1.7, mb: 2.25 }}>
+						{t("pages.home.recentUpdates.subtitle")}
+					</Typography>
+
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+						{updates.map((item, index) => (
+							<Box
+								key={`${item.date}-${item.title}`}
+								sx={{
+									display: "grid",
+									gridTemplateColumns: { xs: "1fr", sm: "88px 1fr" },
+									gap: { xs: 0.5, sm: 2 },
+									py: 1.25,
+									borderTop: index > 0 ? "1px solid rgba(166,206,182,0.28)" : "none",
+								}}>
+								<Typography
+									variant="caption"
+									fontWeight={700}
+									sx={{ color: "var(--text-muted)", whiteSpace: "nowrap" }}>
+									{getLocalizedUpdateField(item.date, locale)}
+								</Typography>
+								<Box>
+									<Typography
+										variant="body2"
+										fontWeight={700}
+										color="var(--text)"
+										sx={{ mb: 0.25 }}>
+										{getLocalizedUpdateField(item.title, locale)}
+									</Typography>
+									<Typography
+										variant="body2"
+										color="text.secondary"
+										sx={{ lineHeight: 1.65 }}>
+										{getLocalizedUpdateField(item.body, locale)}
+									</Typography>
+								</Box>
+							</Box>
+						))}
+					</Box>
+				</Box>
+			</Box>
+		</Fade>
+	);
+}
+
+RecentUpdates.propTypes = {
+	t: PropTypes.func.isRequired,
+	locale: PropTypes.string.isRequired,
 };
 
 // ─── Home ──────────────────────────────────────────────────────────────────────
@@ -174,6 +266,12 @@ SectionCard.propTypes = {
 export default function Home() {
 	const { t, locale } = useLocale();
 	const navigate = useNavigate();
+	const { isAuthenticated } = useAuth();
+	const includeAuth = isAuthenticated();
+	const sections = SECTIONS.map((section) => ({
+		...section,
+		chipKeys: getHomeChips(section, includeAuth),
+	}));
 
 	return (
 		<Container maxWidth="md" sx={{ py: 3 }}>
@@ -199,7 +297,7 @@ export default function Home() {
 
 			{/* Section cards */}
 			<Grid container spacing={3}>
-				{SECTIONS.map((section, idx) => (
+				{sections.map((section, idx) => (
 					<Grid key={section.key} size={{ xs: 12, md: 4 }}>
 						<Fade in timeout={600 + idx * 150}>
 							<Box sx={{ height: "100%" }}>
@@ -214,6 +312,8 @@ export default function Home() {
 					</Grid>
 				))}
 			</Grid>
+
+			<RecentUpdates t={t} locale={locale} />
 
 			{/* Contact */}
 			<Fade in timeout={1100}>

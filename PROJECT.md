@@ -1,4 +1,4 @@
-# WSToolBox Frontend — Project Status
+# CardToolBox Frontend — Project Status
 
 > Last updated: 2026-05-19 (session 9)
 
@@ -13,9 +13,17 @@
 
 ## Completed work (merged to `main`)
 
-### Mahjong Yaku Route Trainer
+### Mahjong tools
 
-A beginner-friendly Riichi Mahjong yaku-awareness trainer at `/mahjong/trainer`. See `CLAUDE.md` for full architecture details.
+A beginner-friendly Riichi Mahjong tool suite. See `CLAUDE.md` for full architecture details.
+
+| Tool | Route | Status |
+|---|---|---|
+| Yaku route trainer | `/mahjong/trainer` | Active |
+| Efficiency / ukeire | `/mahjong/efficiency` | Active |
+| Table centrepiece | `/mahjong/centrepiece` | Initial implementation; landscape UX needs redesign |
+
+#### Yaku route trainer
 
 | Capability | Status |
 |---|---|
@@ -76,14 +84,14 @@ Full migration of mahjong pages from MUI to Tailwind-only with a new B&W design 
 A comprehensive quality pass across all non-Mahjong pages. No features added — only correctness, consistency, and maintainability improvements.
 
 #### API centralisation
-- Removed per-page `BACKEND_URL` constants from every page (CardList, Record, DeckCreate, DeckEdit, DeckSearch, Login, Simulator, AudioBoard)
+- Removed per-page `BACKEND_URL` constants from every page that existed at the time (CardList, Record, DeckCreate, DeckEdit, DeckSearch, Login, Simulator, AudioBoard)
 - All API calls now route through `src/utils/api.js:apiRequest()` — automatic auth header, 401 handling, `VITE_BACKEND_URL` support
 
 #### State cleanup
 - **ChessClock**: removed derived `p1Time`/`p2Time` useState + sync useEffect; computed inline
 - **Login**: merged `errorMessage` + `successMessage` into single `snackbar` state; fixed register-success showing as error
 - **Record**: consolidated `deleteDialogOpen` + `recordToDelete` into `deleteDialog` object
-- **DeckCreate + DeckEdit**: consolidated 8 flat filter useState fields (color/level/rarity/cardType/power/cost/soul/trigger) into `filterState` object
+- **DeckCreate + DeckEdit**: consolidated 8 flat filter useState fields (color/level/rarity/cardType/power/cost/soul/trigger) into `filterState` object before those pages were later removed
 
 #### DeckEdit critical fixes
 - Removed two debug JSON data cards that were exposed to end users
@@ -111,7 +119,7 @@ A comprehensive quality pass across all non-Mahjong pages. No features added —
 #### Polish
 - Removed 19 `console.log` statements across Simulator, DeckSearch, Record
 - Removed 5 unused color constants from Dice
-- Fixed MUI v5 `<Grid item>` → v6 `<Grid size>` in Record and DeckEdit
+- Fixed MUI v5 `<Grid item>` → v6 `<Grid size>` in Record and the then-existing DeckEdit page
 - Polished Record empty state (bordered card with i18n keys)
 - Added loading spinner to Simulator during product card fetch
 - DeckCreate card ±1 touch targets increased from 22px → 36px
@@ -139,19 +147,19 @@ Expanded scope from a WS-only tool to a multi-game platform at `cardtoolbox.org`
 | `/simulator` | `/ws/simulator` |
 | `/record` | `/ws/record` |
 | `/audio` | `/ws/audio` |
-| `/first_second` | `/ws/first-second` |
+| `/first_second` | `/tools/first-second` |
 | `/shuffle` | `/ws/shuffle` (moved from tools to WS) |
 | `/mahjong` | `/mahjong/trainer` |
 | `/dice` | `/tools/dice` |
 | `/chess_clock` | `/tools/clock` |
 
-DeckCreate and DeckSearch removed from routes and NavBar (pages pending redesign).
+DeckCreate and DeckSearch were removed from routes and NavBar before being deleted entirely; there is no active redesign track for them now.
 
 #### NavBar redesign
 
 - Replaced MUI AppBar + hamburger/drawer with a **Tailwind floating pill** (Raycast-style).
 - Primary pill: frosted glass white (`rgba(255,255,255,0.86)`) + Spring Rain border.
-- Secondary pill: mobile-only horizontal scroll for section nav items, no hamburger.
+- Initial mobile nav used a secondary horizontal-scroll pill; this was later replaced by the Raycast-style hamburger dropdown documented below.
 - Language toggle: replaced MUI ToggleButtonGroup with a minimal single `<button>` showing current locale.
 - Added Tailwind CSS v3 (`tailwind.config.js`, `postcss.config.js`) with `preflight: false` to coexist with MUI.
 
@@ -215,7 +223,7 @@ Systematic review of all active pages and locale files.
 #### Home hub card redesign
 
 Replaced the plain equal-card layout with visually distinct section cards:
-- **Top accent bar** (5px): each section has an image-sampled colour — WS `#5c4f6b`, Mahjong `#5a3f45`, Tools `#7a6552`
+- **Top accent bar** (5px): current section colours are WS green `#4f9b78`, Mahjong red `#d26a6a`, Tools blue `#5b84d6`
 - **Icon + title + count row**: `StyleIcon` / `GridViewIcon` / `TuneIcon` in a tinted box; tool count displayed in accent colour
 - **Chips** tinted in each section's accent colour with matching border
 - **Hover**: `translateY(-5px)` + coloured shadow + accent border
@@ -233,7 +241,7 @@ Added `public/assets/home/{ws,mahjong,tools}.webp` as card backgrounds.
 All active pages now consistently use `py: 3` (24px) on their root Container:
 - `Home.jsx`: reduced from `py: 5` → `py: 3`; header `mb: 6 → 4`
 - `Dice`, `ChessClock`, `RandomShuffle`, `PickPacks`, `FirstSecond`, `Simulator`: added `py: 3` (were missing entirely)
-- Pages that were already correct: `AudioBoard`, `Record`, `DeckEdit`
+- Pages that were already correct: `AudioBoard`, `Record`
 
 ---
 
@@ -255,15 +263,19 @@ All active pages now consistently use `py: 3` (24px) on their root Container:
 - ✅ Chanta HIGH on closed all-triplet hands (no sequences)
 - ✅ FEASIBILITY_ACHIEVED upgrade — 8 yaku had wrong `needed` text
 
-**Test suite built: 156 / 156 passing**
+**Test suite integrated:** `npm run test:mahjong` runs core shape/score tests, yaku/yakuman tests, and ukeire Python-reference validation.
 
 | File | Cases | Source |
 |---|---|---|
 | `test-shanten.js` | 17 | riichi.wiki |
+| `test-shanten-extended.js` | 19 | MahjongRepository/mahjong |
+| `test-agari.js` | 33 | MahjongRepository/mahjong |
+| `test-ukeire.js` | 44 | local + reference-aligned |
 | `test-yaku.js` | 54 | MahjongRepository/mahjong |
 | `test-yakuman.js` | 33 | MahjongRepository/mahjong |
-| `test-agari.js` | 33 | MahjongRepository/mahjong |
-| `test-shanten-extended.js` | 19 | MahjongRepository/mahjong |
+| `test-fu.js` | 20 | MahjongRepository/mahjong |
+| `test-scoring.js` | 59 | MahjongRepository/mahjong |
+| `validate-ukeire.js` | 38 pass / 10 skip | Python reference comparison |
 
 **Test coverage note:** `test-yaku.js` checks "contains yaku ID" not "exactly these IDs only". Negative tests cover false-positive cases but unexpected extra yaku would not be caught. Acceptable for current scope.
 
@@ -311,7 +323,7 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 | 随机摸牌按钮 | ✅ | 13张时显示「随机摸牌」按钮，按剩余张数加权随机 |
 | 点击有效牌摸入 | ✅ | 点击分析列表中的有效牌直接加入手牌，继续分析 |
 
-**主页导航动态化**：`chipKeys` 和工具数量从 `NavBar.jsx` NAV 配置自动派生，不再硬编码。新增麻将页面只需改 NavBar 配置一处。
+**主页导航动态化**：站点结构统一由 `src/config/siteStructure.js` 提供，`Home.jsx`、`NavBar.jsx` 和旧路由重定向共用同一份 section/nav/legacy redirect 配置。
 
 ---
 
@@ -330,10 +342,11 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 #### 主页导航动态化
 
-- 将 `WS_NAV`、`MAHJONG_NAV`、`TOOLS_NAV` 从 `NavBar.jsx` 导出（`export const`）
-- `Home.jsx` 从 MAHJONG_NAV/TOOLS_NAV 的 `primary` 数组自动派生 `chipKeys` 和工具数量，不再硬编码
-- WS 仍手动维护（结构复杂，含嵌套下拉）
-- 新增麻将/工具页面只需更新 `NavBar.jsx` 一处，主页自动更新
+- `src/config/siteStructure.js` 是站点结构单一数据源，包含 section、nav group、首页 card metadata 和 legacy redirects
+- `Home.jsx` 从 `SITE_SECTIONS` 自动派生卡片入口与 chips；chip 列表直接跟随 nav 结构展开，不再单独维护摘要配置
+- `NavBar.jsx` 从同一份配置渲染桌面 dropdown 与移动端扁平菜单
+- `App.jsx` 从 `LEGACY_REDIRECTS` 生成旧路径跳转
+- 新增页面时优先更新 `siteStructure.js`，再补对应 route component
 
 ---
 
@@ -359,20 +372,44 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
-### 代码清理 & Backlog 清零 (2026-05-19 session 9)
+### 代码清理 & 历史 Backlog 清理 (2026-05-19 session 9)
 
 #### 评分系统 UI 集成
 
 - **MahjongTrainer**：`CompletedPanel` 在完整和牌时显示得点（番数、符数、荣和/自摸四种情境点数）
 - **MahjongEfficiency**：`WaitsPanel` 为每张待ち牌单独计算并显示荣和/自摸得点
 
-#### Backlog 清零
+#### 历史 Backlog 清理
 
-- **删除所有卡组管理页面**：DeckCreate、DeckSearch、Deck、DeckEdit 全部删除（无开发计划，git 历史保留）；App.jsx 移除相关路由和 lazy import
+- **删除所有卡组管理页面**：DeckCreate、DeckSearch、DeckEdit 全部删除（无开发计划，git 历史保留）；App.jsx 移除相关路由和 lazy import
 - **CardList useMemo deps**：`validLevels`/`validPowers`/`validCosts` 三个 `useMemo` 补充 `productList.level/power/cost` 依赖，消除 3 个 lint warning
 - **i18n 补全**：PickPacks「已选择 N 包/等待选择」、Record「重置我方/对手信息」tooltip 提取为 locale key（zh + en）
 
-**Backlog 现已清空**，项目处于无已知技术债状态。
-- **i18n completion** — PickPacks, Record tooltips still have hardcoded Chinese strings
-- **DeckCreate / DeckSearch redesign** — currently unrouted; needs design before re-enabling
-- **CardList `useMemo` deps** — 3 pre-existing `react-hooks/exhaustive-deps` warnings
+历史 backlog 已清理；新的长期改进项单独记录在 Future backlog。
+
+---
+
+### 站点结构、首页公告与测试整合 (2026-05-19 session 10)
+
+- **站点结构配置化**：新增 `src/config/siteStructure.js`，集中维护 section/nav/home card/legacy redirect 数据；`Home.jsx`、`NavBar.jsx`、`App.jsx` 已改为消费该配置
+- **对战记录路由保护**：新增 `ProtectedRoute`，`/ws/record` 未登录时跳转 `/login`，登录成功后回到来源路径
+- **最近更新栏**：首页功能卡片下方新增最近更新区块；更新内容抽离到 `src/data/recentUpdates.js`，locale 只保留栏目 UI 文案
+- **PWA/品牌文案统一**：项目展示文案从旧 `WSToolBox` / WS-only 描述统一为 `CardToolBox` / 卡牌与桌游多合一工具集
+- **麻将测试整合**：测试脚本补充失败退出码；麻将 utils ESM import 统一 `.js` 后缀；`package.json` 新增 `test:mahjong:core`、`test:mahjong:yaku`、`test:mahjong`
+- **开发调试页清理**：删除未路由的 `OptionsApiTest.jsx`
+
+---
+
+### 麻将牌桌中枢初版 (2026-05-19 session 11)
+
+- **新增页面**：`/mahjong/centrepiece`，参考开源项目 `mahtools/riichi-centrepiece` 的 3x3 牌桌中心布局。
+- **导航接入**：`src/config/siteStructure.js` 的 Mahjong section 新增 `menu.mahjongCentrepiece`；首页麻将卡片自动显示 3 个工具。
+- **路由接入**：`App.jsx` 新增 `/mahjong/centrepiece`，并保留 `/mahjong/centerpiece` → `/mahjong/centrepiece` 兼容跳转。
+- **当前状态**：页面支持四麻/三麻、东风/半庄/一荘、局数、本场和重置；当前版本是可用原型，不是最终横屏桌面形态。
+
+---
+
+## Future backlog
+
+- **CardList 分阶段拆分**：`CardList.jsx` 当前体积较大。后续如恢复查卡器数据更新或继续维护 WS 区，建议先抽 `useCardSearch()` hook，承接搜索请求、分页、loading、`result`、`form/draftForm` 等状态；再逐步拆 `CardSearchFilters`、`CardResultGrid`、`CardDetailDialog`、`RelatedCardsDialog`。该项复杂度较高，暂不作为近期任务。
+- **牌桌中枢横屏重做**：`/mahjong/centrepiece` 目前是参考 `riichi-centrepiece` 的初版 3x3 网格。后续需要按真实“横屏设备放在桌面中央”的使用场景重新设计，目标是全屏、横屏优先、触控面积大、信息只保留局数/本场/场风/座风，避免普通网站页面感。

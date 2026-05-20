@@ -2,7 +2,7 @@
  * Our ukeire.js output for the SAME hands as compare-ukeire.py.
  * Run both and diff the results.
  *
- * Usage: npx vite-node compare-ukeire.js
+ * Usage: node compare-ukeire.js
  */
 import { computeUkeire, computeWaits, analyzeEfficiency } from './src/utils/mahjong/ukeire.js';
 import { computeShanten } from './src/utils/mahjong/shanten.js';

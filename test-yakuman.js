@@ -6,8 +6,7 @@
  *   Layer 1 — canCompleteHand: can we even recognise these as valid winning hands?
  *   Layer 2 — evaluator:       does evaluateYakuFromDecomposition detect the yakuman?
  *
- * Layer 2 tests are currently PENDING (yakuman not yet in evaluator).
- * Run: npx vite-node test-yakuman.js
+ * Run: node test-yakuman.js
  */
 import { evaluateYakuFromDecomposition } from './src/utils/mahjong/handSimulator.js';
 import { extractHandGroups, canCompleteHand } from './src/utils/mahjong/tileParser.js';
@@ -191,3 +190,4 @@ if (pending.length > 0) {
   pending.forEach(p => console.log(p));
 }
 console.log(`${'─'.repeat(60)}\n`);
+if (results.fail > 0) process.exitCode = 1;

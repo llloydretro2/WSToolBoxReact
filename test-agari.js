@@ -5,7 +5,7 @@
  * Tests canCompleteHand() across standard, chiitoitsu, open, and edge-case hands.
  * Kokushi is marked PENDING (not yet implemented in canCompleteHand/extractHandGroups).
  *
- * Run: npx vite-node test-agari.js
+ * Run: node test-agari.js
  */
 import { canCompleteHand } from './src/utils/mahjong/tileParser.js';
 
@@ -183,3 +183,4 @@ console.log(`  ${pending} pending (kokushi, needs tileParser.js update)`);
 if (failures.length) { console.log('\nFailures:'); failures.forEach(f => console.log(f)); }
 if (pendingList.length) { console.log('\nPending:'); pendingList.forEach(p => console.log(p)); }
 console.log(`${'─'.repeat(60)}\n`);
+if (fail > 0) process.exitCode = 1;

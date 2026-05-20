@@ -9,7 +9,7 @@
  *   Python "additional" for non-dealer tsumo → computePoints.tsumo.nonDealer (others pay each)
  *   Python "main"       for dealer tsumo     → computePoints.tsumo.dealer    (each pays)
  *
- * Run: npx vite-node test-scoring.js
+ * Run: node test-scoring.js
  */
 import { computePoints } from './src/utils/mahjong/scoring.js';
 
@@ -142,3 +142,4 @@ console.log(`\n${'─'.repeat(60)}`);
 console.log(`  ${pass}/${pass+fail} passed${fail > 0 ? ` — ${fail} FAILED` : ' ✅'}`);
 if (failures.length) { console.log('\nFailures:'); failures.forEach(f => console.log(f)); }
 console.log(`${'─'.repeat(60)}\n`);
+if (fail > 0) process.exitCode = 1;

@@ -11,51 +11,9 @@ import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-
-// ─── Nav configs ───────────────────────────────────────────────────────────────
-
-export const WS_NAV = {
-	primary: [{ labelKey: "menu.cardSearch", path: "/ws/cards" }],
-	pack: {
-		labelKey: "menu.pack",
-		items: [
-			{ labelKey: "menu.pickPacks", path: "/ws/packs" },
-			{ labelKey: "menu.simulator", path: "/ws/simulator" },
-		],
-	},
-	battleTools: {
-		labelKey: "menu.battleTools",
-		items: [
-			{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
-			{ labelKey: "menu.audio", path: "/ws/audio" },
-		],
-	},
-	userItems: [{ labelKey: "menu.record", path: "/ws/record" }],
-};
-
-export const MAHJONG_NAV = {
-	primary: [
-		{ labelKey: "menu.mahjongTrainer",    path: "/mahjong/trainer" },
-		{ labelKey: "menu.mahjongEfficiency", path: "/mahjong/efficiency" },
-	],
-};
-
-export const TOOLS_NAV = {
-	primary: [
-		{ labelKey: "menu.firstSecond", path: "/tools/first-second" },
-		{ labelKey: "menu.dice", path: "/tools/dice" },
-		{ labelKey: "menu.chessClock", path: "/tools/clock" },
-	],
-};
+import { flattenNavItems, getSectionByPath } from "../config/siteStructure";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function getGameSection(pathname) {
-	if (pathname.startsWith("/ws")) return "ws";
-	if (pathname.startsWith("/mahjong")) return "mahjong";
-	if (pathname.startsWith("/tools")) return "tools";
-	return "hub";
-}
 
 function getAvatarIndex(username) {
 	const hash = [...username].reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -157,8 +115,7 @@ const dropItemSx = (active) => ({
 // ─── NavBar ────────────────────────────────────────────────────────────────────
 
 export default function NavBar() {
-	const [packAnchor, setPackAnchor] = useState(null);
-	const [battleAnchor, setBattleAnchor] = useState(null);
+	const [navMenuAnchors, setNavMenuAnchors] = useState({});
 	const [avatarAnchor, setAvatarAnchor] = useState(null);
 	const [avatarError, setAvatarError] = useState(false);
 	const [loginSnackbar, setLoginSnackbar] = useState(false);
@@ -170,7 +127,9 @@ export default function NavBar() {
 	const navigate = useNavigate();
 	const location = useLocation();
 
-	const section = getGameSection(location.pathname);
+	const currentSection = getSectionByPath(location.pathname);
+	const section = currentSection?.key ?? "hub";
+	const sectionNav = currentSection?.nav ?? [];
 
 	// Close mobile menu on navigation
 	useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);
@@ -181,10 +140,8 @@ export default function NavBar() {
 		return location.pathname.startsWith(path);
 	};
 
-	const chipLabel =
-		section === "ws" ? "Weiss Schwarz"
-		: section === "mahjong" ? t("pages.home.mahjong.name")
-		: section === "tools" ? t("pages.home.tools.name")
+	const chipLabel = currentSection
+		? currentSection.label ?? t(currentSection.labelKey)
 		: null;
 
 	const displayName = user?.username ?? "";
@@ -207,83 +164,66 @@ export default function NavBar() {
 
 	// ── Mobile nav items (flat) ──────────────────────────────────────────────────
 
-	const getMobileItems = () => {
-		if (section === "ws") {
-			const base = [
-				{ labelKey: "menu.cardSearch", path: "/ws/cards" },
-				{ labelKey: "menu.pickPacks", path: "/ws/packs" },
-				{ labelKey: "menu.simulator", path: "/ws/simulator" },
-				{ labelKey: "menu.shuffle", path: "/ws/shuffle" },
-				{ labelKey: "menu.audio", path: "/ws/audio" },
-			];
-			const auth = isLoggedIn
-				? [{ labelKey: "menu.record", path: "/ws/record" }]
-				: [];
-			return [...base, ...auth];
-		}
-		if (section === "mahjong") return MAHJONG_NAV.primary;
-		if (section === "tools") return TOOLS_NAV.primary;
-		return [];
-	};
+	const getMobileItems = () => flattenNavItems(sectionNav, isLoggedIn);
 
 	// ── Desktop nav ──────────────────────────────────────────────────────────────
 
-	const renderDesktopNav = () => {
-		if (section === "ws") return renderWSDesktop();
-		if (section === "mahjong")
-			return MAHJONG_NAV.primary.map((i) => (
-				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
-			));
-		if (section === "tools")
-			return TOOLS_NAV.primary.map((i) => (
-				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
-			));
-		return null;
+	const closeNavMenu = (key) => {
+		setNavMenuAnchors((anchors) => ({ ...anchors, [key]: null }));
 	};
 
-	const renderWSDesktop = () => (
-		<>
-			{WS_NAV.primary.map((i) => (
-				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
-			))}
+	const renderDesktopNav = () =>
+		sectionNav.map((item) => {
+			if (item.authRequired && !isLoggedIn) return null;
 
-			<DropBtn
-				label={t(WS_NAV.pack.labelKey)}
-				isActive={WS_NAV.pack.items.some((i) => isActive(i.path))}
-				onClick={(e) => setPackAnchor(e.currentTarget)}
-			/>
-			<Menu anchorEl={packAnchor} open={Boolean(packAnchor)} onClose={() => setPackAnchor(null)}
-				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-				transformOrigin={{ vertical: "top", horizontal: "left" }}
-				sx={dropMenuSx}>
-				{WS_NAV.pack.items.map((i) => (
-					<MenuItem key={i.path} onClick={() => { navigate(i.path); setPackAnchor(null); }} sx={dropItemSx(isActive(i.path))}>
-						{t(i.labelKey)}
-					</MenuItem>
-				))}
-			</Menu>
+			if (item.type === "group") {
+				const anchor = navMenuAnchors[item.labelKey] ?? null;
+				return (
+					<React.Fragment key={item.labelKey}>
+						<DropBtn
+							label={t(item.labelKey)}
+							isActive={item.items.some((i) => isActive(i.path))}
+							onClick={(e) =>
+								setNavMenuAnchors((anchors) => ({
+									...anchors,
+									[item.labelKey]: e.currentTarget,
+								}))
+							}
+						/>
+						<Menu
+							anchorEl={anchor}
+							open={Boolean(anchor)}
+							onClose={() => closeNavMenu(item.labelKey)}
+							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+							transformOrigin={{ vertical: "top", horizontal: "left" }}
+							sx={dropMenuSx}>
+							{item.items
+								.filter((i) => !i.authRequired || isLoggedIn)
+								.map((i) => (
+									<MenuItem
+										key={i.path}
+										onClick={() => {
+											navigate(i.path);
+											closeNavMenu(item.labelKey);
+										}}
+										sx={dropItemSx(isActive(i.path))}>
+										{t(i.labelKey)}
+									</MenuItem>
+								))}
+						</Menu>
+					</React.Fragment>
+				);
+			}
 
-			<DropBtn
-				label={t(WS_NAV.battleTools.labelKey)}
-				isActive={WS_NAV.battleTools.items.some((i) => isActive(i.path))}
-				onClick={(e) => setBattleAnchor(e.currentTarget)}
-			/>
-			<Menu anchorEl={battleAnchor} open={Boolean(battleAnchor)} onClose={() => setBattleAnchor(null)}
-				anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-				transformOrigin={{ vertical: "top", horizontal: "left" }}
-				sx={dropMenuSx}>
-				{WS_NAV.battleTools.items.map((i) => (
-					<MenuItem key={i.path} onClick={() => { navigate(i.path); setBattleAnchor(null); }} sx={dropItemSx(isActive(i.path))}>
-						{t(i.labelKey)}
-					</MenuItem>
-				))}
-			</Menu>
-
-			{isLoggedIn && WS_NAV.userItems.map((i) => (
-				<NavBtn key={i.path} label={t(i.labelKey)} isActive={isActive(i.path)} onClick={() => navigate(i.path)} />
-			))}
-		</>
-	);
+			return (
+				<NavBtn
+					key={item.path}
+					label={t(item.labelKey)}
+					isActive={isActive(item.path)}
+					onClick={() => navigate(item.path)}
+				/>
+			);
+		});
 
 	// ── Render ───────────────────────────────────────────────────────────────────
 

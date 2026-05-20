@@ -11,7 +11,9 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { OptionsProvider } from "./contexts/OptionsContext";
 import NavBar from "./components/NavBar";
 import PageTransition from "./components/PageTransition";
-import { AnimatePresence } from "framer-motion";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AnimatePresence, motion } from "framer-motion";
+import { LEGACY_REDIRECTS, getSectionByPath } from "./config/siteStructure";
 
 const Home = lazy(() => import("./pages/Home.jsx"));
 const LoginPage = lazy(() => import("./pages/Login.jsx"));
@@ -29,6 +31,7 @@ const CardList = lazy(() => import("./pages/CardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
 const MahjongTrainer    = lazy(() => import("./pages/MahjongTrainer.jsx"));
 const MahjongEfficiency = lazy(() => import("./pages/MahjongEfficiency.jsx"));
+const MahjongCentrepiece = lazy(() => import("./pages/MahjongCentrepiece.jsx"));
 
 
 const LoadingFallback = () => (
@@ -54,23 +57,38 @@ const withPageTransition = (Component) => (
 	</PageTransition>
 );
 
-function WSBackground() {
+const withFullscreenPageTransition = (Component) => (
+	<Suspense fallback={<LoadingFallback />}>
+		<Component />
+	</Suspense>
+);
+
+function RouteBackground() {
 	const { pathname } = useLocation();
-	if (!pathname.startsWith("/ws/")) return null;
+	const section = getSectionByPath(pathname);
+	const backgroundImage = section?.homeImage ?? "/bg.webp";
 	return (
-		<div
-			style={{
-				backgroundImage: "url(/bg.webp)",
-				backgroundSize: "cover",
-				backgroundPosition: "center",
-				backgroundRepeat: "no-repeat",
-				width: "100%",
-				height: "100vh",
-				position: "fixed",
-				opacity: 0.2,
-				zIndex: -1,
-			}}
-		/>
+		<AnimatePresence initial={false} mode="sync">
+			<motion.div
+				key={backgroundImage}
+				initial={{ opacity: 0, scale: 1.035, filter: "blur(10px)" }}
+				animate={{ opacity: 0.18, scale: 1, filter: "blur(0px)" }}
+				exit={{ opacity: 0, scale: 0.985, filter: "blur(10px)" }}
+				transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+				style={{
+					backgroundImage: `url(${backgroundImage})`,
+					backgroundSize: "cover",
+					backgroundPosition: "center",
+					backgroundRepeat: "no-repeat",
+					inset: 0,
+					position: "fixed",
+					zIndex: -1,
+					pointerEvents: "none",
+					transformOrigin: "center center",
+					willChange: "opacity, transform, filter",
+				}}
+			/>
+		</AnimatePresence>
 	);
 }
 
@@ -87,7 +105,14 @@ function AnimatedRoutes() {
 				<Route path="/ws/cards" element={withPageTransition(CardList)} />
 				<Route path="/ws/packs" element={withPageTransition(PickPacks)} />
 				<Route path="/ws/simulator" element={withPageTransition(Simulator)} />
-				<Route path="/ws/record" element={withPageTransition(Record)} />
+				<Route
+					path="/ws/record"
+					element={
+						<ProtectedRoute>
+							{withPageTransition(Record)}
+						</ProtectedRoute>
+					}
+				/>
 				<Route path="/ws/audio" element={withPageTransition(AudioBoard)} />
 				<Route path="/tools/first-second" element={withPageTransition(FirstSecond)} />
 			<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
@@ -95,6 +120,7 @@ function AnimatedRoutes() {
 				{/* Mahjong */}
 				<Route path="/mahjong/trainer"    element={withPageTransition(MahjongTrainer)} />
 				<Route path="/mahjong/efficiency" element={withPageTransition(MahjongEfficiency)} />
+				<Route path="/mahjong/centrepiece" element={withFullscreenPageTransition(MahjongCentrepiece)} />
 
 				{/* Tools */}
 				<Route path="/tools/dice" element={withPageTransition(Dice)} />
@@ -104,19 +130,13 @@ function AnimatedRoutes() {
 				<Route path="/login" element={withPageTransition(LoginPage)} />
 
 				{/* Legacy redirects */}
-				<Route path="/cardlist" element={<Navigate to="/ws/cards" replace />} />
-				<Route path="/pick_packs" element={<Navigate to="/ws/packs" replace />} />
-				<Route path="/simulator" element={<Navigate to="/ws/simulator" replace />} />
-				<Route path="/record" element={<Navigate to="/ws/record" replace />} />
-				<Route path="/audio" element={<Navigate to="/ws/audio" replace />} />
-				<Route path="/first_second" element={<Navigate to="/tools/first-second" replace />} />
-			<Route path="/ws/first-second" element={<Navigate to="/tools/first-second" replace />} />
-				<Route path="/mahjong" element={<Navigate to="/mahjong/trainer" replace />} />
-				<Route path="/dice" element={<Navigate to="/tools/dice" replace />} />
-				<Route path="/chess_clock" element={<Navigate to="/tools/clock" replace />} />
-				<Route path="/shuffle" element={<Navigate to="/ws/shuffle" replace />} />
-
-
+				{LEGACY_REDIRECTS.map(({ from, to }) => (
+					<Route
+						key={from}
+						path={from}
+						element={<Navigate to={to} replace />}
+					/>
+				))}
 			</Routes>
 		</AnimatePresence>
 	);
@@ -134,7 +154,7 @@ function App() {
 				<AuthProvider>
 					<OptionsProvider>
 						<Router>
-							<WSBackground />
+							<RouteBackground />
 							<NavBar />
 							<AnimatedRoutes />
 						</Router>

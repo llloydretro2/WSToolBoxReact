@@ -2,7 +2,7 @@
  * Compares our ukeire.js output against the Python MahjongRepository reference.
  * Reads /tmp/ukeire-reference.json produced by validate-ukeire.py.
  *
- * Run: npx vite-node validate-ukeire.js
+ * Run: node validate-ukeire.js
  */
 import { readFileSync } from 'fs';
 import { computeUkeire, computeWaits, analyzeEfficiency } from './src/utils/mahjong/ukeire.js';
@@ -148,3 +148,4 @@ if (failures.length) {
   failures.forEach(f => console.log('  ✗ ' + f));
 }
 console.log(`${'─'.repeat(70)}\n`);
+if (fail > 0) process.exitCode = 1;

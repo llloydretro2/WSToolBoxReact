@@ -20,7 +20,8 @@
     "audio": "音效",
     "mahjong": "麻将役种",
     "mahjongTrainer": "役种分析",
-    "mahjongEfficiency": "牌理"
+    "mahjongEfficiency": "牌理",
+    "mahjongCentrepiece": "牌桌中枢"
   },
   "common": {
     "language": {
@@ -41,6 +42,11 @@
       "subtitle": "卡牌与桌游多合一工具集",
       "description": "致力于为卡牌与桌游爱好者提供简单易用且人性化的游戏工具",
       "contactTitle": "联系我",
+      "recentUpdates": {
+        "eyebrow": "最近更新",
+        "title": "开发记录",
+        "subtitle": "这里会记录网站近期的功能更新、重构和修复。"
+      },
       "ws": {
         "name": "Weiss Schwarz",
         "desc": "卡片查询、开包模拟与对战记录",
@@ -48,8 +54,8 @@
       },
       "mahjong": {
         "name": "麻将",
-        "desc": "役种路线分析与有效牌枚举",
-        "count": "2 个工具"
+        "desc": "役种分析、牌理与牌桌中枢",
+        "count": "3 个工具"
       },
       "tools": {
         "name": "通用工具",
@@ -240,6 +246,38 @@
     "resetMyInfo": "重置我方信息",
     "resetOpponentInfo": "重置对手信息"
   },
+  "mahjongCentrepiece": {
+    "title": "牌桌中枢",
+    "subtitle": "适合线下实战或共享屏幕的桌面状态板",
+    "description": "显示当前局数、本场、供托、座位和分数。你可以直接调整桌面状态，作为牌桌中央的共享面板使用。",
+    "modes": {
+      "four": "四麻",
+      "three": "三麻"
+    },
+    "lengths": {
+      "east": "东风战",
+      "half": "半庄战",
+      "full": "一荘战"
+    },
+    "labels": {
+      "round": "局数",
+      "honba": "本场",
+      "kyotaku": "供托",
+      "seat": "座位",
+      "score": "分数",
+      "dealer": "庄家",
+      "currentDealer": "当前庄家",
+      "name": "玩家名",
+      "namePlaceholder": "可直接输入名字"
+    },
+    "actions": {
+      "previousRound": "上一局",
+      "nextRound": "下一局",
+      "reset": "重置",
+      "minus": "减",
+      "plus": "加"
+    }
+  },
   "deckEdit": {
     "sideLabel": "边",
     "seriesLabel": "系列",
@@ -328,7 +366,7 @@
   },
   "efficiency": {
     "title": "牌理",
-    "subtitle": "有效牌枚举 · 最优打法分析",
+    "subtitle": "有效牌枚举 · 最优打法分析 · 算法参考 tenhou.net",
     "shantenLabel": "向听数",
     "tenpai": "听牌",
     "complete": "和牌",

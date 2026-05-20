@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records), a Riichi Mahjong yaku trainer, and general game utilities (dice, chess clock). Domain: `cardtoolbox.org`.
+CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records), Riichi Mahjong tools (yaku trainer, efficiency analysis, centrepiece table board), and general game utilities (dice, chess clock). Domain: `cardtoolbox.org`.
 
 ## Commands
 
@@ -13,6 +13,9 @@ npm run dev       # dev server on port 3000 (auto-opens browser)
 npm run build     # production build → dist/
 npm run preview   # preview production build
 npm run lint      # ESLint
+npm run test:mahjong       # full mahjong regression suite
+npm run test:mahjong:core  # shanten/agari/ukeire/fu/scoring
+npm run test:mahjong:yaku  # standard yaku + yakuman detection
 ```
 
 Dev proxy: `/api` and `/audios` requests are forwarded to `http://localhost:4000`. The production backend is `https://api.cardtoolbox.org`.
@@ -40,14 +43,14 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 | Prefix | Section | Example routes |
 |--------|---------|----------------|
 | `/` | Hub (game selector) | `/` |
-| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/first-second`, `/ws/shuffle`, `/ws/deck/edit` |
-| `/mahjong/*` | Mahjong | `/mahjong/trainer`, `/mahjong/efficiency` |
-| `/tools/*` | General tools | `/tools/dice`, `/tools/clock` |
+| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/shuffle` |
+| `/mahjong/*` | Mahjong | `/mahjong/trainer`, `/mahjong/efficiency`, `/mahjong/centrepiece` |
+| `/tools/*` | General tools | `/tools/first-second`, `/tools/dice`, `/tools/clock` |
 | `/login` | Auth | `/login` |
 
 Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new paths via `<Navigate replace>` in `App.jsx`.
 
-**Note:** All deck management pages (DeckCreate, DeckSearch, Deck, DeckEdit) have been deleted (session 9). Only DeckEdit route `/ws/deck/edit` existed; it is now removed. Code preserved in git history.
+**Note:** All deck management pages (DeckCreate, DeckSearch, Deck, DeckEdit) have been deleted. They are kept only in git history and historical session notes; there is no active route or page component left in `src/pages/`. `/ws/record` is protected by `ProtectedRoute` and redirects unauthenticated users to `/login`.
 
 ### Key hooks
 
@@ -101,7 +104,7 @@ Dead theme files removed: `src/hooks/useTheme.js`, `src/hooks/useThemeVariables.
 Tailwind is configured with `corePlugins.preflight: false` so it does not reset MUI's global styles. Config: `tailwind.config.js` + `postcss.config.js`. Directives are at the top of `src/index.css`.
 
 - **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
-- **WS pages** (CardList, Record, DeckEdit, AudioBoard, etc.) — remain MUI.
+- **WS pages** (CardList, Record, AudioBoard, etc.) — remain MUI.
 - **New sections** (Mahjong, Tools, Hub) — use Tailwind + shadcn/ui as they are built or redesigned.
 
 ## Page layout conventions
@@ -126,6 +129,7 @@ Every MUI page must follow this standard structure:
 - **Never use manual `Box sx={{ width: "80%", mx: "auto" }}`** as a layout container — use `Container`.
 - `maxWidth="lg"` for full-feature pages (Record, CardList).
 - `maxWidth="md"` for single-focus tool pages (Dice, ChessClock, RandomShuffle, Simulator, PickPacks, AudioBoard, MahjongTrainer).
+- `/mahjong/centrepiece` is a full-screen table tool and intentionally bypasses the standard `PageTransition` spacing wrapper in `App.jsx`.
 - `maxWidth="sm"` for single-form pages (Login).
 - The Hub page (`/`) does **not** follow this pattern — it is a custom Tailwind layout with game-selector cards.
 
@@ -170,7 +174,7 @@ When adding UI text, add keys to **both** locale files.
 
 ## Mobile / Capacitor
 
-Capacitor config (`capacitor.config.ts`) targets `webDir: 'build'`. The production Vite output for mobile is `build/` (not `dist/`). Android project is in `android/`.
+Capacitor config (`capacitor.config.ts`) currently targets `webDir: 'build'`, while the default Vite build output remains `dist/`. If you are packaging for mobile, verify the copy/sync workflow before release instead of assuming the build directory matches automatically. Android project is in `android/`.
 
 ---
 
@@ -184,7 +188,7 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool at `/mahjong/trainer`.
 |------|------|
 | Page | `src/pages/MahjongTrainer.jsx` |
 | Route | `/mahjong/trainer` |
-| NavBar entry | `menu.mahjong` in `src/components/NavBar.jsx` (under `MAHJONG_NAV`) |
+| NavBar entry | `menu.mahjongTrainer` in `src/config/siteStructure.js` |
 | Locale keys | `mahjong.*` in `src/locales/zh.json` + `en.json` |
 | Tile images | `public/assets/mahjong-tiles/` (34 SVGs, CC0 from FluffyStuff/riichi-mahjong-tiles) |
 | Tile components | `src/components/mahjong/MahjongTile.jsx`, `MahjongTilePicker.jsx` |
@@ -203,9 +207,9 @@ Disabled state: `text-gray-300 cursor-not-allowed` (no background). Do not use b
 
 | Module | Responsibility |
 |--------|----------------|
-| `tileParser.js` | Tile model, `parseTiles`, `parseMelds`, `extractHandGroups` (DFS — first decomposition only), `canCompleteHand`, `generateHandString` |
+| `tileParser.js` | Tile model, `parseTiles`, `parseMelds`, `extractHandGroups`, `extractAllHandGroups`, `canCompleteHand`, `generateHandString` |
 | `shanten.js` | 3-way shanten: standard (Neval DFS), Chiitoitsu, Kokushi — `computeShanten(tiles, numMelds)`. Based on MahjongRepository/mahjong (MIT). |
-| `handSimulator.js` | `evaluateYakuFromDecomposition` (16 standard yaku + 8 yakuman — see coverage below), `findScenarios` (brute-force 0/1-step), `extractYakuRelevantGroups`, `ALL_34_TILES` |
+| `handSimulator.js` | `evaluateYakuFromDecomposition` (16 standard yaku + 8 yakuman — see coverage below), `findScenarios` (brute-force 0/1-step), all-decomposition yaku matching, `extractYakuRelevantGroups`, `ALL_34_TILES` |
 | `yakuBFS.js` | Bounded BFS route search — `searchYakuRoute(...)`, `getDiscardCandidates`, `getDrawCandidates`, `makeBFSScenario` |
 | `yakuAnalyzer.js` | Main entry `analyzeHand(...)` — 3-tier pipeline (simulation → BFS → heuristic), per-yaku analyzers, EXAMPLES, MEANINGS |
 
@@ -225,9 +229,9 @@ Disabled state: `text-gray-300 cursor-not-allowed` (no background). Do not use b
 
 **`yakuAnalyzer.js` route analyzers:** above 16 standard + 9 yakuman (all implemented)
 
-**Test suite — 156 cases, all passing:**
-`test-shanten.js`(17) · `test-yaku.js`(54) · `test-yakuman.js`(33) · `test-agari.js`(33) · `test-shanten-extended.js`(19)
-Data sourced from riichi.wiki and MahjongRepository/mahjong (validated against 26M Tenhou phoenix games).
+**Test suite — run with `npm run test:mahjong`:**
+`test-shanten.js`(17) · `test-shanten-extended.js`(19) · `test-agari.js`(33) · `test-ukeire.js`(44) · `test-yaku.js`(54) · `test-yakuman.js`(33) · `test-fu.js`(20) · `test-scoring.js`(59) · `validate-ukeire.js`(Python reference comparison: 38 pass / 10 skip).
+Data sourced from riichi.wiki, MahjongRepository/mahjong, and Tenhou-aligned ukeire reference checks.
 
 **Test coverage note:** yaku tests check "contains ID" not "exactly these IDs". Negative tests cover false-positives; unexpected extra yaku would not be caught.
 
@@ -291,10 +295,22 @@ shanten(original - k + p) < originalShanten
 ### Verification
 
 Algorithm extracted from Tenhou's `1008.js` (directly downloaded, not guessed). Cross-validated against MahjongRepository/mahjong Python reference. Run:
+
+## Mahjong Centrepiece Page (`/mahjong/centrepiece`)
+
+Full-screen Riichi table state board inspired by `mahtools/riichi-centrepiece`. It tracks round wind, round number, honba, and seat winds for live table use.
+
+| Item | Path |
+|------|------|
+| Page | `src/pages/MahjongCentrepiece.jsx` |
+| Route | `/mahjong/centrepiece` |
+| NavBar entry | `menu.mahjongCentrepiece` in `src/config/siteStructure.js` |
+
+Implementation note: this page currently uses a lightweight 3x3 grid layout based on the upstream open-source project. It is usable as a full-screen tool, but the landscape/tablet UX still needs a dedicated redesign pass. Keep future work scoped to this page unless changing shared route shells is explicitly needed.
 ```bash
 python3 validate-ukeire.py > /tmp/ukeire-reference.json
-npx vite-node validate-ukeire.js
-npx vite-node test-ukeire.js
+node validate-ukeire.js
+npm run test:mahjong:core
 ```
 
 ---
@@ -303,21 +319,19 @@ npx vite-node test-ukeire.js
 
 `src/components/NavBar.jsx` is fully Tailwind-based and section-aware.
 
-### Section detection
+### Section data source
 
-```js
-getGameSection(pathname) → "hub" | "ws" | "mahjong" | "tools"
-```
+`src/config/siteStructure.js` is the single source of truth for section metadata, nav items, home card chips, and legacy redirects. `Home.jsx`, `NavBar.jsx`, and `App.jsx` consume this config.
 
 ### Layout
 
 - **Floating pill** — `position: fixed`, `pointer-events-none` on the outer header so content scrolls under the margins; each pill has `pointer-events-auto`.
 - **Primary pill** — 3-column CSS grid (`auto 1fr auto`): brand+chip | centered desktop nav | lang toggle + auth.
-- **Secondary pill** — mobile only, game sections only. Horizontally scrollable flat nav items. Hidden with `md:hidden`.
+- **Mobile dropdown** — game sections only. Hamburger button opens a framer-motion height animation dropdown from the primary pill.
 
 ### Nav configs
 
-`WS_NAV`, `MAHJONG_NAV`, `TOOLS_NAV` are plain objects at the top of the file. The component reads `section` and switches between them. No hamburger, no drawer.
+Nav items come from `SITE_SECTIONS`. Desktop preserves grouped dropdowns for `type: "group"` items; mobile uses `flattenNavItems(...)`. Auth-only links, such as `/ws/record`, use `authRequired: true`.
 
 ### Language toggle
 

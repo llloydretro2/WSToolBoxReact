@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test:mahjong:core": "node test-shanten.js && node test-shanten-extended.js && node test-agari.js && node test-ukeire.js && node test-fu.js && node test-scoring.js",
+    "test:mahjong:yaku": "node test-yaku.js && node test-yakuman.js",
+    "test:mahjong": "npm run test:mahjong:core && npm run test:mahjong:yaku && node validate-ukeire.js",
     "preview": "vite preview"
   },
   "dependencies": {
