@@ -1,163 +1,256 @@
 /* eslint-disable react/prop-types */
 import React, { useMemo, useState } from "react";
+import { Moon, Sun } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 
+const WIND_TON = 0;
+const WIND_NAN = 1;
+const WIND_SHAA = 2;
+const WIND_PEI = 3;
+
+const PLAYER_DEFAULT = 4;
+const PLAYER_SANMA = 3;
+
+const ROUND_TONPUUSEN = 1;
+const ROUND_HANCHAN = 2;
+const ROUND_IICHAN = 4;
+
+const POSITIONS = ["bottom", "right", "top", "left"];
 const WIND_KEYS = ["E", "S", "W", "N"];
 const WIND_LABELS = {
-	zh: { E: "東", S: "南", W: "西", N: "北" },
-	en: { E: "E", S: "S", W: "W", N: "N" },
+	zh: ["东", "南", "西", "北"],
+	en: ["E", "S", "W", "N"],
 };
 
-const ROUND_MODE_OPTIONS = {
-	east: ["E"],
-	half: ["E", "S"],
-	full: ["E", "S", "W", "N"],
+const POSITION_STYLE = {
+	bottom: { gridArea: "bottom", rotation: 0 },
+	right: { gridArea: "right", rotation: 270 },
+	top: { gridArea: "top", rotation: 180 },
+	left: { gridArea: "left", rotation: 90 },
 };
 
-const GRID_AREAS_FOUR = `
-  ". top ."
-  "left center right"
-  ". bottom ."
-`;
-
-const GRID_AREAS_THREE = `
-  ". top ."
-  "left center right"
-  ". . ."
-`;
-
-function cycle(values, current) {
-	const idx = values.indexOf(current);
-	return values[(idx + 1) % values.length];
+function isStart({ round, wind, honba }) {
+	return round === 1 && wind === WIND_TON && honba === 0;
 }
 
-function SeatWind({ label, rotation, hidden = false }) {
-	if (hidden) return null;
+function Seat({ position, label, isDealer, hidden }) {
+	if (hidden || !position) return null;
+	const { gridArea, rotation } = POSITION_STYLE[position];
+
 	return (
 		<div
-			style={{ transform: `rotate(${rotation}deg)` }}
-			className="flex h-full w-full items-center justify-center">
-			<span className="select-none text-black text-[clamp(52px,12vmin,120px)] font-black leading-none">
+			style={{ gridArea, transform: `rotate(${rotation}deg)` }}
+			className="grid place-items-center self-center justify-self-center">
+			<p
+				className={[
+					"m-0 select-none text-center font-black leading-none",
+					"text-[clamp(4.8rem,20vmin,10rem)]",
+					isDealer ? "text-[#ff5555]" : "text-current",
+				].join(" ")}>
 				{label}
-			</span>
+			</p>
 		</div>
+	);
+}
+
+function OptionButton({ children, onClick, title }) {
+	return (
+		<button
+			type="button"
+			title={title}
+			onClick={onClick}
+			className="grid min-h-14 min-w-14 place-items-center border-0 bg-transparent p-1 text-[clamp(2rem,6vmin,3.5rem)] font-bold leading-none text-[#aaaaaa] shadow-none outline-none">
+			{children}
+		</button>
+	);
+}
+
+function PlayerCountButton({ players }) {
+	return (
+		<span>
+			<span className={players === PLAYER_SANMA ? "font-black text-[#55dd55]" : ""}>3</span>
+			<span className={players === PLAYER_DEFAULT ? "font-black text-[#55dd55]" : ""}>4</span>
+		</span>
+	);
+}
+
+function GameTypeButton({ maxRounds, locale }) {
+	const labels = locale === "zh"
+		? [
+				{ value: ROUND_TONPUUSEN, label: "东" },
+				{ value: ROUND_HANCHAN, label: "半" },
+				{ value: ROUND_IICHAN, label: "一" },
+			]
+		: [
+				{ value: ROUND_TONPUUSEN, label: "T" },
+				{ value: ROUND_HANCHAN, label: "H" },
+				{ value: ROUND_IICHAN, label: "I" },
+			];
+
+	return (
+		<span>
+			{labels.map((item) => (
+				<span
+					key={item.value}
+					className={maxRounds === item.value ? "font-black text-[#55dd55]" : ""}>
+					{item.label}
+				</span>
+			))}
+		</span>
 	);
 }
 
 export default function MahjongCentrepiece() {
 	const { locale, t } = useLocale();
-	const i18nWind = WIND_LABELS[locale] ?? WIND_LABELS.en;
-
-	const [tableMode, setTableMode] = useState("four");
-	const [roundMode, setRoundMode] = useState("half");
-	const [windIndex, setWindIndex] = useState(0);
-	const [roundNumber, setRoundNumber] = useState(1);
+	const windLabels = WIND_LABELS[locale] ?? WIND_LABELS.en;
+	const [darkMode, setDarkMode] = useState(false);
+	const [players, setPlayers] = useState(PLAYER_DEFAULT);
+	const [maxRounds, setMaxRounds] = useState(ROUND_HANCHAN);
+	const [round, setRound] = useState(1);
+	const [wind, setWind] = useState(WIND_TON);
 	const [honba, setHonba] = useState(0);
+	const start = isStart({ round, wind, honba });
 
-	const activeWinds = ROUND_MODE_OPTIONS[roundMode];
-	const maxRound = tableMode === "three" ? 3 : 4;
+	const seatPositions = useMemo(() => {
+		const positions = POSITIONS.slice(0, players);
+		for (let i = 0; i < round - 1; i += 1) {
+			positions.push(positions.shift());
+		}
+		return positions;
+	}, [players, round]);
 
-	const centerWind = activeWinds[windIndex];
-	const centerWindLabel = i18nWind[centerWind];
-	const roundSuffix = locale === "zh" ? "局" : "";
-	const honbaSuffix = locale === "zh" ? "本场" : "H";
-
-	const seats = useMemo(() => {
-		const base = ["E", "S", "W", "N"];
-		const offset = Math.max(0, roundNumber - 1);
-		const rotated = base.slice(offset).concat(base.slice(0, offset));
-		return tableMode === "three" ? rotated.slice(0, 3) : rotated;
-	}, [roundNumber, tableMode]);
+	const reset = () => {
+		setRound(1);
+		setWind(WIND_TON);
+		setHonba(0);
+	};
 
 	const nextRound = () => {
-		if (roundNumber < maxRound) {
-			setRoundNumber((prev) => prev + 1);
+		if (round === players) {
+			setRound(1);
+			setWind((prev) => (prev + 1) % maxRounds);
 			setHonba(0);
 			return;
 		}
-		setRoundNumber(1);
-		setHonba(0);
-		setWindIndex((prev) => (prev + 1) % activeWinds.length);
-	};
-
-	const nextHonba = () => setHonba((prev) => prev + 1);
-
-	const reset = () => {
-		setWindIndex(0);
-		setRoundNumber(1);
+		setRound((prev) => prev + 1);
 		setHonba(0);
 	};
 
-	const boardAreaStyle = {
-		gridTemplateAreas: tableMode === "four" ? GRID_AREAS_FOUR : GRID_AREAS_THREE,
-		gridTemplateColumns: "1fr minmax(0,1.4fr) 1fr",
-		gridTemplateRows: "1fr minmax(0,1.4fr) 1fr",
+	const nextHonba = () => {
+		setHonba((prev) => prev + 1);
 	};
+
+	const togglePlayerCount = () => {
+		if (!start) {
+			reset();
+			return;
+		}
+		setPlayers((prev) => (prev === PLAYER_DEFAULT ? PLAYER_SANMA : PLAYER_DEFAULT));
+	};
+
+	const toggleGameType = () => {
+		if (!start) {
+			reset();
+			return;
+		}
+		setMaxRounds((prev) => {
+			if (prev === ROUND_TONPUUSEN) return ROUND_HANCHAN;
+			if (prev === ROUND_HANCHAN) return ROUND_IICHAN;
+			return ROUND_TONPUUSEN;
+		});
+	};
+
+	const text = darkMode ? "#e8e6e3" : "#333333";
+	const navbarOffset = "clamp(64px, 9dvh, 80px)";
 
 	return (
-		<div className="mahjong-black-theme fixed inset-0 z-40 bg-transparent text-black">
-			<div className="grid h-[100dvh] w-[100vw] place-items-center overflow-hidden px-3 pb-3 pt-[72px] landscape:p-3">
-				<div className="relative h-full w-full">
-					<div
-						className="absolute left-1/2 top-1/2 grid aspect-square max-h-full max-w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-black bg-white/62 p-2 shadow-[0_16px_46px_rgba(0,0,0,0.12)] backdrop-blur-md"
-						style={{
-							...boardAreaStyle,
-							width: "min(calc(100vw - 1.5rem), calc(100dvh - 5.5rem))",
-						}}>
-						<div style={{ gridArea: "top" }}>
-							<SeatWind label={i18nWind[seats[2 % seats.length]]} rotation={180} hidden={tableMode === "three"} />
-						</div>
-						<div style={{ gridArea: "left" }}>
-							<SeatWind label={i18nWind[seats[1]]} rotation={90} />
-						</div>
-						<div style={{ gridArea: "right" }}>
-							<SeatWind label={i18nWind[seats[tableMode === "three" ? 2 : 3]]} rotation={270} />
-						</div>
-						<div style={{ gridArea: "bottom" }}>
-							<SeatWind label={i18nWind[seats[0]]} rotation={0} hidden={tableMode === "three"} />
-						</div>
+		<div
+			className="mahjong-black-theme fixed inset-x-0 bottom-0 overflow-hidden"
+			style={{
+				top: navbarOffset,
+				backgroundColor: "transparent",
+				color: text,
+			}}>
+			<div
+				className="grid h-full w-full overflow-hidden"
+				style={{
+					gridTemplateAreas: `
+						"darkmode top playercount"
+						"left center right"
+						"gametype bottom reset"
+					`,
+					gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+					gridTemplateRows: "minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr)",
+				}}>
+				<Seat
+					position={seatPositions[0]}
+					label={windLabels[WIND_TON]}
+					isDealer
+				/>
+				<Seat
+					position={seatPositions[1]}
+					label={windLabels[WIND_NAN]}
+				/>
+				<Seat
+					position={seatPositions[2]}
+					label={windLabels[WIND_SHAA]}
+				/>
+				<Seat
+					position={seatPositions[3]}
+					label={windLabels[WIND_PEI]}
+					hidden={players === PLAYER_SANMA}
+				/>
 
-						<div
-							style={{ gridArea: "center" }}
-							className="flex flex-col items-center justify-center rounded-xl border border-black bg-white/82 px-2 py-4 text-center">
-							<button
-								type="button"
-								onClick={nextRound}
-								className="select-none text-[clamp(42px,13vmin,116px)] font-black leading-none text-blue-700 transition-colors hover:text-black">
-								{centerWindLabel}
-								{roundNumber}
-								{roundSuffix}
-							</button>
-							<button
-								type="button"
-								onClick={nextHonba}
-								className="mt-2 select-none text-[clamp(26px,7vmin,64px)] font-bold leading-none transition-colors hover:text-blue-700">
-								{honba}
-								{honbaSuffix}
-							</button>
-						</div>
-					</div>
+				<div
+					style={{ gridArea: "center" }}
+					className="self-center justify-self-center text-center">
+					<button
+						type="button"
+						onClick={nextRound}
+						className="block border-0 bg-transparent p-0 font-black leading-none text-[#5555ff]"
+						style={{ fontSize: "clamp(3.8rem, 10vmin, 7rem)" }}>
+						<span>{windLabels[wind]}</span>
+						<span>{round}</span>
+						<span>{locale === "zh" ? "局" : ""}</span>
+					</button>
+					<button
+						type="button"
+						onClick={nextHonba}
+						className="mt-1 block border-0 bg-transparent p-0 leading-none text-current"
+						style={{ fontSize: "clamp(3rem, 8vmin, 5.5rem)" }}>
+						<span>{honba}</span>
+						<span>{locale === "zh" ? "本场" : "H"}</span>
+					</button>
+				</div>
 
-					<div className="absolute right-2 top-[82px] flex flex-col gap-2 landscape:top-2">
-						<button
-							type="button"
-							onClick={() => setTableMode((prev) => (prev === "four" ? "three" : "four"))}
-							className="min-w-20 rounded-md border border-black bg-white/82 px-3 py-2 text-sm font-bold shadow-sm backdrop-blur-sm transition-colors hover:bg-black hover:text-white">
-							{t(`mahjongCentrepiece.modes.${tableMode}`)}
-						</button>
-						<button
-							type="button"
-							onClick={() => setRoundMode((prev) => cycle(["east", "half", "full"], prev))}
-							className="min-w-20 rounded-md border border-black bg-white/82 px-3 py-2 text-sm font-bold shadow-sm backdrop-blur-sm transition-colors hover:bg-black hover:text-white">
-							{t(`mahjongCentrepiece.lengths.${roundMode}`)}
-						</button>
-						<button
-							type="button"
-							onClick={reset}
-							className="min-w-20 rounded-md border border-black bg-white/82 px-3 py-2 text-sm font-bold shadow-sm backdrop-blur-sm transition-colors hover:bg-black hover:text-white">
-							{t("mahjongCentrepiece.actions.reset")}
-						</button>
-					</div>
+				<div style={{ gridArea: "darkmode" }} className="self-center justify-self-center">
+					<OptionButton
+						title={darkMode ? "Light mode" : "Dark mode"}
+						onClick={() => setDarkMode((prev) => !prev)}>
+						{darkMode ? <Sun size="1em" /> : <Moon size="1em" />}
+					</OptionButton>
+				</div>
+
+				<div style={{ gridArea: "playercount" }} className="self-center justify-self-center">
+					<OptionButton
+						title={t("mahjongCentrepiece.labels.playerCount")}
+						onClick={togglePlayerCount}>
+						{start ? <PlayerCountButton players={players} /> : "↻"}
+					</OptionButton>
+				</div>
+
+				<div style={{ gridArea: "gametype" }} className="self-center justify-self-center">
+					<OptionButton
+						title={t("mahjongCentrepiece.labels.gameType")}
+						onClick={toggleGameType}>
+						{start ? <GameTypeButton maxRounds={maxRounds} locale={locale} /> : "↻"}
+					</OptionButton>
+				</div>
+
+				<div style={{ gridArea: "reset" }} className="self-center justify-self-center">
+					<OptionButton title={t("mahjongCentrepiece.actions.reset")} onClick={reset}>
+						↻
+					</OptionButton>
 				</div>
 			</div>
 		</div>

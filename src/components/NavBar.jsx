@@ -6,12 +6,13 @@ import Avatar from "@mui/material/Avatar";
 import { Snackbar, Badge, Tooltip } from "@mui/material";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { flattenNavItems, getSectionByPath } from "../config/siteStructure";
+import { getSectionByPath, getSectionToolItems } from "../config/siteStructure";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -143,6 +144,7 @@ export default function NavBar() {
 	const chipLabel = currentSection
 		? currentSection.label ?? t(currentSection.labelKey)
 		: null;
+	const showMobileSection = section !== "hub" && !!chipLabel;
 
 	const displayName = user?.username ?? "";
 	const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : "?";
@@ -164,7 +166,7 @@ export default function NavBar() {
 
 	// ── Mobile nav items (flat) ──────────────────────────────────────────────────
 
-	const getMobileItems = () => flattenNavItems(sectionNav, isLoggedIn);
+	const mobileItems = getSectionToolItems(currentSection, isLoggedIn);
 
 	// ── Desktop nav ──────────────────────────────────────────────────────────────
 
@@ -258,12 +260,43 @@ export default function NavBar() {
 							<div className="flex items-center gap-2 min-w-0">
 								<button
 									onClick={() => navigate("/")}
-									className="border-0 bg-transparent cursor-pointer p-0 flex-shrink-0"
+									className="border-0 bg-transparent cursor-pointer p-0 flex-shrink-0 flex items-center gap-1.5 min-w-0"
 									style={{ fontFamily: "inherit" }}>
-									<span
-										className="font-bold text-[15px] md:text-base tracking-tight leading-none hover:opacity-60 transition-opacity duration-150"
-										style={{ color: "var(--text)" }}>
-										{t("title")}
+									<AnimatePresence initial={false}>
+										{showMobileSection && (
+											<motion.span
+												key="mobile-back-arrow"
+												initial={{ opacity: 0, x: -5, width: 0 }}
+												animate={{ opacity: 1, x: 0, width: "auto" }}
+												exit={{ opacity: 0, x: -5, width: 0 }}
+												transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+												className="md:hidden flex shrink-0 overflow-hidden">
+												<ArrowBackIosNewIcon
+													style={{ fontSize: 14, color: "var(--text)", opacity: 0.7 }}
+												/>
+											</motion.span>
+										)}
+									</AnimatePresence>
+									<span className="flex min-w-0 flex-col items-start">
+										<span
+											className="font-bold text-[15px] md:text-base tracking-tight leading-none hover:opacity-60 transition-opacity duration-150"
+											style={{ color: "var(--text)" }}>
+											{t("title")}
+										</span>
+										<AnimatePresence initial={false} mode="wait">
+											{showMobileSection && (
+												<motion.span
+													key={chipLabel}
+													initial={{ opacity: 0, y: -3, height: 0 }}
+													animate={{ opacity: 1, y: 0, height: "auto" }}
+													exit={{ opacity: 0, y: -3, height: 0 }}
+													transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+													className="md:hidden mt-0.5 max-w-[9rem] truncate overflow-hidden text-[10px] font-medium leading-none"
+													style={{ color: "var(--text-muted)" }}>
+													{chipLabel}
+												</motion.span>
+											)}
+										</AnimatePresence>
 									</span>
 								</button>
 
@@ -428,7 +461,7 @@ export default function NavBar() {
 								border: PILL_BORDER,
 								boxShadow: PILL_SHADOW,
 							}}>
-							{getMobileItems().map((item, idx) => {
+							{mobileItems.map((item, idx) => {
 								const active = isActive(item.path);
 								return (
 									<button

@@ -45,22 +45,21 @@
       "recentUpdates": {
         "eyebrow": "最近更新",
         "title": "开发记录",
-        "subtitle": "这里会记录网站近期的功能更新、重构和修复。"
+        "subtitle": "这里会记录网站近期的功能更新、重构和修复。",
+        "expand": "展开更多",
+        "collapse": "收起"
       },
       "ws": {
         "name": "Weiss Schwarz",
-        "desc": "卡片查询、开包模拟与对战记录",
-        "count": "6 个工具"
+        "desc": "面向 WS 对战与收藏整理的实用工具。"
       },
       "mahjong": {
         "name": "麻将",
-        "desc": "役种分析、牌理与牌桌中枢",
-        "count": "3 个工具"
+        "desc": "日麻学习、牌理分析与线下桌面辅助。"
       },
       "tools": {
         "name": "通用工具",
-        "desc": "先后攻、骰子、棋钟等对战辅助",
-        "count": "3 个工具"
+        "desc": "适合多种桌游和对战场景的辅助工具。"
       }
     },
     "firstSecond": {
@@ -267,6 +266,8 @@
       "score": "分数",
       "dealer": "庄家",
       "currentDealer": "当前庄家",
+      "playerCount": "三麻/四麻",
+      "gameType": "东风/半庄/一荘",
       "name": "玩家名",
       "namePlaceholder": "可直接输入名字"
     },

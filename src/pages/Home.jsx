@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,11 +17,11 @@ import TuneIcon from "@mui/icons-material/Tune";
 import { GitHub as GitHubIcon, Email as EmailIcon } from "@mui/icons-material";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
-import { SITE_SECTIONS, getHomeChips } from "../config/siteStructure";
+import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
 import { RECENT_UPDATES, getLocalizedUpdateField } from "../data/recentUpdates";
 
 // ─── Section config ────────────────────────────────────────────────────────────
-// chipKeys are derived directly from section nav items.
+// Tool items are derived directly from section nav items.
 
 const SECTION_ICONS = {
 	ws: StyleIcon,
@@ -38,7 +38,10 @@ const SECTIONS = SITE_SECTIONS.map((section) => ({
 // ─── SectionCard ───────────────────────────────────────────────────────────────
 
 function SectionCard({ section, t, locale, onNavigate }) {
-	const { Icon, accent, path, chipKeys, homeImage } = section;
+	const { Icon, accent, path, toolItems, homeImage } = section;
+	const toolCountLabel = locale === "zh"
+		? `${toolItems.length} 个工具`
+		: `${toolItems.length} tool${toolItems.length !== 1 ? "s" : ""}`;
 
 	return (
 		<Box
@@ -110,7 +113,7 @@ function SectionCard({ section, t, locale, onNavigate }) {
 								<Typography
 									variant="caption"
 									sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
-									{chipKeys.length}{locale === 'zh' ? ' 个工具' : ` tool${chipKeys.length !== 1 ? 's' : ''}`}
+									{toolCountLabel}
 								</Typography>
 							</Box>
 						</Box>
@@ -126,10 +129,10 @@ function SectionCard({ section, t, locale, onNavigate }) {
 
 					{/* Chips */}
 					<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-						{chipKeys.map((chipKey) => (
+						{toolItems.map((item) => (
 							<Chip
-								key={chipKey}
-								label={t(chipKey)}
+								key={item.path}
+								label={t(item.labelKey)}
 								size="small"
 								variant="outlined"
 								sx={{
@@ -157,7 +160,10 @@ SectionCard.propTypes = {
 		labelKey: PropTypes.string.isRequired,
 		descKey: PropTypes.string.isRequired,
 		homeImage: PropTypes.string.isRequired,
-		chipKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
+		toolItems: PropTypes.arrayOf(PropTypes.shape({
+			labelKey: PropTypes.string.isRequired,
+			path: PropTypes.string.isRequired,
+		})).isRequired,
 	}).isRequired,
 	t: PropTypes.func.isRequired,
 	locale: PropTypes.string.isRequired,
@@ -167,7 +173,10 @@ SectionCard.propTypes = {
 // ─── Recent updates ───────────────────────────────────────────────────────────
 
 function RecentUpdates({ t, locale }) {
+	const [expanded, setExpanded] = useState(false);
 	const updates = RECENT_UPDATES;
+	const visibleUpdates = expanded ? updates : updates.slice(0, 2);
+	const hasHiddenUpdates = updates.length > 2;
 
 	if (updates.length === 0) return null;
 
@@ -216,7 +225,7 @@ function RecentUpdates({ t, locale }) {
 					</Typography>
 
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-						{updates.map((item, index) => (
+						{visibleUpdates.map((item, index) => (
 							<Box
 								key={`${item.date}-${item.title}`}
 								sx={{
@@ -250,6 +259,29 @@ function RecentUpdates({ t, locale }) {
 							</Box>
 						))}
 					</Box>
+					{hasHiddenUpdates && (
+						<Box sx={{ display: "flex", justifyContent: "center", mt: 2.25 }}>
+							<button
+								type="button"
+								onClick={() => setExpanded((prev) => !prev)}
+								className="border-0 cursor-pointer rounded-full px-4 py-2 text-[12px] font-bold transition-all duration-150"
+								style={{
+									fontFamily: "inherit",
+									color: "var(--text-secondary)",
+									backgroundColor: "rgba(166,206,182,0.24)",
+								}}
+								onMouseEnter={(e) => {
+									e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.38)";
+								}}
+								onMouseLeave={(e) => {
+									e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.24)";
+								}}>
+								{expanded
+									? t("pages.home.recentUpdates.collapse")
+									: t("pages.home.recentUpdates.expand")}
+							</button>
+						</Box>
+					)}
 				</Box>
 			</Box>
 		</Fade>
@@ -270,7 +302,7 @@ export default function Home() {
 	const includeAuth = isAuthenticated();
 	const sections = SECTIONS.map((section) => ({
 		...section,
-		chipKeys: getHomeChips(section, includeAuth),
+		toolItems: getSectionToolItems(section, includeAuth),
 	}));
 
 	return (

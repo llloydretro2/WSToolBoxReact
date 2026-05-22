@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records), Riichi Mahjong tools (yaku trainer, efficiency analysis, centrepiece table board), and general game utilities (dice, chess clock). Domain: `cardtoolbox.org`.
+CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records, shuffle), Riichi Mahjong tools (yaku trainer, efficiency analysis, centrepiece table board), and general game utilities (first/second, dice, chess clock, audio board). Domain: `cardtoolbox.org`.
 
 ## Commands
 
@@ -43,9 +43,9 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 | Prefix | Section | Example routes |
 |--------|---------|----------------|
 | `/` | Hub (game selector) | `/` |
-| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/audio`, `/ws/shuffle` |
+| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/shuffle` |
 | `/mahjong/*` | Mahjong | `/mahjong/trainer`, `/mahjong/efficiency`, `/mahjong/centrepiece` |
-| `/tools/*` | General tools | `/tools/first-second`, `/tools/dice`, `/tools/clock` |
+| `/tools/*` | General tools | `/tools/first-second`, `/tools/dice`, `/tools/clock`, `/tools/audio` |
 | `/login` | Auth | `/login` |
 
 Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new paths via `<Navigate replace>` in `App.jsx`.
@@ -104,8 +104,9 @@ Dead theme files removed: `src/hooks/useTheme.js`, `src/hooks/useThemeVariables.
 Tailwind is configured with `corePlugins.preflight: false` so it does not reset MUI's global styles. Config: `tailwind.config.js` + `postcss.config.js`. Directives are at the top of `src/index.css`.
 
 - **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
-- **WS pages** (CardList, Record, AudioBoard, etc.) — remain MUI.
-- **New sections** (Mahjong, Tools, Hub) — use Tailwind + shadcn/ui as they are built or redesigned.
+- **WS pages** (CardList, PickPacks, Simulator, RandomShuffle, Record, etc.) — remain mostly MUI.
+- **General tool pages** include FirstSecond, Dice, ChessClock, and AudioBoard; these are still mostly MUI except where individually redesigned.
+- **Mahjong pages and NavBar** — Tailwind-first. `/mahjong/centrepiece` is a special transparent fixed board below the NavBar.
 
 ## Page layout conventions
 
@@ -129,7 +130,7 @@ Every MUI page must follow this standard structure:
 - **Never use manual `Box sx={{ width: "80%", mx: "auto" }}`** as a layout container — use `Container`.
 - `maxWidth="lg"` for full-feature pages (Record, CardList).
 - `maxWidth="md"` for single-focus tool pages (Dice, ChessClock, RandomShuffle, Simulator, PickPacks, AudioBoard, MahjongTrainer).
-- `/mahjong/centrepiece` is a full-screen table tool and intentionally bypasses the standard `PageTransition` spacing wrapper in `App.jsx`.
+- `/mahjong/centrepiece` is a fixed table centrepiece below the NavBar and intentionally bypasses the standard `PageTransition` spacing wrapper in `App.jsx`.
 - `maxWidth="sm"` for single-form pages (Login).
 - The Hub page (`/`) does **not** follow this pattern — it is a custom Tailwind layout with game-selector cards.
 
@@ -195,13 +196,15 @@ A beginner-oriented Riichi Mahjong yaku-awareness tool at `/mahjong/trainer`.
 
 ### UI stack — Mahjong pages are Tailwind-only, zero MUI
 
-All mahjong files use **Tailwind CSS only**. No MUI components, no `sx` props, no `var(--primary)` or other WS theme colours. Background is plain white. The WS background image (`/bg.webp`) is scoped to `/ws/*` via `WSBackground` in `App.jsx` and must not appear on mahjong pages.
+All mahjong files use **Tailwind CSS only**. No MUI components, no `sx` props, no `var(--primary)` or other WS theme colours. Most mahjong pages use a plain white background; `/mahjong/centrepiece` is the exception and keeps its page background transparent so the route background remains visible.
 
-**Button style (mahjong pages):** all action buttons use the black rounded-full pill:
+**Button style (mahjong trainer/efficiency pages):** action buttons use the black rounded-full pill:
 ```jsx
 className="text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors"
 ```
 Disabled state: `text-gray-300 cursor-not-allowed` (no background). Do not use bordered/rectangular buttons or MUI `Button` on mahjong pages.
+
+Exception: `/mahjong/centrepiece` follows the upstream `mahtools/riichi-centrepiece` style and intentionally uses transparent, borderless controls.
 
 ### Calculation engine (`src/utils/mahjong/`)
 
@@ -255,7 +258,7 @@ Data sourced from riichi.wiki, MahjongRepository/mahjong, and Tenhou-aligned uke
 
 - ~~**`extractHandGroups` is first-decomposition-only**~~ — **Fixed (session 8)**: `extractAllHandGroups` now enumerates all valid decompositions (cap 20). All scenario-generation paths use it.
 - **No ukeire in trainer** — the trainer page does not enumerate effective tiles; use `/mahjong/efficiency` for that.
-- **No scoring** — no fu/han/point calculation, no riichi/dora/ippatsu mechanics.
+- **No full scoring workflow in trainer** — completed hands can display basic fu/han/point output, but there is no riichi/dora/ippatsu or full win-condition flow.
 - ~~**Pinfu wait check simplified**~~ — **Fixed (session 8)**: `checkRyanmenWait` verifies the drawn tile gives two-sided (ryanmen) wait before creating a pinfu scenario.
 - **Sanankou win-method not enforced** — does not distinguish tsumo vs ron for the completing triplet.
 - **BFS draw candidates are per-yaku pruned** — may miss structural fixes needed from non-yaku tiles.
@@ -296,9 +299,15 @@ shanten(original - k + p) < originalShanten
 
 Algorithm extracted from Tenhou's `1008.js` (directly downloaded, not guessed). Cross-validated against MahjongRepository/mahjong Python reference. Run:
 
+```bash
+python3 validate-ukeire.py > /tmp/ukeire-reference.json
+node validate-ukeire.js
+npm run test:mahjong:core
+```
+
 ## Mahjong Centrepiece Page (`/mahjong/centrepiece`)
 
-Full-screen Riichi table state board inspired by `mahtools/riichi-centrepiece`. It tracks round wind, round number, honba, and seat winds for live table use.
+Lightweight Riichi table state board based on `mahtools/riichi-centrepiece`. It tracks round wind, round number, honba, and seat winds for live table use.
 
 | Item | Path |
 |------|------|
@@ -306,12 +315,12 @@ Full-screen Riichi table state board inspired by `mahtools/riichi-centrepiece`. 
 | Route | `/mahjong/centrepiece` |
 | NavBar entry | `menu.mahjongCentrepiece` in `src/config/siteStructure.js` |
 
-Implementation note: this page currently uses a lightweight 3x3 grid layout based on the upstream open-source project. It is usable as a full-screen tool, but the landscape/tablet UX still needs a dedicated redesign pass. Keep future work scoped to this page unless changing shared route shells is explicitly needed.
-```bash
-python3 validate-ukeire.py > /tmp/ukeire-reference.json
-node validate-ukeire.js
-npm run test:mahjong:core
-```
+Implementation notes:
+- Uses a 3x3 grid matching the upstream centrepiece pattern: four seat winds around the edges and current hand / honba in the centre.
+- It is **not** allowed to cover the NavBar. The root container is fixed with `top: clamp(64px, 9dvh, 80px)` and `bottom: 0`, so only the content area below the NavBar is occupied.
+- Keep the page background transparent and avoid visible panel backgrounds/borders, so the project route background can show through.
+- Current interactions are intentionally minimal: click hand to advance, click honba to increment, corner controls for dark mode, 3/4 players, game length, and reset.
+- Do not add scoring, riichi sticks, settlement flows, manual dealer assignment, or history unless explicitly requested; this page should stay closer to a centrepiece than a full score tracker.
 
 ---
 
@@ -321,17 +330,24 @@ npm run test:mahjong:core
 
 ### Section data source
 
-`src/config/siteStructure.js` is the single source of truth for section metadata, nav items, home card chips, and legacy redirects. `Home.jsx`, `NavBar.jsx`, and `App.jsx` consume this config.
+`src/config/siteStructure.js` is the single source of truth for section metadata, nav items, home card chips/counts, and legacy redirects. `Home.jsx`, `NavBar.jsx`, and `App.jsx` consume this config. Do not hardcode section tool counts or tool lists in locale files.
+
+Helper boundaries:
+- `getSectionToolItems(section, includeAuth)` returns the filtered nav/tool items for a section.
+- `getSectionToolCount(section, includeAuth)` and `getSectionToolLabelKeys(section, includeAuth)` derive display data from those items.
+- Use these helpers in Home/NavBar instead of duplicating auth filtering or chip derivation.
 
 ### Layout
 
 - **Floating pill** — `position: fixed`, `pointer-events-none` on the outer header so content scrolls under the margins; each pill has `pointer-events-auto`.
 - **Primary pill** — 3-column CSS grid (`auto 1fr auto`): brand+chip | centered desktop nav | lang toggle + auth.
 - **Mobile dropdown** — game sections only. Hamburger button opens a framer-motion height animation dropdown from the primary pill.
+- **Mobile brand state** — on `/ws/*`, `/mahjong/*`, and `/tools/*`, the left brand button shows a back arrow plus the app title, with the current section name as a small muted subtitle underneath. The arrow and title both navigate to `/`. Show the section label, not the concrete tool/page label.
+- **Mobile brand animation** — the back arrow and section subtitle use `AnimatePresence` with short opacity/position transitions when entering or leaving section pages. Keep this animation subtle and local to the brand area.
 
 ### Nav configs
 
-Nav items come from `SITE_SECTIONS`. Desktop preserves grouped dropdowns for `type: "group"` items; mobile uses `flattenNavItems(...)`. Auth-only links, such as `/ws/record`, use `authRequired: true`.
+Nav items come from `SITE_SECTIONS`. Desktop preserves grouped dropdowns for `type: "group"` items; mobile uses `getSectionToolItems(...)`. Auth-only links, such as `/ws/record`, use `authRequired: true`.
 
 ### Language toggle
 

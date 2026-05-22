@@ -45,22 +45,21 @@
       "recentUpdates": {
         "eyebrow": "Recent Updates",
         "title": "Development Notes",
-        "subtitle": "Recent feature updates, refactors, and fixes will be listed here."
+        "subtitle": "Recent feature updates, refactors, and fixes will be listed here.",
+        "expand": "Show more",
+        "collapse": "Show less"
       },
       "ws": {
         "name": "Weiss Schwarz",
-        "desc": "Card search, pack simulation & match records",
-        "count": "6 tools"
+        "desc": "Practical tools for WS play and collection lookup."
       },
       "mahjong": {
         "name": "Mahjong",
-        "desc": "Yaku trainer, efficiency, and a shared table centrepiece",
-        "count": "3 tools"
+        "desc": "Riichi learning, efficiency analysis, and table aids."
       },
       "tools": {
         "name": "General Tools",
-        "desc": "First/second, dice, chess clock and more",
-        "count": "3 tools"
+        "desc": "Reusable helpers for tabletop and match play."
       }
     },
     "firstSecond": {
@@ -267,6 +266,8 @@
       "score": "Score",
       "dealer": "Dealer",
       "currentDealer": "Current dealer",
+      "playerCount": "3-player / 4-player",
+      "gameType": "East / Half / Full",
       "name": "Player name",
       "namePlaceholder": "Type a name"
     },

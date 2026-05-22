@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-19 (session 9)
+> Last updated: 2026-05-22 (session 14)
 
 ## Deployment
 
@@ -13,6 +13,11 @@
 
 ## Completed work (merged to `main`)
 
+> Notes before editing this file:
+> - The sections below include historical session records. Treat the summary tables and the newest dated entries as current state.
+> - `src/config/siteStructure.js` is the source of truth for section nav items, home chips, home tool counts, and legacy redirects.
+> - Do not hardcode section tool counts or section tool lists in locale files.
+
 ### Mahjong tools
 
 A beginner-friendly Riichi Mahjong tool suite. See `CLAUDE.md` for full architecture details.
@@ -21,7 +26,7 @@ A beginner-friendly Riichi Mahjong tool suite. See `CLAUDE.md` for full architec
 |---|---|---|
 | Yaku route trainer | `/mahjong/trainer` | Active |
 | Efficiency / ukeire | `/mahjong/efficiency` | Active |
-| Table centrepiece | `/mahjong/centrepiece` | Initial implementation; landscape UX needs redesign |
+| Table centrepiece | `/mahjong/centrepiece` | Active; mahtools-style 3x3 centrepiece below NavBar |
 
 #### Yaku route trainer
 
@@ -46,7 +51,7 @@ A beginner-friendly Riichi Mahjong tool suite. See `CLAUDE.md` for full architec
 | Chanta bug fixed — closed all-triplet hands no longer show HIGH | ✅ |
 | FEASIBILITY_ACHIEVED upgrade logic standardised across all yaku | ✅ |
 
-**Known limitations (by design):** first-decomposition only (`extractHandGroups`), no ukeire, no scoring, simplified Pinfu wait check, Sanankou tsumo/ron not enforced.
+**Current trainer limitations (by design):** ukeire lives on the separate `/mahjong/efficiency` page; completed hands can show basic fu/han/point output but there is no full riichi/dora/ippatsu/win-condition workflow; Sanankou tsumo/ron is not enforced. Historical notes below may mention older limitations that were later fixed.
 
 ---
 
@@ -146,12 +151,14 @@ Expanded scope from a WS-only tool to a multi-game platform at `cardtoolbox.org`
 | `/pick_packs` | `/ws/packs` |
 | `/simulator` | `/ws/simulator` |
 | `/record` | `/ws/record` |
-| `/audio` | `/ws/audio` |
+| `/audio` | `/tools/audio` |
 | `/first_second` | `/tools/first-second` |
 | `/shuffle` | `/ws/shuffle` (moved from tools to WS) |
 | `/mahjong` | `/mahjong/trainer` |
 | `/dice` | `/tools/dice` |
 | `/chess_clock` | `/tools/clock` |
+
+Additional compatibility redirect: `/ws/audio` → `/tools/audio`.
 
 DeckCreate and DeckSearch were removed from routes and NavBar before being deleted entirely; there is no active redesign track for them now.
 
@@ -228,7 +235,7 @@ Replaced the plain equal-card layout with visually distinct section cards:
 - **Chips** tinted in each section's accent colour with matching border
 - **Hover**: `translateY(-5px)` + coloured shadow + accent border
 - Grid: `xs:12 md:4` — adding a new section just adds another card, no layout changes needed
-- Added `pages.home.*.count` locale keys to zh/en.json
+- Added `pages.home.*.count` locale keys to zh/en.json at the time; this was later removed because counts are now derived dynamically from `siteStructure.js`.
 
 #### Background images
 
@@ -403,13 +410,80 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 ### 麻将牌桌中枢初版 (2026-05-19 session 11)
 
 - **新增页面**：`/mahjong/centrepiece`，参考开源项目 `mahtools/riichi-centrepiece` 的 3x3 牌桌中心布局。
-- **导航接入**：`src/config/siteStructure.js` 的 Mahjong section 新增 `menu.mahjongCentrepiece`；首页麻将卡片自动显示 3 个工具。
+- **导航接入**：`src/config/siteStructure.js` 的 Mahjong section 新增 `menu.mahjongCentrepiece`；首页麻将卡片按 nav 结构自动显示工具 chips。
 - **路由接入**：`App.jsx` 新增 `/mahjong/centrepiece`，并保留 `/mahjong/centerpiece` → `/mahjong/centrepiece` 兼容跳转。
-- **当前状态**：页面支持四麻/三麻、东风/半庄/一荘、局数、本场和重置；当前版本是可用原型，不是最终横屏桌面形态。
+- **当前状态**：已被 session 12 的 mahtools-style 重做取代，保留为历史记录。
+
+---
+
+### 牌桌中枢 mahtools-style 重做 (2026-05-20 session 12)
+
+- **目标修正**：不再做强制横屏或覆盖整页的控制盘；页面只占用 NavBar 下方的内容区域，保持项目导航可见。
+- **参考实现**：按 `mahtools/riichi-centrepiece/index.html` 的核心模式重做，而不是扩展成完整记分器。
+- **当前交互**：
+  - 3x3 网格：四个座风在四边，中央显示当前局数与本场。
+  - 点击中央局数推进下一局；点击本场增加本场。
+  - 角落控制：明暗模式、三麻/四麻、东风/半庄/一荘、重置。
+  - 非初始状态下点击三麻/四麻或场制按钮会重置，与 upstream 行为一致。
+- **布局约束**：
+  - 根容器使用 `position: fixed; top: clamp(64px, 9dvh, 80px); bottom: 0`，固定在 NavBar 下方，避免页面上下滚动。
+  - 页面背景透明、无边框，让全局路由背景图透出。
+  - 不使用 MUI；保持 Tailwind-only。
+- **刻意不做**：暂不加入供托、分数、流局/荣和/自摸结算、手动设庄、历史栈，避免从“中枢”膨胀成完整记分器。
+
+---
+
+### 移动端 NavBar 子分区状态提示 (2026-05-20 session 12)
+
+- **目标**：移动端进入 `/ws/*`、`/mahjong/*`、`/tools/*` 任一子分区后，让用户明确知道左侧品牌区可返回首页，同时显示当前所在分区。
+- **实现**：
+  - `NavBar.jsx` 的品牌按钮在移动端子分区显示一个左箭头图标；点击箭头或“卡牌工具箱”标题均返回 `/`。
+  - 标题下方显示当前 section 名，而不是具体工具名：Weiss Schwarz / 麻将 / 通用工具。
+  - 桌面端保持原设计，仍使用 section chip 和桌面导航。
+- **动画**：
+  - 使用现有 `framer-motion` / `AnimatePresence`。
+  - 箭头进入/离开时做轻微横向位移 + opacity 过渡。
+  - section 小字进入/离开时做轻微纵向位移 + 高度展开/收起。
+  - 动画时长约 0.18s，使用 `[0.4, 0, 0.2, 1]` easing，保持轻量不抢注意力。
+
+---
+
+### 音效面板移入通用工具 (2026-05-20 session 12)
+
+- **路由调整**：`AudioBoard` 从 `/ws/audio` 移动到 `/tools/audio`。
+- **导航调整**：`menu.audio` 从 Weiss Schwarz 分区移除，加入通用工具分区。
+- **兼容跳转**：`/audio` 和旧的 `/ws/audio` 都重定向到 `/tools/audio`。
+- **首页同步**：通用工具卡片加入音效；首页工具数量和 chips 由 `siteStructure.js` 动态派生。
+
+---
+
+### 首页/导航数据边界清理 (2026-05-21 session 13)
+
+- **单一数据源**：`src/config/siteStructure.js` 继续作为 section、nav item、home chip、工具数量和 legacy redirect 的来源。
+- **派生 helper**：新增/使用 `getSectionToolItems()`、`getSectionToolCount()`、`getSectionToolLabelKeys()`，让 Home/NavBar 不再重复理解 nav 结构。
+- **首页卡片**：
+  - 工具数量由 `section.nav` 动态计算。
+  - 工具 chip 由 nav item 的 `labelKey` 动态翻译生成。
+  - section 简介保留为一句概览文案，不列出所有工具；具体工具交给 chips 展示。
+- **Locale 约束**：`zh.json` / `en.json` 只保留 section 名称和一句简介，不维护 `5 个工具`、`4 tools` 或工具清单。
+- **清理项**：删除/避免使用 `pages.home.*.count` 这类易过期 key；移动工具时只改 `siteStructure.js`，首页自动更新。
 
 ---
 
 ## Future backlog
 
+### Near-term candidates
+
+- **移动端 NavBar 实机校验**：当前动画和布局已在代码层收敛，但仍建议用真实手机尺寸重点检查 `/ws/*`、`/mahjong/*`、`/tools/*` 的进入/返回状态：标题是否换行合理、箭头点击区是否足够、下拉菜单是否和品牌区动画冲突。该项不应引入新设计，只做小幅 CSS 微调。
+- **首页组件拆分**：`Home.jsx` 已承担 section card、recent updates、contact links、布局容器等职责。建议先抽出 `SectionCard`、`RecentUpdates`、`ContactLinks` 到 `src/components/home/`，保持现有视觉不变，只降低页面文件复杂度。
+- **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少“移动一个工具但漏改首页/导航/跳转”的风险。
+- **AudioBoard 通用化文案检查**：音效面板已经移到 `/tools/audio`，后续需要确认页面文案、空状态、错误提示不再暗示它只属于 WS。这个优化应以 locale 文案和小范围 UI 文案为主，不改变播放器逻辑。
+
+### Documentation candidates
+
+- **文档结构进一步分层**：当前 `CLAUDE.md` 负责当前架构规则，`PROJECT.md` 同时保存当前状态和历史 session。后续可把较长历史迁移到 `docs/history.md`，把麻将引擎说明迁移到 `docs/mahjong-engine.md`，让 `PROJECT.md` 更聚焦当前状态、近期记录和 backlog。
+
+### Deferred / high-complexity
+
 - **CardList 分阶段拆分**：`CardList.jsx` 当前体积较大。后续如恢复查卡器数据更新或继续维护 WS 区，建议先抽 `useCardSearch()` hook，承接搜索请求、分页、loading、`result`、`form/draftForm` 等状态；再逐步拆 `CardSearchFilters`、`CardResultGrid`、`CardDetailDialog`、`RelatedCardsDialog`。该项复杂度较高，暂不作为近期任务。
-- **牌桌中枢横屏重做**：`/mahjong/centrepiece` 目前是参考 `riichi-centrepiece` 的初版 3x3 网格。后续需要按真实“横屏设备放在桌面中央”的使用场景重新设计，目标是全屏、横屏优先、触控面积大、信息只保留局数/本场/场风/座风，避免普通网站页面感。
+- **牌桌中枢后续增强（谨慎）**：当前 `/mahjong/centrepiece` 已按 `mahtools/riichi-centrepiece` 收敛为轻量中枢。后续如增强，优先保持 mahtools 的极简交互；只有用户明确要求时再考虑供托、分数、流局/和牌结算或手动设庄。

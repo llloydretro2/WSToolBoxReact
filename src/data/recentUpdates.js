@@ -15,6 +15,42 @@ export const RECENT_UPDATES = [
 		},
 	},
 	{
+		id: "audio-moved-to-tools",
+		date: "2026-05-20",
+		title: {
+			zh: "音效移入通用工具",
+			en: "Audio Moved to General Tools",
+		},
+		body: {
+			zh: "音效面板已从 Weiss Schwarz 分区移动到通用工具分区，旧的 /audio 和 /ws/audio 链接会自动跳转到新的 /tools/audio。",
+			en: "The audio board moved from the Weiss Schwarz section to General Tools. Old /audio and /ws/audio links now redirect to /tools/audio.",
+		},
+	},
+	{
+		id: "mobile-navbar-section-state",
+		date: "2026-05-20",
+		title: {
+			zh: "移动端导航优化",
+			en: "Mobile Navigation Polish",
+		},
+		body: {
+			zh: "移动端进入 WS、麻将或通用工具子页面时，导航左侧会显示返回箭头和当前分区名，并加入轻量过渡动画，让返回首页和识别当前分区更直观。",
+			en: "On mobile section pages, the navbar now shows a back arrow and the current section name with a subtle transition, making it clearer how to return home and where you are.",
+		},
+	},
+	{
+		id: "mahjong-centrepiece-mahtools",
+		date: "2026-05-20",
+		title: {
+			zh: "牌桌中枢重做",
+			en: "Mahjong Centrepiece Rework",
+		},
+		body: {
+			zh: "牌桌中枢已按 mahtools/riichi-centrepiece 的 3x3 中心盘模式重做：保留座风、局数、本场和轻量设置，并固定在导航栏下方，背景保持透明。",
+			en: "The Mahjong centrepiece was rebuilt around the mahtools/riichi-centrepiece 3x3 pattern, keeping seat winds, hand, honba, and lightweight settings below the navbar with a transparent background.",
+		},
+	},
+	{
 		id: "site-structure",
 		date: "2026-05-19",
 		title: {

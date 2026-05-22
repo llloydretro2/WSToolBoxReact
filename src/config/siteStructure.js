@@ -12,7 +12,6 @@ export const SITE_SECTIONS = [
 			{ type: "link", labelKey: "menu.pickPacks", path: "/ws/packs" },
 			{ type: "link", labelKey: "menu.simulator", path: "/ws/simulator" },
 			{ type: "link", labelKey: "menu.shuffle", path: "/ws/shuffle" },
-			{ type: "link", labelKey: "menu.audio", path: "/ws/audio" },
 			{
 				type: "link",
 				labelKey: "menu.record",
@@ -61,6 +60,7 @@ export const SITE_SECTIONS = [
 			},
 			{ type: "link", labelKey: "menu.dice", path: "/tools/dice" },
 			{ type: "link", labelKey: "menu.chessClock", path: "/tools/clock" },
+			{ type: "link", labelKey: "menu.audio", path: "/tools/audio" },
 		],
 	},
 ];
@@ -70,7 +70,8 @@ export const LEGACY_REDIRECTS = [
 	{ from: "/pick_packs", to: "/ws/packs" },
 	{ from: "/simulator", to: "/ws/simulator" },
 	{ from: "/record", to: "/ws/record" },
-	{ from: "/audio", to: "/ws/audio" },
+	{ from: "/audio", to: "/tools/audio" },
+	{ from: "/ws/audio", to: "/tools/audio" },
 	{ from: "/first_second", to: "/tools/first-second" },
 	{ from: "/ws/first-second", to: "/tools/first-second" },
 	{ from: "/mahjong", to: "/mahjong/trainer" },
@@ -98,6 +99,23 @@ export function flattenNavItems(nav, includeAuth = false) {
 	});
 }
 
+export function getSectionToolItems(section, includeAuth = false) {
+	if (!section?.nav) return [];
+	return flattenNavItems(section.nav, includeAuth);
+}
+
+export function getSectionToolCount(section, includeAuth = false) {
+	return getSectionToolItems(section, includeAuth).length;
+}
+
+export function getSectionToolLabelKeys(section, includeAuth = false) {
+	return getSectionToolItems(section, includeAuth).map((item) => item.labelKey);
+}
+
 export function getHomeChips(section, includeAuth = false) {
-	return flattenNavItems(section.nav, includeAuth).map((item) => item.labelKey);
+	return getSectionToolLabelKeys(section, includeAuth);
+}
+
+export function getSectionLabelKeyByPath(pathname) {
+	return getSectionByPath(pathname)?.labelKey ?? null;
 }

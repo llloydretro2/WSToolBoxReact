@@ -113,9 +113,8 @@ function AnimatedRoutes() {
 						</ProtectedRoute>
 					}
 				/>
-				<Route path="/ws/audio" element={withPageTransition(AudioBoard)} />
 				<Route path="/tools/first-second" element={withPageTransition(FirstSecond)} />
-			<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
+				<Route path="/ws/shuffle" element={withPageTransition(RandomShuffle)} />
 
 				{/* Mahjong */}
 				<Route path="/mahjong/trainer"    element={withPageTransition(MahjongTrainer)} />
@@ -125,6 +124,7 @@ function AnimatedRoutes() {
 				{/* Tools */}
 				<Route path="/tools/dice" element={withPageTransition(Dice)} />
 				<Route path="/tools/clock" element={withPageTransition(ChessClock)} />
+				<Route path="/tools/audio" element={withPageTransition(AudioBoard)} />
 	
 				{/* Auth */}
 				<Route path="/login" element={withPageTransition(LoginPage)} />
