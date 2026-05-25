@@ -1,66 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
-import {
-	interpolateSpectral,
-	interpolateRainbow,
-	interpolateViridis,
-} from "d3-scale-chromatic";
 import { Combobox } from "@headlessui/react";
-import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown } from "lucide-react";
+import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown, Trash2, TrendingUp, LayoutGrid, Layers } from "lucide-react";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
-import {
-	Box,
-	Typography,
-	Paper,
-	CircularProgress,
-	MenuItem,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	DialogContentText,
-	DialogTitle,
-	Switch,
-	FormControlLabel,
-	Card,
-	CardContent,
-	CardActions,
-	IconButton,
-	Chip,
-	Avatar,
-	Tooltip,
-	Grid,
-	Fab,
-	Divider,
-	Menu,
-	MenuItem as MenuItemMui,
-	ListItemIcon,
-	ListItemText,
-} from "@mui/material";
-import {
-	Delete as DeleteIcon,
-	EmojiEvents as TrophyIcon,
-	Casino as DeckIcon,
-	Settings as SettingsIcon,
-	TableChart as TableIcon,
-	Visibility as VisibilityIcon,
-	VisibilityOff as VisibilityOffIcon,
-	Analytics as AnalyticsIcon,
-} from "@mui/icons-material";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import {
-	PrimaryButton,
-	SecondaryButton,
-	DangerButton,
-	GenerateButton,
-	SubtleButton,
-} from "../components/ButtonVariants";
 import { useOptions } from "../contexts/OptionsContext";
-import Chart from "react-apexcharts";
 
 function SeriesCombobox({ value, onChange, label, id, name }) {
 	const { productList, translationMap } = useOptions();
@@ -278,321 +223,195 @@ const Record = () => {
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
 
-	// 浮动按钮菜单状态
-	const [fabMenuAnchor, setFabMenuAnchor] = useState(null);
-	const fabMenuOpen = Boolean(fabMenuAnchor);
+	// 分析对话框
+	const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+	const [analysisTab, setAnalysisTab] = useState(0);
+	const [seriesSort, setSeriesSort] = useState("total");
+	const [trendPeriod, setTrendPeriod] = useState("month");
+	const [deckFilter, setDeckFilter] = useState(null);
 
-	// 对话框状态
-	const [playerChartDialogOpen, setPlayerChartDialogOpen] = useState(false);
-	const [opponentChartDialogOpen, setOpponentChartDialogOpen] = useState(false);
-	const [battleStatsDialogOpen, setBattleStatsDialogOpen] = useState(false);
-	const [seriesStats, setSeriesStats] = useState([]);
-	const [opponentSeriesStats, setOpponentSeriesStats] = useState([]);
+	const filteredRecords = useMemo(() => {
+		if (!deckFilter) return records;
+		return records.filter(
+			(rec) =>
+				(rec.playerSeries || "") === deckFilter.series &&
+				(rec.playerDeckName || "") === deckFilter.deck
+		);
+	}, [records, deckFilter]);
 
-	const totalMatches = records.length;
+	const totalMatches = filteredRecords.length;
 
 	const wins = useMemo(
-		() => records.filter((record) => record.result === "win").length,
-		[records]
+		() => filteredRecords.filter((record) => record.result === "win").length,
+		[filteredRecords]
 	);
 	const losses = useMemo(
-		() => records.filter((record) => record.result === "lose").length,
-		[records]
-	);
-	const draws = useMemo(
-		() => records.filter((record) => record.result === "doubleLose").length,
-		[records]
+		() => filteredRecords.filter((record) => record.result === "lose").length,
+		[filteredRecords]
 	);
 	const winRate = totalMatches
 		? ((wins / totalMatches) * 100).toFixed(1)
 		: "0.0";
 
-	const playerSeriesSummary = useMemo(() => {
-		const noDataLabel = t("record.stats.noData");
-		const unknownSeriesLabel = t("record.display.unknownSeries");
-
-		if (!records.length) {
-			return {
-				counts: {},
-				topSeries: noDataLabel,
-				topCount: 0,
-				totalSeries: 0,
-			};
-		}
-
-		const counts = records.reduce((acc, rec) => {
-			const key = rec.playerSeries || unknownSeriesLabel;
-			acc[key] = (acc[key] || 0) + 1;
-			return acc;
-		}, {});
-
-		const [topSeries, topCount] = Object.entries(counts).sort(
-			(a, b) => b[1] - a[1]
-		)[0] || [noDataLabel, 0];
-
-		return {
-			counts,
-			topSeries,
-			topCount,
-			totalSeries: Object.keys(counts).length,
-		};
+	const mySeriesWinRate = useMemo(() => {
+		const unknownLabel = t("record.display.unknownSeries");
+		const map = {};
+		records.forEach((rec) => {
+			const key = rec.playerSeries || unknownLabel;
+			if (!map[key]) map[key] = { total: 0, wins: 0, losses: 0, draws: 0 };
+			map[key].total++;
+			if (rec.result === "win") map[key].wins++;
+			else if (rec.result === "lose") map[key].losses++;
+			else map[key].draws++;
+		});
+		return Object.entries(map)
+			.map(([name, s]) => ({
+				name,
+				...s,
+				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
+			}))
+			.sort((a, b) => b.total - a.total);
 	}, [records, t]);
 
-	const opponentSeriesSummary = useMemo(() => {
-		const noDataLabel = t("record.stats.noData");
-		const unknownSeriesLabel = t("record.display.unknownSeries");
-
-		if (!records.length) {
-			return {
-				counts: {},
-				topSeries: noDataLabel,
-				topCount: 0,
-				totalSeries: 0,
-			};
-		}
-
-		const counts = records.reduce((acc, rec) => {
-			const key = rec.opponentSeries || unknownSeriesLabel;
-			acc[key] = (acc[key] || 0) + 1;
-			return acc;
-		}, {});
-
-		const [topSeries, topCount] = Object.entries(counts).sort(
-			(a, b) => b[1] - a[1]
-		)[0] || [noDataLabel, 0];
-
-		return {
-			counts,
-			topSeries,
-			topCount,
-			totalSeries: Object.keys(counts).length,
-		};
+	const opponentSeriesWinRate = useMemo(() => {
+		const unknownLabel = t("record.display.unknownSeries");
+		const map = {};
+		records.forEach((rec) => {
+			const key = rec.opponentSeries || unknownLabel;
+			if (!map[key]) map[key] = { total: 0, wins: 0, losses: 0, draws: 0 };
+			map[key].total++;
+			if (rec.result === "win") map[key].wins++;
+			else if (rec.result === "lose") map[key].losses++;
+			else map[key].draws++;
+		});
+		return Object.entries(map)
+			.map(([name, s]) => ({
+				name,
+				...s,
+				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
+			}))
+			.sort((a, b) => b.total - a.total);
 	}, [records, t]);
 
-	const basicStatsLines = useMemo(
-		() => [
-			t("record.stats.totalMatches", { count: totalMatches }),
-			t("record.stats.wins", { count: wins }),
-			t("record.stats.losses", { count: losses }),
-			t("record.stats.draws", { count: draws }),
-			totalMatches
-				? t("record.stats.winRateDetailed", {
-						percentage: winRate,
-						wins,
-						losses,
-						draws,
-				  })
-				: t("record.stats.winRateEmpty"),
-		],
-		[totalMatches, wins, losses, draws, winRate, t]
-	);
+	const recentForm = useMemo(() => records.slice(0, 15).reverse(), [records]);
 
-	const playerSeriesLines = useMemo(
-		() => [
-			playerSeriesSummary.topCount > 0
-				? t("record.stats.playerTop", {
-						series: playerSeriesSummary.topSeries,
-						count: playerSeriesSummary.topCount,
-				  })
-				: t("record.stats.playerTopEmpty"),
-			playerSeriesSummary.totalSeries > 0
-				? t("record.stats.playerTotal", {
-						count: playerSeriesSummary.totalSeries,
-				  })
-				: t("record.stats.playerTotalEmpty"),
-		],
-		[playerSeriesSummary, t]
-	);
-
-	const opponentSeriesLines = useMemo(
-		() => [
-			opponentSeriesSummary.topCount > 0
-				? t("record.stats.opponentTop", {
-						series: opponentSeriesSummary.topSeries,
-						count: opponentSeriesSummary.topCount,
-				  })
-				: t("record.stats.opponentTopEmpty"),
-			opponentSeriesSummary.totalSeries > 0
-				? t("record.stats.opponentTotal", {
-						count: opponentSeriesSummary.totalSeries,
-				  })
-				: t("record.stats.opponentTotalEmpty"),
-		],
-		[opponentSeriesSummary, t]
-	);
-
-	const StatSection = ({ title, lines }) => (
-		<Box
-			sx={{
-				border: "1px solid",
-				borderColor: "divider",
-				borderRadius: 2,
-				p: 2,
-				mb: 3,
-				backgroundColor: "background.paper",
-			}}>
-			<Typography
-				variant="subtitle1"
-				fontWeight="bold"
-				sx={{ mb: 1 }}>
-				{title}
-			</Typography>
-			<Box
-				component="ul"
-				sx={{ pl: 2.5, m: 0 }}>
-				{lines.map((line, index) => (
-					<Typography
-						component="li"
-						variant="body2"
-						sx={{ lineHeight: 1.7 }}
-						key={`${title}-${index}`}>
-						{line}
-					</Typography>
-				))}
-			</Box>
-		</Box>
-	);
-
-	StatSection.propTypes = {
-		title: PropTypes.string.isRequired,
-		lines: PropTypes.array.isRequired,
-	};
-
-	// 生成饼图颜色 - 使用d3颜色方案
-	const generateColors = (count) => {
-		if (count <= 1) return ["#8884d8"];
-
-		// 方案1: 彩虹色方案 - 适合大量数据
-		if (count > 20) {
-			return Array.from({ length: count }, (_, i) =>
-				interpolateRainbow(i / Math.max(count - 1, 1))
-			);
+	const currentStreak = useMemo(() => {
+		if (!records.length) return null;
+		const first = records[0].result;
+		let count = 0;
+		for (const rec of records) {
+			if (rec.result === first) count++;
+			else break;
 		}
+		return { result: first, count };
+	}, [records]);
 
-		// 方案2: 光谱色方案 - 适合中等数量数据
-		if (count > 10) {
-			return Array.from({ length: count }, (_, i) =>
-				interpolateSpectral(i / Math.max(count - 1, 1))
-			);
+	const longestWinStreak = useMemo(() => {
+		if (!records.length) return 0;
+		let max = 0, cur = 0;
+		const sorted = [...records].sort(
+			(a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+		);
+		for (const rec of sorted) {
+			if (rec.result === "win") { cur++; if (cur > max) max = cur; }
+			else cur = 0;
 		}
+		return max;
+	}, [records]);
 
-		// 方案3: Viridis色方案 - 适合少量数据
-		if (count > 5) {
-			return Array.from({ length: count }, (_, i) =>
-				interpolateViridis(i / Math.max(count - 1, 1))
-			);
-		}
+	const trendData = useMemo(() => {
+		if (!records.length) return [];
+		const groups = {};
+		records.forEach((rec) => {
+			const date = new Date(rec.timestamp);
+			let key;
+			if (trendPeriod === "week") {
+				const d = new Date(date);
+				d.setHours(0, 0, 0, 0);
+				d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // Monday
+				key = d.toISOString().split("T")[0];
+			} else {
+				key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+			}
+			if (!groups[key]) groups[key] = { total: 0, wins: 0 };
+			groups[key].total++;
+			if (rec.result === "win") groups[key].wins++;
+		});
+		return Object.entries(groups)
+			.sort(([a], [b]) => a.localeCompare(b))
+			.map(([key, s]) => ({
+				key,
+				...s,
+				winRate: s.total > 0 ? (s.wins / s.total) * 100 : 0,
+				label: trendPeriod === "week"
+					? key.slice(5).replace("-", "/")
+					: key.slice(2).replace("-", "/"),
+			}));
+	}, [records, trendPeriod]);
 
-		// 方案4: 预定义基础颜色 - 适合少量数据
-		const baseColors = [
-			"#8884d8",
-			"#82ca9d",
-			"#ffc658",
-			"#ff7300",
-			"#8dd1e1",
-			"#d084d0",
-			"#ff8042",
-			"#00C49F",
-			"#FFBB28",
-			"#FF6B6B",
-			"#4ECDC4",
-			"#45B7D1",
-			"#96CEB4",
-			"#FFEAA7",
-			"#DDA0DD",
-			"#98D8C8",
-			"#F7DC6F",
-			"#BB8FCE",
-			"#85C1E9",
-			"#F8C471",
-		];
-		return baseColors.slice(0, count);
-	};
+	const matchupMatrix = useMemo(() => {
+		const unknownLabel = t("record.display.unknownSeries");
+		const matrix = {};
+		const mySeriesSet = new Set();
+		const oppSeriesSet = new Set();
+		records.forEach((rec) => {
+			const ms = rec.playerSeries || unknownLabel;
+			const os = rec.opponentSeries || unknownLabel;
+			mySeriesSet.add(ms);
+			oppSeriesSet.add(os);
+			if (!matrix[ms]) matrix[ms] = {};
+			if (!matrix[ms][os]) matrix[ms][os] = { total: 0, wins: 0 };
+			matrix[ms][os].total++;
+			if (rec.result === "win") matrix[ms][os].wins++;
+		});
+		const myRows = [...mySeriesSet].sort();
+		const oppCols = [...oppSeriesSet].sort();
+		return { matrix, myRows, oppCols };
+	}, [records, t]);
 
-	// 准备ApexCharts配置
-	const prepareChartOptions = (data, _title) => {
-		const total = data.reduce((sum, item) => sum + item.value, 0);
+	const deckData = useMemo(() => {
+		const unknownSeries = t("record.display.unknownSeries");
+		const unknownDeck = t("record.display.unknownDeck");
+		const map = {};
+		records.forEach((rec) => {
+			const series = rec.playerSeries || unknownSeries;
+			const deck = rec.playerDeckName || unknownDeck;
+			const key = `${series}\x00${deck}`;
+			if (!map[key]) map[key] = { series, deck, total: 0, wins: 0, losses: 0, draws: 0 };
+			map[key].total++;
+			if (rec.result === "win") map[key].wins++;
+			else if (rec.result === "lose") map[key].losses++;
+			else map[key].draws++;
+		});
+		return Object.entries(map)
+			.map(([, s]) => ({
+				name: `${s.series} / ${s.deck}`,
+				series: s.series,
+				deck: s.deck,
+				total: s.total, wins: s.wins, losses: s.losses, draws: s.draws,
+				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
+			}))
+			.sort((a, b) => b.total - a.total);
+	}, [records, t]);
 
-		return {
-			chart: {
-				type: "pie",
-				toolbar: {
-					show: false,
-				},
-			},
-			labels: data.map((item) => item.name),
-			colors: generateColors(data.length),
-			responsive: [
-				{
-					breakpoint: 768,
-					options: {
-						chart: {
-							width: 400,
-						},
-						legend: {
-							position: "bottom",
-						},
-					},
-				},
-				{
-					breakpoint: 480,
-					options: {
-						chart: {
-							width: 300,
-						},
-						legend: {
-							position: "bottom",
-						},
-					},
-				},
-			],
-			legend: {
-				position: "bottom",
-				formatter: function (seriesName, opts) {
-					const value = data[opts.seriesIndex].value;
-					const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-					return t("record.charts.legendFull", {
-						series: seriesName,
-						count: value,
-						percentage,
-					});
-				},
-			},
-			tooltip: {
-				y: {
-					formatter: function (value, { seriesIndex: _seriesIndex }) {
-						const percentage =
-							total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-						return t("record.charts.legendShort", {
-							count: value,
-							percentage,
-						});
-					},
-				},
-			},
-			dataLabels: {
-				enabled: true,
-				formatter: function (val, opts) {
-					const value = data[opts.seriesIndex].value;
-					return value.toString();
-				},
-			},
-			plotOptions: {
-				pie: {
-					donut: {
-						labels: {
-							show: false,
-						},
-					},
-				},
-			},
-		};
-	};
-
-	// 准备图表数据
-	const prepareChartSeries = (data) => {
-		return data.map((item) => item.value);
-	};
+	const tournamentData = useMemo(() => {
+		const map = {};
+		records.forEach((rec) => {
+			if (!rec.tournamentName) return;
+			const key = rec.tournamentName;
+			if (!map[key]) map[key] = { total: 0, wins: 0, losses: 0, draws: 0 };
+			map[key].total++;
+			if (rec.result === "win") map[key].wins++;
+			else if (rec.result === "lose") map[key].losses++;
+			else map[key].draws++;
+		});
+		return Object.entries(map)
+			.map(([name, s]) => ({
+				name, ...s,
+				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
+			}))
+			.sort((a, b) => b.total - a.total);
+	}, [records]);
 
 	const resetForm = () => {
 		setFormState({
@@ -637,32 +456,7 @@ const Record = () => {
 		updateFormField("opponentSeries", "");
 	};
 
-	// 处理浮动按钮菜单
-	const handleFabMenuOpen = (event) => {
-		setFabMenuAnchor(event.currentTarget);
-	};
 
-	const handleFabMenuClose = () => {
-		setFabMenuAnchor(null);
-	};
-
-	// 切换显示选项
-	const toggleDisplayOption = (option) => {
-		handleFabMenuClose();
-		switch (option) {
-			case "playerChart":
-				setPlayerChartDialogOpen(true);
-				break;
-			case "opponentChart":
-				setOpponentChartDialogOpen(true);
-				break;
-			case "battleStats":
-				setBattleStatsDialogOpen(true);
-				break;
-			default:
-				break;
-		}
-	};
 
 	const deleteRecord = async () => {
 		if (!deleteDialog.record) return;
@@ -685,6 +479,159 @@ const Record = () => {
 		}
 	};
 
+	const exportMatrixPNG = () => {
+		const { matrix, myRows, oppCols } = matchupMatrix;
+		if (!myRows.length || !oppCols.length) return;
+
+		const dpr = Math.min(window.devicePixelRatio || 1, 2);
+		const cellW = 76;
+		const cellH = 54;
+		const rowHeaderW = 112;
+		const colHeaderH = 64;
+		const pad = 24;
+		const titleH = 48;
+		const legendH = 28;
+
+		const logicalW = pad * 2 + rowHeaderW + oppCols.length * cellW;
+		const logicalH = pad + titleH + colHeaderH + myRows.length * cellH + legendH + pad;
+
+		const canvas = document.createElement("canvas");
+		canvas.width = logicalW * dpr;
+		canvas.height = logicalH * dpr;
+		const ctx = canvas.getContext("2d");
+		ctx.scale(dpr, dpr);
+
+		const roundedRect = (x, y, w, h, r) => {
+			ctx.beginPath();
+			ctx.moveTo(x + r, y);
+			ctx.lineTo(x + w - r, y);
+			ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+			ctx.lineTo(x + w, y + h - r);
+			ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+			ctx.lineTo(x + r, y + h);
+			ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+			ctx.lineTo(x, y + r);
+			ctx.quadraticCurveTo(x, y, x + r, y);
+			ctx.closePath();
+		};
+
+		const truncate = (str, maxW, font) => {
+			ctx.font = font;
+			if (ctx.measureText(str).width <= maxW) return str;
+			while (str.length > 1 && ctx.measureText(str + "…").width > maxW) str = str.slice(0, -1);
+			return str + "…";
+		};
+
+		// Background
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(0, 0, logicalW, logicalH);
+
+		// Title
+		ctx.fillStyle = "#35443b";
+		ctx.font = "bold 16px sans-serif";
+		ctx.textBaseline = "middle";
+		ctx.fillText(t("record.stats.matchupTitle"), pad, pad + titleH / 2);
+
+		const startX = pad + rowHeaderW;
+		const startY = pad + titleH + colHeaderH;
+
+		// Column headers
+		const colFont = "bold 11px sans-serif";
+		oppCols.forEach((col, ci) => {
+			const cx = startX + ci * cellW + cellW / 2;
+			ctx.save();
+			ctx.translate(cx, pad + titleH + colHeaderH - 10);
+			ctx.rotate(-Math.PI / 4);
+			ctx.fillStyle = "#52675a";
+			ctx.font = colFont;
+			ctx.textAlign = "left";
+			ctx.textBaseline = "middle";
+			ctx.fillText(truncate(col, 72, colFont), 0, 0);
+			ctx.restore();
+		});
+
+		// Grid lines
+		ctx.strokeStyle = "#e8f0eb";
+		ctx.lineWidth = 1;
+		myRows.forEach((_, ri) => {
+			const y = startY + ri * cellH;
+			ctx.beginPath();
+			ctx.moveTo(pad, y);
+			ctx.lineTo(logicalW - pad, y);
+			ctx.stroke();
+		});
+
+		// Rows
+		const rowLabelFont = "bold 11px sans-serif";
+		myRows.forEach((row, ri) => {
+			const y = startY + ri * cellH;
+			const cy = y + cellH / 2;
+
+			// Row label
+			ctx.fillStyle = "#0c120f";
+			ctx.font = rowLabelFont;
+			ctx.textAlign = "left";
+			ctx.textBaseline = "middle";
+			ctx.fillText(truncate(row, rowHeaderW - 8, rowLabelFont), pad, cy);
+
+			// Cells
+			oppCols.forEach((col, ci) => {
+				const x = startX + ci * cellW;
+				const cell = matrix[row]?.[col];
+
+				if (!cell) {
+					ctx.fillStyle = "#f4f8f5";
+					roundedRect(x + 3, y + 4, cellW - 6, cellH - 8, 6);
+					ctx.fill();
+					ctx.fillStyle = "#aac0b0";
+					ctx.font = "13px sans-serif";
+					ctx.textAlign = "center";
+					ctx.textBaseline = "middle";
+					ctx.fillText("—", x + cellW / 2, cy);
+					return;
+				}
+
+				const rate = cell.wins / cell.total;
+				const hue = Math.round(rate * 120);
+				ctx.fillStyle = `hsla(${hue}, 55%, 45%, 0.88)`;
+				roundedRect(x + 3, y + 4, cellW - 6, cellH - 8, 6);
+				ctx.fill();
+
+				ctx.fillStyle = "#ffffff";
+				ctx.font = "bold 14px sans-serif";
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				ctx.fillText(`${(rate * 100).toFixed(0)}%`, x + cellW / 2, cy - 6);
+
+				ctx.font = "10px sans-serif";
+				ctx.fillStyle = "rgba(255,255,255,0.78)";
+				ctx.fillText(`${cell.wins}/${cell.total}`, x + cellW / 2, cy + 9);
+			});
+		});
+
+		// Legend
+		const legendY = startY + myRows.length * cellH + 10;
+		const legendBarW = 100;
+		const legendStartX = logicalW - pad - legendBarW;
+		for (let i = 0; i < legendBarW; i++) {
+			const hue = Math.round((i / legendBarW) * 120);
+			ctx.fillStyle = `hsla(${hue}, 55%, 45%, 0.88)`;
+			ctx.fillRect(legendStartX + i, legendY, 1, 8);
+		}
+		ctx.fillStyle = "#52675a";
+		ctx.font = "10px sans-serif";
+		ctx.textAlign = "right";
+		ctx.textBaseline = "top";
+		ctx.fillText("0%", legendStartX - 4, legendY);
+		ctx.textAlign = "left";
+		ctx.fillText("100%", legendStartX + legendBarW + 4, legendY);
+
+		const link = document.createElement("a");
+		link.download = "matchup-matrix.png";
+		link.href = canvas.toDataURL("image/png");
+		link.click();
+	};
+
 	const getHistory = async () => {
 		try {
 			const res = await apiRequest(`/api/matches/history`);
@@ -698,33 +645,6 @@ const Record = () => {
 				return true;
 			});
 			setRecords(filtered);
-			const countMap = {};
-			const unknownSeriesLabel = t("record.display.unknownSeries");
-			filtered.forEach((rec) => {
-				const key = rec.playerSeries || unknownSeriesLabel;
-				countMap[key] = (countMap[key] || 0) + 1;
-			});
-			const statsArray = Object.entries(countMap)
-				.map(([name, value]) => ({
-					name,
-					value,
-				}))
-				.sort((a, b) => b.value - a.value);
-			setSeriesStats(statsArray);
-
-			// 敌方系列统计
-			const opponentMap = {};
-			filtered.forEach((rec) => {
-				const key = rec.opponentSeries || unknownSeriesLabel;
-				opponentMap[key] = (opponentMap[key] || 0) + 1;
-			});
-			const opponentStatsArray = Object.entries(opponentMap)
-				.map(([name, value]) => ({
-					name,
-					value,
-				}))
-				.sort((a, b) => b.value - a.value);
-			setOpponentSeriesStats(opponentStatsArray);
 		} catch (err) {
 			console.error("Error fetching match records:", err);
 		} finally {
@@ -740,7 +660,7 @@ const Record = () => {
 				</h1>
 			</div>
 
-			<div className="flex border-b border-[var(--border)] mb-6">
+			<div className="flex bg-[var(--card-background)] rounded-xl p-1 mb-6">
 				{[
 					{ index: 0, label: t("record.tabs.create") },
 					{ index: 1, label: t("record.tabs.query") },
@@ -759,10 +679,10 @@ const Record = () => {
 								void e;
 							}
 						}}
-						className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 -mb-px
+						className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all duration-200
 							${tabValue === index
-								? "border-[var(--text-muted)] text-[var(--text-muted)]"
-								: "border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]"
+								? "bg-white text-[var(--text-muted)] shadow-sm"
+								: "text-[var(--text-muted)] opacity-50 hover:opacity-80"
 							}`}
 					>
 						{label}
@@ -990,581 +910,575 @@ const Record = () => {
 			)}
 
 			{tabValue === 1 && (
-				<Box textAlign={"center"}>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: { xs: "column", sm: "row" },
-							justifyContent: "center",
-							alignItems: "center",
-							gap: 2,
-							mb: 2,
-							width: "100%",
-							px: 1,
-						}}>
-						<LocalizationProvider dateAdapter={AdapterDateFns}>
-							<DatePicker
-								label={t("record.form.startDate")}
-								value={startDate}
-								onChange={(newValue) => setAndSaveStartDate(newValue)}
-								slotProps={{
-									textField: {
-										id: "startDate",
-										fullWidth: true,
-										sx: { width: { xs: "100%", sm: "40%" } },
-									},
-								}}
+				<div>
+					{/* ── Filter bar ─────────────────────────────── */}
+					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
+						<div className="flex-1 flex flex-col gap-1.5">
+							<label htmlFor="startDate" className="text-[11px] font-bold text-[var(--text-secondary)]">
+								{t("record.form.startDate")}
+							</label>
+							<input
+								type="date"
+								id="startDate"
+								value={startDate ? startDate.toISOString().split("T")[0] : ""}
+								onChange={(e) => setAndSaveStartDate(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
+								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
 							/>
-							<DatePicker
-								label={t("record.form.endDate")}
-								value={endDate}
-								onChange={(newValue) => setAndSaveEndDate(newValue)}
-								slotProps={{
-									textField: {
-										id: "endDate",
-										fullWidth: true,
-										sx: { width: { xs: "100%", sm: "40%" } },
-									},
-								}}
+						</div>
+						<div className="flex-1 flex flex-col gap-1.5">
+							<label htmlFor="endDate" className="text-[11px] font-bold text-[var(--text-secondary)]">
+								{t("record.form.endDate")}
+							</label>
+							<input
+								type="date"
+								id="endDate"
+								value={endDate ? endDate.toISOString().split("T")[0] : ""}
+								onChange={(e) => setAndSaveEndDate(e.target.value ? new Date(e.target.value + "T23:59:59") : null)}
+								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
 							/>
-						</LocalizationProvider>
-						<PrimaryButton
-							variant="contained"
-							sx={{
-								width: { xs: "100%", sm: "20%" },
-								whiteSpace: "nowrap",
-							}}
-							onClick={() => {
-								setLoading(true);
-								getHistory();
-							}}>
+						</div>
+						<button
+							onClick={() => { setLoading(true); getHistory(); }}
+							className="py-2.5 px-5 rounded-xl bg-[var(--text-muted)] text-white font-bold text-sm hover:bg-[var(--text-secondary)] transition-colors whitespace-nowrap">
 							{t("record.form.filterButton")}
-						</PrimaryButton>
-					</Box>
+						</button>
+					</div>
 
-					<Dialog
-						open={deleteDialog.open}
-						onClose={() => setDeleteDialog({ open: false, record: null })}>
-						<DialogTitle>{t("record.deleteDialog.title")}</DialogTitle>
-						<DialogContent>
-							<DialogContentText>
-								{t("record.deleteDialog.content")}
-							</DialogContentText>
-						</DialogContent>
-						<DialogActions>
-							<SecondaryButton onClick={() => setDeleteDialog({ open: false, record: null })}>
-								{t("record.deleteDialog.cancel")}
-							</SecondaryButton>
-							<DangerButton
-								color="error"
-								onClick={() => {
-									deleteRecord();
-								}}>
-								{t("record.deleteDialog.confirm")}
-							</DangerButton>
-						</DialogActions>
-					</Dialog>
-					{loading ? (
-						<Box
-							sx={{
-								width: "100%",
-								display: "flex",
-								justifyContent: "center",
-								mt: 2,
-							}}>
-							<CircularProgress />
-						</Box>
-					) : records.length === 0 ? (
-						<Box
-							sx={{
-								textAlign: "center",
-								py: 8,
-								px: 2,
-								border: "1px solid var(--border)",
-								borderRadius: 2,
-								backgroundColor: "var(--card-background)",
-							}}>
-							<Typography variant="h6" fontWeight={600} color="var(--text)" gutterBottom>
-								{t("record.display.noRecords")}
-							</Typography>
-							<Typography variant="body2" color="text.secondary">
-								{t("record.display.startFirst")}
-							</Typography>
-						</Box>
-					) : (
-						<Grid
-							container
-							spacing={2}
-							sx={{ width: "100%" }}>
-							{records.map((record) => (
-								<Grid
-									size={{ xs: 12 }}
-									sx={{ width: "100%" }}
-									key={record._id}>
-									<Card
-										sx={{
-											display: "flex",
-											flexDirection: "column",
-											transition: "all 0.3s ease",
-											boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-											"&:hover": {
-												boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-												transform: "translateY(-2px)",
-											},
-											borderRadius: 2,
-											backgroundColor: "var(--surface)",
-											width: "100%",
-										}}>
-										{/* 卡片头部 - 比赛结果 */}
-										<Box
-											sx={{
-												p: 1.5,
-												backgroundColor:
-													record.result === "win"
-														? "var(--success)"
-														: record.result === "lose"
-														? "var(--error)"
-														: "var(--warning)",
-												color: "white",
-												display: "flex",
-												alignItems: "center",
-												justifyContent: "space-between",
-											}}>
-											<Box
-												sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-												<TrophyIcon />
-												<Typography
-													variant="h6"
-													fontWeight="bold">
-													{record.result === "win"
-														? t("record.form.result.win")
-														: record.result === "lose"
-														? t("record.form.result.lose")
-														: t("record.form.result.doubleLose")}
-												</Typography>
-											</Box>
-											<Typography
-												variant="caption"
-												sx={{ opacity: 0.9 }}>
-												{new Date(record.timestamp).toLocaleDateString()}
-											</Typography>
-										</Box>
-
-										<CardContent sx={{ flexGrow: 1, p: 1.5 }}>
-											{/* 比赛名称 */}
-											{record.tournamentName && (
-												<Box sx={{ mb: 1.5, textAlign: "center" }}>
-													<Chip
-														label={record.tournamentName}
-														color="info"
-														variant="filled"
-														size="small"
-														sx={{ fontWeight: "bold" }}
-													/>
-												</Box>
-											)}
-
-											{/* 玩家信息 */}
-											<Box sx={{ mb: 1.5 }}>
-												<Box
-													sx={{
-														display: "flex",
-														alignItems: "center",
-														gap: 1,
-														mb: 0.5,
-													}}>
-													<Typography
-														variant="caption"
-														color="text.secondary">
-														{t("record.display.myDeck")}
-													</Typography>
-												</Box>
-												<Typography
-													variant="body2"
-													fontWeight="medium"
-													sx={{ mb: 0.5 }}>
-													{record.playerDeckName ||
-														t("record.display.unknownDeck")}
-												</Typography>
-												<Chip
-													label={
-														record.playerSeries ||
-														t("record.display.unknownSeries")
-													}
-													size="small"
-													color="primary"
-													variant="outlined"
-												/>
-											</Box>
-
-											{/* VS 分隔符 */}
-											<Box
-												sx={{
-													display: "flex",
-													alignItems: "center",
-													justifyContent: "center",
-													my: 1,
-													position: "relative",
-												}}>
-												<Box
-													sx={{
-														width: "100%",
-														height: 1,
-														backgroundColor: "divider",
-													}}
-												/>
-												<Typography
-													variant="caption"
-													sx={{
-														position: "absolute",
-														backgroundColor: "background.paper",
-														px: 1,
-														color: "text.secondary",
-														fontWeight: "bold",
-													}}>
-													VS
-												</Typography>
-											</Box>
-
-											{/* 对手信息 */}
-											<Box sx={{ mb: 1.5 }}>
-												<Box
-													sx={{
-														display: "flex",
-														alignItems: "center",
-														gap: 1,
-														mb: 0.5,
-													}}>
-													<Typography
-														variant="caption"
-														color="text.secondary">
-														{t("record.display.opponentDeck")}
-													</Typography>
-												</Box>
-												<Typography
-													variant="body2"
-													fontWeight="medium"
-													sx={{ mb: 0.5 }}>
-													{record.opponentDeckName ||
-														t("record.display.unknownDeck")}
-												</Typography>
-												<Chip
-													label={
-														record.opponentSeries ||
-														t("record.display.unknownSeries")
-													}
-													size="small"
-													color="secondary"
-													variant="outlined"
-												/>
-											</Box>
-
-											{/* 备注信息 */}
-											{record.notes && (
-												<Box
-													sx={{
-														mt: 1.5,
-														p: 1,
-														backgroundColor: "grey.50",
-														borderRadius: 1,
-														border: "1px solid",
-														borderColor: "grey.200",
-													}}>
-													<Typography
-														variant="caption"
-														display="block"
-														color="text.secondary">
-														<strong>{t("record.display.notesLabel")}</strong>
-														{record.notes}
-													</Typography>
-												</Box>
-											)}
-										</CardContent>
-
-										<CardActions
-											sx={{
-												justifyContent: "space-between",
-												p: 1.5,
-												pt: 0,
-												borderTop: "1px solid",
-												borderColor: "divider",
-											}}>
-											<Typography
-												variant="caption"
-												color="text.secondary">
-												{new Date(record.timestamp).toLocaleString()}
-											</Typography>
-											<Tooltip title={t("record.display.deleteTooltip")}>
-												<IconButton
-													onClick={() => {
-														setDeleteDialog({ open: true, record: record });
-													}}
-													color="error"
-													size="small"
-													sx={{
-														"&:hover": {
-															backgroundColor: "error.light",
-															color: "white",
-														},
-													}}>
-													<DeleteIcon />
-												</IconButton>
-											</Tooltip>
-										</CardActions>
-									</Card>
-								</Grid>
-							))}
-						</Grid>
+					{/* ── Delete dialog ──────────────────────────── */}
+					{deleteDialog.open && (
+						<div
+							className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+							onClick={() => setDeleteDialog({ open: false, record: null })}>
+							<div
+								className="bg-white rounded-2xl shadow-xl p-6 w-80 mx-4 flex flex-col gap-4"
+								onClick={(e) => e.stopPropagation()}>
+								<div>
+									<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.deleteDialog.title")}</p>
+									<p className="text-sm text-[var(--text-secondary)]">{t("record.deleteDialog.content")}</p>
+								</div>
+								<div className="flex gap-2 justify-end">
+									<button
+										onClick={() => setDeleteDialog({ open: false, record: null })}
+										className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+										{t("record.deleteDialog.cancel")}
+									</button>
+									<button
+										onClick={deleteRecord}
+										className="px-4 py-2 rounded-lg text-sm font-bold bg-[var(--reset)] text-white hover:bg-[var(--reset-hover)] transition-colors">
+										{t("record.deleteDialog.confirm")}
+									</button>
+								</div>
+							</div>
+						</div>
 					)}
-				</Box>
+
+					{loading ? (
+						<div className="flex justify-center py-12">
+							<div className="w-8 h-8 rounded-full border-2 border-[var(--border)] border-t-[var(--text-muted)] animate-spin" />
+						</div>
+					) : records.length === 0 ? (
+						<div className="text-center py-12 px-4 border border-[var(--border)] rounded-2xl bg-[var(--card-background)]">
+							<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.display.noRecords")}</p>
+							<p className="text-sm text-[var(--text-secondary)]">{t("record.display.startFirst")}</p>
+						</div>
+					) : filteredRecords.length === 0 ? (
+						<div className="text-center py-12 px-4 border border-[var(--border)] rounded-2xl bg-[var(--card-background)]">
+							<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.display.noFilterResults")}</p>
+							<button onClick={() => setDeckFilter(null)} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors mt-1">
+								{t("record.display.clearFilter")}
+							</button>
+						</div>
+					) : (
+						<div className="flex flex-col gap-3">
+							{/* ── Deck filter chip ───────────────────── */}
+							{deckFilter && (
+								<div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--text-muted)] bg-[var(--card-background)]">
+									<div className="flex-1 min-w-0">
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)]">{t("record.stats.deckFilterLabel")}</span>
+										<p className="text-xs font-medium text-[var(--text)] truncate">{deckFilter.series} / {deckFilter.deck}</p>
+									</div>
+									<button
+										onClick={() => setDeckFilter(null)}
+										className="shrink-0 text-[var(--text-muted)] hover:text-[var(--reset)] transition-colors">
+										<XIcon size={14} />
+									</button>
+								</div>
+							)}
+							{/* ── Summary bar ────────────────────────── */}
+							<div className="grid grid-cols-4 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)] mb-5">
+								{[
+									{ value: totalMatches, label: t("record.stats.totalLabel"), color: "text-[var(--text)]" },
+									{ value: wins, label: t("record.stats.winsLabel"), color: "text-[#52b788]" },
+									{ value: losses, label: t("record.stats.lossesLabel"), color: "text-[#e05c5c]" },
+									{ value: `${winRate}%`, label: t("record.stats.winRateLabel"), color: "text-[var(--text-muted)]" },
+								].map(({ value, label, color }) => (
+									<div key={label} className="bg-white/70 backdrop-blur-md py-3 flex flex-col items-center gap-0.5">
+										<span className={`text-xl font-black ${color}`}>{value}</span>
+										<span className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+									</div>
+								))}
+							</div>
+
+							{/* ── Analysis actions ──────────────────────── */}
+						<div className="mb-5">
+							<div className="flex items-center gap-3 mb-3">
+								<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+									{t("record.stats.analysisLabel")}
+								</span>
+								<div className="flex-1 border-t border-[var(--border)]" />
+							</div>
+							<div className="grid grid-cols-3 gap-2">
+								{[
+									{ tab: 0, Icon: TrendingUp,  label: t("record.stats.tabForm") },
+									{ tab: 1, Icon: User,        label: t("record.stats.tabMySeries") },
+									{ tab: 2, Icon: Swords,      label: t("record.stats.tabOpponentSeries") },
+									{ tab: 3, Icon: LayoutGrid,  label: t("record.stats.tabMatchup") },
+									{ tab: 4, Icon: Trophy,      label: t("record.stats.tabTournament") },
+									{ tab: 5, Icon: Layers,      label: t("record.stats.tabDeck") },
+								].map(({ tab, Icon, label }) => (
+									<button
+										key={tab}
+										onClick={() => { setAnalysisTab(tab); setAnalysisDialogOpen(true); }}
+										className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border border-[var(--border)] bg-white/60 backdrop-blur-sm text-center hover:border-[var(--text-muted)] hover:bg-white/90 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+										<Icon size={15} className="text-[var(--text-muted)]" />
+										<span className="text-[10px] font-bold text-[var(--text-secondary)] leading-tight">{label}</span>
+									</button>
+								))}
+							</div>
+						</div>
+						{filteredRecords.map((record) => (
+								<div
+									key={record._id}
+									className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+									{/* Result header */}
+									<div className={`px-4 py-3 flex items-center justify-between text-white ${
+										record.result === "win" ? "bg-[#52b788]"
+										: record.result === "lose" ? "bg-[#e05c5c]"
+										: "bg-[#7b8fa1]"
+									}`}>
+										<div className="flex items-center gap-2">
+											<Trophy size={15} />
+											<span className="font-bold text-sm">
+												{record.result === "win" ? t("record.form.result.win")
+													: record.result === "lose" ? t("record.form.result.lose")
+													: t("record.form.result.doubleLose")}
+											</span>
+										</div>
+										<span className="text-xs opacity-90">{new Date(record.timestamp).toLocaleDateString()}</span>
+									</div>
+									{/* Card body */}
+									<div className="p-4">
+										{record.tournamentName && (
+											<div className="flex justify-center mb-3">
+												<span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[var(--card-background)] text-[var(--text-secondary)] border border-[var(--border)]">
+													{record.tournamentName}
+												</span>
+											</div>
+										)}
+										<div className="mb-3">
+											<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">{t("record.display.myDeck")}</p>
+											<p className="text-sm font-medium text-[var(--text)] mb-1.5">{record.playerDeckName || t("record.display.unknownDeck")}</p>
+											<span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[var(--text-muted)] text-[var(--text-muted)]">
+												{record.playerSeries || t("record.display.unknownSeries")}
+											</span>
+										</div>
+										<div className="flex items-center gap-3 my-3">
+											<div className="flex-1 border-t border-[var(--border)]" />
+											<span className="text-[10px] font-black tracking-widest text-[var(--text-muted)]">VS</span>
+											<div className="flex-1 border-t border-[var(--border)]" />
+										</div>
+										<div className="mb-1">
+											<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">{t("record.display.opponentDeck")}</p>
+											<p className="text-sm font-medium text-[var(--text)] mb-1.5">{record.opponentDeckName || t("record.display.unknownDeck")}</p>
+											<span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">
+												{record.opponentSeries || t("record.display.unknownSeries")}
+											</span>
+										</div>
+										{record.notes && (
+											<div className="mt-3 p-3 rounded-xl bg-[var(--card-background)] border border-[var(--border)]">
+												<p className="text-xs text-[var(--text-secondary)]">
+													<span className="font-bold">{t("record.display.notesLabel")}</span>{record.notes}
+												</p>
+											</div>
+										)}
+									</div>
+									{/* Footer */}
+									<div className="px-4 py-2.5 flex items-center justify-end border-t border-[var(--border)]">
+										<button
+											title={t("record.display.deleteTooltip")}
+											onClick={() => setDeleteDialog({ open: true, record: record })}
+											className="text-[var(--text-muted)] hover:text-[var(--reset)] transition-colors">
+											<Trash2 size={15} />
+										</button>
+									</div>
+							</div>
+							))}
+						</div>
+					)}
+				</div>
 			)}
 
-			{/* 我方系列分布对话框 */}
-			<Dialog
-				open={playerChartDialogOpen}
-				onClose={() => setPlayerChartDialogOpen(false)}
-				maxWidth="md"
-				fullWidth
-				sx={{
-					"& .MuiDialog-paper": {
-						borderRadius: 3,
-						maxHeight: "80vh",
-						minHeight: "500px",
-					},
-				}}>
-				<DialogTitle
-					sx={{
-						textAlign: "center",
-						background: "linear-gradient(135deg, #1b4332 0%, #2d5a42 100%)",
-						color: "white",
-						fontWeight: "bold",
-						fontSize: "1.25rem",
-					}}>
-					{t("record.charts.playerDialogTitle")}
-				</DialogTitle>
-				<DialogContent
-					sx={{
-						px: { xs: 2, sm: 3 },
-						py: { xs: 2, sm: 3 },
-						overflow: "hidden",
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						justifyContent: "center",
-					}}>
-					{seriesStats.length > 0 ? (
-						<Box
-							sx={{
-								width: "100%",
-								maxWidth: "600px",
-								margin: "0 auto",
-								textAlign: "center",
-							}}>
-							<Box
-								id="player-chart-container"
-								sx={{
-									width: "100%",
-									height: "350px",
-								}}>
-								<Chart
-									options={prepareChartOptions(
-										seriesStats,
-										t("record.charts.playerDialogTitle")
-									)}
-									series={prepareChartSeries(seriesStats)}
-									type="pie"
-									height="100%"
-								/>
-							</Box>
-						</Box>
-					) : (
-						<Typography
-							variant="body1"
-							align="center"
-							color="text.secondary">
-							{t("record.charts.noData")}
-						</Typography>
-					)}
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setPlayerChartDialogOpen(false)}>
-						{t("record.stats.close")}
-					</Button>
-				</DialogActions>
-			</Dialog>
+		{/* ── Unified analysis dialog ────────────────── */}
+		{analysisDialogOpen && (
+			<div
+				className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4"
+				onClick={() => setAnalysisDialogOpen(false)}>
+				<div
+					className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl bg-white"
+					onClick={(e) => e.stopPropagation()}>
 
-			{/* 敌方系列分布对话框 */}
-			<Dialog
-				open={opponentChartDialogOpen}
-				onClose={() => setOpponentChartDialogOpen(false)}
-				maxWidth="md"
-				fullWidth
-				sx={{
-					"& .MuiDialog-paper": {
-						borderRadius: 3,
-						maxHeight: "80vh",
-						minHeight: "500px",
-					},
-				}}>
-				<DialogTitle
-					sx={{
-						textAlign: "center",
-						background: "linear-gradient(135deg, #760f10 0%, #5c0f10 100%)",
-						color: "white",
-						fontWeight: "bold",
-						fontSize: "1.25rem",
-					}}>
-					{t("record.charts.opponentDialogTitle")}
-				</DialogTitle>
-				<DialogContent
-					sx={{
-						px: { xs: 2, sm: 3 },
-						py: { xs: 2, sm: 3 },
-						overflow: "hidden",
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						justifyContent: "center",
-					}}>
-					{opponentSeriesStats.length > 0 ? (
-						<Box
-							sx={{
-								width: "100%",
-								maxWidth: "600px",
-								margin: "0 auto",
-								textAlign: "center",
-							}}>
-							<Box
-								id="opponent-chart-container"
-								sx={{
-									width: "100%",
-									height: "350px",
-								}}>
-								<Chart
-									options={prepareChartOptions(
-										opponentSeriesStats,
-										t("record.charts.opponentDialogTitle")
-									)}
-									series={prepareChartSeries(opponentSeriesStats)}
-									type="pie"
-									height="100%"
-								/>
-							</Box>
-						</Box>
-					) : (
-						<Typography
-							variant="body1"
-							align="center"
-							color="text.secondary">
-							{t("record.charts.noData")}
-						</Typography>
-					)}
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setOpponentChartDialogOpen(false)}>
-						{t("record.stats.close")}
-					</Button>
-				</DialogActions>
-			</Dialog>
+					{/* Header */}
+					<div className="px-5 py-4 bg-[var(--text-muted)] flex items-center justify-between shrink-0">
+						<p className="font-bold text-base text-white">{t("record.stats.analysisTitle")}</p>
+						<button onClick={() => setAnalysisDialogOpen(false)} className="text-white/70 hover:text-white transition-colors">
+							<XIcon size={16} />
+						</button>
+					</div>
 
-			{/* 对战数据统计对话框 */}
-			<Dialog
-				open={battleStatsDialogOpen}
-				onClose={() => setBattleStatsDialogOpen(false)}
-				maxWidth="lg"
-				fullWidth
-				sx={{
-					"& .MuiDialog-paper": {
-						borderRadius: 3,
-						background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-					},
-				}}>
-				<DialogTitle
-					sx={{
-						textAlign: "center",
-						background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-						color: "white",
-						fontWeight: "bold",
-						fontSize: "1.5rem",
-						py: 3,
-						boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-					}}>
-					{t("record.stats.dialogTitle")}
-				</DialogTitle>
-				<DialogContent
-					sx={{
-						px: { xs: 2, sm: 4 },
-						py: { xs: 3, sm: 4 },
-						overflow: "auto",
-						maxHeight: "75vh",
-					}}>
-					{records.length > 0 ? (
-						<Box sx={{ width: "100%", mt: 2 }}>
-							<StatSection
-								title={t("record.stats.basicSection")}
-								lines={basicStatsLines}
-							/>
-							<StatSection
-								title={t("record.stats.playerSection")}
-								lines={playerSeriesLines}
-							/>
-							<StatSection
-								title={t("record.stats.opponentSection")}
-								lines={opponentSeriesLines}
-							/>
-						</Box>
-					) : (
-						<Box sx={{ textAlign: "center", py: 8 }}>
-							<Box
-								sx={{
-									width: 80,
-									height: 80,
-									borderRadius: "50%",
-									background:
-										"linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									margin: "0 auto 16px",
-									fontSize: "2rem",
-								}}>
-								📊
-							</Box>
-							<Typography
-								variant="h6"
-								color="text.secondary"
-								gutterBottom>
-								{t("record.stats.emptyStateTitle")}
-							</Typography>
-							<Typography
-								variant="body2"
-								color="text.secondary">
-								{t("record.stats.emptyStateSubtitle")}
-							</Typography>
-						</Box>
-					)}
-				</DialogContent>
-				<DialogActions sx={{ px: 3, pb: 3 }}>
-					<Button
-						variant="contained"
-						onClick={() => setBattleStatsDialogOpen(false)}
-						sx={{
-							background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-							borderRadius: 2,
-							px: 4,
-							py: 1,
-							fontWeight: "bold",
-							boxShadow: "0 4px 12px rgba(102, 126, 234, 0.3)",
-							"&:hover": {
-								boxShadow: "0 6px 20px rgba(102, 126, 234, 0.4)",
-								transform: "translateY(-1px)",
-							},
-							transition: "all 0.3s ease",
-						}}>
-						{t("record.stats.close")}
-					</Button>
-				</DialogActions>
-			</Dialog>
+					{/* Tab bar */}
+					<div className="px-5 pt-4 shrink-0">
+						<div className="flex bg-[var(--card-background)] rounded-xl p-1">
+							{[
+								{ idx: 0, label: t("record.stats.tabForm") },
+								{ idx: 1, label: t("record.stats.tabMySeries") },
+								{ idx: 2, label: t("record.stats.tabOpponentSeries") },
+								{ idx: 3, label: t("record.stats.tabMatchup") },
+							{ idx: 4, label: t("record.stats.tabTournament") },
+							{ idx: 5, label: t("record.stats.tabDeck") },
+							].map(({ idx, label }) => (
+								<button
+									key={idx}
+									onClick={() => setAnalysisTab(idx)}
+									className={`flex-1 py-1.5 text-xs rounded-lg font-bold transition-all duration-200 ${
+										analysisTab === idx
+											? "bg-white text-[var(--text-muted)] shadow-sm"
+											: "text-[var(--text-muted)] opacity-50 hover:opacity-80"
+									}`}>
+									{label}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{/* Content */}
+					<div className="flex-1 overflow-auto p-5">
+
+						{/* ── Tab 0: Recent Form ───────────────────── */}
+						{analysisTab === 0 && (
+							<div>
+								<div className="flex items-center gap-3 mb-2">
+									<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.recentFormTitle")}</span>
+									<div className="flex-1 border-t border-[var(--border)]" />
+								</div>
+								<p className="text-xs text-[var(--text-muted)] mb-4">{t("record.stats.recentFormDesc")}</p>
+								<div className="flex flex-wrap gap-1.5 mb-4">
+									{recentForm.length === 0 ? (
+										<p className="text-sm text-[var(--text-muted)]">{t("record.charts.noData")}</p>
+									) : recentForm.map((rec, i) => (
+										<div
+											key={rec._id || i}
+											title={new Date(rec.timestamp).toLocaleDateString()}
+											className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black select-none ${
+												rec.result === "win" ? "bg-[#52b788]"
+												: rec.result === "lose" ? "bg-[#e05c5c]"
+												: "bg-[#7b8fa1]"}`}>
+											{rec.result === "win" ? "W" : rec.result === "lose" ? "L" : "D"}
+										</div>
+									))}
+								</div>
+								{currentStreak && (
+									<div className="flex flex-wrap gap-2 mb-5">
+										<span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+											currentStreak.result === "win"
+												? "bg-[rgba(82,183,136,0.12)] text-[#3a9d6e]"
+												: currentStreak.result === "lose"
+												? "bg-[rgba(224,92,92,0.10)] text-[#c94444]"
+												: "bg-[rgba(123,143,161,0.10)] text-[#5a6f80]"}`}>
+											{currentStreak.result === "win"
+												? t("record.stats.streakWin", { count: currentStreak.count })
+												: currentStreak.result === "lose"
+												? t("record.stats.streakLose", { count: currentStreak.count })
+												: t("record.stats.streakDraw", { count: currentStreak.count })}
+										</span>
+										<span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--card-background)] text-[var(--text-secondary)]">
+											{t("record.stats.longestStreak", { count: longestWinStreak })}
+										</span>
+									</div>
+								)}
+								<div className="flex items-center gap-3 mb-3">
+									<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.basicSection")}</span>
+									<div className="flex-1 border-t border-[var(--border)]" />
+								</div>
+								<div className="grid grid-cols-2 gap-2">
+									{[
+										{ label: t("record.stats.totalLabel"), value: totalMatches, color: "text-[var(--text)]" },
+										{ label: t("record.stats.winRateLabel"), value: `${winRate}%`, color: "text-[#52b788]" },
+										{ label: t("record.stats.winsLabel"), value: wins, color: "text-[#52b788]" },
+										{ label: t("record.stats.lossesLabel"), value: losses, color: "text-[#e05c5c]" },
+									].map(({ label, value, color }) => (
+										<div key={label} className="border border-[var(--border)] rounded-xl p-3 flex flex-col gap-0.5 bg-white/70">
+											<span className={`text-2xl font-black ${color}`}>{value}</span>
+											<span className="text-[10px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{label}</span>
+										</div>
+									))}
+								</div>
+
+								{/* ── Trend chart ──────────────────────── */}
+								<div className="flex items-center gap-3 mt-5 mb-2">
+									<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.trendTitle")}</span>
+									<div className="flex-1 border-t border-[var(--border)]" />
+									<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+										{[
+											{ key: "month", label: t("record.stats.trendMonth") },
+											{ key: "week", label: t("record.stats.trendWeek") },
+										].map((opt) => (
+											<button
+												key={opt.key}
+												onClick={() => setTrendPeriod(opt.key)}
+												className={`px-2.5 py-1 text-[10px] font-bold border-r border-[var(--border)] last:border-r-0 transition-colors
+													${trendPeriod === opt.key
+														? "bg-[var(--text)] text-[var(--background)]"
+														: "bg-transparent text-[var(--text)] hover:bg-[var(--card-background)]"}`}>
+												{opt.label}
+											</button>
+										))}
+									</div>
+								</div>
+								{trendData.length < 2 ? (
+									<p className="text-xs text-center text-[var(--text-muted)] py-4">{t("record.stats.trendNotEnough")}</p>
+								) : (() => {
+									const cW = 400, cH = 130;
+									const pL = 32, pR = 6, pT = 10, pB = 22;
+									const iW = cW - pL - pR;
+									const iH = cH - pT - pB;
+									const maxTotal = Math.max(...trendData.map((d) => d.total));
+									const pts = trendData.map((d, i) => ({
+										...d,
+										x: pL + (trendData.length === 1 ? iW / 2 : (i / (trendData.length - 1)) * iW),
+										y: pT + iH - (d.winRate / 100) * iH,
+									}));
+									const step = trendData.length <= 8 ? 1 : trendData.length <= 14 ? 2 : Math.ceil(trendData.length / 7);
+									return (
+										<svg viewBox={`0 0 ${cW} ${cH}`} className="w-full" style={{ height: "auto" }}>
+											{[0, 50, 100].map((pct) => {
+												const gy = pT + iH - (pct / 100) * iH;
+												return (
+													<g key={pct}>
+														<line x1={pL} y1={gy} x2={cW - pR} y2={gy}
+															stroke={pct === 50 ? "#a6ceb6" : "#e8f0eb"}
+															strokeWidth={pct === 50 ? 1 : 0.5}
+															strokeDasharray={pct === 50 ? "4 3" : undefined} />
+														<text x={pL - 3} y={gy + 3.5} textAnchor="end" fontSize="7.5" fill="#7b9987">{pct}%</text>
+													</g>
+												);
+											})}
+											{pts.map((pt, i) => {
+												const bW = Math.min(iW / trendData.length * 0.55, 20);
+												const bH = maxTotal > 0 ? (pt.total / maxTotal) * iH * 0.28 : 0;
+												return <rect key={i} x={pt.x - bW / 2} y={pT + iH - bH}
+													width={bW} height={bH} fill="rgba(166,206,182,0.30)" rx="2" />;
+											})}
+											<polyline
+												points={pts.map((pt) => `${pt.x},${pt.y}`).join(" ")}
+												fill="none" stroke="#52675a" strokeWidth="1.8"
+												strokeLinejoin="round" strokeLinecap="round" />
+											{pts.map((pt, i) => (
+												<circle key={i} cx={pt.x} cy={pt.y} r="3" fill="#52675a" stroke="white" strokeWidth="1.2">
+													<title>{`${pt.key}  ${pt.winRate.toFixed(0)}%  (${pt.wins}胜 / ${pt.total}局)`}</title>
+												</circle>
+											))}
+											{pts.map((pt, i) => {
+												if (i % step !== 0 && i !== pts.length - 1) return null;
+												return (
+													<text key={i} x={pt.x} y={cH - 4} textAnchor="middle" fontSize="8" fill="#7b9987">
+														{pt.label}
+													</text>
+												);
+											})}
+										</svg>
+									);
+								})()}
+							</div>
+						)}
+
+						{/* ── Tab 1: My Series ─────────────────────── */}
+						{(analysisTab === 1 || analysisTab === 2 || analysisTab === 4 || analysisTab === 5) && (() => {
+							const baseData = analysisTab === 1 ? mySeriesWinRate
+								: analysisTab === 2 ? opponentSeriesWinRate
+								: analysisTab === 4 ? tournamentData
+								: deckData;
+							const desc = analysisTab === 1 ? t("record.stats.mySeriesDesc")
+								: analysisTab === 2 ? t("record.stats.opponentSeriesDesc")
+								: analysisTab === 4 ? t("record.stats.tournamentDesc")
+								: t("record.stats.deckDesc");
+							const sorted = [...baseData].sort((a, b) => {
+								if (seriesSort === "winRate_desc") return parseFloat(b.winRate) - parseFloat(a.winRate);
+								if (seriesSort === "winRate_asc") return parseFloat(a.winRate) - parseFloat(b.winRate);
+								if (seriesSort === "wins_desc") return b.wins - a.wins;
+								if (seriesSort === "wins_asc") return a.wins - b.wins;
+								return b.total - a.total;
+							});
+							const sortOptions = [
+								{ key: "total", label: t("record.stats.sortByTotal") },
+								{ key: "winRate_desc", label: t("record.stats.sortByWinRateDesc") },
+								{ key: "winRate_asc", label: t("record.stats.sortByWinRateAsc") },
+								{ key: "wins_desc", label: t("record.stats.sortByWinsDesc") },
+								{ key: "wins_asc", label: t("record.stats.sortByWinsAsc") },
+							];
+							return (
+								<div>
+									<div className="flex items-center gap-3 mb-2">
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.seriesBreakdownTitle")}</span>
+										<div className="flex-1 border-t border-[var(--border)]" />
+									</div>
+									<p className="text-xs text-[var(--text-muted)] mb-3">{desc}</p>
+									<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden mb-4">
+										{sortOptions.map((opt) => (
+											<button
+												key={opt.key}
+												onClick={() => setSeriesSort(opt.key)}
+												className={`px-3 py-1.5 text-[11px] font-bold border-r border-[var(--border)] last:border-r-0 transition-colors
+													${seriesSort === opt.key
+														? "bg-[var(--text)] text-[var(--background)]"
+														: "bg-transparent text-[var(--text)] hover:bg-[var(--card-background)]"}`}>
+												{opt.label}
+											</button>
+										))}
+									</div>
+									{sorted.length === 0 ? (
+										<p className="text-sm text-center text-[var(--text-muted)] py-8">{t("record.charts.noData")}</p>
+									) : (
+										<div className="flex flex-col gap-2.5">
+											{sorted.map((item) => (
+												<div
+												key={item.name}
+												className={`flex items-center gap-3 ${analysisTab === 5 ? "cursor-pointer rounded-xl px-2 py-1 -mx-2 hover:bg-[var(--card-background)] transition-colors" : ""}`}
+												onClick={analysisTab === 5 ? () => { setDeckFilter({ series: item.series, deck: item.deck }); setAnalysisDialogOpen(false); } : undefined}>
+													{analysisTab === 5 ? (
+																<div className="shrink-0 w-32 flex flex-col gap-0.5 min-w-0">
+																	<span className="text-[10px] text-[var(--text-muted)] truncate" title={item.series}>{item.series}</span>
+																	<span className="text-xs font-medium text-[var(--text)] truncate" title={item.deck}>{item.deck}</span>
+																</div>
+															) : (
+																<span className="text-xs text-[var(--text)] truncate shrink-0 w-24">{item.name}</span>
+															)}
+													<div className={`flex-1 flex rounded-full overflow-hidden bg-[var(--card-background)] ${analysisTab === 5 ? "h-8" : "h-5"}`}>
+														{item.wins > 0 && <div className="bg-[#52b788] h-full" style={{ width: `${(item.wins / item.total) * 100}%` }} />}
+														{item.draws > 0 && <div className="bg-[#7b8fa1] h-full" style={{ width: `${(item.draws / item.total) * 100}%` }} />}
+														{item.losses > 0 && <div className="bg-[#e05c5c] h-full" style={{ width: `${(item.losses / item.total) * 100}%` }} />}
+													</div>
+													<div className="shrink-0 text-right w-20">
+														<span className="text-xs font-bold text-[var(--text-muted)]">{item.winRate}%</span>
+														<span className="text-[10px] text-[var(--text-muted)] ml-1">{t("record.stats.gamesCount", { count: item.total })}</span>
+													</div>
+												</div>
+											))}
+										</div>
+									)}
+								</div>
+							);
+						})()}
+
+					{/* ── Tab 3: Matchup Matrix ────────────────── */}
+						{analysisTab === 3 && (() => {
+							const { matrix, myRows, oppCols } = matchupMatrix;
+							const cellStyle = (wins, total) => {
+								if (!total) return {};
+								const hue = Math.round((wins / total) * 120);
+								return { backgroundColor: `hsla(${hue}, 55%, 48%, 0.80)` };
+							};
+							return (
+								<div>
+									<div className="flex items-center gap-3 mb-2">
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.matchupTitle")}</span>
+										<div className="flex-1 border-t border-[var(--border)]" />
+										{myRows.length > 0 && (
+											<button
+												onClick={exportMatrixPNG}
+												className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:text-[var(--text-muted)] transition-colors">
+												{t("record.stats.exportPNG")}
+											</button>
+										)}
+									</div>
+									<p className="text-xs text-[var(--text-muted)] mb-4">{t("record.stats.matchupDesc")}</p>
+									{myRows.length === 0 ? (
+										<p className="text-sm text-center text-[var(--text-muted)] py-8">{t("record.charts.noData")}</p>
+									) : (
+										<div className="overflow-x-auto">
+											<table className="text-[11px] border-collapse w-full">
+												<thead>
+													<tr>
+														<th className="sticky left-0 bg-white z-10 p-2 min-w-[88px] max-w-[88px]" />
+														{oppCols.map((col) => (
+															<th key={col} className="p-1.5 font-bold text-center min-w-[56px]">
+																<span className="block truncate max-w-[56px] text-[var(--text-secondary)] text-[10px]" title={col}>{col}</span>
+															</th>
+														))}
+													</tr>
+												</thead>
+												<tbody>
+													{myRows.map((row) => (
+														<tr key={row} className="border-t border-[var(--border)]">
+															<td className="sticky left-0 bg-white z-10 py-2 px-2 font-bold text-[var(--text)] truncate max-w-[88px]" title={row}>
+																{row}
+															</td>
+															{oppCols.map((col) => {
+																const cell = matrix[row]?.[col];
+																if (!cell) return (
+																	<td key={col} className="p-1.5 text-center text-[var(--text-muted)] opacity-30">—</td>
+																);
+																return (
+																	<td
+																		key={col}
+																		className="p-1 text-center"
+																		title={`${(cell.wins / cell.total * 100).toFixed(0)}%  ${cell.wins}胜/${cell.total}局`}>
+																		<div
+																			className="rounded-md flex flex-col items-center justify-center py-1.5 px-1"
+																			style={cellStyle(cell.wins, cell.total)}>
+																			<span className="font-black text-white leading-none">
+																				{(cell.wins / cell.total * 100).toFixed(0)}%
+																			</span>
+																			<span className="text-white/70 text-[9px] leading-none mt-0.5">
+																				{cell.wins}/{cell.total}
+																			</span>
+																		</div>
+																	</td>
+																);
+															})}
+														</tr>
+													))}
+												</tbody>
+											</table>
+										</div>
+									)}
+									{/* Legend */}
+									<div className="flex items-center gap-2 mt-4 justify-end">
+										<span className="text-[10px] text-[var(--text-muted)]">{t("record.stats.matchupLegend")}</span>
+										<div className="flex rounded overflow-hidden h-3 w-20">
+											{Array.from({ length: 10 }, (_, i) => {
+												const hue = Math.round((i / 9) * 120);
+												return <div key={i} className="flex-1 h-full" style={{ backgroundColor: `hsla(${hue}, 55%, 48%, 0.80)` }} />;
+											})}
+										</div>
+										<span className="text-[10px] font-bold text-[#3a8a55]">100%</span>
+									</div>
+								</div>
+							);
+						})()}
+
+					</div>
+
+					{/* Footer */}
+					<div className="px-5 py-3 border-t border-[var(--border)] flex justify-end shrink-0">
+						<button
+							onClick={() => setAnalysisDialogOpen(false)}
+							className="px-5 py-2 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold hover:bg-[var(--text-secondary)] transition-colors">
+							{t("record.stats.close")}
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
 
 			{/* Reset Confirmation Dialog */}
 			{resetDialogOpen && (
@@ -1598,88 +1512,6 @@ const Record = () => {
 				</div>
 			)}
 
-			{/* 浮动按钮 - 仅在历史记录标签页显示 */}
-			{tabValue === 1 && records.length > 0 && (
-				<>
-					<Fab
-						color="primary"
-						onClick={handleFabMenuOpen}
-						sx={{
-							position: "fixed",
-							bottom: 24,
-							left: 24,
-							zIndex: 1000,
-							background: "linear-gradient(135deg, #1b4332 0%, #2d5a42 100%)",
-							"&:hover": {
-								background: "linear-gradient(135deg, #2d5a42 0%, #40916c 100%)",
-								transform: "scale(1.05)",
-							},
-							transition: "all 0.2s ease-in-out",
-							boxShadow: "0 6px 18px rgba(27, 67, 50, 0.18)",
-						}}>
-						<AnalyticsIcon />
-					</Fab>
-
-					{/* 浮动按钮菜单 */}
-					<Menu
-						anchorEl={fabMenuAnchor}
-						open={fabMenuOpen}
-						onClose={handleFabMenuClose}
-						anchorOrigin={{
-							vertical: "top",
-							horizontal: "right",
-						}}
-						transformOrigin={{
-							vertical: "bottom",
-							horizontal: "left",
-						}}
-						sx={{
-							"& .MuiPaper-root": {
-								borderRadius: 2,
-								minWidth: 200,
-								boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-								border: "1px solid rgba(27, 67, 50, 0.1)",
-							},
-						}}>
-						<MenuItemMui
-							onClick={() => toggleDisplayOption("playerChart")}
-							sx={{
-								py: 1.5,
-								"&:hover": {
-									backgroundColor: "rgba(27, 67, 50, 0.08)",
-								},
-							}}>
-							<ListItemText>
-								{t("record.charts.showMySeriesDistribution")}
-							</ListItemText>
-						</MenuItemMui>
-
-						<MenuItemMui
-							onClick={() => toggleDisplayOption("opponentChart")}
-							sx={{
-								py: 1.5,
-								"&:hover": {
-									backgroundColor: "rgba(27, 67, 50, 0.08)",
-								},
-							}}>
-							<ListItemText>
-								{t("record.charts.showOpponentSeriesDistribution")}
-							</ListItemText>
-						</MenuItemMui>
-
-						<MenuItemMui
-							onClick={() => toggleDisplayOption("battleStats")}
-							sx={{
-								py: 1.5,
-								"&:hover": {
-									backgroundColor: "rgba(27, 67, 50, 0.08)",
-								},
-							}}>
-							<ListItemText>{t("record.stats.menuItem")}</ListItemText>
-						</MenuItemMui>
-					</Menu>
-				</>
-			)}
 		</div>
 	);
 };

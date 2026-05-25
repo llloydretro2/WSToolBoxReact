@@ -52,6 +52,13 @@ Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new pa
 
 **Note:** All deck management pages (DeckCreate, DeckSearch, Deck, DeckEdit) have been deleted. They are kept only in git history and historical session notes; there is no active route or page component left in `src/pages/`. `/ws/record` is protected by `ProtectedRoute` and redirects unauthenticated users to `/login`.
 
+**`/ws/record` feature summary:** Two-tab layout (创建 / 查询). The query tab includes:
+- Inline stats bar (total / wins / losses / win rate) computed from `filteredRecords`
+- Deck filter: set via the Deck analysis tab, clears with ×; `filteredRecords` is derived from `records + deckFilter`
+- Analysis dialog (6 tabs): 走势 (recent form squares + SVG win-rate trend chart by week/month) · 我方 · 对手 · 矩阵 (matchup matrix with PNG export via Canvas API) · 赛事 · 卡组 (series/deck two-line layout with click-to-filter)
+- All analysis charts use full `records`; only the summary bar and card list respect `deckFilter`
+- Pure CSS stacked bars for W/D/L breakdown; pure SVG for trend chart; pure Canvas for PNG export — zero chart library dependencies
+
 ### Key hooks
 
 | Hook | Source | Purpose |
@@ -112,7 +119,7 @@ Without these, `w-full` inputs overflow their containers and `<button>` elements
 
 - **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
 - **WS pages** — being incrementally migrated to Tailwind:
-  - `Record.jsx` — outer frame + Create tab (`tabValue === 0`) fully migrated; query/history tab (`tabValue === 1`) still MUI.
+  - `Record.jsx` — **fully migrated** (both tabs). Zero MUI, zero ApexCharts, zero `@mui/x-date-pickers`. Native `<input type="date">` replaces DatePicker; `SeriesCombobox` (Headless UI) replaces MUI Autocomplete; all dialogs are native modals.
   - `CardList`, `PickPacks`, `Simulator`, `RandomShuffle` — still MUI.
 - **General tool pages** include FirstSecond, Dice, ChessClock, and AudioBoard; these are still mostly MUI except where individually redesigned.
 - **Mahjong pages and NavBar** — Tailwind-first. `/mahjong/centrepiece` is a special transparent fixed board below the NavBar.
@@ -124,7 +131,7 @@ WS tools are being incrementally migrated from MUI to Tailwind. These convention
 ### Migration rules
 
 - Migrate **whole pages** at once, not partially. A page is either MUI or Tailwind — no mixing `sx` props and `className` at the same component level.
-- **MUI islands** are allowed inside Tailwind pages only for `DatePicker`. All other formerly-island components now have Tailwind replacements (see below).
+- **MUI islands** are no longer needed in `Record.jsx`. `DatePicker` has been replaced with native `<input type="date">`. All pages that still use MUI may retain MUI islands where MUI components have no direct Tailwind replacement.
 - `ButtonVariants` (`PrimaryButton`, `DangerButton`, etc.) belong to still-MUI pages and MUI islands only. Fully migrated Tailwind sections use plain `<button>` with Tailwind classes.
 - Use **Lucide icons** (`lucide-react`) in all new Tailwind components. MUI icons only in components that still use MUI.
 - Never mix `className` and `sx` on the same element.
