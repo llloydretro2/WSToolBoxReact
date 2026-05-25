@@ -6,18 +6,24 @@ import { apiRequest } from "../utils/api";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-	const [user, setUser] = useState(null);
-	const [token, setToken] = useState(null);
-	const [username, setUsername] = useState(null);
+	// Initialise synchronously from localStorage so ProtectedRoute never
+	// flashes a redirect on the first render when a stored session exists.
+	const [user, setUser] = useState(() => {
+		try {
+			const stored = localStorage.getItem("user");
+			return stored ? JSON.parse(stored) : null;
+		} catch {
+			return null;
+		}
+	});
+	const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+	const [username, setUsername] = useState(() => localStorage.getItem("username") || null);
 
 	useEffect(() => {
-		const storedUser = localStorage.getItem("user");
 		const storedToken = localStorage.getItem("token");
-		const storedUsername = localStorage.getItem("username");
 
 		if (storedToken) {
-			// 有本地 token，先把 token 写入 state，然后向后端验证并获取最新用户信息
-			setToken(storedToken);
+			// Validate stored token against the server and refresh user data.
 			apiRequest("/api/auth/me")
 				.then(async (res) => {
 					const data = await res.json();
@@ -27,7 +33,6 @@ export const AuthProvider = ({ children }) => {
 					localStorage.setItem("username", data.username);
 				})
 				.catch((err) => {
-					// token 无效或请求失败，清除本地登录状态
 					setToken(null);
 					setUser(null);
 					setUsername(null);
@@ -36,9 +41,6 @@ export const AuthProvider = ({ children }) => {
 					localStorage.removeItem("username");
 					console.warn("自动验证 token 失败：", err.message || err);
 				});
-		} else {
-			if (storedUser) setUser(JSON.parse(storedUser));
-			if (storedUsername) setUsername(storedUsername);
 		}
 	}, []);
 

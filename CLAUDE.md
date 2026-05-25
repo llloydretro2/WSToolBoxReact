@@ -103,10 +103,212 @@ Dead theme files removed: `src/hooks/useTheme.js`, `src/hooks/useThemeVariables.
 
 Tailwind is configured with `corePlugins.preflight: false` so it does not reset MUI's global styles. Config: `tailwind.config.js` + `postcss.config.js`. Directives are at the top of `src/index.css`.
 
+Since preflight is disabled, `src/index.css` manually resets browser defaults for native elements used in Tailwind pages:
+```css
+input, textarea, select { box-sizing: border-box; }
+button { background: none; border: none; padding: 0; cursor: pointer; font: inherit; }
+```
+Without these, `w-full` inputs overflow their containers and `<button>` elements show browser chrome (gray background, border).
+
 - **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
-- **WS pages** (CardList, PickPacks, Simulator, RandomShuffle, Record, etc.) — remain mostly MUI.
+- **WS pages** — being incrementally migrated to Tailwind:
+  - `Record.jsx` — outer frame + Create tab (`tabValue === 0`) fully migrated; query/history tab (`tabValue === 1`) still MUI.
+  - `CardList`, `PickPacks`, `Simulator`, `RandomShuffle` — still MUI.
 - **General tool pages** include FirstSecond, Dice, ChessClock, and AudioBoard; these are still mostly MUI except where individually redesigned.
 - **Mahjong pages and NavBar** — Tailwind-first. `/mahjong/centrepiece` is a special transparent fixed board below the NavBar.
+
+## Tailwind migration conventions (WS tools)
+
+WS tools are being incrementally migrated from MUI to Tailwind. These conventions define the target style system, derived from the existing Mahjong tool design language adapted for the Spring Rain theme.
+
+### Migration rules
+
+- Migrate **whole pages** at once, not partially. A page is either MUI or Tailwind — no mixing `sx` props and `className` at the same component level.
+- **MUI islands** are allowed inside Tailwind pages only for `DatePicker`. All other formerly-island components now have Tailwind replacements (see below).
+- `ButtonVariants` (`PrimaryButton`, `DangerButton`, etc.) belong to still-MUI pages and MUI islands only. Fully migrated Tailwind sections use plain `<button>` with Tailwind classes.
+- Use **Lucide icons** (`lucide-react`) in all new Tailwind components. MUI icons only in components that still use MUI.
+- Never mix `className` and `sx` on the same element.
+- **`Autocomplete` → `@headlessui/react` `Combobox`**: use the `SeriesCombobox` pattern in `Record.jsx` as reference. Key points: `immediate` prop for open-on-focus, `anchor={{ to: "bottom start", gap: 4 }}` on `Combobox.Options` to portal the dropdown outside stacking contexts (`backdrop-filter` creates a stacking context that traps `z-index`).
+- **`Dialog` → native modal**: backdrop `fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm`, click-outside closes, inner card is `bg-white rounded-2xl shadow-xl p-6`. See the reset confirmation dialog in `Record.jsx` as reference.
+
+### Color tokens in Tailwind
+
+CSS variables are referenced via Tailwind's arbitrary value syntax. Never hardcode hex values.
+
+```
+text-[var(--text)]              border-[var(--border)]
+text-[var(--text-secondary)]    border-[var(--primary)]
+text-[var(--text-muted)]        bg-[var(--primary)]
+bg-[var(--surface)]             bg-[var(--card-background)]
+bg-[var(--primary)]             bg-[var(--background)]
+```
+
+Semantic shorthand to use consistently:
+
+| Intent | Class |
+|--------|-------|
+| Default border | `border-[var(--border)]` |
+| Accent/focus border | `border-[var(--text-muted)]` |
+| Body text | `text-[var(--text)]` |
+| Secondary text | `text-[var(--text-secondary)]` |
+| Muted/placeholder | `text-[var(--text-muted)]` |
+| Frosted card background | `bg-white/70 backdrop-blur-md` |
+| Subtle hover fill | `hover:bg-[var(--card-background)]` |
+
+`--primary` (#a6ceb6) is too light for interactive accents on white backgrounds. Use `--text-muted` (#52675a, spring-rain-900) for focus rings, selected states, active tab indicators, and card accent borders. Use `--text-secondary` (#35443b) as the hover/active step darker.
+
+### Page layout structure
+
+```jsx
+<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+  {/* Title block */}
+  <div className="mb-8">
+    <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
+      {t("page.title")}
+    </h1>
+    <p className="text-sm text-[var(--text-secondary)]">{t("page.subtitle")}</p>
+  </div>
+
+  {/* content */}
+</div>
+```
+
+Width scale mirrors MUI Container:
+- `max-w-5xl` — full-feature pages (Record, CardList)
+- `max-w-3xl` — single-focus tool pages (matches Mahjong tools)
+- `max-w-lg` — single-form pages (Login)
+
+### Panel / Card
+
+Outer panel (frosted glass card):
+```jsx
+<div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md">
+```
+
+Panel section with top accent (replaces `borderTop: "3px solid var(--primary)"`):
+```jsx
+<div className="border border-[var(--border)] border-t-[3px] border-t-[var(--text-muted)] rounded-2xl p-5 sm:p-6 bg-white/70 backdrop-blur-md">
+```
+
+Inner sub-panel (nested content block):
+```jsx
+<div className="border border-[var(--border)] rounded-xl p-4 bg-transparent">
+```
+
+Section divider within a panel:
+```jsx
+<div className="border-b border-[var(--border)]" />
+```
+
+Section eyebrow with horizontal rule (results/analysis sections):
+```jsx
+<div className="flex items-center gap-3 mb-5">
+  <span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+    Section Title
+  </span>
+  <div className="flex-1 border-t border-[var(--border)]" />
+</div>
+```
+
+### Typography scale
+
+| Role | Classes |
+|------|---------|
+| Page title | `text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none` |
+| Section heading | `text-base font-bold text-[var(--text)]` |
+| Panel eyebrow label | `text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]` |
+| Body | `text-sm text-[var(--text)]` |
+| Secondary body | `text-sm text-[var(--text-secondary)]` |
+| Small metadata | `text-[11px] text-[var(--text-muted)]` |
+| Micro label | `text-[10px] text-[var(--text-muted)]` |
+
+### Buttons
+
+Primary full-width CTA:
+```jsx
+<button className="w-full py-3 bg-[var(--text-muted)] text-white text-sm font-bold rounded-xl
+                   hover:bg-[var(--text-secondary)] transition-colors
+                   flex items-center justify-center gap-2">
+```
+
+Primary small action (pill):
+```jsx
+<button className="text-[11px] font-bold px-3 py-1.5 rounded-full bg-[var(--text-muted)]
+                   text-white hover:bg-[var(--text-secondary)] transition-colors">
+```
+
+Secondary / outline:
+```jsx
+<button className="text-sm font-bold px-4 py-2 rounded-xl border border-[var(--border)]
+                   text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+```
+
+Icon-only reset button (borderless, color-only feedback):
+```jsx
+<button className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+```
+
+Toggle option group (radio-style, replaces `ToggleButtonGroup`):
+```jsx
+<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+  {/* active */}
+  <button className="px-3 py-1.5 text-[11px] font-bold border-r border-[var(--border)] last:border-r-0
+                     bg-[var(--text)] text-[var(--background)] transition-colors">
+  {/* inactive */}
+  <button className="px-3 py-1.5 text-[11px] font-bold border-r border-[var(--border)] last:border-r-0
+                     bg-transparent text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+```
+
+Disabled state (any button): append `disabled:opacity-40 disabled:cursor-not-allowed`.
+
+### Form inputs
+
+Text input (replaces `TextField`):
+```jsx
+<input
+  className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2
+             text-sm text-[var(--text)] placeholder:text-[var(--text-muted)]
+             focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+/>
+```
+
+Floating label pattern: pair input with a `<label>` above using `text-[11px] font-bold text-[var(--text-secondary)] mb-1 block`.
+
+Combobox (replaces MUI `Autocomplete`): use `@headlessui/react` `Combobox`. Always set `immediate` (open-on-focus) and `anchor={{ to: "bottom start", gap: 4 }}` on `Combobox.Options` to avoid stacking context clipping. Add `Combobox.Button` with `ChevronDown` for dropdown affordance. See `SeriesCombobox` in `Record.jsx`.
+
+### Layout grid
+
+Two-column responsive (e.g. player vs opponent):
+```jsx
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+```
+
+Three-column stats row:
+```jsx
+<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+```
+
+### Border radius scale
+
+| Level | Value | Use |
+|-------|-------|-----|
+| `rounded-2xl` | outer panels/cards | |
+| `rounded-xl` | inner sub-panels, CTA buttons | |
+| `rounded-lg` | inputs, small containers | |
+| `rounded-full` | pill buttons, badges, avatars | |
+| `rounded-md` | inline tags/chips | |
+
+### Icons
+
+Use `lucide-react` for all Tailwind components. Common icons:
+
+```js
+import { Search, RefreshCw, X, ChevronDown, ChevronUp,
+         Plus, Trash2, RotateCcw, User, Trophy, Swords } from "lucide-react";
+```
+
+Size convention: `size={14}` inline with text, `size={16}` for icon buttons, `size={18}` for CTA.
 
 ## Page layout conventions
 

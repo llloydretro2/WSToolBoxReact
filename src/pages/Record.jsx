@@ -5,6 +5,8 @@ import {
 	interpolateRainbow,
 	interpolateViridis,
 } from "d3-scale-chromatic";
+import { Combobox } from "@headlessui/react";
+import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown } from "lucide-react";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -13,13 +15,8 @@ import {
 	Typography,
 	Paper,
 	CircularProgress,
-	Container,
-	Tabs,
-	Tab,
-	TextField,
 	MenuItem,
 	Button,
-	Autocomplete,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -36,8 +33,6 @@ import {
 	Tooltip,
 	Grid,
 	Fab,
-	ToggleButton,
-	ToggleButtonGroup,
 	Divider,
 	Menu,
 	MenuItem as MenuItemMui,
@@ -47,14 +42,12 @@ import {
 import {
 	Delete as DeleteIcon,
 	EmojiEvents as TrophyIcon,
-	Person as PersonIcon,
 	Casino as DeckIcon,
 	Settings as SettingsIcon,
 	TableChart as TableIcon,
 	Visibility as VisibilityIcon,
 	VisibilityOff as VisibilityOffIcon,
 	Analytics as AnalyticsIcon,
-	RestartAlt as RestartAltIcon,
 } from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -69,8 +62,93 @@ import {
 import { useOptions } from "../contexts/OptionsContext";
 import Chart from "react-apexcharts";
 
-const Record = () => {
+function SeriesCombobox({ value, onChange, label, id, name }) {
 	const { productList, translationMap } = useOptions();
+	const [query, setQuery] = useState("");
+
+	const options = useMemo(
+		() =>
+			(productList.series ?? [])
+				.slice()
+				.sort()
+				.map((s) => ({
+					key: s,
+					label: `${s}${translationMap.series?.[s] ? `（${translationMap.series[s]}）` : ""}`,
+				})),
+		[productList.series, translationMap.series]
+	);
+
+	const filtered =
+		query === ""
+			? options
+			: options.filter((o) =>
+					o.label.toLowerCase().includes(query.toLowerCase())
+			  );
+
+	return (
+		<div className="flex flex-col gap-1.5">
+			<label htmlFor={id} className="text-[11px] font-bold text-[var(--text-secondary)]">
+				{label} <span className="text-[var(--error)]">*</span>
+			</label>
+			<Combobox value={value} onChange={onChange} onClose={() => setQuery("")} immediate>
+				<div className="relative">
+					<Combobox.Input
+						id={id}
+						name={name}
+						autoComplete="off"
+						placeholder={label}
+						displayValue={(key) => {
+							const opt = options.find((o) => o.key === key);
+							return opt ? opt.label : key ?? "";
+						}}
+						onChange={(e) => setQuery(e.target.value)}
+						className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 pr-8 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+					/>
+					<Combobox.Button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--border)] hover:text-[var(--text-secondary)] transition-colors">
+						<ChevronDown size={14} />
+					</Combobox.Button>
+					<Combobox.Options
+						anchor={{ to: "bottom start", gap: 4 }}
+						className="z-[9999] w-[var(--input-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
+						{filtered.length === 0 ? (
+							<div className="px-3 py-2 text-sm text-[var(--text-muted)]">
+								{query ? "无匹配结果" : "暂无选项"}
+							</div>
+						) : (
+							filtered.map((option) => (
+								<Combobox.Option
+									key={option.key}
+									value={option.key}
+									className={({ active, selected }) =>
+										`px-3 py-2 text-sm cursor-pointer transition-colors ${
+											selected
+												? "bg-[var(--text-muted)] text-white font-medium"
+												: active
+												? "bg-[var(--card-background)] text-[var(--text)]"
+												: "text-[var(--text)]"
+										}`
+									}
+								>
+									{option.label}
+								</Combobox.Option>
+							))
+						)}
+					</Combobox.Options>
+				</div>
+			</Combobox>
+		</div>
+	);
+}
+
+SeriesCombobox.propTypes = {
+	value: PropTypes.string,
+	onChange: PropTypes.func.isRequired,
+	label: PropTypes.string.isRequired,
+	id: PropTypes.string.isRequired,
+	name: PropTypes.string.isRequired,
+};
+
+const Record = () => {
 	const { t } = useLocale();
 	const { user } = useAuth();
 
@@ -655,54 +733,45 @@ const Record = () => {
 	};
 
 	return (
-		<Container maxWidth="lg" sx={{ py: 3 }}>
-			<Box textAlign="center" mb={4}>
-				<Typography
-					variant="h4"
-					fontWeight={700}
-					color="var(--text)"
-					gutterBottom>
+		<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+			<div className="mb-8">
+				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none">
 					{t("record.title")}
-				</Typography>
-			</Box>
+				</h1>
+			</div>
 
-			<Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
-				<Tabs
-					value={tabValue}
-					variant="fullWidth"
-					onChange={(e, newValue) => {
-						if (newValue === 1) {
-							getHistory();
-						}
-						setTabValue(newValue);
-						try {
-							localStorage.setItem(
-								`${storagePrefix}tabValue`,
-								JSON.stringify(newValue)
-							);
-						} catch (e) {
-							void e;
-						}
-					}}
-					sx={{
-						"& .MuiTab-root": {
-							color: "text.secondary",
-						},
-						"& .MuiTab-root.Mui-selected": {
-							color: "var(--primary)",
-						},
-						"& .MuiTabs-indicator": {
-							backgroundColor: "var(--primary)",
-						},
-					}}>
-					<Tab label={t("record.tabs.create")} />
-					<Tab label={t("record.tabs.query")} />
-				</Tabs>
-			</Box>
+			<div className="flex border-b border-[var(--border)] mb-6">
+				{[
+					{ index: 0, label: t("record.tabs.create") },
+					{ index: 1, label: t("record.tabs.query") },
+				].map(({ index, label }) => (
+					<button
+						key={index}
+						onClick={() => {
+							if (index === 1) getHistory();
+							setTabValue(index);
+							try {
+								localStorage.setItem(
+									`${storagePrefix}tabValue`,
+									JSON.stringify(index)
+								);
+							} catch (e) {
+								void e;
+							}
+						}}
+						className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 -mb-px
+							${tabValue === index
+								? "border-[var(--text-muted)] text-[var(--text-muted)]"
+								: "border-transparent text-[var(--text-secondary)] hover:text-[var(--text)]"
+							}`}
+					>
+						{label}
+					</button>
+				))}
+			</div>
 
 			{tabValue === 0 && (
-				<Box
-					component="form"
+				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
 						const data = {};
@@ -738,267 +807,186 @@ const Record = () => {
 							console.error("Failed to submit record:", err);
 						}
 					}}
-					sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							gap: 2,
-							borderRadius: 2,
-							p: 3,
-							mb: 2,
-							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-						}}>
-						<Box
-							sx={{
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-								mb: 1,
-							}}>
-							<Typography
-								variant="subtitle2"
-								sx={{ fontWeight: 600 }}>
-								{t("record.form.myInfo")}
-							</Typography>
-							<Tooltip title={t("record.resetMyInfo")}>
-								<IconButton
-									size="small"
-									onClick={resetMyInfo}
-									aria-label="reset-my-info">
-									<RestartAltIcon fontSize="small" />
-								</IconButton>
-							</Tooltip>
-						</Box>
-						<TextField
-							required
-							id="playerDeckName"
-							name="playerDeckName"
-							fullWidth
-							label={t("record.form.myDeckName")}
-							value={formState.playerDeckName}
-							onChange={(e) =>
-								updateFormField("playerDeckName", e.target.value)
-							}
-						/>
-						<Autocomplete
-							options={productList.series
-								.slice()
-								.sort()
-								.map(
-									(s) =>
-										`${s}${
-											translationMap.series?.[s]
-												? `（${translationMap.series[s]}）`
-												: ""
-										}`
-								)}
-							value={
-								formState.playerSeries
-									? `${formState.playerSeries}${
-											translationMap.series?.[formState.playerSeries]
-												? `（${translationMap.series[formState.playerSeries]}）`
-												: ""
-									  }`
-									: ""
-							}
-							onChange={(_, newValue) => {
-								const key = newValue?.split("（")[0];
-								updateFormField("playerSeries", key || "");
-							}}
-							renderInput={(params) => (
-								<TextField
-									{...params}
+					className="flex flex-col gap-5">
+
+					{/* ── Player vs Opponent ────────────────────────── */}
+					<div className="relative">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{/* My Info */}
+							<div className="border border-[var(--border)] border-t-[3px] border-t-[var(--text-muted)] rounded-2xl p-5 bg-white/70 backdrop-blur-md">
+								<div className="flex items-center justify-between mb-4">
+									<div className="flex items-center gap-1.5">
+										<User size={14} className="shrink-0" style={{ color: "var(--text-muted)" }} />
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)]">
+											{t("record.form.myInfo")}
+										</span>
+									</div>
+									<button
+										type="button"
+										title={t("record.resetMyInfo")}
+										onClick={resetMyInfo}
+										className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+										<RotateCcw size={14} />
+									</button>
+								</div>
+								<div className="flex flex-col gap-1.5 mb-4">
+									<label htmlFor="playerDeckName" className="text-[11px] font-bold text-[var(--text-secondary)]">
+										{t("record.form.myDeckName")} <span className="text-[var(--error)]">*</span>
+									</label>
+									<input
+										id="playerDeckName"
+										name="playerDeckName"
+										required
+										value={formState.playerDeckName}
+										onChange={(e) => updateFormField("playerDeckName", e.target.value)}
+										className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+									/>
+								</div>
+								<SeriesCombobox
 									id="playerSeries"
 									name="playerSeries"
-									fullWidth
 									label={t("record.form.mySeries")}
-									required
+									value={formState.playerSeries}
+									onChange={(key) => updateFormField("playerSeries", key ?? "")}
 								/>
-							)}
-						/>
-					</Box>
-					<Divider sx={{ my: 1 }} />
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							gap: 2,
-							borderRadius: 2,
-							p: 3,
-							mb: 2,
-							boxShadow: "0 1px 6px rgba(0,0,0,0.04)",
-						}}>
-						<Box
-							sx={{
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-								mb: 1,
-							}}>
-							<Typography
-								variant="subtitle1"
-								sx={{ fontWeight: 700 }}>
-								{t("record.form.opponentInfo")}
-							</Typography>
-							<Tooltip title={t("record.resetOpponentInfo")}>
-								<IconButton
-									size="small"
-									onClick={resetOpponentInfo}
-									aria-label="reset-opponent-info">
-									<RestartAltIcon fontSize="small" />
-								</IconButton>
-							</Tooltip>
-						</Box>
-						<TextField
-							required
-							id="opponentDeckName"
-							name="opponentDeckName"
-							fullWidth
-							label={t("record.form.opponentDeckName")}
-							value={formState.opponentDeckName}
-							onChange={(e) =>
-								updateFormField("opponentDeckName", e.target.value)
-							}
-						/>
-						<Autocomplete
-							options={productList.series
-								.slice()
-								.sort()
-								.map(
-									(s) =>
-										`${s}${
-											translationMap.series?.[s]
-												? `（${translationMap.series[s]}）`
-												: ""
-										}`
-								)}
-							value={
-								formState.opponentSeries
-									? `${formState.opponentSeries}${
-											translationMap.series?.[formState.opponentSeries]
-												? `（${
-														translationMap.series[formState.opponentSeries]
-												  }）`
-												: ""
-									  }`
-									: ""
-							}
-							onChange={(_, newValue) => {
-								const key = newValue?.split("（")[0];
-								updateFormField("opponentSeries", key || "");
-							}}
-							renderInput={(params) => (
-								<TextField
-									{...params}
+							</div>
+
+							{/* Opponent Info */}
+							<div className="border border-[var(--border)] border-t-[3px] border-t-[var(--text-muted)] rounded-2xl p-5 bg-white/70 backdrop-blur-md">
+								<div className="flex items-center justify-between mb-4">
+									<div className="flex items-center gap-1.5">
+										<User size={14} className="shrink-0" style={{ color: "var(--text-muted)" }} />
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)]">
+											{t("record.form.opponentInfo")}
+										</span>
+									</div>
+									<button
+										type="button"
+										title={t("record.resetOpponentInfo")}
+										onClick={resetOpponentInfo}
+										className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+										<RotateCcw size={14} />
+									</button>
+								</div>
+								<div className="flex flex-col gap-1.5 mb-4">
+									<label htmlFor="opponentDeckName" className="text-[11px] font-bold text-[var(--text-secondary)]">
+										{t("record.form.opponentDeckName")} <span className="text-[var(--error)]">*</span>
+									</label>
+									<input
+										id="opponentDeckName"
+										name="opponentDeckName"
+										required
+										value={formState.opponentDeckName}
+										onChange={(e) => updateFormField("opponentDeckName", e.target.value)}
+										className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+									/>
+								</div>
+								<SeriesCombobox
 									id="opponentSeries"
 									name="opponentSeries"
-									fullWidth
 									label={t("record.form.opponentSeries")}
-									required
+									value={formState.opponentSeries}
+									onChange={(key) => updateFormField("opponentSeries", key ?? "")}
 								/>
-							)}
-						/>
-					</Box>
-					<Divider sx={{ my: 1 }} />
-					<TextField
-						id="tournamentName"
-						name="tournamentName"
-						fullWidth
-						label={t("record.form.matchName")}
-						value={formState.tournamentName}
-						onChange={(e) => updateFormField("tournamentName", e.target.value)}
-					/>
-					<TextField
-						id="notes"
-						name="notes"
-						fullWidth
-						label={t("record.form.notes")}
-						value={formState.notes}
-						onChange={(e) => updateFormField("notes", e.target.value)}
-						inputProps={{ id: "notes", name: "notes" }}
-					/>
-					<Box>
-						<ToggleButtonGroup
-							value={formState.result || ""}
-							exclusive
-							onChange={(_, value) => updateFormField("result", value || "")}
-							size="small"
-							sx={{
-								width: "100%",
-								display: "flex",
-								gap: 1,
-								"& .MuiToggleButton-root": {
-									flex: 1,
-									minWidth: 0,
-									px: 2,
-									fontSize: { xs: "0.875rem", sm: "0.95rem" },
-								},
-							}}>
-							<ToggleButton
-								value="win"
-								sx={{
-									fontWeight: 600,
-									"&.Mui-selected, &.Mui-selected:hover": {
-										backgroundColor: "var(--success) !important",
-										color: "#fff",
-									},
-								}}>
+							</div>
+						</div>
+
+						{/* VS badge */}
+						<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10
+							w-11 h-11 rounded-full bg-[var(--text)] text-[var(--background)]
+							flex items-center justify-center
+							font-black text-[0.7rem] tracking-widest select-none
+							shadow-[0_2px_10px_rgba(0,0,0,0.18)] border-2 border-white/60">
+							VS
+						</div>
+					</div>
+
+					{/* ── Result selector ───────────────────────────── */}
+					<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] block mb-3">
+							{t("record.form.resultLabel")}
+						</span>
+						<div className="flex gap-3">
+							<button
+								type="button"
+								onClick={() => updateFormField("result", formState.result === "win" ? "" : "win")}
+								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
+									${formState.result === "win"
+										? "bg-[#52b788] border-[#52b788] text-white"
+										: "bg-[rgba(82,183,136,0.12)] border-[rgba(82,183,136,0.4)] text-[#3a9d6e] hover:bg-[rgba(82,183,136,0.2)]"
+									}`}>
+								<Trophy size={18} className="hidden sm:block" />
 								{t("record.form.result.win")}
-							</ToggleButton>
-							<ToggleButton
-								value="lose"
-								sx={{
-									fontWeight: 600,
-									"&.Mui-selected, &.Mui-selected:hover": {
-										backgroundColor: "var(--error) !important",
-										color: "#fff",
-									},
-								}}>
+							</button>
+							<button
+								type="button"
+								onClick={() => updateFormField("result", formState.result === "lose" ? "" : "lose")}
+								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
+									${formState.result === "lose"
+										? "bg-[#e05c5c] border-[#e05c5c] text-white"
+										: "bg-[rgba(224,92,92,0.10)] border-[rgba(224,92,92,0.4)] text-[#c94444] hover:bg-[rgba(224,92,92,0.18)]"
+									}`}>
+								<XIcon size={18} className="hidden sm:block" />
 								{t("record.form.result.lose")}
-							</ToggleButton>
-							<ToggleButton
-								value="doubleLose"
-								sx={{
-									fontWeight: 600,
-									"&.Mui-selected, &.Mui-selected:hover": {
-										backgroundColor: "var(--warning) !important",
-										color: "#fff",
-									},
-								}}>
+							</button>
+							<button
+								type="button"
+								onClick={() => updateFormField("result", formState.result === "doubleLose" ? "" : "doubleLose")}
+								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
+									${formState.result === "doubleLose"
+										? "bg-[#7b8fa1] border-[#7b8fa1] text-white"
+										: "bg-[rgba(123,143,161,0.10)] border-[rgba(123,143,161,0.4)] text-[#5a6f80] hover:bg-[rgba(123,143,161,0.18)]"
+									}`}>
+								<Swords size={18} className="hidden sm:block" />
 								{t("record.form.result.doubleLose")}
-							</ToggleButton>
-						</ToggleButtonGroup>
-					</Box>
-					<Box
-						sx={{
-							display: "flex",
-							justifyContent: "center",
-							gap: 2,
-							mt: 2,
-							mb: 3,
-						}}>
-						<PrimaryButton
+							</button>
+						</div>
+					</div>
+
+					{/* ── Match details ─────────────────────────────── */}
+					<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md flex flex-col gap-4">
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor="tournamentName" className="text-[11px] font-bold text-[var(--text-secondary)]">
+								{t("record.form.matchName")}
+							</label>
+							<input
+								id="tournamentName"
+								name="tournamentName"
+								value={formState.tournamentName}
+								onChange={(e) => updateFormField("tournamentName", e.target.value)}
+								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+							/>
+						</div>
+						<div className="flex flex-col gap-1.5">
+							<label htmlFor="notes" className="text-[11px] font-bold text-[var(--text-secondary)]">
+								{t("record.form.notes")}
+							</label>
+							<textarea
+								id="notes"
+								name="notes"
+								rows={3}
+								value={formState.notes}
+								onChange={(e) => updateFormField("notes", e.target.value)}
+								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors resize-none"
+							/>
+						</div>
+					</div>
+
+					{/* ── Actions ───────────────────────────────────── */}
+					<div className="flex flex-col items-center gap-2">
+						<button
 							type="submit"
-							variant="contained"
-							sx={{
-								px: 4,
-								py: 1.5,
-							}}>
+							className="w-full py-2.5 rounded-xl bg-[var(--text-muted)] text-white font-bold text-sm hover:bg-[var(--text-secondary)] transition-colors">
 							{t("record.form.submitButton")}
-						</PrimaryButton>
-						<DangerButton
+						</button>
+						<button
 							type="button"
-							variant="contained"
 							onClick={() => setResetDialogOpen(true)}
-							sx={{
-								px: 4,
-								py: 1.5,
-							}}>
+							className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
 							{t("record.form.resetButton")}
-						</DangerButton>
-					</Box>
-				</Box>
+						</button>
+					</div>
+				</form>
 			)}
 
 			{tabValue === 1 && (
@@ -1579,26 +1567,36 @@ const Record = () => {
 			</Dialog>
 
 			{/* Reset Confirmation Dialog */}
-			<Dialog
-				open={resetDialogOpen}
-				onClose={() => setResetDialogOpen(false)}>
-				<DialogTitle>{t("record.resetDialog.title")}</DialogTitle>
-				<DialogContent>
-					<DialogContentText>
-						{t("record.resetDialog.content")}
-					</DialogContentText>
-				</DialogContent>
-				<DialogActions>
-					<SecondaryButton onClick={() => setResetDialogOpen(false)}>
-						{t("record.resetDialog.cancel")}
-					</SecondaryButton>
-					<DangerButton
-						color="error"
-						onClick={resetForm}>
-						{t("record.resetDialog.confirm")}
-					</DangerButton>
-				</DialogActions>
-			</Dialog>
+			{resetDialogOpen && (
+				<div
+					className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+					onClick={() => setResetDialogOpen(false)}>
+					<div
+						className="bg-white rounded-2xl shadow-xl p-6 w-80 mx-4 flex flex-col gap-4"
+						onClick={(e) => e.stopPropagation()}>
+						<div>
+							<p className="text-base font-bold text-[var(--text)] mb-1">
+								{t("record.resetDialog.title")}
+							</p>
+							<p className="text-sm text-[var(--text-secondary)]">
+								{t("record.resetDialog.content")}
+							</p>
+						</div>
+						<div className="flex gap-2 justify-end">
+							<button
+								onClick={() => setResetDialogOpen(false)}
+								className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+								{t("record.resetDialog.cancel")}
+							</button>
+							<button
+								onClick={resetForm}
+								className="px-4 py-2 rounded-lg text-sm font-bold bg-[var(--reset)] text-white hover:bg-[var(--reset-hover)] transition-colors">
+								{t("record.resetDialog.confirm")}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 			{/* 浮动按钮 - 仅在历史记录标签页显示 */}
 			{tabValue === 1 && records.length > 0 && (
@@ -1682,7 +1680,7 @@ const Record = () => {
 					</Menu>
 				</>
 			)}
-		</Container>
+		</div>
 	);
 };
 
