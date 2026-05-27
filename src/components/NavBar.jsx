@@ -137,8 +137,7 @@ export default function NavBar() {
 
 	const isActive = (path) => {
 		if (!path) return false;
-		if (path === "/") return location.pathname === "/";
-		return location.pathname.startsWith(path);
+		return location.pathname === path;
 	};
 
 	const chipLabel = currentSection

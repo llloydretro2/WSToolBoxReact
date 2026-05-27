@@ -187,7 +187,7 @@ function Simulator() {
 						setIsLoading(true);
 						try {
 							const res = await apiRequest(
-								`/api/cards/by-product?product_name=${encodeURIComponent(newValue)}`
+								`/api/cards/jp/by-product?product_name=${encodeURIComponent(newValue)}`
 							);
 							const data = await res.json();
 							setCards(data.data);

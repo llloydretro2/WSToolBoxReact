@@ -25,8 +25,8 @@ export const API_ENDPOINTS = {
 
 	// 卡牌相关
 	CARDS: {
-		SEARCH: "/api/cards/search",
-		FILTER: "/api/cards/filter",
+		JP: "/api/cards/jp",
+		EN: "/api/cards/en",
 	},
 };
 

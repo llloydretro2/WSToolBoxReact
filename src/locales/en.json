@@ -21,7 +21,8 @@
     "mahjong": "Mahjong Yaku",
     "mahjongTrainer": "Yaku Trainer",
     "mahjongEfficiency": "Efficiency",
-    "mahjongCentrepiece": "Centrepiece"
+    "mahjongCentrepiece": "Centrepiece",
+    "enCardSearch": "EN Cards"
   },
   "common": {
     "language": {
@@ -514,5 +515,34 @@
   "pickPacks": {
     "selectionStatus": "{{count}} pack(s) selected",
     "waitingSelection": "Waiting for selection"
+  },
+  "enCardList": {
+    "title": "EN Card Search",
+    "subtitle": "English Weiss Schwarz card database",
+    "filters": "Filters",
+    "search": "Keyword Search",
+    "searchPlaceholder": "Card name, ability text...",
+    "product": "Product",
+    "seriesNumber": "Series Code",
+    "series": "Series",
+    "cardType": "Card Type",
+    "color": "Color",
+    "side": "Side",
+    "trigger": "Trigger",
+    "rarity": "Rarity",
+    "soul": "Soul",
+    "hasSoul": "Has Soul",
+    "ranges": "Stat Ranges",
+    "clearFilters": "Clear Filters",
+    "searchButton": "Search",
+    "resetButton": "Reset",
+    "mergeVariants": "Merge Variants",
+    "splitVariants": "Split Variants",
+    "loading": "Loading...",
+    "results": "{{total}} cards · Page {{page}} of {{totalPages}}",
+    "noResults": "No cards found",
+    "noResultsHint": "Try adjusting your filters",
+    "prev": "Prev",
+    "next": "Next"
   }
 }

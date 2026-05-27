@@ -329,7 +329,7 @@ function CardList() {
 			)
 		).toString();
 
-		apiRequest(`/api/cards?${params}`)
+		apiRequest(`/api/cards/jp?${params}`)
 			.then((res) => res.json())
 			.then((res) => {
 				setResult({

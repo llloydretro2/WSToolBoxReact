@@ -317,6 +317,36 @@ import { Search, RefreshCw, X, ChevronDown, ChevronUp,
 
 Size convention: `size={14}` inline with text, `size={16}` for icon buttons, `size={18}` for CTA.
 
+## WS 卡牌数据模型（后端 API 返回格式）
+
+后端 JP 卡牌数据（`GET /api/cards/jp`）使用以下字段，前端处理时注意：
+
+### trigger 字段（重要：已变更为数组）
+
+`trigger` 字段类型为 **`[String]`（字符串数组）**，不再是单个字符串。
+
+```js
+// 正确渲染方式
+card.trigger?.join(", ")   // 无 trigger → undefined（不显示）
+card.trigger?.length > 0   // 判断是否有 trigger
+```
+
+合法 trigger 值：`soul+1`、`soul+2`、`pool`、`comeback`、`return`、`draw`、`treasure`、`shot`、`gate`、`standby`、`choice`、`discovery`、`chance`，以及早期历史值 `focus`（6 张特殊卡）。
+
+> ⚠️ 旧代码如果使用 `card.trigger === "soul+1"` 等字符串比较会失效，需改为 `card.trigger?.includes("soul+1")`。
+
+### color 字段
+
+合法值：`yellow`、`green`、`red`、`blue`、`purple`。
+
+紫色（`purple`）于 2026-02-26 加入官方数据，数据库中目前共 2 张紫色卡。颜色 filter 和颜色显示 UI 应包含 purple。
+
+### soul 字段
+
+`soul` 字段存储 `0` 或 `1`（数字），表示该卡是否有 soul 标记。`soul+1`、`soul+2` 是 **trigger 类型**（属于 trigger 数组），与 soul 字段无关。
+
+---
+
 ## Page layout conventions
 
 Every MUI page must follow this standard structure:
@@ -345,7 +375,7 @@ Every MUI page must follow this standard structure:
 
 ## MUI Grid API
 
-This project uses **MUI v6**. Always use the `size` prop, never the v5 `item` prop:
+This project uses **MUI v7**. Always use the `size` prop, never the v5 `item` prop:
 
 ```jsx
 // ✅ Correct (v6)

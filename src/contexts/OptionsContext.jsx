@@ -41,10 +41,10 @@ export const OptionsProvider = ({ children }) => {
 			setOptionsError(null);
 			try {
 				const [remoteProductList, remoteTranslations, weissRules, schwarzRules] = await Promise.all([
-					apiRequest("/api/options/product-list").then((res) => res.json()),
-					apiRequest("/api/options/translations").then((res) => res.json()),
-					apiRequest("/api/options/deck-rules?side=weiss").then((res) => res.json()),
-					apiRequest("/api/options/deck-rules?side=schwarz").then((res) => res.json()),
+					apiRequest("/api/options/jp/product-list").then((res) => res.json()),
+					apiRequest("/api/options/jp/translations").then((res) => res.json()),
+					apiRequest("/api/options/jp/deck-rules?side=weiss").then((res) => res.json()),
+					apiRequest("/api/options/jp/deck-rules?side=schwarz").then((res) => res.json()),
 				]);
 
 				if (!active) return;

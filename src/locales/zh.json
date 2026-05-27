@@ -21,7 +21,8 @@
     "mahjong": "麻将役种",
     "mahjongTrainer": "役种分析",
     "mahjongEfficiency": "牌理",
-    "mahjongCentrepiece": "牌桌中枢"
+    "mahjongCentrepiece": "牌桌中枢",
+    "enCardSearch": "EN卡片查询"
   },
   "common": {
     "language": {
@@ -514,5 +515,34 @@
   "pickPacks": {
     "selectionStatus": "已选择 {{count}} 包",
     "waitingSelection": "等待选择"
+  },
+  "enCardList": {
+    "title": "EN 卡牌查询",
+    "subtitle": "英文版 Weiss Schwarz 卡牌数据库",
+    "filters": "筛选条件",
+    "search": "关键词搜索",
+    "searchPlaceholder": "卡名、效果文本...",
+    "product": "商品",
+    "seriesNumber": "系列代号",
+    "series": "系列",
+    "cardType": "卡片类型",
+    "color": "颜色",
+    "side": "阵营",
+    "trigger": "触发",
+    "rarity": "稀有度",
+    "soul": "Soul",
+    "hasSoul": "有 Soul",
+    "ranges": "数值范围",
+    "clearFilters": "清除筛选",
+    "searchButton": "搜索",
+    "resetButton": "重置",
+    "mergeVariants": "合并变体",
+    "splitVariants": "分开显示",
+    "loading": "加载中...",
+    "results": "共 {{total}} 张 · 第 {{page}} / {{totalPages}} 页",
+    "noResults": "未找到匹配的卡牌",
+    "noResultsHint": "请尝试调整筛选条件",
+    "prev": "上一页",
+    "next": "下一页"
   }
 }

@@ -190,3 +190,10 @@ body {
     src: url("./assets/fonts/NotoSansJP-VariableFont_wght.ttf")
         format("truetype");
 }
+
+/* Dual-thumb range slider — hides native thumb so custom visuals show through */
+.dual-range { -webkit-appearance: none; appearance: none; background: transparent; }
+.dual-range::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; opacity: 0; cursor: grab; }
+.dual-range::-moz-range-thumb { width: 22px; height: 22px; opacity: 0; border: none; background: transparent; cursor: grab; }
+.dual-range::-webkit-slider-runnable-track { background: transparent; }
+.dual-range::-moz-range-track { background: transparent; }

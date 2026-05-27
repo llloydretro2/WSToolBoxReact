@@ -9,6 +9,7 @@ export const SITE_SECTIONS = [
 		defaultPath: "/ws/cards",
 		nav: [
 			{ type: "link", labelKey: "menu.cardSearch", path: "/ws/cards" },
+			{ type: "link", labelKey: "menu.enCardSearch", path: "/ws/cards/en" },
 			{ type: "link", labelKey: "menu.pickPacks", path: "/ws/packs" },
 			{ type: "link", labelKey: "menu.simulator", path: "/ws/simulator" },
 			{ type: "link", labelKey: "menu.shuffle", path: "/ws/shuffle" },
