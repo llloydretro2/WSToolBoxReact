@@ -542,6 +542,8 @@
     "results": "{{total}} cards · Page {{page}} of {{totalPages}}",
     "noResults": "No cards found",
     "noResultsHint": "Try adjusting your filters",
+    "errorTitle": "Failed to load",
+    "errorHint": "Please check your connection and try again",
     "prev": "Prev",
     "next": "Next"
   }

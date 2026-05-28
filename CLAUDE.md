@@ -347,6 +347,96 @@ card.trigger?.length > 0   // 判断是否有 trigger
 
 ---
 
+## EN 卡牌数据模型（后端 API 返回格式）
+
+后端 EN 卡牌数据（`GET /api/cards/en`）字段与 JP 基本一致，但有以下差异：
+
+### trigger 字段
+
+EN 的 `trigger` 同样是 `[String]` 数组，渲染方式与 JP 相同：
+
+```js
+card.trigger?.length > 0   // 判断是否有 trigger
+card.trigger?.join(", ")   // 渲染显示
+```
+
+### feature（Trait）字段
+
+EN 数据库字段名为 `feature`（与 JP 一致）。注意：`attachRelatedCards` 在 `enRoutes.js` 中将相关卡的 `feature` 映射为 `trait` 字段返回，但主卡对象本身仍使用 `feature`。
+
+### related_cards 字段
+
+`GET /api/cards/en` 返回的每张卡包含 `related_cards` 数组，由后端 `attachRelatedCards()` 注入：
+
+```js
+card.related_cards  // Array<RelatedCard> | []（不会为 undefined）
+
+// RelatedCard 对象结构：
+{
+  cardno, name, image_url,
+  series, series_number, product_name,
+  rarity, card_type, color,
+  level, cost, power, soul,
+  trigger,   // [String] 数组
+  effect, flavor,
+  trait,     // 对应数据库的 feature 字段
+}
+```
+
+`CardDetailModal` 中点击相关卡会通过 `onRelatedCardClick` 回调直接切换 `selectedCard`，无需再次请求 API。
+
+### trigger 过滤器 URL 编码
+
+filter 参数中 `+` 必须编码为 `%2B`，否则服务器解析为空格：
+
+```js
+// ✅ 正确
+params.set("trigger", "soul+1")  // URLSearchParams 自动编码为 %2B
+// ❌ 错误
+`/api/cards/en?trigger=soul+1`   // + 被解析为空格，查询失败
+```
+
+## EN 卡片列表页实现说明（ENCardList.jsx）
+
+### Climax 卡图旋转
+
+官方 WS 卡图尺寸：普通卡 400×559（竖版，5:7），Climax 卡 559×400（横版，7:5）。
+展示时 Climax 卡图旋转 90°，使其在相同的 5:7 竖版容器内正常显示。
+
+### `CardImage` 组件
+
+`ENCardList.jsx` 内定义的局部组件，统一处理卡图展示和 Climax 旋转：
+
+```jsx
+// 容器始终为 5/7 竖版，overflow: hidden
+<div className={`relative overflow-hidden ${className}`} style={{ aspectRatio: "5/7" }}>
+  <LazyImage src={src} alt={alt} style={isClimax ? CLIMAX_IMG_STYLE : NORMAL_IMG_STYLE} />
+</div>
+```
+
+两种 style 常量均使用绝对定位填满容器（`height: "100%"` 在非绝对定位时无法可靠解析 `aspect-ratio` 派生的父高度）：
+
+```js
+// 普通卡：绝对定位填满容器
+const NORMAL_IMG_STYLE = {
+  position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: "0",
+};
+
+// Climax 卡：旋转数学
+// 容器 W×1.4W（5/7），旋转前元素尺寸 1.4W×W（横版），旋转后恰好填满容器
+const CLIMAX_IMG_STYLE = {
+  position: "absolute",
+  width: "140%", height: "71.43%",   // 1.4W × W
+  top: "14.285%", left: "-20%",      // 居中偏移
+  transform: "rotate(90deg)",
+  borderRadius: "0",
+};
+```
+
+`CardImage` 仅用于卡片列表网格。`CardDetailModal` 中主图仍使用原始 `LazyImage`（`objectFit: contain`），不做旋转。
+
+---
+
 ## Page layout conventions
 
 Every MUI page must follow this standard structure:
