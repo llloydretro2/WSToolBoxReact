@@ -878,7 +878,7 @@ function CardList() {
 							onChange={(_, newValue) =>
 								setDraftForm((prev) => ({
 									...prev,
-									soul: newValue === "soul" ? "soul" : "",
+									soul: newValue === "soul" ? "1" : "",
 								}))
 							}
 							size="small"
@@ -894,7 +894,7 @@ function CardList() {
 							}}>
 							<ToggleButton
 								value="soul"
-								selected={draftForm.soul === "soul"}
+								selected={!!draftForm.soul}
 								sx={{
 									fontWeight: 600,
 									"&.Mui-selected, &.Mui-selected:hover": {
@@ -1520,9 +1520,9 @@ function CardList() {
 								key: "soul",
 								label: `${card.soul} ${t("pages.cardList.fields.soul")}`,
 							},
-							card.trigger && {
+							card.trigger?.length > 0 && {
 								key: "trigger",
-								label: `${t("pages.cardList.fields.trigger")} ${card.trigger}`,
+								label: `${t("pages.cardList.fields.trigger")} ${card.trigger.join(", ")}`,
 							},
 						].filter(Boolean);
 
@@ -2137,10 +2137,10 @@ function CardList() {
 												"pages.cardList.fields.soul"
 											)}`,
 										},
-										detailCard.trigger && {
+										detailCard.trigger?.length > 0 && {
 											key: "trigger",
 											label: `${t("pages.cardList.fields.trigger")} ${
-												detailCard.trigger
+												detailCard.trigger.join(", ")
 											}`,
 										},
 									].filter(Boolean);

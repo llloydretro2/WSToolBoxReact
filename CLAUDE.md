@@ -345,6 +345,18 @@ card.trigger?.length > 0   // 判断是否有 trigger
 
 `soul` 字段存储 `0` 或 `1`（数字），表示该卡是否有 soul 标记。`soul+1`、`soul+2` 是 **trigger 类型**（属于 trigger 数组），与 soul 字段无关。
 
+前端 soul 过滤器的 URL 参数必须发送 `soul=1`（数字），不能发送 `soul=soul`（字符串），后端将其作为数值范围解析。
+
+### side 字段
+
+`side` 字段合法值：`"w"`（Weiß）、`"s"`（Schwarz）、`"ws"`（WS サイド——双边促销卡，如特典、联动等）。数据库原始值为 API 数字 ID，由 `fetch_cards.py` 的 `SIDE_MAP` 转换：
+
+```python
+SIDE_MAP = {"-1": "w", "-2": "s", "-3": "ws"}
+```
+
+i18n 中 `pages.cardList.sides` 必须包含三个键：`{"w": "Weiß", "s": "Schwarz", "ws": "WS"}`。
+
 ---
 
 ## EN 卡牌数据模型（后端 API 返回格式）

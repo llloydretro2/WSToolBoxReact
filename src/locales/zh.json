@@ -147,11 +147,13 @@
         "blue": "蓝色",
         "green": "绿色",
         "red": "红色",
-        "yellow": "黄色"
+        "yellow": "黄色",
+        "purple": "紫色"
       },
       "sides": {
-        "s": "S",
-        "w": "W"
+        "w": "Weiß",
+        "s": "Schwarz",
+        "ws": "WS"
       },
       "cardTypes": {
         "イベント": "事件",
