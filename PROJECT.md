@@ -512,6 +512,16 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### FirstSecond 迁移至 Tailwind + 翻牌动画重设计 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：`Container`/`Typography`/`Box`/`PrimaryButton` 全部替换为 Tailwind
+- **翻牌动画**：CSS 3D flip（`perspective` + `preserve-3d` + `backface-visibility`，500ms cubic-bezier 过渡）；点击前显示 `ws_cardback.png` 牌背，点击后翻转揭示先攻/後攻卡图
+- **结果显示**：先攻红色、後攻蓝色大字，翻牌完成后显示在卡片下方
+- **交互**：点击卡片或「决定」按钮均可触发；翻开后显示「再次决定」按钮（带 RotateCcw 图标）重置
+- **locale**：新增 `firstSecond.again` 键（zh: 再次决定 / en: Decide Again），更新 subtitle 文案
+
+---
+
 ## Future backlog
 
 ### Near-term candidates

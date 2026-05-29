@@ -65,8 +65,9 @@
     },
     "firstSecond": {
       "title": "First/Second",
-      "subtitle": "Click to determine first attack or second attack",
+      "subtitle": "Flip the card to reveal your turn order",
       "button": "Decide",
+      "again": "Decide Again",
       "first": "First",
       "second": "Second"
     },

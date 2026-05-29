@@ -65,8 +65,9 @@
     },
     "firstSecond": {
       "title": "先后攻",
-      "subtitle": "点击生成先攻或者后攻",
+      "subtitle": "点击决定，翻牌揭示结果",
       "button": "决定",
+      "again": "再次决定",
       "first": "先攻",
       "second": "後攻"
     },
