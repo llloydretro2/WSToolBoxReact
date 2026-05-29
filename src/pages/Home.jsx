@@ -11,6 +11,7 @@ const GithubIcon = () => (
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
+import { apiRequest } from "../utils/api.js";
 import pinnedMessageRaw from "../data/pinnedMessage.md?raw";
 
 
@@ -158,8 +159,7 @@ function RecentUpdates({ t }) {
 	useEffect(() => {
 		Promise.all([
 			fetch(GITHUB_API).then((r) => r.json()).catch(() => []),
-			fetch(`${import.meta.env.VITE_BACKEND_URL || "https://api.cardtoolbox.org"}/api/options/recent-updates`)
-				.then((r) => r.json()).catch(() => ({ jp: [], en: [] })),
+			apiRequest("/api/options/recent-updates").then((r) => r.json()).catch(() => ({ jp: [], en: [] })),
 		]).then(([commitData, seriesData]) => {
 			if (Array.isArray(commitData)) setCommits(commitData);
 			if (seriesData?.jp) setSeries(seriesData);
