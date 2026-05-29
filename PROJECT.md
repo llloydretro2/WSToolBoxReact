@@ -595,6 +595,18 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### AudioBoard 迁移至 Tailwind + 固定播放器栏重设计 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：所有 MUI 组件和 MUI icons 移除，MUI Slider → 原生 `<input type="range">` + 自定义 CSS
+- **MUI icons → Lucide**：Play/Pause/SkipBack/SkipForward/Repeat/Volume2/VolumeX/Music
+- **播放器栏固定底部**：`position: fixed; bottom: 0`，白色磨砂玻璃，全宽进度条在顶部，控制区三段（曲名｜播放控制｜循环+音量）
+- **曲目卡片**：frosted glass，活跃态绿色边框 + 淡绿背景，播放中 EQ 动画条
+- **进度/音量 RangeInput**：CSS 变量 `--pct` 驱动填充渐变，webkit/moz 均适配
+- **加载态**：Tailwind `animate-pulse` 骨架屏替代 MUI Skeleton
+- **后端修复**：`/api/audios/file/:name` 新增 `Cross-Origin-Resource-Policy: cross-origin` 头，解决 `new Audio(url)` 跨域被 helmet 拦截的问题
+
+---
+
 ## Future backlog
 
 ### Near-term candidates

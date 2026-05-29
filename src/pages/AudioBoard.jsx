@@ -1,40 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useLocale } from "../contexts/LocaleContext";
 import {
-	Box,
-	Container,
-	Typography,
-	Paper,
-	Slider,
-	IconButton,
-	Skeleton,
-	Tooltip,
-} from "@mui/material";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
-import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
-import SkipNextIcon from "@mui/icons-material/SkipNext";
-import RepeatIcon from "@mui/icons-material/Repeat";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-import VolumeOffIcon from "@mui/icons-material/VolumeOff";
-import MusicNoteIcon from "@mui/icons-material/MusicNote";
+	Play, Pause, SkipBack, SkipForward,
+	Repeat, Volume2, VolumeX, Music,
+} from "lucide-react";
 import { apiRequest } from "../utils/api.js";
 
-const BACKEND_URL =
-	import.meta.env.VITE_BACKEND_URL || "https://api.cardtoolbox.org";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://api.cardtoolbox.org";
 
 function friendlyName(filename) {
-	return decodeURIComponent(filename)
-		.replace(/\.[^.]+$/, "")
-		.replace(/[_-]/g, " ")
-		.trim();
+	return decodeURIComponent(filename).replace(/\.[^.]+$/, "").replace(/[_-]/g, " ").trim();
 }
-
 function fileFormat(filename) {
 	const ext = filename.split(".").pop();
 	return ext ? ext.toUpperCase() : "AUDIO";
 }
-
 function formatTime(sec) {
 	if (!sec || isNaN(sec) || !isFinite(sec)) return "0:00";
 	const m = Math.floor(sec / 60);
@@ -42,68 +22,42 @@ function formatTime(sec) {
 	return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-// Animated equalizer bars shown on the active playing card
+// EQ animation bars
 function EqBars() {
-	const delays = ["0s", "0.18s", "0.09s", "0.27s"];
 	return (
-		<Box
-			sx={{
-				display: "flex",
-				alignItems: "flex-end",
-				gap: "2.5px",
-				height: 16,
-				flexShrink: 0,
-			}}>
-			{delays.map((delay, i) => (
-				<Box
-					key={i}
-					sx={{
-						width: 3,
-						borderRadius: "2px",
-						backgroundColor: "var(--text)",
-						animation: `eq-bounce 0.55s ${delay} ease-in-out infinite alternate`,
-					}}
-				/>
+		<div className="flex items-end gap-[2.5px] h-4 shrink-0">
+			{["0s", "0.18s", "0.09s", "0.27s"].map((delay, i) => (
+				<div key={i} className="w-[3px] rounded-sm bg-[var(--text-muted)]"
+					style={{ animation: `eq-bounce 0.55s ${delay} ease-in-out infinite alternate` }} />
 			))}
-		</Box>
+		</div>
 	);
 }
 
-// Shared slider sx for progress and volume
-const sliderSx = {
-	color: "var(--primary-dark)",
-	height: 3,
-	padding: "10px 0",
-	"& .MuiSlider-thumb": {
-		width: 12,
-		height: 12,
-		transition: "box-shadow 0.15s",
-		"&:hover, &.Mui-focusVisible": {
-			boxShadow: "0 0 0 7px rgba(166,206,182,0.28)",
-		},
-	},
-	"& .MuiSlider-rail": {
-		opacity: 0.25,
-		backgroundColor: "var(--text)",
-	},
-	"& .MuiSlider-track": {
-		border: "none",
-	},
-};
+// Range input (progress / volume)
+function RangeInput({ value, min = 0, max = 1, step = 0.01, onChange, onMouseDown, onTouchStart, className = "" }) {
+	const pct = max > 0 ? ((value - min) / (max - min)) * 100 : 0;
+	return (
+		<input
+			type="range"
+			value={value}
+			min={min}
+			max={max}
+			step={step}
+			onChange={(e) => onChange(parseFloat(e.target.value))}
+			onMouseDown={onMouseDown}
+			onTouchStart={onTouchStart}
+			className={`ws-range ${className}`}
+			style={{ "--pct": `${pct}%` }}
+		/>
+	);
+}
 
-const iconBtnSx = {
-	color: "var(--text)",
-	"&:hover": { backgroundColor: "rgba(166,206,182,0.22)" },
-};
-
-export default function AudioBoard() {
+export default function AudioBoardV2() {
 	const { t } = useLocale();
-
 	const [tracks, setTracks] = useState([]);
 	const [loading, setLoading] = useState(true);
-	// { [track.name]: number } — populated by preload="metadata" probes
 	const [trackDurations, setTrackDurations] = useState({});
-
 	const [playingIdx, setPlayingIdx] = useState(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
@@ -111,37 +65,28 @@ export default function AudioBoard() {
 	const [volume, setVolume] = useState(0.8);
 	const [loop, setLoop] = useState(true);
 
-	// Refs so closures inside Audio callbacks always read the latest values
 	const audioRef = useRef(null);
 	const isSeekingRef = useRef(false);
 	const volumeRef = useRef(0.8);
 	const loopRef = useRef(true);
 
-	// ── Fetch track list ────────────────────────────────────────────────────────
-
+	// Fetch tracks
 	useEffect(() => {
 		let mounted = true;
 		apiRequest("/api/audios")
 			.then((r) => r.json())
-			.then((list) => {
-				if (mounted && Array.isArray(list)) setTracks(list);
-			})
+			.then((list) => { if (mounted && Array.isArray(list)) setTracks(list); })
 			.catch(() => {})
 			.finally(() => { if (mounted) setLoading(false); });
 		return () => {
 			mounted = false;
-			if (audioRef.current) {
-				audioRef.current.pause();
-				audioRef.current = null;
-			}
+			if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
 		};
 	}, []);
 
-	// ── Prefetch durations via preload="metadata" ──────────────────────────────
-	// Only fetches the file header (a few KB), not the full audio.
-
+	// Prefetch durations
 	useEffect(() => {
-		if (tracks.length === 0) return;
+		if (!tracks.length) return;
 		const probes = [];
 		tracks.forEach((track) => {
 			const a = new Audio();
@@ -158,8 +103,7 @@ export default function AudioBoard() {
 		return () => probes.forEach((a) => { a.src = ""; });
 	}, [tracks]);
 
-	// ── Playback helpers ────────────────────────────────────────────────────────
-
+	// Playback
 	const loadAndPlay = (idx) => {
 		if (audioRef.current) {
 			audioRef.current.pause();
@@ -169,82 +113,50 @@ export default function AudioBoard() {
 			audioRef.current.onpause = null;
 			audioRef.current.onended = null;
 		}
-
 		const track = tracks[idx];
 		const audio = new Audio(`${BACKEND_URL}${track.url}`);
 		audio.volume = volumeRef.current;
 		audio.loop = loopRef.current;
-
-		audio.ontimeupdate = () => {
-			if (!isSeekingRef.current) setCurrentTime(audio.currentTime);
-		};
+		audio.ontimeupdate = () => { if (!isSeekingRef.current) setCurrentTime(audio.currentTime); };
 		audio.onloadedmetadata = () => setDuration(audio.duration);
 		audio.onplay = () => setIsPlaying(true);
 		audio.onpause = () => setIsPlaying(false);
-		audio.onended = () => {
-			if (!loopRef.current) {
-				setIsPlaying(false);
-				setCurrentTime(0);
-			}
-		};
-
+		audio.onended = () => { if (!loopRef.current) { setIsPlaying(false); setCurrentTime(0); } };
 		audioRef.current = audio;
 		setPlayingIdx(idx);
 		setCurrentTime(0);
 		setDuration(0);
 		setIsPlaying(true);
-		audio.play().catch((e) => console.warn("play failed", e));
+		audio.play().catch(() => {});
 	};
 
 	const handleTrackClick = (idx) => {
 		if (playingIdx === idx) {
-			if (isPlaying) {
-				audioRef.current.pause();
-			} else {
-				audioRef.current.play().catch(() => {});
-			}
+			if (isPlaying) audioRef.current.pause();
+			else audioRef.current.play().catch(() => {});
 			return;
 		}
 		loadAndPlay(idx);
 	};
 
-	const handlePrev = () => {
-		if (playingIdx === null || tracks.length === 0) return;
-		loadAndPlay((playingIdx - 1 + tracks.length) % tracks.length);
-	};
-
-	const handleNext = () => {
-		if (playingIdx === null || tracks.length === 0) return;
-		loadAndPlay((playingIdx + 1) % tracks.length);
-	};
-
+	const handlePrev = () => { if (playingIdx !== null && tracks.length) loadAndPlay((playingIdx - 1 + tracks.length) % tracks.length); };
+	const handleNext = () => { if (playingIdx !== null && tracks.length) loadAndPlay((playingIdx + 1) % tracks.length); };
 	const handleTogglePlay = () => {
 		if (!audioRef.current) return;
-		if (isPlaying) {
-			audioRef.current.pause();
-		} else {
-			audioRef.current.play().catch(() => {});
-		}
+		if (isPlaying) audioRef.current.pause();
+		else audioRef.current.play().catch(() => {});
 	};
-
-	const handleSeekStart = () => { isSeekingRef.current = true; };
-	const handleSeekChange = (_, val) => setCurrentTime(val);
-	const handleSeekCommit = (_, val) => {
+	const handleSeekChange = (val) => setCurrentTime(val);
+	const handleSeekCommit = (e) => {
 		isSeekingRef.current = false;
-		if (audioRef.current) audioRef.current.currentTime = val;
+		if (audioRef.current) audioRef.current.currentTime = parseFloat(e.target.value);
 	};
-
-	const handleVolumeChange = (_, val) => {
+	const handleVolumeChange = (val) => {
 		volumeRef.current = val;
 		setVolume(val);
 		if (audioRef.current) audioRef.current.volume = val;
 	};
-
-	const handleMuteToggle = () => {
-		const next = volume > 0 ? 0 : 0.8;
-		handleVolumeChange(null, next);
-	};
-
+	const handleMuteToggle = () => handleVolumeChange(volume > 0 ? 0 : 0.8);
 	const handleLoopToggle = () => {
 		const next = !loopRef.current;
 		loopRef.current = next;
@@ -252,304 +164,201 @@ export default function AudioBoard() {
 		if (audioRef.current) audioRef.current.loop = next;
 	};
 
-	// ── Render ──────────────────────────────────────────────────────────────────
+	const hasPlayer = playingIdx !== null;
 
 	return (
-		<Container maxWidth="md" sx={{ py: 3 }}>
-			{/* Header */}
-			<Box textAlign="center" mb={4}>
-				<Typography variant="h4" fontWeight={700} color="var(--text)" gutterBottom>
-					{t("audio.title")}
-				</Typography>
-				<Typography variant="body1" color="text.secondary">
-					{t("audio.subtitle")}
-				</Typography>
-			</Box>
+		<>
+			{/* Range input styles */}
+			<style>{`
+				.ws-range {
+					-webkit-appearance: none;
+					appearance: none;
+					height: 3px;
+					border-radius: 2px;
+					outline: none;
+					cursor: pointer;
+					background: linear-gradient(
+						to right,
+						var(--primary-dark) 0%,
+						var(--primary-dark) var(--pct),
+						rgba(0,0,0,0.15) var(--pct),
+						rgba(0,0,0,0.15) 100%
+					);
+				}
+				.ws-range::-webkit-slider-thumb {
+					-webkit-appearance: none;
+					width: 12px; height: 12px;
+					border-radius: 50%;
+					background: var(--primary-dark);
+					cursor: pointer;
+					transition: box-shadow 0.15s;
+				}
+				.ws-range::-webkit-slider-thumb:hover {
+					box-shadow: 0 0 0 6px rgba(166,206,182,0.3);
+				}
+				.ws-range::-moz-range-thumb {
+					width: 12px; height: 12px;
+					border: none;
+					border-radius: 50%;
+					background: var(--primary-dark);
+					cursor: pointer;
+				}
+			`}</style>
 
-			{/* Loading skeletons */}
-			{loading && (
-				<>
-					<Typography
-						variant="body2"
-						color="text.secondary"
-						textAlign="center"
-						mb={2}
-						sx={{ opacity: 0.7 }}>
-						{t("audio.loading")}
-					</Typography>
-					<Box
-						sx={{
-							display: "grid",
-							gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-							gap: 2,
-						}}>
+			<div className={`max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 ${hasPlayer ? "pb-36" : ""}`}>
+
+				{/* Title */}
+				<div className="mb-8">
+					<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
+						{t("audio.title")}
+					</h1>
+					<p className="text-sm text-[var(--text-secondary)]">{t("audio.subtitle")}</p>
+				</div>
+
+				{/* Loading skeletons */}
+				{loading && (
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 						{Array(6).fill(0).map((_, i) => (
-							<Skeleton
-								key={i}
-								variant="rounded"
-								height={72}
-								animation="wave"
-								sx={{ borderRadius: 2 }}
-							/>
+							<div key={i} className="h-16 rounded-2xl bg-[var(--card-background)] animate-pulse" />
 						))}
-					</Box>
-				</>
-			)}
+					</div>
+				)}
 
-			{/* Empty state */}
-			{!loading && tracks.length === 0 && (
-				<Typography color="text.secondary" textAlign="center">
-					{t("audio.empty")}
-				</Typography>
-			)}
+				{/* Empty */}
+				{!loading && tracks.length === 0 && (
+					<p className="text-center text-[var(--text-muted)] py-12">{t("audio.empty")}</p>
+				)}
 
-			{/* Track grid */}
-			{!loading && tracks.length > 0 && (
-				<Box
-					sx={{
-						display: "grid",
-						gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-						gap: 2,
-					}}>
-					{tracks.map((track, idx) => {
-						const active = playingIdx === idx;
-						const activeAndPlaying = active && isPlaying;
-						return (
-							<Paper
-								key={track.name}
-								onClick={() => handleTrackClick(idx)}
-								elevation={0}
-								sx={{
-									display: "flex",
-									alignItems: "center",
-									gap: 1.5,
-									px: 2,
-									minHeight: 72,
-									cursor: "pointer",
-									borderRadius: 2,
-									border: "1px solid",
-									borderColor: active ? "var(--primary-dark)" : "var(--border)",
-									backgroundColor: active
-										? "linear-gradient(135deg, var(--primary-light), var(--primary))"
-										: "var(--surface)",
-									background: active
-										? "linear-gradient(135deg, var(--primary-light), var(--primary))"
-										: "var(--surface)",
-									boxShadow: active
-										? "0 4px 14px rgba(80,140,106,0.18)"
-										: "none",
-									transition: "all 0.18s ease",
-									userSelect: "none",
-									"&:hover": {
-										borderColor: "var(--primary-dark)",
-										backgroundColor: active
-											? undefined
-											: "rgba(166,206,182,0.08)",
-										background: active
-											? undefined
-											: "rgba(166,206,182,0.08)",
-										boxShadow: "0 2px 10px rgba(80,140,106,0.12)",
-									},
-								}}>
-								{/* Left icon area */}
-								<Box sx={{ width: 20, flexShrink: 0, display: "flex", alignItems: "center" }}>
-									{activeAndPlaying ? (
-										<EqBars />
-									) : active ? (
-										<PauseIcon sx={{ fontSize: 18, color: "var(--text)", opacity: 0.7 }} />
-									) : (
-										<PlayArrowIcon sx={{ fontSize: 18, color: "var(--text)", opacity: 0.25 }} />
-									)}
-								</Box>
+				{/* Track grid */}
+				{!loading && tracks.length > 0 && (
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+						{tracks.map((track, idx) => {
+							const active = playingIdx === idx;
+							const playing = active && isPlaying;
+							return (
+								<button
+									key={track.name}
+									type="button"
+									onClick={() => handleTrackClick(idx)}
+									className={`flex items-center gap-3 px-4 py-3 rounded-2xl border text-left
+									            transition-all duration-150 select-none
+									            ${active
+									              ? "border-[var(--primary)] bg-[rgba(166,206,182,0.15)] shadow-sm"
+									              : "border-[var(--border)] bg-white/70 backdrop-blur-md hover:border-[var(--primary)] hover:bg-[rgba(166,206,182,0.08)]"
+									            }`}
+								>
+									{/* Left indicator */}
+									<div className="w-5 shrink-0 flex items-center justify-center">
+										{playing ? (
+											<EqBars />
+										) : active ? (
+											<Pause size={15} className="text-[var(--text-muted)]" />
+										) : (
+											<Play size={15} className="text-[var(--text-muted)] opacity-40" />
+										)}
+									</div>
 
-								{/* Track name + metadata */}
-								<Box sx={{ flex: 1, minWidth: 0 }}>
-									<Typography
-										variant="body2"
-										fontWeight={active ? 600 : 400}
-										color="var(--text)"
-										noWrap
-										sx={{ fontSize: "0.875rem", lineHeight: 1.3 }}>
-										{friendlyName(track.name)}
-									</Typography>
-									<Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.3 }}>
-										<Typography
-											component="span"
-											sx={{
-												fontSize: "0.65rem",
-												fontWeight: 600,
-												letterSpacing: "0.06em",
-												px: 0.75,
-												py: 0.1,
-												borderRadius: "3px",
-												backgroundColor: active
-													? "rgba(0,0,0,0.12)"
-													: "rgba(166,206,182,0.25)",
-												color: "var(--text-secondary)",
-												lineHeight: 1.6,
-											}}>
-											{fileFormat(track.name)}
-										</Typography>
-										<Typography
-											component="span"
-											sx={{
-												fontSize: "0.7rem",
-												color: "var(--text-muted)",
-												fontVariantNumeric: "tabular-nums",
-											}}>
-											{trackDurations[track.name] != null
-												? formatTime(trackDurations[track.name])
-												: "—"}
-										</Typography>
-									</Box>
-								</Box>
-							</Paper>
-						);
-					})}
-				</Box>
-			)}
+									{/* Info */}
+									<div className="flex-1 min-w-0">
+										<p className={`text-sm leading-tight truncate ${active ? "font-bold text-[var(--text)]" : "font-medium text-[var(--text)]"}`}>
+											{friendlyName(track.name)}
+										</p>
+										<div className="flex items-center gap-1.5 mt-0.5">
+											<span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[rgba(166,206,182,0.25)] text-[var(--text-secondary)]">
+												{fileFormat(track.name)}
+											</span>
+											<span className="text-[11px] text-[var(--text-muted)] tabular-nums">
+												{trackDurations[track.name] != null ? formatTime(trackDurations[track.name]) : "—"}
+											</span>
+										</div>
+									</div>
+								</button>
+							);
+						})}
+					</div>
+				)}
+			</div>
 
-			{/* ── Player bar ───────────────────────────────────────────────────── */}
-			{playingIdx !== null && (
-				<Paper
-					elevation={0}
-					sx={{
-						mt: 4,
-						p: { xs: 2, sm: 2.5 },
-						borderRadius: 3,
-						border: "1px solid var(--border)",
-						background:
-							"linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%)",
-					}}>
+			{/* ── Fixed Player Bar ───────────────────────────────────────────── */}
+			{hasPlayer && (
+				<div className="fixed bottom-0 left-0 right-0 z-50
+				                bg-white/85 backdrop-blur-xl border-t border-[var(--border)]
+				                shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
 
-					{/* Track name row */}
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-						<MusicNoteIcon
-							sx={{ fontSize: 15, color: "var(--text)", opacity: 0.55, flexShrink: 0 }}
-						/>
-						<Typography
-							variant="body2"
-							fontWeight={600}
-							color="var(--text)"
-							noWrap>
-							{friendlyName(tracks[playingIdx].name)}
-						</Typography>
-					</Box>
-
-					{/* Progress bar */}
-					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-						<Typography
-							variant="caption"
-							color="var(--text-secondary)"
-							sx={{ minWidth: 34, fontVariantNumeric: "tabular-nums" }}>
+					{/* Progress bar (full width, top of bar) */}
+					<div className="flex items-center gap-2 px-4 pt-3 pb-1">
+						<span className="text-[11px] tabular-nums text-[var(--text-muted)] w-9 text-right shrink-0">
 							{formatTime(currentTime)}
-						</Typography>
-						<Slider
+						</span>
+						<RangeInput
 							value={currentTime}
 							min={0}
 							max={duration || 1}
 							step={0.5}
-							onMouseDown={handleSeekStart}
-							onTouchStart={handleSeekStart}
+							className="flex-1"
+							onMouseDown={() => { isSeekingRef.current = true; }}
+							onTouchStart={() => { isSeekingRef.current = true; }}
 							onChange={handleSeekChange}
-							onChangeCommitted={handleSeekCommit}
-							sx={{ ...sliderSx, flex: 1 }}
+							onMouseUp={handleSeekCommit}
 						/>
-						<Typography
-							variant="caption"
-							color="var(--text-secondary)"
-							sx={{ minWidth: 34, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+						<span className="text-[11px] tabular-nums text-[var(--text-muted)] w-9 shrink-0">
 							{formatTime(duration)}
-						</Typography>
-					</Box>
+						</span>
+					</div>
 
 					{/* Controls row */}
-					<Box
-						sx={{
-							display: "flex",
-							alignItems: "center",
-							gap: 0.5,
-							mt: 0.5,
-						}}>
-						{/* Prev */}
-						<Tooltip title={t("audio.prev")} arrow>
-							<IconButton size="small" onClick={handlePrev} sx={iconBtnSx}>
-								<SkipPreviousIcon fontSize="small" />
-							</IconButton>
-						</Tooltip>
+					<div className="flex items-center px-4 pb-4 gap-2">
 
-						{/* Play / Pause */}
-						<IconButton
-							onClick={handleTogglePlay}
-							sx={{
-								...iconBtnSx,
-								mx: 0.5,
-								backgroundColor: "rgba(255,255,255,0.35)",
-								"&:hover": { backgroundColor: "rgba(255,255,255,0.55)" },
-							}}>
-							{isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-						</IconButton>
+						{/* Track name */}
+						<div className="flex items-center gap-1.5 flex-1 min-w-0">
+							<Music size={13} className="text-[var(--text-muted)] shrink-0" />
+							<span className="text-sm font-bold text-[var(--text)] truncate">
+								{friendlyName(tracks[playingIdx].name)}
+							</span>
+						</div>
 
-						{/* Next */}
-						<Tooltip title={t("audio.next")} arrow>
-							<IconButton size="small" onClick={handleNext} sx={iconBtnSx}>
-								<SkipNextIcon fontSize="small" />
-							</IconButton>
-						</Tooltip>
+						{/* Playback controls (centered) */}
+						<div className="flex items-center gap-1 shrink-0">
+							<button type="button" onClick={handlePrev} title={t("audio.prev")}
+								className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--card-background)] transition-colors">
+								<SkipBack size={16} />
+							</button>
+							<button type="button" onClick={handleTogglePlay}
+								className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors">
+								{isPlaying ? <Pause size={18} /> : <Play size={18} />}
+							</button>
+							<button type="button" onClick={handleNext} title={t("audio.next")}
+								className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--text-secondary)] hover:bg-[var(--card-background)] transition-colors">
+								<SkipForward size={16} />
+							</button>
+						</div>
 
-						{/* Loop */}
-						<Tooltip title={t("audio.loop")} arrow>
-							<IconButton
-								size="small"
-								onClick={handleLoopToggle}
-								sx={{
-									...iconBtnSx,
-									ml: 0.5,
-									opacity: loop ? 1 : 0.3,
-									backgroundColor: loop ? "rgba(255,255,255,0.3)" : "transparent",
-									"&:hover": {
-										backgroundColor: loop
-											? "rgba(255,255,255,0.45)"
-											: "rgba(166,206,182,0.22)",
-									},
-								}}>
-								<RepeatIcon fontSize="small" />
-							</IconButton>
-						</Tooltip>
-
-						{/* Volume */}
-						<Box
-							sx={{
-								ml: "auto",
-								display: "flex",
-								alignItems: "center",
-								gap: 0.5,
-							}}>
-							<Tooltip title={t("audio.volume")} arrow>
-								<IconButton size="small" onClick={handleMuteToggle} sx={iconBtnSx}>
-									{volume === 0 ? (
-										<VolumeOffIcon fontSize="small" />
-									) : (
-										<VolumeUpIcon fontSize="small" />
-									)}
-								</IconButton>
-							</Tooltip>
-							<Slider
+						{/* Loop + Volume */}
+						<div className="flex items-center gap-1.5 flex-1 justify-end min-w-0">
+							<button type="button" onClick={handleLoopToggle} title={t("audio.loop")}
+								className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+									loop
+										? "text-[var(--text-muted)] bg-[rgba(166,206,182,0.3)]"
+										: "text-[var(--text-muted)] opacity-40 hover:opacity-70"
+								}`}>
+								<Repeat size={14} />
+							</button>
+							<button type="button" onClick={handleMuteToggle} title={t("audio.volume")}
+								className="w-7 h-7 flex items-center justify-center rounded-full text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors shrink-0">
+								{volume === 0 ? <VolumeX size={14} /> : <Volume2 size={14} />}
+							</button>
+							<RangeInput
 								value={volume}
 								min={0}
 								max={1}
 								step={0.02}
+								className="w-16 sm:w-24 shrink-0"
 								onChange={handleVolumeChange}
-								sx={{
-									...sliderSx,
-									width: { xs: 60, sm: 88 },
-									flexShrink: 0,
-								}}
 							/>
-						</Box>
-					</Box>
-				</Paper>
+						</div>
+					</div>
+				</div>
 			)}
-		</Container>
+		</>
 	);
 }
