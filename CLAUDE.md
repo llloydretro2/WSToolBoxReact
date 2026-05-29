@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CardToolBox Frontend — a React + Vite PWA that has expanded from a Weiss Schwarz tool into a multi-game platform. Currently hosts Weiss Schwarz tools (card search, pack simulator, match records, shuffle), Riichi Mahjong tools (yaku trainer, efficiency analysis, centrepiece table board), and general game utilities (first/second, dice, chess clock, audio board). Domain: `cardtoolbox.org`.
 
+## 开发规范
+
+**提交前必须更新文档。** 每次完成一个功能、重构或重要修复后，在 `git commit` 之前必须先更新对应文档：
+- 架构/约定变更 → 更新 `CLAUDE.md`
+- 功能开发/完成阶段 → 更新 `PROJECT.md`（追加 session 记录）
+
+---
+
 ## Commands
 
 ```bash
