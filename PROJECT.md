@@ -585,6 +585,16 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### Login 迁移至 Tailwind (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：所有 MUI 组件、ButtonVariants、Login.css 移除
+- **MUI icons → Lucide**：`Person`→`User`，`Lock`→`Lock`，`Visibility/Off`→`Eye/EyeOff`，`LoginRounded`→`LogIn`，`PersonAddRounded`→`UserPlus`
+- **Toast 组件**：原生实现替代 `Snackbar`+`Alert`，固定定位居上，4秒自动关闭，成功/错误颜色区分
+- **输入框**：左侧图标绝对定位，密码右侧显示/隐藏切换按钮
+- **分割线**：flex + border-t 替代 MUI `Divider`+`Chip`
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
