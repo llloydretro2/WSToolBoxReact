@@ -48,7 +48,10 @@
         "title": "Development Notes",
         "subtitle": "Recent feature updates, refactors, and fixes will be listed here.",
         "expand": "Show more",
-        "collapse": "Show less"
+        "collapse": "Show less",
+        "pinned": "Notice",
+        "seriesTitle": "Recently Updated Series",
+        "commitsTitle": "Latest Commits"
       },
       "ws": {
         "name": "Weiss Schwarz",

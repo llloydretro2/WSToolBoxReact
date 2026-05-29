@@ -48,7 +48,10 @@
         "title": "开发记录",
         "subtitle": "这里会记录网站近期的功能更新、重构和修复。",
         "expand": "展开更多",
-        "collapse": "收起"
+        "collapse": "收起",
+        "pinned": "站长留言",
+        "seriesTitle": "最近更新系列",
+        "commitsTitle": "最新提交"
       },
       "ws": {
         "name": "Weiss Schwarz",

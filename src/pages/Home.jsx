@@ -11,6 +11,7 @@ const GithubIcon = () => (
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
+import pinnedMessageRaw from "../data/pinnedMessage.md?raw";
 
 
 const SECTION_ICONS = {
@@ -120,6 +121,21 @@ SectionCard.propTypes = {
 	onNavigate: PropTypes.func.isRequired,
 };
 
+// ─── Markdown renderer（支持 **bold** *italic* [link](url) 段落）─────────────
+
+function renderMarkdown(md) {
+	return md.split(/\n\n+/).map((para, pi) => {
+		const inline = para.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+			.replace(/\*(.+?)\*/g, "<em>$1</em>")
+			.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="underline text-[var(--text-muted)] hover:text-[var(--text)]">$1</a>')
+			.replace(/\n/g, "<br>");
+		return (
+			<p key={pi} className="text-sm text-[var(--text-secondary)] leading-relaxed"
+			   dangerouslySetInnerHTML={{ __html: inline }} />
+		);
+	});
+}
+
 // ─── RecentUpdates ─────────────────────────────────────────────────────────────
 
 const GITHUB_API = "https://api.github.com/repos/llloydretro2/WSToolBoxReact/commits?per_page=3";
@@ -130,63 +146,119 @@ function formatDate(iso) {
 }
 
 function parseCommit(raw) {
-	// 只取第一行（subject），去掉 Co-Authored-By 等 trailer
-	const subject = raw.split("\n")[0].trim();
-	return subject;
+	return raw.split("\n")[0].trim();
 }
 
 function RecentUpdates({ t }) {
 	const [commits, setCommits] = useState([]);
+	const [series, setSeries] = useState({ jp: [], en: [] });
+	const [seriesTab, setSeriesTab] = useState("jp");
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
-		fetch(GITHUB_API)
-			.then((r) => r.json())
-			.then((data) => {
-				if (Array.isArray(data)) setCommits(data);
-			})
-			.catch(() => {})
-			.finally(() => setLoading(false));
+		Promise.all([
+			fetch(GITHUB_API).then((r) => r.json()).catch(() => []),
+			fetch(`${import.meta.env.VITE_BACKEND_URL || "https://api.cardtoolbox.org"}/api/options/recent-updates`)
+				.then((r) => r.json()).catch(() => ({ jp: [], en: [] })),
+		]).then(([commitData, seriesData]) => {
+			if (Array.isArray(commitData)) setCommits(commitData);
+			if (seriesData?.jp) setSeries(seriesData);
+		}).finally(() => setLoading(false));
 	}, []);
+
+	const Divider = () => <div className="border-t border-[rgba(166,206,182,0.28)] my-1" />;
 
 	return (
 		<div className="mt-8 border border-[var(--border)] rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md">
 			{/* Rainbow bar */}
 			<div className="h-1" style={{ background: "linear-gradient(90deg, #4f9b78, #d26a6a, #5b84d6)" }} />
 
-			<div className="p-5 sm:p-6">
-				<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">
-					{t("pages.home.recentUpdates.eyebrow")}
-				</p>
-				<p className="text-lg font-black text-[var(--text)] mb-1">
-					{t("pages.home.recentUpdates.title")}
-				</p>
+			<div className="p-5 sm:p-6 flex flex-col gap-5">
 
-				{loading ? (
-					<div className="flex justify-center py-6">
-						<div className="w-5 h-5 rounded-full border-2 border-[var(--border)] border-t-[var(--text-muted)] animate-spin" />
+				{/* ── 置顶留言 ── */}
+				<div>
+					<div className="flex items-center gap-2 mb-2">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)]">
+							📌 {t("pages.home.recentUpdates.pinned")}
+						</span>
 					</div>
-				) : commits.length === 0 ? null : (
-					<div className="flex flex-col mt-3">
-						{commits.map((c, i) => (
-							<a
-								key={c.sha}
-								href={c.html_url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={`grid grid-cols-1 sm:grid-cols-[88px_1fr] gap-1 sm:gap-4 py-3
-								            hover:bg-[var(--card-background)] rounded-lg px-2 -mx-2 transition-colors
-								            ${i > 0 ? "border-t border-[rgba(166,206,182,0.28)]" : ""}`}>
-								<p className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap">
-									{formatDate(c.commit.author.date)}
-								</p>
-								<p className="text-sm font-medium text-[var(--text)]">
-									{parseCommit(c.commit.message)}
-								</p>
-							</a>
-						))}
+					<div className="flex flex-col gap-1.5">
+						{renderMarkdown(pinnedMessageRaw)}
 					</div>
-				)}
+				</div>
+
+				<Divider />
+
+				{/* ── 最近更新系列 ── */}
+				<div>
+					<div className="flex items-center justify-between mb-3">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)]">
+							{t("pages.home.recentUpdates.seriesTitle")}
+						</span>
+						<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+							{["jp", "en"].map((lang, i) => (
+								<button
+									key={lang}
+									onClick={() => setSeriesTab(lang)}
+									className={`px-3 py-1 text-[10px] font-bold transition-colors ${
+										i === 0 ? "border-r border-[var(--border)]" : ""
+									} ${seriesTab === lang
+										? "bg-[var(--text)] text-[var(--background)]"
+										: "text-[var(--text)] hover:bg-[var(--card-background)]"
+									}`}>
+									{lang.toUpperCase()}
+								</button>
+							))}
+						</div>
+					</div>
+					{loading ? (
+						<div className="flex justify-center py-3">
+							<div className="w-4 h-4 rounded-full border-2 border-[var(--border)] border-t-[var(--text-muted)] animate-spin" />
+						</div>
+					) : (
+						<div className="flex flex-col gap-0">
+							{(series[seriesTab] || []).map((item, i) => (
+								<div key={item.name}
+								     className={`flex items-center gap-3 py-2 ${i > 0 ? "border-t border-[rgba(166,206,182,0.18)]" : ""}`}>
+									<span className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap w-14 shrink-0">
+										{item.month}
+									</span>
+									<span className="text-sm text-[var(--text)] truncate">{item.name}</span>
+								</div>
+							))}
+						</div>
+					)}
+				</div>
+
+				<Divider />
+
+				{/* ── 最新提交 ── */}
+				<div>
+					<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] block mb-3">
+						{t("pages.home.recentUpdates.commitsTitle")}
+					</span>
+					{loading ? (
+						<div className="flex justify-center py-3">
+							<div className="w-4 h-4 rounded-full border-2 border-[var(--border)] border-t-[var(--text-muted)] animate-spin" />
+						</div>
+					) : (
+						<div className="flex flex-col gap-0">
+							{commits.map((c, i) => (
+								<a key={c.sha} href={c.html_url} target="_blank" rel="noopener noreferrer"
+								   className={`flex items-start gap-3 py-2 hover:bg-[var(--card-background)] rounded-lg px-2 -mx-2 transition-colors ${
+								   	i > 0 ? "border-t border-[rgba(166,206,182,0.18)]" : ""
+								   }`}>
+									<span className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap w-24 shrink-0 pt-0.5">
+										{formatDate(c.commit.author.date)}
+									</span>
+									<span className="text-sm text-[var(--text)] leading-snug">
+										{parseCommit(c.commit.message)}
+									</span>
+								</a>
+							))}
+						</div>
+					)}
+				</div>
 			</div>
 		</div>
 	);
