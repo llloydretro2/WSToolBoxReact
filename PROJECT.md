@@ -532,6 +532,17 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### Dice 迁移至 Tailwind + 交互重设计 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：所有 MUI 组件和 MUI icons 移除，framer-motion 按钮动画改为 CSS transition
+- **骰子面数快捷按钮**：每组显示 `D4 D6 D8 D10 D12 D20 D100` 快捷选项，点选即切换
+- **步进器输入**：面数和数量改用 `−/数字/+` 步进器，替代 MUI TextField，移动端友好
+- **多组管理**：单组时隐藏删除按钮，多组时各行右上角显示 Trash2 删除
+- **结果展示**：圆角方块展示每个点数，同组多骰时最大值高亮深色背景
+- **操作区**：投掷（主）+ 添加骰子（次）左对齐，重置靠右
+
+---
+
 ## Future backlog
 
 ### Near-term candidates

@@ -1,345 +1,257 @@
-import React, { useState, useEffect } from "react";
-import {
-	PrimaryButton,
-	DangerButton,
-	SecondaryButton,
-} from "../components/ButtonVariants";
-import { motion } from "framer-motion";
-import {
-	Container,
-	Typography,
-	Button,
-	TextField,
-	Box,
-	Grid,
-	Paper,
-	Stack,
-	Divider,
-	Chip,
-} from "@mui/material";
-import CasinoIcon from "@mui/icons-material/Casino";
-import AddCircleOutlineRoundedIcon from "@mui/icons-material/AddCircleOutlineRounded";
-import RefreshRoundedIcon from "@mui/icons-material/RefreshRounded";
+import React, { useState, useEffect, useMemo } from "react";
+import { Plus, RotateCcw, Dices, Trash2 } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 
-function Dice() {
+const PRESET_SIDES = [4, 6, 8, 10, 12, 20, 100];
+
+function Stepper({ value, onChange, min, max, label }) {
+	return (
+		<div className="flex flex-col items-center gap-1">
+			<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">
+				{label}
+			</span>
+			<div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
+				<button
+					type="button"
+					onClick={() => onChange(Math.max(min, value - 1))}
+					className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)]
+					           hover:bg-[var(--card-background)] transition-colors text-lg font-bold">
+					−
+				</button>
+				<span className="w-10 text-center text-sm font-black text-[var(--text)]">
+					{value}
+				</span>
+				<button
+					type="button"
+					onClick={() => onChange(max ? Math.min(max, value + 1) : value + 1)}
+					className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)]
+					           hover:bg-[var(--card-background)] transition-colors text-lg font-bold">
+					+
+				</button>
+			</div>
+		</div>
+	);
+}
+
+function DiceRow({ input, index, onChange, onRemove, canRemove }) {
+	return (
+		<div className="border border-[var(--border)] rounded-2xl p-4 bg-white/70 backdrop-blur-md flex flex-col gap-3">
+			<div className="flex items-center justify-between">
+				<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+					第 {index + 1} 组 · D{input.sides}
+				</span>
+				{canRemove && (
+					<button
+						type="button"
+						onClick={onRemove}
+						className="text-[var(--text-muted)] hover:text-[var(--reset)] transition-colors">
+						<Trash2 size={14} />
+					</button>
+				)}
+			</div>
+
+			{/* Preset sides */}
+			<div className="flex flex-wrap gap-1.5">
+				{PRESET_SIDES.map((s) => (
+					<button
+						key={s}
+						type="button"
+						onClick={() => onChange("sides", s)}
+						className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition-colors ${
+							input.sides === s
+								? "bg-[var(--text)] text-[var(--background)]"
+								: "border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--card-background)]"
+						}`}>
+						D{s}
+					</button>
+				))}
+			</div>
+
+			{/* Steppers */}
+			<div className="flex gap-6 justify-center">
+				<Stepper
+					label="面数"
+					value={input.sides}
+					onChange={(v) => onChange("sides", v)}
+					min={2}
+				/>
+				<Stepper
+					label="数量"
+					value={input.count}
+					onChange={(v) => onChange("count", v)}
+					min={1}
+					max={20}
+				/>
+			</div>
+		</div>
+	);
+}
+
+function DiceResult({ value, isMax, multiDice }) {
+	const highlight = isMax && multiDice;
+	return (
+		<div
+			className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black border transition-colors ${
+				highlight
+					? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
+					: "border-[var(--border)] text-[var(--text)] bg-white/60"
+			}`}>
+			{value}
+		</div>
+	);
+}
+
+export default function DiceV2() {
+	const { t } = useLocale();
 	const [diceInputs, setDiceInputs] = useState([{ sides: 6, count: 1 }]);
 	const [results, setResults] = useState([]);
-	const { t } = useLocale();
 
 	useEffect(() => {
 		const savedInputs = localStorage.getItem("diceInputs");
 		const savedResults = localStorage.getItem("diceResults");
-		if (savedInputs) {
-			setDiceInputs(JSON.parse(savedInputs));
-		}
-		if (savedResults) {
-			setResults(JSON.parse(savedResults));
-		}
+		if (savedInputs) setDiceInputs(JSON.parse(savedInputs));
+		if (savedResults) setResults(JSON.parse(savedResults));
 	}, []);
 
+	const save = (inputs, res) => {
+		localStorage.setItem("diceInputs", JSON.stringify(inputs));
+		if (res !== undefined) localStorage.setItem("diceResults", JSON.stringify(res));
+	};
+
 	const handleChange = (index, field, value) => {
-		const numericValue = parseInt(value, 10);
-		const minValue = field === "sides" ? 2 : 1;
-
-		setDiceInputs((prevInputs) => {
-			const nextInputs = prevInputs.map((input, idx) => {
-				if (idx !== index) {
-					return input;
-				}
-				if (Number.isNaN(numericValue)) {
-					return { ...input, [field]: "" };
-				}
-				return { ...input, [field]: Math.max(minValue, numericValue) };
-			});
-
-			localStorage.setItem("diceInputs", JSON.stringify(nextInputs));
-			return nextInputs;
+		setDiceInputs((prev) => {
+			const next = prev.map((item, i) => i === index ? { ...item, [field]: value } : item);
+			save(next);
+			return next;
 		});
 	};
 
-	const addDiceInput = () => {
-		setDiceInputs((prevInputs) => {
-			const nextInputs = [...prevInputs, { sides: 6, count: 1 }];
-			localStorage.setItem("diceInputs", JSON.stringify(nextInputs));
-			return nextInputs;
+	const addDice = () => {
+		setDiceInputs((prev) => {
+			const next = [...prev, { sides: 6, count: 1 }];
+			save(next);
+			return next;
 		});
 	};
 
-	const resetDiceInputs = () => {
+	const removeDice = (index) => {
+		setDiceInputs((prev) => {
+			const next = prev.filter((_, i) => i !== index);
+			save(next);
+			return next;
+		});
+	};
+
+	const reset = () => {
 		setDiceInputs([{ sides: 6, count: 1 }]);
 		setResults([]);
 		localStorage.removeItem("diceInputs");
 		localStorage.removeItem("diceResults");
 	};
 
-	const rollDice = () => {
-		const sanitizedInputs = diceInputs.map(({ count, sides }) => ({
-			count: Math.max(1, parseInt(count, 10) || 1),
-			sides: Math.max(2, parseInt(sides, 10) || 6),
-		}));
-
-		setDiceInputs(sanitizedInputs);
-		localStorage.setItem("diceInputs", JSON.stringify(sanitizedInputs));
-
-		const allResults = sanitizedInputs.map(({ count, sides }) => {
-			const rolls = [];
-			for (let i = 0; i < count; i += 1) {
-				rolls.push(Math.floor(Math.random() * sides) + 1);
-			}
-			return rolls;
+	const roll = () => {
+		const allResults = diceInputs.map(({ count, sides }) => {
+			const c = Math.max(1, count || 1);
+			const s = Math.max(2, sides || 6);
+			return Array.from({ length: c }, () => Math.floor(Math.random() * s) + 1);
 		});
 		setResults(allResults);
-		localStorage.setItem("diceResults", JSON.stringify(allResults));
+		save(diceInputs, allResults);
 	};
 
-	const flattenedResults = results.flat();
-	const total = flattenedResults.reduce((sum, value) => sum + value, 0);
-	const average =
-		flattenedResults.length > 0
-			? (total / flattenedResults.length).toFixed(2)
-			: "0";
-	const hasResults = results.length > 0 && flattenedResults.length > 0;
+	const flat = useMemo(() => results.flat(), [results]);
+	const total = flat.reduce((s, v) => s + v, 0);
+	const hasResults = flat.length > 0;
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100%", // 使用100%而不是视口高度
-			}}>
-			<Container maxWidth="md" sx={{ py: 3 }}>
-				{/* 页面标题和副标题 */}
-				<Box
-					textAlign="center"
-					mb={4}>
-					<Typography
-						variant="h4"
-						fontWeight={700}
-						color="var(--text)"
-						gutterBottom>
-						{t("dice.title")}
-					</Typography>
-					<Typography
-						variant="body1"
-						color="text.secondary">
-						{t("dice.subtitle")}
-					</Typography>
-				</Box>
+		<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
 
-				<Paper
-					elevation={8}
-					sx={{
-						p: { xs: 3, md: 5 },
-						backgroundColor: "transparent",
-						border: "1px solid var(--border)",
-						boxShadow: "0 20px 45px -18px rgba(0, 0, 0, 0.2)",
-					}}>
-					<Stack spacing={2}>
-						{diceInputs.map((input, index) => (
-							<Paper
-								key={`dice-input-${index}`}
-								elevation={3}
-								sx={{
-									p: { xs: 2, md: 3 },
-									borderRadius: 3,
-									border: "1px solid var(--border)",
-									backgroundColor: "transparent",
-								}}>
-								<Grid
-									container
-									spacing={2}
-									alignItems="center"
-									justifyContent="center"
-									textAlign="center">
-									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
-										<Stack
-											spacing={0.25}
-											alignItems="center">
-											<Typography
-												variant="subtitle2"
-												color="text.secondary">
-												{t("dice.setLabel", { index: index + 1 })}
-											</Typography>
-											<Typography
-												variant="h6"
-												fontWeight={600}>
-												D{input.sides || "?"}
-											</Typography>
-											<Typography
-												variant="caption"
-												color="text.secondary">
-												{t("dice.facesLabel")}
-											</Typography>
-										</Stack>
-									</Grid>
-									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
-										<TextField
-											label={t("dice.countLabel")}
-											type="number"
-											fullWidth
-											value={input.count}
-											onChange={(e) =>
-												handleChange(index, "count", e.target.value)
-											}
-											inputProps={{ min: 1, style: { textAlign: "center" } }}
-										/>
-									</Grid>
-									<Grid size={{ xs: 12, sm: 4, md: 3 }}>
-										<TextField
-											label={t("dice.facesLabel")}
-											type="number"
-											fullWidth
-											value={input.sides}
-											onChange={(e) =>
-												handleChange(index, "sides", e.target.value)
-											}
-											inputProps={{ min: 2, style: { textAlign: "center" } }}
-										/>
-									</Grid>
-								</Grid>
-							</Paper>
-						))}
-					</Stack>
+			{/* Title */}
+			<div className="mb-8">
+				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
+					{t("dice.title")}
+				</h1>
+				<p className="text-sm text-[var(--text-secondary)]">{t("dice.subtitle")}</p>
+			</div>
 
-					<Divider sx={{ my: { xs: 3, md: 4 } }} />
+			{/* Dice config */}
+			<div className="flex flex-col gap-3 mb-5">
+				{diceInputs.map((input, index) => (
+					<DiceRow
+						key={index}
+						input={input}
+						index={index}
+						onChange={(field, val) => handleChange(index, field, val)}
+						onRemove={() => removeDice(index)}
+						canRemove={diceInputs.length > 1}
+					/>
+				))}
+			</div>
 
-					<Grid
-						container
-						spacing={2}
-						justifyContent="center">
-						<Grid size={{ xs: 12, sm: 4 }}>
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: 1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-								<SecondaryButton
-									variant="outlined"
-									fullWidth
-									startIcon={<AddCircleOutlineRoundedIcon />}
-									onClick={addDiceInput}>
-									{t("dice.addButton")}
-								</SecondaryButton>
-							</motion.div>
-						</Grid>
-						<Grid size={{ xs: 12, sm: 4 }}>
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: -1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-								<DangerButton
-									variant="outlined"
-									fullWidth
-									startIcon={<RefreshRoundedIcon />}
-									onClick={resetDiceInputs}>
-									{t("dice.resetButton")}
-								</DangerButton>
-							</motion.div>
-						</Grid>
-						<Grid size={{ xs: 12, sm: 4 }}>
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: 1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-								<PrimaryButton
-									variant="contained"
-									fullWidth
-									startIcon={<CasinoIcon />}
-									onClick={rollDice}>
-									{t("dice.rollButton")}
-								</PrimaryButton>
-							</motion.div>
-						</Grid>
-					</Grid>
+			{/* Actions */}
+			<div className="flex gap-2 mb-8 flex-wrap">
+				<button
+					onClick={roll}
+					className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--text-muted)] text-white
+					           text-sm font-bold hover:bg-[var(--text-secondary)] transition-colors">
+					<Dices size={15} />
+					{t("dice.rollButton")}
+				</button>
+				<button
+					onClick={addDice}
+					className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)]
+					           text-[var(--text)] text-sm font-bold hover:bg-[var(--card-background)] transition-colors">
+					<Plus size={14} />
+					{t("dice.addButton")}
+				</button>
+				<button
+					onClick={reset}
+					className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[var(--border)]
+					           text-[var(--text-secondary)] text-sm font-bold hover:bg-[var(--card-background)] transition-colors ml-auto">
+					<RotateCcw size={14} />
+					{t("dice.resetButton")}
+				</button>
+			</div>
 
-					{hasResults && (
-						<Box sx={{ mt: { xs: 4, md: 5 }, textAlign: "center" }}>
-							<Typography
-								variant="h5"
-								gutterBottom
-								fontWeight={600}>
-								{t("dice.resultsTitle")}
-							</Typography>
-							<Grid
-								container
-								spacing={2}
-								justifyContent="center">
-								{results.map((rolls, idx) => {
-									const maxRoll = rolls.length > 0 ? Math.max(...rolls) : null;
-									return (
-										<Grid
-											size={{ xs: 12, md: 6 }}
-											key={`result-${idx}`}>
-											<Paper
-												elevation={0}
-												sx={{
-													p: { xs: 2, md: 3 },
-													borderRadius: 3,
-													border: "1px solid var(--border)",
-													backgroundColor: "transparent",
-												}}>
-												<Typography
-													variant="subtitle1"
-													gutterBottom>
-													{t("dice.setLabel", { index: idx + 1 })}
-												</Typography>
-												<Stack
-													direction="row"
-													spacing={1}
-													flexWrap="wrap"
-													justifyContent="center">
-													{rolls.map((value, rollIndex) => (
-														<Chip
-															key={`chip-${idx}-${rollIndex}`}
-															label={value}
-															color={
-																maxRoll !== null &&
-																value === maxRoll &&
-																rolls.length > 1
-																	? "primary"
-																	: "default"
-															}
-															variant={
-																maxRoll !== null &&
-																value === maxRoll &&
-																rolls.length > 1
-																	? "filled"
-																	: "outlined"
-															}
-														/>
-													))}
-												</Stack>
-											</Paper>
-										</Grid>
-									);
-								})}
-							</Grid>
-							<Paper
-								elevation={0}
-								sx={{
-									mt: { xs: 3, md: 4 },
-									p: { xs: 2, md: 3 },
-									borderRadius: 3,
-									backgroundColor: "transparent",
-									border: "1px solid var(--border)",
-									maxWidth: 420,
-									mx: "auto",
-								}}>
-								<Typography
-									variant="subtitle2"
-									color="text.secondary">
-									{t("dice.summaryTitle")}
-								</Typography>
-								<Typography
-									variant="h6"
-									fontWeight={600}>
-									{t("dice.summaryValue", { total, average })}
-								</Typography>
-							</Paper>
-						</Box>
-					)}
-				</Paper>
-			</Container>
-		</Box>
+			{/* Results */}
+			{hasResults && (
+				<div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md">
+
+					{/* Header */}
+					<div className="px-5 py-3 border-b border-[var(--border)] flex items-center gap-3">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+							{t("dice.resultsTitle")}
+						</span>
+						<div className="flex-1 border-t border-[var(--border)]" />
+						<span className="text-sm font-black text-[var(--text)]">{total}</span>
+						<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">总计</span>
+					</div>
+
+					{/* Per-group results */}
+					<div className="p-5 flex flex-col gap-4">
+						{results.map((rolls, idx) => {
+							const max = Math.max(...rolls);
+							return (
+								<div key={idx}>
+									<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">
+										第 {idx + 1} 组 · D{diceInputs[idx]?.sides ?? "?"}
+									</p>
+									<div className="flex flex-wrap gap-2">
+										{rolls.map((val, ri) => (
+											<DiceResult
+												key={ri}
+												value={val}
+												isMax={val === max}
+												multiDice={rolls.length > 1}
+											/>
+										))}
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			)}
+		</div>
 	);
 }
-
-export default Dice;
