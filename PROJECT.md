@@ -554,6 +554,17 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### Home 迁移至 Tailwind (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：`Container`/`Box`/`Grid`/`Typography`/`Chip`/`IconButton`/`Link`/`Fade` 全部替换
+- **MUI icons → Lucide**：`StyleIcon`→`Layers`，`GridViewIcon`→`LayoutGrid`，`TuneIcon`→`SlidersHorizontal`，`GitHub`→`Github`，`Email`→`Mail`
+- **SectionCard**：背景图、accent 色条、悬停上移动效完整保留，用 Tailwind + inline style 实现
+- **RecentUpdates**：彩虹色条、展开/收起完整保留，`Fade` 动画移除
+- **Contact**：`IconButton`+`Link` → `<a>` + Tailwind，hover scale 效果保留
+- **布局**：`max-w-3xl mx-auto` 替代 MUI Container
+
+---
+
 ## Future backlog
 
 ### Near-term candidates

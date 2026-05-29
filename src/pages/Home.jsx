@@ -1,32 +1,16 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import {
-	Container,
-	Box,
-	Typography,
-	Chip,
-	Grid,
-	IconButton,
-	Link,
-	Fade,
-} from "@mui/material";
-import StyleIcon from "@mui/icons-material/Style";
-import GridViewIcon from "@mui/icons-material/GridView";
-import TuneIcon from "@mui/icons-material/Tune";
-import { GitHub as GitHubIcon, Email as EmailIcon } from "@mui/icons-material";
+import { Layers, LayoutGrid, SlidersHorizontal, Github, Mail } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
 import { RECENT_UPDATES, getLocalizedUpdateField } from "../data/recentUpdates";
 
-// ─── Section config ────────────────────────────────────────────────────────────
-// Tool items are derived directly from section nav items.
-
 const SECTION_ICONS = {
-	ws: StyleIcon,
-	mahjong: GridViewIcon,
-	tools: TuneIcon,
+	ws:     Layers,
+	mahjong: LayoutGrid,
+	tools:  SlidersHorizontal,
 };
 
 const SECTIONS = SITE_SECTIONS.map((section) => ({
@@ -44,110 +28,70 @@ function SectionCard({ section, t, locale, onNavigate }) {
 		: `${toolItems.length} tool${toolItems.length !== 1 ? "s" : ""}`;
 
 	return (
-		<Box
+		<div
 			onClick={() => onNavigate(path)}
-			sx={{
-				cursor: "pointer",
-				borderRadius: 3,
-				border: "1px solid var(--border)",
-				overflow: "hidden",
-				height: "100%",
-				display: "flex",
-				flexDirection: "column",
-				position: "relative",
+			className="cursor-pointer rounded-2xl border border-[var(--border)] overflow-hidden h-full
+			           flex flex-col relative transition-all duration-200
+			           hover:-translate-y-1.5 hover:shadow-lg"
+			style={{
 				backgroundImage: `url('${homeImage}')`,
 				backgroundSize: "cover",
 				backgroundPosition: "center",
-				transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-				"&:hover": {
-					transform: "translateY(-5px)",
-					boxShadow: `0 16px 40px ${accent}44`,
-					borderColor: accent,
-				},
-				"&:hover .card-overlay": {
-					backgroundColor: "rgba(255,255,255,0.44)",
-				},
-			}}>
-
-			{/* Overlay — keeps text readable over any background image */}
-			<Box
-				className="card-overlay"
-				sx={{
-					position: "absolute",
-					inset: 0,
-					backgroundColor: "rgba(255,255,255,0.58)",
-					transition: "background-color 0.2s ease",
-				}}
+			}}
+		>
+			{/* Overlay */}
+			<div
+				className="absolute inset-0 transition-colors duration-200"
+				style={{ backgroundColor: "rgba(255,255,255,0.58)" }}
+				onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.44)")}
+				onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.58)")}
 			/>
 
 			{/* Accent bar */}
-			<Box sx={{ height: 5, backgroundColor: accent, flexShrink: 0, position: "relative", zIndex: 1 }} />
+			<div className="h-1.5 flex-shrink-0 relative z-10" style={{ backgroundColor: accent }} />
 
-				{/* Body */}
-				<Box sx={{ p: 3, display: "flex", flexDirection: "column", flex: 1, position: "relative", zIndex: 1 }}>
+			{/* Body */}
+			<div className="p-5 flex flex-col flex-1 relative z-10 gap-3">
 
-					{/* Icon + title + count */}
-					<Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5, mb: 1.75 }}>
-						<Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, minWidth: 0 }}>
-							<Box
-								sx={{
-									width: 42,
-									height: 42,
-									borderRadius: 2,
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "center",
-									backgroundColor: `${accent}18`,
-									flexShrink: 0,
-								}}>
-								<Icon sx={{ fontSize: 22, color: accent }} />
-							</Box>
-							<Box>
-								<Typography
-									variant="h6"
-									fontWeight={700}
-									color="var(--text)"
-									sx={{ lineHeight: 1.25, mb: 0.25 }}>
-									{t(section.labelKey)}
-								</Typography>
-								<Typography
-									variant="caption"
-									sx={{ color: accent, fontWeight: 600, letterSpacing: "0.02em" }}>
-									{toolCountLabel}
-								</Typography>
-							</Box>
-						</Box>
-					</Box>
+				{/* Icon + title + count */}
+				<div className="flex items-start gap-3">
+					<div
+						className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+						style={{ backgroundColor: `${accent}18` }}>
+						<Icon size={20} style={{ color: accent }} />
+					</div>
+					<div>
+						<p className="text-base font-bold text-[var(--text)] leading-tight mb-0.5">
+							{t(section.labelKey)}
+						</p>
+						<p className="text-xs font-semibold" style={{ color: accent }}>
+							{toolCountLabel}
+						</p>
+					</div>
+				</div>
 
-					{/* Description */}
-					<Typography
-						variant="body2"
-						color="text.secondary"
-						sx={{ mb: 2, lineHeight: 1.65, fontSize: "0.825rem", flex: 1 }}>
-						{t(section.descKey)}
-					</Typography>
+				{/* Description */}
+				<p className="text-sm text-[var(--text-secondary)] leading-relaxed flex-1">
+					{t(section.descKey)}
+				</p>
 
-					{/* Chips */}
-					<Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
-						{toolItems.map((item) => (
-							<Chip
-								key={item.path}
-								label={t(item.labelKey)}
-								size="small"
-								variant="outlined"
-								sx={{
-									fontSize: "0.7rem",
-									height: 22,
-									backgroundColor: `${accent}14`,
-									color: accent,
-									fontWeight: 600,
-									border: `1px solid ${accent}30`,
-								}}
-							/>
-						))}
-					</Box>
-				</Box>
-		</Box>
+				{/* Tool chips */}
+				<div className="flex flex-wrap gap-1.5">
+					{toolItems.map((item) => (
+						<span
+							key={item.path}
+							className="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+							style={{
+								backgroundColor: `${accent}14`,
+								color: accent,
+								borderColor: `${accent}30`,
+							}}>
+							{t(item.labelKey)}
+						</span>
+					))}
+				</div>
+			</div>
+		</div>
 	);
 }
 
@@ -170,121 +114,66 @@ SectionCard.propTypes = {
 	onNavigate: PropTypes.func.isRequired,
 };
 
-// ─── Recent updates ───────────────────────────────────────────────────────────
+// ─── RecentUpdates ─────────────────────────────────────────────────────────────
 
 function RecentUpdates({ t, locale }) {
 	const [expanded, setExpanded] = useState(false);
 	const updates = RECENT_UPDATES;
-	const visibleUpdates = expanded ? updates : updates.slice(0, 2);
-	const hasHiddenUpdates = updates.length > 2;
-
+	const visible = expanded ? updates : updates.slice(0, 2);
 	if (updates.length === 0) return null;
 
 	return (
-		<Fade in timeout={1000}>
-			<Box
-				mt={5}
-				sx={{
-					border: "1px solid var(--border)",
-					borderRadius: 3,
-					background:
-						"linear-gradient(135deg, rgba(255,255,255,0.82), rgba(240,250,244,0.7))",
-					backdropFilter: "blur(18px)",
-					boxShadow: "0 14px 36px rgba(80,140,106,0.08)",
-					overflow: "hidden",
-				}}>
-				<Box
-					sx={{
-						height: 4,
-						background:
-							"linear-gradient(90deg, #4f9b78, #d26a6a, #5b84d6)",
-					}}
-				/>
-				<Box sx={{ p: { xs: 2.5, md: 3 } }}>
-					<Typography
-						variant="overline"
-						sx={{
-							color: "var(--text-muted)",
-							fontWeight: 800,
-							letterSpacing: "0.12em",
-						}}>
-						{t("pages.home.recentUpdates.eyebrow")}
-					</Typography>
-					<Typography
-						variant="h6"
-						fontWeight={800}
-						color="var(--text)"
-						sx={{ mt: 0.25, mb: 0.75 }}>
-						{t("pages.home.recentUpdates.title")}
-					</Typography>
-					<Typography
-						variant="body2"
-						color="text.secondary"
-						sx={{ lineHeight: 1.7, mb: 2.25 }}>
-						{t("pages.home.recentUpdates.subtitle")}
-					</Typography>
+		<div className="mt-8 border border-[var(--border)] rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md">
+			{/* Rainbow bar */}
+			<div className="h-1" style={{ background: "linear-gradient(90deg, #4f9b78, #d26a6a, #5b84d6)" }} />
 
-					<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-						{visibleUpdates.map((item, index) => (
-							<Box
-								key={`${item.date}-${item.title}`}
-								sx={{
-									display: "grid",
-									gridTemplateColumns: { xs: "1fr", sm: "88px 1fr" },
-									gap: { xs: 0.5, sm: 2 },
-									py: 1.25,
-									borderTop: index > 0 ? "1px solid rgba(166,206,182,0.28)" : "none",
-								}}>
-								<Typography
-									variant="caption"
-									fontWeight={700}
-									sx={{ color: "var(--text-muted)", whiteSpace: "nowrap" }}>
-									{getLocalizedUpdateField(item.date, locale)}
-								</Typography>
-								<Box>
-									<Typography
-										variant="body2"
-										fontWeight={700}
-										color="var(--text)"
-										sx={{ mb: 0.25 }}>
-										{getLocalizedUpdateField(item.title, locale)}
-									</Typography>
-									<Typography
-										variant="body2"
-										color="text.secondary"
-										sx={{ lineHeight: 1.65 }}>
-										{getLocalizedUpdateField(item.body, locale)}
-									</Typography>
-								</Box>
-							</Box>
-						))}
-					</Box>
-					{hasHiddenUpdates && (
-						<Box sx={{ display: "flex", justifyContent: "center", mt: 2.25 }}>
-							<button
-								type="button"
-								onClick={() => setExpanded((prev) => !prev)}
-								className="border-0 cursor-pointer rounded-full px-4 py-2 text-[12px] font-bold transition-all duration-150"
-								style={{
-									fontFamily: "inherit",
-									color: "var(--text-secondary)",
-									backgroundColor: "rgba(166,206,182,0.24)",
-								}}
-								onMouseEnter={(e) => {
-									e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.38)";
-								}}
-								onMouseLeave={(e) => {
-									e.currentTarget.style.backgroundColor = "rgba(166,206,182,0.24)";
-								}}>
-								{expanded
-									? t("pages.home.recentUpdates.collapse")
-									: t("pages.home.recentUpdates.expand")}
-							</button>
-						</Box>
-					)}
-				</Box>
-			</Box>
-		</Fade>
+			<div className="p-5 sm:p-6">
+				<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">
+					{t("pages.home.recentUpdates.eyebrow")}
+				</p>
+				<p className="text-lg font-black text-[var(--text)] mb-1">
+					{t("pages.home.recentUpdates.title")}
+				</p>
+				<p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
+					{t("pages.home.recentUpdates.subtitle")}
+				</p>
+
+				<div className="flex flex-col gap-0">
+					{visible.map((item, i) => (
+						<div
+							key={`${item.date}-${item.title}`}
+							className={`grid grid-cols-1 sm:grid-cols-[88px_1fr] gap-1 sm:gap-4 py-3
+							            ${i > 0 ? "border-t border-[rgba(166,206,182,0.28)]" : ""}`}>
+							<p className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap">
+								{getLocalizedUpdateField(item.date, locale)}
+							</p>
+							<div>
+								<p className="text-sm font-bold text-[var(--text)] mb-0.5">
+									{getLocalizedUpdateField(item.title, locale)}
+								</p>
+								<p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+									{getLocalizedUpdateField(item.body, locale)}
+								</p>
+							</div>
+						</div>
+					))}
+				</div>
+
+				{updates.length > 2 && (
+					<div className="flex justify-center mt-4">
+						<button
+							type="button"
+							onClick={() => setExpanded((v) => !v)}
+							className="text-[12px] font-bold px-4 py-1.5 rounded-full text-[var(--text-secondary)]
+							           bg-[rgba(166,206,182,0.24)] hover:bg-[rgba(166,206,182,0.38)] transition-colors">
+							{expanded
+								? t("pages.home.recentUpdates.collapse")
+								: t("pages.home.recentUpdates.expand")}
+						</button>
+					</div>
+				)}
+			</div>
+		</div>
 	);
 }
 
@@ -306,110 +195,62 @@ export default function Home() {
 	}));
 
 	return (
-		<Container maxWidth="md" sx={{ py: 3 }}>
+		<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
 
 			{/* Header */}
-			<Fade in timeout={800}>
-				<Box textAlign="center" mb={4}>
-					<Typography
-						variant="h2"
-						fontWeight={900}
-						color="var(--text)"
-						sx={{ fontSize: { xs: "2rem", md: "2.6rem" }, mb: 1, letterSpacing: "-0.5px" }}>
-						{t("pages.home.title")}
-					</Typography>
-					<Typography
-						variant="body1"
-						color="text.secondary"
-						sx={{ fontSize: "1rem", opacity: 0.75 }}>
-						{t("pages.home.subtitle")}
-					</Typography>
-				</Box>
-			</Fade>
+			<div className="text-center mb-8">
+				<h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] leading-none mb-2"
+				    style={{ letterSpacing: "-0.5px" }}>
+					{t("pages.home.title")}
+				</h1>
+				<p className="text-base text-[var(--text-secondary)] opacity-75">
+					{t("pages.home.subtitle")}
+				</p>
+			</div>
 
 			{/* Section cards */}
-			<Grid container spacing={3}>
-				{sections.map((section, idx) => (
-					<Grid key={section.key} size={{ xs: 12, md: 4 }}>
-						<Fade in timeout={600 + idx * 150}>
-							<Box sx={{ height: "100%" }}>
-								<SectionCard
-									section={section}
-									t={t}
-									locale={locale}
-									onNavigate={navigate}
-								/>
-							</Box>
-						</Fade>
-					</Grid>
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+				{sections.map((section) => (
+					<SectionCard
+						key={section.key}
+						section={section}
+						t={t}
+						locale={locale}
+						onNavigate={navigate}
+					/>
 				))}
-			</Grid>
+			</div>
 
 			<RecentUpdates t={t} locale={locale} />
 
 			{/* Contact */}
-			<Fade in timeout={1100}>
-				<Box textAlign="center" mt={8}>
-					<Typography
-						variant="body2"
-						fontWeight={600}
-						color="var(--text-muted)"
-						mb={1.5}>
-						{t("pages.home.contactTitle")}
-					</Typography>
-					<Box sx={{ display: "flex", justifyContent: "center", gap: 1.5 }}>
-						<IconButton
-							component={Link}
-							href="https://github.com/llloydretro2/WSToolBoxReact"
-							target="_blank"
-							rel="noopener"
-							size="small"
-							sx={{
-								width: 36, height: 36,
-								backgroundColor: "rgba(0,0,0,0.06)",
-								color: "var(--text-secondary)",
-								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
-								transition: "all 0.2s ease",
-							}}>
-							<GitHubIcon sx={{ fontSize: 18 }} />
-						</IconButton>
-						<IconButton
-							component={Link}
-							href="https://space.bilibili.com/13365744"
-							target="_blank"
-							rel="noopener"
-							size="small"
-							sx={{
-								width: 36, height: 36,
-								backgroundColor: "rgba(0,0,0,0.06)",
-								color: "var(--text-secondary)",
-								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
-								transition: "all 0.2s ease",
-							}}>
-							<img
-								src="bilibili.svg"
-								alt="Bilibili"
-								width={16}
-								height={16}
-								style={{ opacity: 0.6 }}
-							/>
-						</IconButton>
-						<IconButton
-							component={Link}
-							href="mailto:lloydretro2@gmail.com"
-							size="small"
-							sx={{
-								width: 36, height: 36,
-								backgroundColor: "rgba(0,0,0,0.06)",
-								color: "var(--text-secondary)",
-								"&:hover": { backgroundColor: "rgba(0,0,0,0.12)", transform: "scale(1.1)" },
-								transition: "all 0.2s ease",
-							}}>
-							<EmailIcon sx={{ fontSize: 18 }} />
-						</IconButton>
-					</Box>
-				</Box>
-			</Fade>
-		</Container>
+			<div className="text-center mt-12">
+				<p className="text-sm font-semibold text-[var(--text-muted)] mb-3">
+					{t("pages.home.contactTitle")}
+				</p>
+				<div className="flex justify-center gap-3">
+					{[
+						{ href: "https://github.com/llloydretro2/WSToolBoxReact", icon: <Github size={16} />, label: "GitHub" },
+						{
+							href: "https://space.bilibili.com/13365744",
+							icon: <img src="bilibili.svg" alt="Bilibili" width={16} height={16} className="opacity-60" />,
+							label: "Bilibili",
+						},
+						{ href: "mailto:lloydretro2@gmail.com", icon: <Mail size={16} />, label: "Email" },
+					].map(({ href, icon, label }) => (
+						<a
+							key={label}
+							href={href}
+							target={label !== "Email" ? "_blank" : undefined}
+							rel="noopener noreferrer"
+							className="w-9 h-9 rounded-full flex items-center justify-center
+							           bg-black/[0.06] text-[var(--text-secondary)]
+							           hover:bg-black/[0.12] hover:scale-110 transition-all duration-200">
+							{icon}
+						</a>
+					))}
+				</div>
+			</div>
+		</div>
 	);
 }
