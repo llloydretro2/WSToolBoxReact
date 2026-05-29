@@ -27,7 +27,7 @@ const SIDE_OPTIONS = [
 ];
 
 const EMPTY_DRAFT = {
-	search: "", product_name: "", series_number: "", series: "",
+	search: "", product_name: "", series_number: "",
 	card_type: "", color: "", side: "", trigger: "", rarity: "",
 };
 
@@ -404,12 +404,14 @@ const ENCardList = () => {
 
 	// ── Options from API ──────────────────────────────────────────────────────
 	const [options, setOptions] = useState({
-		product_name: [], series_number: [], series: [], trigger: [], rarity: [],
+		product_name: [], series_number: [], trigger: [], rarity: [],
 		level: [], cost: [], power: [],
 	});
+	const [neostandardMap, setNeostandardMap] = useState({});
 
 	// ── Draft filters (not yet submitted) ─────────────────────────────────────
 	const [draft, setDraft]               = useState(EMPTY_DRAFT);
+	const [draftNeostandard, setDraftNeostandard] = useState("");
 	const [draftSoul, setDraftSoul]       = useState(false);
 	const [levelRange, setLevelRange]     = useState([0, 3]);
 	const [costRange, setCostRange]       = useState([0, 4]);
@@ -441,19 +443,19 @@ const ENCardList = () => {
 
 	// ── Load options once ─────────────────────────────────────────────────────
 	useEffect(() => {
-		apiRequest("/api/options/en/product-list")
+		apiRequest("/api/options/en/filter-option")
 			.then((r) => r.json())
 			.then((data) => {
 				setOptions({
 					product_name:  (data.product_name  ?? []).slice().sort(),
 					series_number: (data.series_number ?? []).slice().sort(),
-					series:        (data.series        ?? []).slice().sort(),
 					trigger:       (data.trigger       ?? []).slice().sort(),
 					rarity:        (data.rarity        ?? []).slice().sort(),
 					level:         data.level  ?? [],
 					cost:          data.cost   ?? [],
 					power:         data.power  ?? [],
 				});
+				setNeostandardMap(data.neostandard_map ?? {});
 			})
 			.catch(console.error);
 	}, []);
@@ -494,9 +496,13 @@ const ENCardList = () => {
 	}, []);
 
 	// ── Build URLSearchParams from current draft state ─────────────────────────
-	const buildParams = useCallback((d, soul, lr, cr, pr) => {
+	const buildParams = useCallback((d, neo, soul, lr, cr, pr) => {
 		const params = new URLSearchParams();
 		Object.entries(d).forEach(([k, v]) => { if (v !== "") params.set(k, v); });
+		if (neo) {
+			const codes = neostandardMap[neo];
+			if (codes?.length) params.set("series_number", codes.join(","));
+		}
 		if (soul) params.set("soul_min", "1");
 
 		const [lMin, lMax] = lr;
@@ -518,19 +524,20 @@ const ENCardList = () => {
 	// ── Search / Reset ─────────────────────────────────────────────────────────
 	const handleSearch = useCallback(() => {
 		const pr = powerRange ?? (validPowers.length > 0 ? [validPowers[0], validPowers[validPowers.length - 1]] : null);
-		const snapshot = { d: draft, soul: draftSoul, lr: levelRange, cr: costRange, pr };
+		const snapshot = { d: draft, neo: draftNeostandard, soul: draftSoul, lr: levelRange, cr: costRange, pr };
 		lastSearchRef.current = snapshot;
-		const params = buildParams(draft, draftSoul, levelRange, costRange, pr);
+		const params = buildParams(draft, draftNeostandard, draftSoul, levelRange, costRange, pr);
 		setPage(1);
 		setHasSearched(true);
 		setFiltersOpen(false);
 		window.scrollTo({ top: 0, behavior: "smooth" });
 		fetchCards(new URLSearchParams(params), 1);
-	}, [draft, draftSoul, levelRange, costRange, powerRange, validPowers, buildParams, fetchCards]);
+	}, [draft, draftNeostandard, draftSoul, levelRange, costRange, powerRange, validPowers, buildParams, fetchCards]);
 
 	const handleReset = useCallback(() => {
 		const fullPr = validPowers.length > 0 ? [validPowers[0], validPowers[validPowers.length - 1]] : null;
 		setDraft(EMPTY_DRAFT);
+		setDraftNeostandard("");
 		setDraftSoul(false);
 		setLevelRange([0, maxLevel]);
 		setCostRange([0, maxCost]);
@@ -546,8 +553,8 @@ const ENCardList = () => {
 	// ── Pagination ─────────────────────────────────────────────────────────────
 	const handlePageChange = useCallback((pg) => {
 		if (!lastSearchRef.current) return;
-		const { d, soul, lr, cr, pr } = lastSearchRef.current;
-		const params = buildParams(d, soul, lr, cr, pr);
+		const { d, neo, soul, lr, cr, pr } = lastSearchRef.current;
+		const params = buildParams(d, neo, soul, lr, cr, pr);
 		setPage(pg);
 		fetchCards(new URLSearchParams(params), pg);
 		window.scrollTo({ top: 0, behavior: "smooth" });
@@ -660,8 +667,19 @@ const ENCardList = () => {
 							/>
 						</div>
 
-						{/* Row 3: Series Number + Series */}
+						{/* Row 3: Neostandard Title + Series Number */}
 						<div className="grid grid-cols-2 gap-3">
+							<div>
+								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+									{t("enCardList.series")}
+								</label>
+								<FilterCombobox
+									value={draftNeostandard}
+									onChange={(v) => setDraftNeostandard(v ?? "")}
+									options={Object.keys(neostandardMap)}
+									placeholder="Title / Series"
+								/>
+							</div>
 							<div>
 								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
 									{t("enCardList.seriesNumber")}
@@ -671,17 +689,6 @@ const ENCardList = () => {
 									onChange={(v) => setDraft((p) => ({ ...p, series_number: v ?? "" }))}
 									options={options.series_number}
 									placeholder="e.g. SAO"
-								/>
-							</div>
-							<div>
-								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
-									{t("enCardList.series")}
-								</label>
-								<FilterCombobox
-									value={draft.series}
-									onChange={(v) => setDraft((p) => ({ ...p, series: v ?? "" }))}
-									options={options.series}
-									placeholder="Title / Series"
 								/>
 							</div>
 						</div>

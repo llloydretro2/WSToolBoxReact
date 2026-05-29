@@ -47,7 +47,7 @@ const extractBaseCardNo = (cardno) => {
 };
 
 function CardList() {
-	const { productList, translationMap } = useOptions();
+	const { productList, jpNeostandardMap, translationMap } = useOptions();
 	const [result, setResult] = useState({
 		data: [],
 		total: 0,
@@ -57,6 +57,7 @@ function CardList() {
 
 	const [form, setForm] = useState({ page: 1 });
 	const [draftForm, setDraftForm] = useState({ page: 1 });
+	const [draftNeostandard, setDraftNeostandard] = useState("");
 	const [levelRange, setLevelRange] = useState(null);
 	const [powerRange, setPowerRange] = useState(null);
 	const [costRange, setCostRange] = useState(null);
@@ -323,13 +324,20 @@ function CardList() {
 
 	const handleSearch = (draftForm) => {
 		setIsLoading(true);
-		const params = new URLSearchParams(
-			Object.entries(draftForm).filter(
-				([, v]) => v !== undefined && v !== "" && v !== null
-			)
-		).toString();
+		const entries = Object.entries(draftForm).filter(
+			([, v]) => v !== undefined && v !== "" && v !== null
+		);
+		const params = new URLSearchParams(entries);
+		// neostandard 选择翻译为 series_number 多值
+		if (draftNeostandard) {
+			const codes = jpNeostandardMap[draftNeostandard];
+			if (codes?.length) {
+				params.delete("series_number");
+				params.set("series_number", codes.join(","));
+			}
+		}
 
-		apiRequest(`/api/cards/jp?${params}`)
+		apiRequest(`/api/cards/jp?${params.toString()}`)
 			.then((res) => res.json())
 			.then((res) => {
 				setResult({
@@ -353,6 +361,7 @@ function CardList() {
 	const handleReset = () => {
 		setForm({ page: 1 });
 		setDraftForm({ page: 1 });
+		setDraftNeostandard("");
 		setResult({ data: [], total: 0, page: 1, pageSize: 20 });
 		setHasSearched(false);
 		setIsLoading(false);
@@ -537,30 +546,18 @@ function CardList() {
 						/>
 
 						<Autocomplete
-							options={productList.series
-								.slice()
-								.sort()
-								.map(
-									(s) =>
-										`${s}${
-											translationMap.series?.[s]
-												? `（${translationMap.series?.[s]}）`
-												: ""
-										}`
-								)}
+							options={Object.keys(jpNeostandardMap).sort().map(
+								(s) => `${s}${translationMap.neostandard?.[s] ? `（${translationMap.neostandard[s]}）` : ""}`
+							)}
 							size="small"
 							value={
-								draftForm.series
-									? `${draftForm.series}${
-											translationMap.series?.[draftForm.series]
-												? `（${translationMap.series?.[draftForm.series]}）`
-												: ""
-									  }`
+								draftNeostandard
+									? `${draftNeostandard}${translationMap.neostandard?.[draftNeostandard] ? `（${translationMap.neostandard[draftNeostandard]}）` : ""}`
 									: ""
 							}
 							onChange={(_, newValue) => {
-								const key = newValue?.split("（")[0];
-								setDraftForm((prev) => ({ ...prev, series: key }));
+								const key = newValue?.split("（")[0] ?? "";
+								setDraftNeostandard(key);
 							}}
 							renderInput={(params) => (
 								<TextField
@@ -573,24 +570,10 @@ function CardList() {
 											e.preventDefault();
 											const inputValue = e.target.value;
 											if (inputValue) {
-												const matchingOption = productList.series
-													.slice()
-													.sort()
-													.find((option) =>
-														`${option}${
-															translationMap.series?.[option]
-																? `（${translationMap.series?.[option]}）`
-																: ""
-														}`
-															.toLowerCase()
-															.includes(inputValue.toLowerCase())
-													);
-												if (matchingOption) {
-													setDraftForm((prev) => ({
-														...prev,
-														series: matchingOption,
-													}));
-												}
+												const match = Object.keys(jpNeostandardMap).find((s) =>
+													`${s}${translationMap.neostandard?.[s] ? `（${translationMap.neostandard[s]}）` : ""}`.toLowerCase().includes(inputValue.toLowerCase())
+												);
+												if (match) setDraftNeostandard(match);
 											}
 										}
 									}}
@@ -637,18 +620,18 @@ function CardList() {
 									onKeyDown={(e) =>
 										handleAutocompleteEnter(
 											e,
-											productList.series
+											productList.product_name
 												.slice()
 												.sort()
 												.map(
-													(s) =>
-														`${s}${
-															translationMap.series?.[s]
-																? `（${translationMap.series?.[s]}）`
+													(p) =>
+														`${p}${
+															translationMap.product_name?.[p]
+																? `（${translationMap.product_name?.[p]}）`
 																: ""
 														}`
 												),
-											"series"
+											"product_name"
 										)
 									}
 								/>

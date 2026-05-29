@@ -3,7 +3,7 @@
   "close": "Close",
   "menu": {
     "home": "Home",
-    "cardSearch": "Card Search",
+    "cardSearch": "JP Card Search",
     "battleTools": "Battle Tools",
     "pack": "Packs",
     "simulator": "Pack Simulator",
@@ -22,7 +22,7 @@
     "mahjongTrainer": "Yaku Trainer",
     "mahjongEfficiency": "Efficiency",
     "mahjongCentrepiece": "Centrepiece",
-    "enCardSearch": "EN Cards"
+    "enCardSearch": "EN Card Search"
   },
   "common": {
     "language": {

@@ -8,20 +8,25 @@ import { useAuth } from "../contexts/AuthContext";
 import { useOptions } from "../contexts/OptionsContext";
 
 function SeriesCombobox({ value, onChange, label, id, name }) {
-	const { productList, translationMap } = useOptions();
+	const { jpNeostandardMap, neostandardMap, translationMap } = useOptions();
 	const [query, setQuery] = useState("");
+	const [side, setSide] = useState("jp");
 
-	const options = useMemo(
-		() =>
-			(productList.series ?? [])
-				.slice()
+	const options = useMemo(() => {
+		if (side === "en") {
+			return Object.keys(neostandardMap)
+				.filter((s) => s.trim() !== "")
 				.sort()
-				.map((s) => ({
-					key: s,
-					label: `${s}${translationMap.series?.[s] ? `（${translationMap.series[s]}）` : ""}`,
-				})),
-		[productList.series, translationMap.series]
-	);
+				.map((s) => ({ key: s, label: s }));
+		}
+		return Object.keys(jpNeostandardMap)
+			.filter((s) => s.trim() !== "")
+			.sort()
+			.map((s) => ({
+				key: s,
+				label: `${s}${translationMap.neostandard?.[s] ? `（${translationMap.neostandard[s]}）` : ""}`,
+			}));
+	}, [side, jpNeostandardMap, neostandardMap, translationMap.neostandard]);
 
 	const filtered =
 		query === ""
@@ -30,11 +35,37 @@ function SeriesCombobox({ value, onChange, label, id, name }) {
 					o.label.toLowerCase().includes(query.toLowerCase())
 			  );
 
+	const handleSideSwitch = (newSide) => {
+		if (newSide === side) return;
+		setSide(newSide);
+		onChange("");
+		setQuery("");
+	};
+
 	return (
 		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="text-[11px] font-bold text-[var(--text-secondary)]">
-				{label} <span className="text-[var(--error)]">*</span>
-			</label>
+			<div className="flex items-center justify-between">
+				<label htmlFor={id} className="text-[11px] font-bold text-[var(--text-secondary)]">
+					{label} <span className="text-[var(--error)]">*</span>
+				</label>
+				<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+					{["jp", "en"].map((s, i) => (
+						<button
+							key={s}
+							type="button"
+							onClick={() => handleSideSwitch(s)}
+							className={`px-2.5 py-0.5 text-[10px] font-bold transition-colors ${
+								i === 0 ? "border-r border-[var(--border)]" : ""
+							} ${
+								side === s
+									? "bg-[var(--text)] text-[var(--background)]"
+									: "bg-transparent text-[var(--text)] hover:bg-[var(--card-background)]"
+							}`}>
+							{s.toUpperCase()}
+						</button>
+					))}
+				</div>
+			</div>
 			<Combobox value={value} onChange={onChange} onClose={() => setQuery("")} immediate>
 				<div className="relative">
 					<Combobox.Input
