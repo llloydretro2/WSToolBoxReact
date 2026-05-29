@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import { Layers, LayoutGrid, SlidersHorizontal, Github, Mail } from "lucide-react";
+import { Layers, LayoutGrid, SlidersHorizontal, Mail } from "lucide-react";
+
+const GithubIcon = () => (
+	<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+		<path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.79-.26.79-.58v-2.23c-3.34.73-4.03-1.42-4.03-1.42-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.81 1.3 3.49 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.24 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.19.69.8.58C20.56 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
+	</svg>
+);
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
@@ -230,7 +236,7 @@ export default function Home() {
 				</p>
 				<div className="flex justify-center gap-3">
 					{[
-						{ href: "https://github.com/llloydretro2/WSToolBoxReact", icon: <Github size={16} />, label: "GitHub" },
+						{ href: "https://github.com/llloydretro2/WSToolBoxReact", icon: <GithubIcon />, label: "GitHub" },
 						{
 							href: "https://space.bilibili.com/13365744",
 							icon: <img src="bilibili.svg" alt="Bilibili" width={16} height={16} className="opacity-60" />,
