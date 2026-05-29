@@ -565,6 +565,26 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### Simulator 重设计：Tailwind + 箱级模拟算法 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：所有 MUI 组件、ButtonVariants 替换为 Tailwind + Headless UI Combobox
+- **JP/EN 切换**：同 ENCardList 模式，JP 用 productList，EN 用 enProductList
+- **版本规格 Preset**：
+  - 经典规格（16包×8张）：RRR×1、RR×4、R×11、Climax×16 自动填充
+  - EN 2024+（16包×9张）：无 RRR/RR 保底，第9张随机
+  - JP 2026+（10包×8张）：RRR×1、RR×4，SR 留空
+  - 自定义：全手动
+- **标配稀有度表**：每种 rarity 填「每箱张数」，Preset 自动填充可手动调整
+- **高稀有度独立面板**：SP/SSP/SEC/SIR/AGR/OFR 等自动归类，填「每 X 箱 X 张」（支持 1/2 箱和 2/1 箱两个方向）
+- **新算法（箱级模拟）**：
+  1. 先生成整箱固定卡池（按每箱张数）
+  2. 对高稀有度：整除部分保证加入，余数部分按概率掷骰
+  3. 剩余槽位由未配置稀有度的卡填充
+  4. 洗牌后逐包分配（有限制抽取，非无限重复采样）
+- **结果展示**：稀有度分组（超高稀有优先）+ 折叠式逐包详情 + 卡详情左图右文 modal
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
