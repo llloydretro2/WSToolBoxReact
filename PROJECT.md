@@ -522,6 +522,16 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### RandomShuffle 迁移至 Tailwind + 可视化重设计 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：`Container`/`Typography`/`Grid`/`Paper`/`Stack`/`Divider`/`Chip`/`GenerateButton`/`DangerButton` 全部替换为 Tailwind；MUI icons 替换为 Lucide（`Shuffle`/`RotateCcw`/`Minus`）
+- **进度条可视化**：每个卡格底部添加绿色填充条，高度按该格数值占最大值的比例计算，直观展示各组相对大小
+- **统计眉头**：第 N 次生成 / 组数 / 总点数，移除无意义的「平均」项（工具目的是打散固定 50 张，平均无意义）
+- **0 值降调**：opacity-40 + 文字颜色降调，视觉上明确区分
+- **按钮布局**：生成（主）+ 清空（次）左对齐，「全部-1」靠右，条件显示
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
