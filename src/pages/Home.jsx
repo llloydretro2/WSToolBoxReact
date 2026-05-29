@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import { Layers, LayoutGrid, SlidersHorizontal, Mail } from "lucide-react";
@@ -11,7 +11,7 @@ const GithubIcon = () => (
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
 import { SITE_SECTIONS, getSectionToolItems } from "../config/siteStructure";
-import { RECENT_UPDATES, getLocalizedUpdateField } from "../data/recentUpdates";
+
 
 const SECTION_ICONS = {
 	ws:     Layers,
@@ -122,11 +122,32 @@ SectionCard.propTypes = {
 
 // ─── RecentUpdates ─────────────────────────────────────────────────────────────
 
-function RecentUpdates({ t, locale }) {
-	const [expanded, setExpanded] = useState(false);
-	const updates = RECENT_UPDATES;
-	const visible = expanded ? updates : updates.slice(0, 2);
-	if (updates.length === 0) return null;
+const GITHUB_API = "https://api.github.com/repos/llloydretro2/WSToolBoxReact/commits?per_page=3";
+
+function formatDate(iso) {
+	const d = new Date(iso);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function parseCommit(raw) {
+	// 只取第一行（subject），去掉 Co-Authored-By 等 trailer
+	const subject = raw.split("\n")[0].trim();
+	return subject;
+}
+
+function RecentUpdates({ t }) {
+	const [commits, setCommits] = useState([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		fetch(GITHUB_API)
+			.then((r) => r.json())
+			.then((data) => {
+				if (Array.isArray(data)) setCommits(data);
+			})
+			.catch(() => {})
+			.finally(() => setLoading(false));
+	}, []);
 
 	return (
 		<div className="mt-8 border border-[var(--border)] rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md">
@@ -140,42 +161,30 @@ function RecentUpdates({ t, locale }) {
 				<p className="text-lg font-black text-[var(--text)] mb-1">
 					{t("pages.home.recentUpdates.title")}
 				</p>
-				<p className="text-sm text-[var(--text-secondary)] leading-relaxed mb-4">
-					{t("pages.home.recentUpdates.subtitle")}
-				</p>
 
-				<div className="flex flex-col gap-0">
-					{visible.map((item, i) => (
-						<div
-							key={`${item.date}-${item.title}`}
-							className={`grid grid-cols-1 sm:grid-cols-[88px_1fr] gap-1 sm:gap-4 py-3
-							            ${i > 0 ? "border-t border-[rgba(166,206,182,0.28)]" : ""}`}>
-							<p className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap">
-								{getLocalizedUpdateField(item.date, locale)}
-							</p>
-							<div>
-								<p className="text-sm font-bold text-[var(--text)] mb-0.5">
-									{getLocalizedUpdateField(item.title, locale)}
+				{loading ? (
+					<div className="flex justify-center py-6">
+						<div className="w-5 h-5 rounded-full border-2 border-[var(--border)] border-t-[var(--text-muted)] animate-spin" />
+					</div>
+				) : commits.length === 0 ? null : (
+					<div className="flex flex-col mt-3">
+						{commits.map((c, i) => (
+							<a
+								key={c.sha}
+								href={c.html_url}
+								target="_blank"
+								rel="noopener noreferrer"
+								className={`grid grid-cols-1 sm:grid-cols-[88px_1fr] gap-1 sm:gap-4 py-3
+								            hover:bg-[var(--card-background)] rounded-lg px-2 -mx-2 transition-colors
+								            ${i > 0 ? "border-t border-[rgba(166,206,182,0.28)]" : ""}`}>
+								<p className="text-[11px] font-bold text-[var(--text-muted)] whitespace-nowrap">
+									{formatDate(c.commit.author.date)}
 								</p>
-								<p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-									{getLocalizedUpdateField(item.body, locale)}
+								<p className="text-sm font-medium text-[var(--text)]">
+									{parseCommit(c.commit.message)}
 								</p>
-							</div>
-						</div>
-					))}
-				</div>
-
-				{updates.length > 2 && (
-					<div className="flex justify-center mt-4">
-						<button
-							type="button"
-							onClick={() => setExpanded((v) => !v)}
-							className="text-[12px] font-bold px-4 py-1.5 rounded-full text-[var(--text-secondary)]
-							           bg-[rgba(166,206,182,0.24)] hover:bg-[rgba(166,206,182,0.38)] transition-colors">
-							{expanded
-								? t("pages.home.recentUpdates.collapse")
-								: t("pages.home.recentUpdates.expand")}
-						</button>
+							</a>
+						))}
 					</div>
 				)}
 			</div>
@@ -185,7 +194,6 @@ function RecentUpdates({ t, locale }) {
 
 RecentUpdates.propTypes = {
 	t: PropTypes.func.isRequired,
-	locale: PropTypes.string.isRequired,
 };
 
 // ─── Home ──────────────────────────────────────────────────────────────────────
@@ -227,7 +235,7 @@ export default function Home() {
 				))}
 			</div>
 
-			<RecentUpdates t={t} locale={locale} />
+			<RecentUpdates t={t} />
 
 			{/* Contact */}
 			<div className="text-center mt-12">
