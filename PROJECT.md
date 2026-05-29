@@ -470,6 +470,48 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### WS 筛选体系重构：Neostandard + filter_option (2026-05-29 session 15)
+
+#### filter_option 重命名与清理
+
+- 后端 `productList.json` 重命名为 `filter_option.json`，API 端点 `/product-list` → `/filter-option`
+- 删除所有 `deck_rules` 相关文件和路由（前端确认无任何页面消费 `deckRules`）
+- `OptionsContext` 移除 deck_rules 请求、移除静态 fallback（所有数据强制从后端拉取）
+- `optionsLoading` 初始值改为 `true`，避免加载前误认为数据就绪
+
+#### Neostandard 系列筛选
+
+**JP 查卡器（CardList.jsx）**
+- 系列筛选从 195 条 `series` 字段（JP 语义混杂）改为 162 条 Neostandard 官方标题
+- 数据来自后端 `/filter-options` API 的 `sides[]`，`title_number` 解析为 series_number 代码列表
+- 选中系列 → 翻译为对应 `series_number` 列表 → 发送 `?series_number=CODE1,CODE2,...`（`$in` 查询）
+- Autocomplete 显示 `日文名（中文名）` 双语格式
+
+**EN 查卡器（ENCardList.jsx）**
+- 系列筛选从 209 条 `product_name` 改为 80 条 Neostandard 标题
+- 数据来自 `en.ws-tcg.com/cardlist/` 下拉菜单，逐 title 翻页收集所有 series_number codes
+- 同样通过 `series_number` `$in` 查询实现 franchise 级别过滤
+
+**Record.jsx SeriesCombobox**
+- JP/EN 切换按钮；JP 模式用 162 条 neostandard 标题（双语），EN 模式用 80 条 neostandard 标题
+
+#### Neostandard 中文翻译体系
+
+经过 5 轮 prompt 迭代测试，最终采用 **Bangumi API + DeepSeek LLM hybrid** 方案：
+
+1. **Bangumi API 精确匹配**（`api.bgm.tv/search/subject`）→ 覆盖约 100/162 条
+2. **Bangumi 变体匹配**（去括号、拆 ／ 组合等）→ 再覆盖 ~5 条
+3. **LLM fallback**（专用 prompt，引用 Bangumi.tv/维基百科/萌娘百科）→ 剩余 ~57 条
+4. **手动 override 表** → 8 条已知问题修正
+
+翻译结果存入 `filter_translations.json` 的 `neostandard` 字段（162 条）。生成脚本（`generate_filter_data.py`）已集成增量更新逻辑：新系列出现时自动走 Bangumi→LLM 流程补充翻译，已翻译条目不重复调用。
+
+#### JP/EN routes 改进
+
+- `jpRoutes.js` / `enRoutes.js`：`series_number` 参数新增逗号分隔 `$in` 支持（与 `series` 保持一致）
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
