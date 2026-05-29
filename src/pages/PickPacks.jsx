@@ -1,618 +1,321 @@
-import React, { useState, useEffect } from "react";
-import { PrimaryButton, DangerButton } from "../components/ButtonVariants";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
 import seedrandom from "seedrandom";
 import { useLocale } from "../contexts/LocaleContext";
-import {
-  Container,
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Grid,
-} from "@mui/material";
-import Snackbar from "@mui/material/Snackbar";
-import MuiAlert from "@mui/material/Alert";
 import packImage from "../assets/765_box.png";
 import temari from "../assets/tiny_temari.png";
 import lilja from "../assets/tiny_lilja.png";
 import wscollection from "../assets/wscollection.png";
 
-function PickPacks() {
-  const { t } = useLocale();
-  const [totalPacks, setTotalPacks] = useState("");
-  const [openPacks, setOpenPacks] = useState("");
-  const [_, setSeed] = useState("");
-  const [results, setResults] = useState([]);
-  const [errorOpen, setErrorOpen] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pickpacks");
-    if (saved) {
-      const { total, open, seed, results } = JSON.parse(saved);
-      setTotalPacks(total);
-      setOpenPacks(open);
-      setSeed(seed);
-      setResults(results);
-    }
-  }, []);
-
-  const clearPage = () => {
-    setTotalPacks("");
-    setOpenPacks("");
-    setSeed("");
-    setResults([]);
-    localStorage.removeItem("pickpacks");
-  };
-
-  const tianGan = "甲乙丙丁戊己庚辛壬癸";
-  const diZhi = "子丑寅卯辰巳午未申酉戌亥";
-
-  // 将公历年转为干支年（简化版）
-  function getGanZhiYear(year) {
-    const tgIndex = (year - 4) % 10;
-    const dzIndex = (year - 4) % 12;
-    return tianGan[tgIndex] + diZhi[dzIndex];
-  }
-
-  // 从固定日期生成对应的八字（简化推算）
-  function getFixedDateBazi() {
-    const date = new Date("2001-12-11T00:00:00");
-    const y = date.getFullYear();
-    const m = date.getMonth() + 1;
-    const d = date.getDate();
-    const h = date.getHours();
-
-    const yearGZ = getGanZhiYear(y);
-    const monthGZ = tianGan[(y * 12 + m) % 10] + diZhi[(m + 1) % 12];
-    const dayGZ = tianGan[(y * 5 + m + d) % 10] + diZhi[(d + 2) % 12];
-    const hourGZ =
-      tianGan[(y + m + d + Math.floor(h / 2)) % 10] +
-      diZhi[Math.floor(h / 2) % 12];
-
-    return yearGZ + monthGZ + dayGZ + hourGZ;
-  }
-
-  function generateFixedBaziSeed() {
-    const baziStr = getFixedDateBazi();
-    let total = 0;
-
-    for (const ch of baziStr) {
-      if (tianGan.includes(ch)) {
-        total += tianGan.indexOf(ch) + 1;
-      } else if (diZhi.includes(ch)) {
-        total += diZhi.indexOf(ch) + 1;
-      }
-    }
-
-    const now = new Date();
-    total +=
-      now.getFullYear() +
-      now.getMonth() +
-      now.getDate() +
-      now.getHours() +
-      now.getMinutes() +
-      now.getSeconds();
-
-    return { baziStr, seed: total };
-  }
-
-  const randomGeneratePacks = () => {
-    const total = parseInt(totalPacks);
-    const open = parseInt(openPacks);
-
-    const { baziStr, seed } = generateFixedBaziSeed();
-    setSeed(seed);
-
-    if (
-      open > total ||
-      isNaN(total) ||
-      isNaN(open) ||
-      total <= 0 ||
-      open <= 0
-    ) {
-      setErrorOpen(true);
-      return;
-    }
-
-    const rng = seedrandom(seed.toString());
-    const available = new Set(Array.from({ length: total }, (_, i) => i + 1));
-    const selected = [];
-
-    while (selected.length < open) {
-      const index = Math.floor(rng() * available.size);
-      const value = Array.from(available)[index];
-      available.delete(value);
-      selected.push(value);
-    }
-
-    selected.sort((a, b) => a - b);
-    setResults(selected);
-
-    localStorage.setItem(
-      "pickpacks",
-      JSON.stringify({
-        total: totalPacks,
-        open: openPacks,
-        seed,
-        bazi: baziStr,
-        results: selected,
-      }),
-    );
-  };
-
-  return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
-      <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
-        <Typography
-          variant="h4"
-          fontWeight={700}
-          color="var(--text)"
-          gutterBottom
-        >
-          {t("pages.pickPacks.title")}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" align="center">
-          {t("pages.pickPacks.subtitle")}
-        </Typography>
-      </Box>
-
-      {/* 输入表单 */}
-      <Box
-        sx={{
-          mb: 4,
-          p: 3,
-          backgroundColor: "var(--card-background)",
-          borderRadius: 3,
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-          border: "1px solid var(--border)",
-        }}
-      >
-        <Grid container spacing={3} justifyContent="center" alignItems="center">
-          {/* 第一行：输入框 */}
-          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-            <TextField
-              type="number"
-              label={t("pages.pickPacks.openPacks")}
-              variant="outlined"
-              fullWidth
-              value={openPacks}
-              onChange={(e) => setOpenPacks(e.target.value)}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "var(--primary)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "var(--primary)",
-                  },
-                },
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-            <TextField
-              type="number"
-              label={t("pages.pickPacks.totalPacks")}
-              variant="outlined"
-              fullWidth
-              value={totalPacks}
-              onChange={(e) => setTotalPacks(e.target.value)}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  "&:hover fieldset": {
-                    borderColor: "var(--primary)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "var(--primary)",
-                  },
-                },
-              }}
-            />
-          </Grid>
-
-          {/* 第二行：按钮 */}
-          <Grid size={{ xs: 12 }}>
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              gap={3}
-              sx={{ mt: 2 }}
-            >
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: 1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <PrimaryButton
-                  size="large"
-                  onClick={randomGeneratePacks}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    minWidth: 140,
-                    width: 140,
-                    height: 48,
-                    fontSize: "1rem",
-                  }}
-                >
-                  {t("pages.pickPacks.openButton")}
-                </PrimaryButton>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05, rotate: -1 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <DangerButton
-                  size="large"
-                  onClick={clearPage}
-                  sx={{
-                    px: 4,
-                    py: 1.5,
-                    minWidth: 140,
-                    width: 140,
-                    height: 48,
-                    fontSize: "1rem",
-                  }}
-                >
-                  {t("pages.pickPacks.resetButton")}
-                </DangerButton>
-              </motion.div>
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* 包图标展示区 */}
-      {totalPacks > 0 && (
-        <Box
-          sx={{
-            mb: 4,
-            p: 3,
-            backgroundColor: "var(--surface)",
-            borderRadius: 3,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <Typography
-            variant="h6"
-            sx={{ mb: 3, textAlign: "center", color: "var(--text)" }}
-          >
-            包选择结果 (
-            {results.length > 0
-              ? t("pickPacks.selectionStatus", { count: results.length })
-              : t("pickPacks.waitingSelection")})
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(auto-fill, minmax(60px, 1fr))",
-                sm: "repeat(auto-fill, minmax(80px, 1fr))",
-                md: "repeat(auto-fill, minmax(100px, 1fr))",
-              },
-              gap: 2,
-              justifyItems: "center",
-            }}
-          >
-            {Array.from({ length: parseInt(totalPacks) }, (_, i) => i + 1).map(
-              (pack) => {
-                const isSelected = results.includes(pack);
-                const isUnselected = results.length > 0 && !isSelected;
-
-                return (
-                  <Box
-                    key={pack}
-                    sx={{
-                      position: "relative",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      transition: "all 0.3s ease",
-                      transform: isSelected ? "scale(1.1)" : "scale(1)",
-                      opacity: isUnselected ? 0.3 : 1,
-                      "&:hover": {
-                        transform: isSelected ? "scale(1.15)" : "scale(1.05)",
-                      },
-                    }}
-                  >
-                    {/* 包图片 */}
-                    <Box
-                      sx={{
-                        position: "relative",
-                        width: { xs: 50, sm: 70, md: 90 },
-                        height: { xs: 50, sm: 70, md: 90 },
-                        overflow: "hidden",
-                      }}
-                    >
-                      <img
-                        src={packImage}
-                        alt={`Pack ${pack}`}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "contain",
-                        }}
-                      />
-                      {isSelected && (
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            width: "100%",
-                            height: "100%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              backgroundColor: "var(--primary)",
-                              color: "white",
-                              borderRadius: "50%",
-                              width: 24,
-                              height: 24,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: "0.8rem",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            ✓
-                          </Box>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {/* 包编号 */}
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        mt: 1,
-                        px: 1,
-                        py: 0.5,
-                        backgroundColor: isSelected
-                          ? "var(--primary)"
-                          : "var(--card-background)",
-                        color: isSelected ? "white" : "var(--text-secondary)",
-                        borderRadius: 1,
-                        fontWeight: isSelected ? "bold" : "normal",
-                        fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                      }}
-                    >
-                      {pack}
-                    </Typography>
-                  </Box>
-                );
-              },
-            )}
-          </Box>
-
-          {/* 结果统计 */}
-          {results.length > 0 && (
-            <Box
-              sx={{
-                mt: 3,
-                p: 2,
-                backgroundColor: "var(--card-background)",
-                borderRadius: 2,
-                textAlign: "center",
-              }}
-            >
-              <Typography variant="body1" sx={{ color: "var(--text)" }}>
-                <strong>选中的包：</strong>
-                {results.map((pack, index) => (
-                  <span key={pack}>
-                    {pack}
-                    {index < results.length - 1 ? ", " : ""}
-                  </span>
-                ))}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* 小记 */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          mb: 4,
-        }}
-      >
-        <Box
-          sx={{
-            maxWidth: { xs: "100%", sm: "90%", md: "800px" },
-            width: "100%",
-            p: 4,
-            backgroundColor: "var(--surface)",
-            borderRadius: 3,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          {/* 背景装饰 */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              background:
-                "linear-gradient(135deg, var(--card-background) 0%, rgba(255,255,255,0.1) 100%)",
-              zIndex: 0,
-            }}
-          />
-
-          <Box sx={{ position: "relative", zIndex: 1 }}>
-            {/* 标题对话 */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                mb: 4,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: 2,
-                  backgroundColor: "var(--card-background)",
-                  borderRadius: 2,
-                  borderLeft: "4px solid var(--primary)",
-                }}
-              >
-                <img
-                  src={temari}
-                  alt="Temari"
-                  style={{ height: "2rem", flexShrink: 0 }}
-                />
-                <Typography variant="h6" sx={{ color: "var(--text)" }}>
-                  这个随机开包器有什么特别的吗？
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: 2,
-                  backgroundColor: "rgba(244, 67, 54, 0.1)",
-                  borderRadius: 2,
-                  borderLeft: "4px solid var(--error)",
-                }}
-              >
-                <img
-                  src={lilja}
-                  alt="Lilja"
-                  style={{ height: "3rem", flexShrink: 0 }}
-                />
-                <Typography
-                  variant="h5"
-                  sx={{ color: "#760f10", fontWeight: "bold" }}
-                >
-                  完全没有！
-                  <br />{" "}
-                  就是普通的随机数生成器只不过我设定了一个和我有关的会随着时间会变化的种子
-                </Typography>
-              </Box>
-            </Box>
-
-            {/* 第二轮对话 */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                mb: 4,
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  p: 2,
-                  backgroundColor: "rgba(166, 206, 182, 0.1)",
-                  borderRadius: 2,
-                  borderLeft: "4px solid #a6ceb6",
-                }}
-              >
-                <img
-                  src={temari}
-                  alt="Temari"
-                  style={{ height: "2rem", flexShrink: 0 }}
-                />
-                <Typography variant="h6" sx={{ color: "#1b4332" }}>
-                  那我为什么应该用这个随机开包器？
-                </Typography>
-              </Box>
-
-              <Box
-                sx={{
-                  p: 3,
-                  backgroundColor: "rgba(118, 15, 16, 0.05)",
-                  borderRadius: 2,
-                  border: "1px solid rgba(118, 15, 16, 0.1)",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    mb: 3,
-                  }}
-                >
-                  <img
-                    src={lilja}
-                    alt="Lilja"
-                    style={{
-                      height: "3rem",
-                      flexShrink: 0,
-                      marginTop: "0.5rem",
-                    }}
-                  />
-                  <Typography variant="h6" sx={{ lineHeight: 1.6 }}>
-                    请看战绩⬇️平均3盒一个SP/SSP，只买散盒
-                  </Typography>
-                </Box>
-
-                {/* 收藏图片 */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    mb: 3,
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={wscollection}
-                    alt="WS Collection"
-                    sx={{
-                      maxWidth: "100%",
-                      height: "auto",
-                      borderRadius: 2,
-                      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* 错误提示 */}
-      <Snackbar
-        open={errorOpen}
-        autoHideDuration={5000}
-        onClose={() => setErrorOpen(false)}
-      >
-        <MuiAlert
-          onClose={() => setErrorOpen(false)}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {t("pages.pickPacks.errorMessage")}
-        </MuiAlert>
-      </Snackbar>
-    </Container>
-  );
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function Toast({ message, onClose }) {
+	useEffect(() => {
+		if (!message) return;
+		const id = setTimeout(onClose, 5000);
+		return () => clearTimeout(id);
+	}, [message, onClose]);
+	if (!message) return null;
+	return (
+		<div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3
+		                px-5 py-3 rounded-2xl shadow-xl text-sm font-bold bg-[#e05c5c] text-white">
+			{message}
+			<button type="button" onClick={onClose} className="opacity-70 hover:opacity-100 transition-opacity ml-1">✕</button>
+		</div>
+	);
 }
 
-export default PickPacks;
+// ── Stepper ────────────────────────────────────────────────────────────────────
+function Stepper({ label, value, onChange, min = 1 }) {
+	const num = parseInt(value) || 0;
+	return (
+		<div className="flex flex-col gap-1.5">
+			<span className="text-[11px] font-bold text-[var(--text-secondary)]">{label}</span>
+			<div className="flex items-center border border-[var(--border)] rounded-xl overflow-hidden">
+				<button type="button" onClick={() => onChange(String(Math.max(min, num - 1)))}
+					className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)]
+					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0">
+					−
+				</button>
+				<input
+					type="number" min={min} value={value}
+					onChange={(e) => onChange(e.target.value)}
+					className="flex-1 text-center text-lg font-black text-[var(--text)] bg-transparent
+					           focus:outline-none py-2 [appearance:textfield]
+					           [&::-webkit-outer-spin-button]:appearance-none
+					           [&::-webkit-inner-spin-button]:appearance-none"
+				/>
+				<button type="button" onClick={() => onChange(String(num + 1))}
+					className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)]
+					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0">
+					+
+				</button>
+			</div>
+		</div>
+	);
+}
+
+// ── Seed logic ─────────────────────────────────────────────────────────────────
+const tianGan = "甲乙丙丁戊己庚辛壬癸";
+const diZhi = "子丑寅卯辰巳午未申酉戌亥";
+
+function getGanZhiYear(year) {
+	return tianGan[(year - 4) % 10] + diZhi[(year - 4) % 12];
+}
+
+function generateFixedBaziSeed() {
+	const date = new Date("2001-12-11T00:00:00");
+	const y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate(), h = date.getHours();
+	const yearGZ = getGanZhiYear(y);
+	const monthGZ = tianGan[(y * 12 + m) % 10] + diZhi[(m + 1) % 12];
+	const dayGZ = tianGan[(y * 5 + m + d) % 10] + diZhi[(d + 2) % 12];
+	const hourGZ = tianGan[(y + m + d + Math.floor(h / 2)) % 10] + diZhi[Math.floor(h / 2) % 12];
+	const baziStr = yearGZ + monthGZ + dayGZ + hourGZ;
+	let total = 0;
+	for (const ch of baziStr) {
+		if (tianGan.includes(ch)) total += tianGan.indexOf(ch) + 1;
+		else if (diZhi.includes(ch)) total += diZhi.indexOf(ch) + 1;
+	}
+	const now = new Date();
+	total += now.getFullYear() + now.getMonth() + now.getDate() + now.getHours() + now.getMinutes() + now.getSeconds();
+	return { baziStr, seed: total };
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────────
+export default function PickPacksV2() {
+	const { t } = useLocale();
+	const [totalPacks, setTotalPacks] = useState("");
+	const [openPacks, setOpenPacks] = useState("");
+	const [results, setResults] = useState([]);
+	const [toastMsg, setToastMsg] = useState("");
+	const [litPacks, setLitPacks] = useState(new Set()); // 刚被点亮的包（动画用）
+	const [noteOpen, setNoteOpen] = useState(false);
+	const litTimerRef = useRef(null);
+
+	useEffect(() => {
+		const saved = localStorage.getItem("pickpacks");
+		if (saved) {
+			const { total, open, results } = JSON.parse(saved);
+			setTotalPacks(total ?? "");
+			setOpenPacks(open ?? "");
+			setResults(results ?? []);
+		}
+		return () => { if (litTimerRef.current) clearTimeout(litTimerRef.current); };
+	}, []);
+
+	const clearPage = () => {
+		setTotalPacks(""); setOpenPacks(""); setResults([]); setLitPacks(new Set());
+		localStorage.removeItem("pickpacks");
+	};
+
+	const randomGeneratePacks = () => {
+		const total = parseInt(totalPacks);
+		const open = parseInt(openPacks);
+		if (!total || !open || open > total || total <= 0 || open <= 0) {
+			setToastMsg(t("pages.pickPacks.errorMessage"));
+			return;
+		}
+		const { seed } = generateFixedBaziSeed();
+		const rng = seedrandom(seed.toString());
+		const available = new Set(Array.from({ length: total }, (_, i) => i + 1));
+		const selected = [];
+		while (selected.length < open) {
+			const idx = Math.floor(rng() * available.size);
+			const val = Array.from(available)[idx];
+			available.delete(val);
+			selected.push(val);
+		}
+		selected.sort((a, b) => a - b);
+		setResults(selected);
+		// 触发点亮动画
+		setLitPacks(new Set(selected));
+		if (litTimerRef.current) clearTimeout(litTimerRef.current);
+		litTimerRef.current = setTimeout(() => setLitPacks(new Set()), 600);
+		localStorage.setItem("pickpacks", JSON.stringify({ total: totalPacks, open: openPacks, seed, results: selected }));
+	};
+
+	const totalNum = parseInt(totalPacks) || 0;
+	const openNum = parseInt(openPacks) || 0;
+
+	return (
+		<>
+			<style>{`
+				@keyframes pack-light {
+					0%   { transform: scale(1.0); filter: drop-shadow(0 0 0px transparent); }
+					40%  { transform: scale(1.22); filter: drop-shadow(0 0 14px rgba(166,206,182,0.95)); }
+					100% { transform: scale(1.1);  filter: drop-shadow(0 0 6px rgba(166,206,182,0.5)); }
+				}
+				.pack-lit { animation: pack-light 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
+				.pack-selected { transform: scale(1.1); filter: drop-shadow(0 0 6px rgba(166,206,182,0.5)); }
+			`}</style>
+
+			<Toast message={toastMsg} onClose={() => setToastMsg("")} />
+
+			<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+
+				{/* Title */}
+				<div className="mb-8">
+					<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
+						{t("pages.pickPacks.title")}
+					</h1>
+					<p className="text-sm text-[var(--text-secondary)]">{t("pages.pickPacks.subtitle")}</p>
+				</div>
+
+				{/* Input panel */}
+				<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md mb-4">
+					<div className="grid grid-cols-2 gap-4 mb-5">
+						<Stepper label={t("pages.pickPacks.openPacks")} value={openPacks} onChange={setOpenPacks} />
+						<Stepper label={t("pages.pickPacks.totalPacks")} value={totalPacks} onChange={setTotalPacks} />
+					</div>
+					{/* Counter display */}
+					{totalNum > 0 && openNum > 0 && (
+						<div className="flex items-baseline justify-center gap-2 mb-4">
+							<span className="text-4xl font-black text-[var(--text-muted)]">{openNum}</span>
+							<span className="text-lg text-[var(--text-muted)] font-bold">/</span>
+							<span className="text-2xl font-black text-[var(--text-secondary)]">{totalNum}</span>
+							<span className="text-sm text-[var(--text-muted)] ml-1">包</span>
+						</div>
+					)}
+					<div className="flex gap-3">
+						<button onClick={randomGeneratePacks}
+							className="flex-1 py-2.5 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold
+							           hover:bg-[var(--text-secondary)] transition-colors">
+							{t("pages.pickPacks.openButton")}
+						</button>
+						<button onClick={clearPage}
+							className="px-5 py-2.5 rounded-xl border border-[var(--border)] text-[var(--text-secondary)]
+							           text-sm font-bold hover:bg-[var(--card-background)] transition-colors">
+							{t("pages.pickPacks.resetButton")}
+						</button>
+					</div>
+				</div>
+
+				{/* Pack grid */}
+				{totalNum > 0 && (
+					<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md mb-4">
+
+						{/* Status eyebrow */}
+						<div className="flex items-center gap-3 mb-5">
+							<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+								包选择结果
+							</span>
+							<div className="flex-1 border-t border-[var(--border)]" />
+							<span className={`text-xs font-bold px-2.5 py-1 rounded-full transition-colors ${
+								results.length > 0
+									? "bg-[var(--text-muted)] text-white"
+									: "bg-[var(--card-background)] text-[var(--text-muted)]"
+							}`}>
+								{results.length > 0
+									? t("pickPacks.selectionStatus", { count: results.length })
+									: t("pickPacks.waitingSelection")}
+							</span>
+						</div>
+
+						{/* Grid */}
+						<div className="grid gap-4"
+							style={{ gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))" }}>
+							{Array.from({ length: totalNum }, (_, i) => i + 1).map((pack) => {
+								const isSelected = results.includes(pack);
+								const isLit = litPacks.has(pack);
+								const isDimmed = results.length > 0 && !isSelected;
+								return (
+									<div key={pack}
+										className={`flex flex-col items-center gap-2 transition-opacity duration-300
+										            ${isDimmed ? "opacity-20" : "opacity-100"}`}>
+										<div className={`relative w-[72px] h-[72px] cursor-default
+										                 hover:scale-105 transition-transform duration-150
+										                 ${isLit ? "pack-lit" : isSelected ? "pack-selected" : ""}`}>
+											<img src={packImage} alt={`Pack ${pack}`}
+												className="w-full h-full object-contain" />
+											{isSelected && (
+												<div className="absolute inset-0 flex items-center justify-center">
+													<div className="w-7 h-7 rounded-full bg-[var(--text-muted)] text-white
+													                flex items-center justify-center text-sm font-black
+													                shadow-lg">
+														✓
+													</div>
+												</div>
+											)}
+										</div>
+										<span className={`text-[11px] font-bold px-2 py-0.5 rounded-md transition-all duration-300 ${
+											isSelected
+												? "bg-[var(--text-muted)] text-white"
+												: "bg-[var(--card-background)] text-[var(--text-secondary)]"
+										}`}>
+											{pack}
+										</span>
+									</div>
+								);
+							})}
+						</div>
+
+						{/* Selected pill list */}
+						{results.length > 0 && (
+							<div className="mt-5 pt-4 border-t border-[var(--border)] flex flex-wrap items-center gap-2">
+								<span className="text-xs font-bold text-[var(--text-muted)]">选中：</span>
+								{results.map((pack) => (
+									<span key={pack}
+										className="text-xs font-black px-2.5 py-1 rounded-full bg-[var(--text-muted)] text-white">
+										{pack}
+									</span>
+								))}
+							</div>
+						)}
+					</div>
+				)}
+
+				{/* 小记（折叠） */}
+				<div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md">
+					<div className="h-1 bg-[var(--primary)]" />
+					<button type="button"
+						onClick={() => setNoteOpen((v) => !v)}
+						className="w-full flex items-center justify-between px-5 py-4
+						           hover:bg-[var(--card-background)] transition-colors">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+							背后的故事
+						</span>
+						<span className={`text-[var(--text-muted)] transition-transform duration-200 text-sm ${noteOpen ? "rotate-180" : ""}`}>
+							▾
+						</span>
+					</button>
+
+					{noteOpen && (
+						<div className="px-5 pb-5 border-t border-[var(--border)] flex flex-col gap-4 pt-4">
+
+							<div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--card-background)] border-l-4 border-[var(--primary)]">
+								<img src={temari} alt="Temari" className="h-8 shrink-0" />
+								<p className="text-sm font-bold text-[var(--text)]">
+									这个随机开包器有什么特别的吗？
+								</p>
+							</div>
+
+							<div className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(224,92,92,0.08)] border-l-4 border-[#e05c5c]">
+								<img src={lilja} alt="Lilja" className="h-10 shrink-0" />
+								<p className="text-sm font-bold text-[#760f10] leading-relaxed">
+									完全没有！<br />
+									就是普通的随机数生成器，只不过我设定了一个和我有关的、会随着时间变化的种子
+								</p>
+							</div>
+
+							<div className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(166,206,182,0.1)] border-l-4 border-[var(--primary)]">
+								<img src={temari} alt="Temari" className="h-8 shrink-0" />
+								<p className="text-sm font-bold text-[var(--text)]">
+									那我为什么应该用这个随机开包器？
+								</p>
+							</div>
+
+							<div className="p-4 rounded-xl bg-[rgba(118,15,16,0.05)] border border-[rgba(118,15,16,0.1)]">
+								<div className="flex items-start gap-3 mb-4">
+									<img src={lilja} alt="Lilja" className="h-10 shrink-0 mt-1" />
+									<p className="text-sm font-bold text-[var(--text)] leading-relaxed">
+										请看战绩⬇️ 平均3盒一个SP/SSP，只买散盒
+									</p>
+								</div>
+								<img src={wscollection} alt="WS Collection"
+									className="w-full rounded-xl shadow-md" />
+							</div>
+						</div>
+					)}
+				</div>
+			</div>
+		</>
+	);
+}

@@ -607,6 +607,23 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### PickPacks 迁移至 Tailwind + 视觉优化 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：Container/Box/Grid/Typography/TextField/Snackbar/Alert 全部替换，framer-motion 移除
+- **ButtonVariants → 原生 Tailwind 按钮**
+- **步进器输入**：`−/数字/+` 替代 TextField，复用 Dice 页的 Stepper 组件
+- **输入计数预览**：步进器下方显示 `X / Y 包` 大字预览
+- **包格子视觉优化**：
+  - 包尺寸从 56px 放大到 72px
+  - 选中态：`scale(1.1)` + `drop-shadow` 绿色光晕
+  - 点亮动画：点击开包时触发 `pack-light` keyframe（快速放大+光晕，再稳定）
+  - 未选中降透明度到 20%
+- **选中 pill 列表**：结果以深色圆形 badge 横排展示
+- **小记区默认折叠**：「背后的故事 ▾」点击展开，保持主功能区整洁
+- **Toast 错误提示**：复用 Login 的 Toast 组件
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
