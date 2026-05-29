@@ -1,363 +1,193 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import {
-	Box,
-	Container,
-	Typography,
-	Dialog,
-	DialogTitle,
-	DialogContent,
-	DialogActions,
-	Paper,
-	Stack,
-	Divider,
-	Chip,
-} from "@mui/material";
-import {
-	PrimaryButton,
-	SecondaryButton,
-	DangerButton,
-} from "../components/ButtonVariants";
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded";
-import PauseRoundedIcon from "@mui/icons-material/PauseRounded";
-import RestartAltRoundedIcon from "@mui/icons-material/RestartAltRounded";
-import SwapVertRoundedIcon from "@mui/icons-material/SwapVertRounded";
+import { Pause, Play, RotateCcw } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 
 const formatTime = (seconds) => {
-	const minutes = Math.floor(seconds / 60);
-	const remainingSeconds = seconds % 60;
-	return `${String(minutes).padStart(2, "0")}:${String(
-		remainingSeconds
-	).padStart(2, "0")}`;
+	const m = Math.floor(seconds / 60);
+	const s = seconds % 60;
+	return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-function ChessClock() {
+export default function ChessClockV2() {
+	const { t } = useLocale();
 	const [side, setSide] = useState(1);
 	const [isRunning, setIsRunning] = useState(false);
 	const [p1Seconds, setP1Seconds] = useState(0);
 	const [p2Seconds, setP2Seconds] = useState(0);
-	const [showResetConfirm, setShowResetConfirm] = useState(false);
-	const { t } = useLocale();
+	const [showReset, setShowReset] = useState(false);
 
+	// Restore from localStorage
 	useEffect(() => {
-		const saved = localStorage.getItem("chessclock");
-		if (!saved) {
-			return;
-		}
 		try {
-			const parsed = JSON.parse(saved);
-			if (typeof parsed.p1Seconds === "number") {
-				setP1Seconds(parsed.p1Seconds);
-			}
-			if (typeof parsed.p2Seconds === "number") {
-				setP2Seconds(parsed.p2Seconds);
-			}
-			if (parsed.side === 1 || parsed.side === 2) {
-				setSide(parsed.side);
-			}
-			if (typeof parsed.isRunning === "boolean") {
-				setIsRunning(parsed.isRunning);
-			}
-		} catch (error) {
-			console.error("Failed to parse chess clock settings", error);
-		}
+			const saved = localStorage.getItem("chessclock");
+			if (!saved) return;
+			const d = JSON.parse(saved);
+			if (typeof d.p1Seconds === "number") setP1Seconds(d.p1Seconds);
+			if (typeof d.p2Seconds === "number") setP2Seconds(d.p2Seconds);
+			if (d.side === 1 || d.side === 2) setSide(d.side);
+			if (typeof d.isRunning === "boolean") setIsRunning(d.isRunning);
+		} catch {}
 	}, []);
 
+	// Tick
 	useEffect(() => {
 		if (!isRunning) return;
-
-		const interval = setInterval(() => {
-			if (side === 1) {
-				setP1Seconds((prev) => prev + 1);
-			} else {
-				setP2Seconds((prev) => prev + 1);
-			}
+		const id = setInterval(() => {
+			if (side === 1) setP1Seconds((v) => v + 1);
+			else setP2Seconds((v) => v + 1);
 		}, 1000);
-
-		return () => clearInterval(interval);
+		return () => clearInterval(id);
 	}, [isRunning, side]);
 
+	// Persist
 	useEffect(() => {
-		localStorage.setItem(
-			"chessclock",
-			JSON.stringify({
-				p1Seconds,
-				p2Seconds,
-				side,
-				isRunning,
-			})
-		);
+		localStorage.setItem("chessclock", JSON.stringify({ p1Seconds, p2Seconds, side, isRunning }));
 	}, [p1Seconds, p2Seconds, side, isRunning]);
 
-	const p1Time = formatTime(p1Seconds);
-	const p2Time = formatTime(p2Seconds);
-
-	const activeSide = isRunning ? side : null;
-	const totalSeconds = p1Seconds + p2Seconds;
-	const totalTime = formatTime(totalSeconds);
-	const activePlayerLabel = t("chessClock.playerLabel", { index: side });
-	const statusChipLabel = isRunning
-		? t("chessClock.statusRunning", { player: activePlayerLabel })
-		: t("chessClock.statusPaused");
-
-	const handlePlayerTap = (targetSide) => {
+	const tap = (targetSide) => {
 		setSide(targetSide);
 		setIsRunning(true);
 	};
 
-	const togglePause = () => {
-		setIsRunning((prev) => !prev);
+	const togglePause = (e) => {
+		e.stopPropagation();
+		setIsRunning((v) => !v);
 	};
 
-	const handleSwitchSide = () => {
-		setSide((prev) => (prev === 1 ? 2 : 1));
-		setIsRunning(true);
-	};
-
-	const handleResetAll = () => {
+	const confirmReset = () => {
 		setIsRunning(false);
 		setSide(1);
 		setP1Seconds(0);
 		setP2Seconds(0);
-		setShowResetConfirm(false);
+		setShowReset(false);
 		localStorage.removeItem("chessclock");
 	};
 
-	const pauseLabel = isRunning
-		? t("chessClock.pauseButton")
-		: t("chessClock.resumeButton");
+	const total = formatTime(p1Seconds + p2Seconds);
+
+	const PlayerPanel = ({ id }) => {
+		const isActive = isRunning && side === id;
+		const time = formatTime(id === 1 ? p1Seconds : p2Seconds);
+
+		return (
+			<button
+				type="button"
+				onClick={() => tap(id)}
+				className={`flex-1 flex flex-col items-center justify-center gap-3 rounded-2xl
+				            border transition-all duration-200 select-none cursor-pointer relative
+				            ${isActive
+				              ? "border-[var(--primary)] bg-[var(--primary-light,rgba(166,206,182,0.18))]"
+				              : "border-[var(--border)] bg-white/60 hover:bg-white/90"
+				            }`}
+				style={{ minHeight: "36vh" }}
+			>
+				{/* Active indicator bar */}
+				{isActive && (
+					<div className="absolute left-0 top-6 bottom-6 w-1 rounded-full bg-[var(--primary)]" />
+				)}
+
+				<span className={`text-xs font-black tracking-widest uppercase ${
+					isActive ? "text-[var(--text-muted)]" : "text-[var(--text-muted)]"
+				}`}>
+					{t("chessClock.playerLabel", { index: id })}
+				</span>
+
+				<span className={`font-black tabular-nums leading-none transition-colors duration-200 ${
+					isActive ? "text-[var(--text)]" : "text-[var(--text-secondary)]"
+				}`} style={{ fontSize: "clamp(3rem, 10vw, 5rem)" }}>
+					{time}
+				</span>
+
+				{isActive ? (
+					<span className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-muted)]">
+						<span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse" />
+						计时中
+					</span>
+				) : (
+					<span className="text-[11px] text-[var(--text-muted)]">
+						{t("chessClock.playerHint")}
+					</span>
+				)}
+			</button>
+		);
+	};
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100%", // 使用100%而不是视口高度
-			}}>
-			<Container maxWidth="md" sx={{ py: 3 }}>
-				{/* 页面标题和副标题 */}
-				<Stack
-					spacing={1.5}
-					alignItems="center"
-					sx={{ mb: 4 }}>
-					<Typography
-						variant="h4"
-						fontWeight={700}
-						color="var(--text)">
-						{t("chessClock.title")}
-					</Typography>
-					<Typography
-						variant="body1"
-						color="text.secondary"
-						gutterBottom>
-						{t("chessClock.subtitle")}
-					</Typography>
-					<Chip
-						label={statusChipLabel}
-						color={isRunning ? "error" : "default"}
-						size="small"
-						sx={{
-							backgroundColor: isRunning
-								? "rgba(118, 15, 16, 0.12)"
-								: "rgba(166, 206, 182, 0.22)",
-							color: isRunning ? "#5c0f10" : "#1b4332",
-						}}
-					/>
-				</Stack>
+		<div className="max-w-lg mx-auto px-4 sm:px-6 py-6 flex flex-col gap-3" style={{ minHeight: "calc(100dvh - 72px)" }}>
 
-				<Paper
-					elevation={10}
-					sx={{
-						p: { xs: 3, md: 5 },
-						borderRadius: 4,
-						backgroundColor: "rgba(255, 255, 255, 0)",
-						border: "1px solid var(--border)",
-						boxShadow: "0 32px 80px -48px rgba(74, 141, 112, 0.45)",
-					}}>
-					<Stack spacing={{ xs: 3, md: 4 }}>
-						<Divider
-							flexItem
-							light
-						/>
+			{/* Title */}
+			<div className="mb-2">
+				<h1 className="text-2xl sm:text-3xl font-black tracking-tight text-[var(--text)] leading-none mb-1">
+					{t("chessClock.title")}
+				</h1>
+				<p className="text-xs text-[var(--text-secondary)]">{t("chessClock.subtitle")}</p>
+			</div>
 
-						<Stack spacing={{ xs: 2, md: 3 }}>
-							{[1, 2].map((playerId) => {
-								const isActive = activeSide === playerId;
-								const playerLabel = t("chessClock.playerLabel", {
-									index: playerId,
-								});
-								const playerTime = playerId === 1 ? p1Time : p2Time;
-								return (
-									<Paper
-										key={`clock-player-${playerId}`}
-										component="button"
-										type="button"
-										onClick={() => handlePlayerTap(playerId)}
-										elevation={isActive ? 8 : 3}
-										sx={{
-											width: "100%",
-											borderRadius: 3,
-											p: { xs: 2.5, md: 3.5 },
-											textAlign: "left",
-											cursor: "pointer",
-											border: `1px solid ${
-												isActive
-													? "rgba(118, 15, 16, 0.38)"
-													: "rgba(166, 206, 182, 0.4)"
-											}`,
-											backgroundColor: isActive
-												? "rgba(166, 206, 182, 0.38)"
-												: "rgba(255, 255, 255, 0.94)",
-											boxShadow: isActive
-												? "0 26px 48px -32px rgba(118, 15, 16, 0.55)"
-												: "0 24px 48px -32px rgba(76, 175, 80, 0.35)",
-											transition: "all 0.3s ease",
-											borderStyle: "solid",
-											"&:hover": {
-												boxShadow: "0 30px 60px -35px rgba(76, 175, 80, 0.45)",
-												transform: "translateY(-2px)",
-											},
-											"&:focus-visible": {
-												outline: "2px solid rgba(118, 15, 16, 0.6)",
-												outlineOffset: 2,
-											},
-										}}>
-										<Stack
-											direction="row"
-											justifyContent="space-between"
-											alignItems="center"
-											spacing={2}>
-											<Stack spacing={0.25}>
-												<Typography
-													variant="h6"
-													fontWeight={600}
-													color="#1b4332">
-													{playerLabel}
-												</Typography>
-												<Typography
-													variant="body2"
-													color="text.secondary">
-													{t("chessClock.playerHint")}
-												</Typography>
-											</Stack>
-											<Typography
-												variant="h3"
-												fontWeight={700}
-												color={isActive ? "#5c0f10" : "#1b4332"}>
-												{playerTime}
-											</Typography>
-										</Stack>
-										{isActive && (
-											<Chip
-												label={t("chessClock.activeChip")}
-												color="error"
-												size="small"
-												sx={{ mt: { xs: 2, md: 2.5 } }}
-											/>
-										)}
-									</Paper>
-								);
-							})}
-						</Stack>
+			{/* Player 1 */}
+			<PlayerPanel id={1} />
 
-						<Divider
-							flexItem
-							light
-						/>
+			{/* Controls */}
+			<div className="flex items-center gap-2 py-1">
+				<span className="text-xs font-bold text-[var(--text-muted)]">
+					{t("chessClock.totalTime", { time: total })}
+				</span>
+				<div className="flex-1" />
+				<button
+					onClick={togglePause}
+					className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-colors ${
+						isRunning
+							? "bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)]"
+							: "bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)]"
+					}`}>
+					{isRunning ? <Pause size={13} /> : <Play size={13} />}
+					{isRunning ? t("chessClock.pauseButton") : t("chessClock.resumeButton")}
+				</button>
+				<button
+					onClick={() => setShowReset(true)}
+					className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold
+					           border border-[var(--border)] text-[var(--text-secondary)]
+					           hover:bg-[var(--card-background)] transition-colors">
+					<RotateCcw size={13} />
+					{t("chessClock.resetButton")}
+				</button>
+			</div>
 
-						<Stack
-							direction={{ xs: "column", sm: "row" }}
-							spacing={2}
-							justifyContent="center">
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: 1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}
-								style={{ width: "100%" }}>
-								<PrimaryButton
-									startIcon={
-										isRunning ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />
-									}
-									fullWidth
-									sx={{
-										backgroundColor: isRunning ? "var(--warning)" : undefined,
-										"&:hover": {
-											backgroundColor: isRunning
-												? "var(--warning-hover)"
-												: undefined,
-										},
-									}}
-									onClick={togglePause}>
-									{pauseLabel}
-								</PrimaryButton>
-							</motion.div>
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: 1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}
-								style={{ width: "100%" }}>
-								<SecondaryButton
-									variant="outlined"
-									startIcon={<SwapVertRoundedIcon />}
-									fullWidth
-									onClick={handleSwitchSide}>
-									{t("chessClock.switchButton")}
-								</SecondaryButton>
-							</motion.div>
-							<motion.div
-								whileHover={{ scale: 1.05, rotate: -1 }}
-								whileTap={{ scale: 0.95 }}
-								transition={{ type: "spring", stiffness: 400, damping: 17 }}
-								style={{ width: "100%" }}>
-								<DangerButton
-									variant="outlined"
-									startIcon={<RestartAltRoundedIcon />}
-									fullWidth
-									onClick={() => setShowResetConfirm(true)}>
-									{t("chessClock.resetButton")}
-								</DangerButton>
-							</motion.div>
-						</Stack>
+			{/* Player 2 */}
+			<PlayerPanel id={2} />
 
-						<Stack
-							direction="row"
-							justifyContent="center">
-							<Chip
-								label={t("chessClock.totalTime", { time: totalTime })}
-								size="small"
-								sx={{
-									mt: { xs: 2, md: 3 },
-									px: 2,
-									color: "#1b4332",
-									backgroundColor: "rgba(166, 206, 182, 0.25)",
-								}}
-							/>
-						</Stack>
-					</Stack>
-				</Paper>
-			</Container>
-
-			<Dialog
-				open={showResetConfirm}
-				onClose={() => setShowResetConfirm(false)}
-				sx={{ "& .MuiDialog-paper": { borderRadius: 3 } }}>
-				<DialogTitle>{t("chessClock.dialogTitle")}</DialogTitle>
-				<DialogContent>
-					<Typography>{t("chessClock.dialogBody")}</Typography>
-				</DialogContent>
-				<DialogActions>
-					<SecondaryButton onClick={() => setShowResetConfirm(false)}>
-						{t("chessClock.dialogCancel")}
-					</SecondaryButton>
-					<DangerButton
-						variant="contained"
-						onClick={handleResetAll}
-						startIcon={<RestartAltRoundedIcon />}>
-						{t("chessClock.dialogConfirm")}
-					</DangerButton>
-				</DialogActions>
-			</Dialog>
-		</Box>
+			{/* Reset confirmation modal */}
+			{showReset && (
+				<div
+					className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+					onClick={() => setShowReset(false)}>
+					<div
+						className="bg-white rounded-2xl shadow-xl p-6 w-80 mx-4 flex flex-col gap-4"
+						onClick={(e) => e.stopPropagation()}>
+						<div>
+							<p className="text-base font-bold text-[var(--text)] mb-1">
+								{t("chessClock.dialogTitle")}
+							</p>
+							<p className="text-sm text-[var(--text-secondary)]">
+								{t("chessClock.dialogBody")}
+							</p>
+						</div>
+						<div className="flex gap-2 justify-end">
+							<button
+								onClick={() => setShowReset(false)}
+								className="px-4 py-2 rounded-lg text-sm font-medium text-[var(--text-secondary)]
+								           hover:text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+								{t("chessClock.dialogCancel")}
+							</button>
+							<button
+								onClick={confirmReset}
+								className="px-4 py-2 rounded-lg text-sm font-bold bg-[var(--reset)] text-white
+								           hover:bg-[var(--reset-hover)] transition-colors">
+								{t("chessClock.dialogConfirm")}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+		</div>
 	);
 }
-
-export default ChessClock;

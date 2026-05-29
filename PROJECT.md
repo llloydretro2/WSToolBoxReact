@@ -543,6 +543,17 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### ChessClock 迁移至 Tailwind + 大面板重设计 (2026-05-29 session 15 cont.)
+
+- **MUI 完全移除**：所有 MUI 组件、MUI icons、framer-motion 移除；Dialog 改为原生 modal
+- **大面板布局**：两个玩家面板各占约 36vh，点击整个面板即切换计时，移动端对战体验大幅提升
+- **时间数字极大居中**：`clamp(3rem, 10vw, 5rem)` 响应式字体，时间是页面视觉重心
+- **Active 状态**：左侧绿色竖条 + 轻微背景色 + 脉冲绿点「计时中」指示
+- **去掉冗余 Switch 按钮**：点击对方面板即可切换，与 Switch 功能完全重复
+- **控制区夹在面板之间**：总用时 / 暂停|继续 / 重置，紧凑小按钮不抢主视觉
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
