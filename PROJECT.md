@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-22 (session 14)
+> Last updated: 2026-05-29 (session 16)
 
 ## Deployment
 
@@ -624,6 +624,31 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### JP 查卡器新界面 & MUI 迁移完成 (2026-05-29 session 16)
+
+- **`JPCardList.jsx` 正式上线**：以 `ENCardList.jsx` 为 UI 模板，重写 JP 查卡器。零 MUI，完整 Tailwind。路由 `/ws/cards` 切换至新页面。
+- **旧 `CardList.jsx` 删除**：2289 行 MUI 页面已移除，仅保留 git 历史。
+- **`ButtonVariants.jsx` + `AnimatedButton.jsx` 删除**：随 CardList 一起清理，全站不再有任何 MUI 按钮组件。
+- **JP 专有差异**（相对 ENCardList）：
+  - 数据来自 `useOptions()`（`productList`/`jpNeostandardMap`/`translationMap`），不重复 fetch
+  - `card_type` 值为日文（`"クライマックス"` / `"キャラ"` / `"イベント"`）；Climax 旋转判断使用日文值
+  - Side 增加 `ws` 选项；Color 增加 `purple`；Soul 参数用 `soul=1`（非 `soul_min`）
+  - Neostandard 下拉显示 `日文名（中文名）` 双语格式（`NeoCombobox` 组件）
+  - 卡图格显示 `zh_name`；详情 Modal 显示 `zh_effect` / `zh_trait` / `zh_flavor`
+
+**全站 MUI 迁移至此完成。** 所有页面组件均为 Tailwind-only。NavBar 保留 MUI 岛屿（Avatar/Badge/Snackbar/Tooltip/Menu/MenuItem）；`PageTransition.jsx` 保留 MUI（基础设施组件）。
+
+#### 迁移完成后全面审计
+
+对 `src/pages/` 和 `src/components/` 做系统检查，修复以下硬编码颜色：
+
+- `LazyImage.jsx`：占位背景色 `#f5f5f5` → `var(--card-background)`，占位文字色 `#666` → `var(--text-muted)`
+- `Home.jsx` Divider：`rgba(166,206,182,0.28)` → `var(--border)`
+
+其余检查全部通过：无 MUI 残留、无删除文件残引、无 BACKEND_URL 违规、无孤立页面、zh/en locale 结构完全对齐。
+
+---
+
 ## Future backlog
 
 ### Near-term candidates
@@ -639,5 +664,5 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ### Deferred / high-complexity
 
-- **CardList 分阶段拆分**：`CardList.jsx` 当前体积较大。后续如恢复查卡器数据更新或继续维护 WS 区，建议先抽 `useCardSearch()` hook，承接搜索请求、分页、loading、`result`、`form/draftForm` 等状态；再逐步拆 `CardSearchFilters`、`CardResultGrid`、`CardDetailDialog`、`RelatedCardsDialog`。该项复杂度较高，暂不作为近期任务。
+- **CardList 拆分**（已从 deferred 移除）：`JPCardList.jsx` 已于 Session 16 完成重写，旧 `CardList.jsx` 已删除。若未来需要进一步拆分子组件，参考 ENCardList 模式。
 - **牌桌中枢后续增强（谨慎）**：当前 `/mahjong/centrepiece` 已按 `mahtools/riichi-centrepiece` 收敛为轻量中枢。后续如增强，优先保持 mahtools 的极简交互；只有用户明确要求时再考虑供托、分数、流局/和牌结算或手动设庄。

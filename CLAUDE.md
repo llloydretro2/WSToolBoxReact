@@ -114,7 +114,7 @@ Dead theme files removed: `src/hooks/useTheme.js`, `src/hooks/useThemeVariables.
 
 ## CSS framework
 
-**Dual-stack: MUI (existing pages) + Tailwind CSS v3 (NavBar and new pages).**
+**Migration complete: all pages are Tailwind-only. MUI is no longer used in any page component.**
 
 Tailwind is configured with `corePlugins.preflight: false` so it does not reset MUI's global styles. Config: `tailwind.config.js` + `postcss.config.js`. Directives are at the top of `src/index.css`.
 
@@ -126,21 +126,22 @@ button { background: none; border: none; padding: 0; cursor: pointer; font: inhe
 Without these, `w-full` inputs overflow their containers and `<button>` elements show browser chrome (gray background, border).
 
 - **NavBar** — fully Tailwind. Uses MUI only for `Menu`/`MenuItem` (dropdowns), `Avatar`/`Badge`, `Snackbar`, `Tooltip`.
-- **WS pages** — being incrementally migrated to Tailwind:
-  - `Record.jsx` — **fully migrated** (both tabs). Zero MUI, zero ApexCharts, zero `@mui/x-date-pickers`. Native `<input type="date">` replaces DatePicker; `SeriesCombobox` (Headless UI) replaces MUI Autocomplete; all dialogs are native modals.
-  - `CardList`, `PickPacks`, `Simulator`, `RandomShuffle` — still MUI.
-- **General tool pages** include FirstSecond, Dice, ChessClock, and AudioBoard; these are still mostly MUI except where individually redesigned.
-- **Mahjong pages and NavBar** — Tailwind-first. `/mahjong/centrepiece` is a special transparent fixed board below the NavBar.
+- **WS pages** — all fully migrated:
+  - `Record.jsx`, `PickPacks.jsx`, `Simulator.jsx`, `RandomShuffle.jsx` — fully migrated. `Record.jsx` reference patterns: native `<input type="date">` replaces DatePicker; `SeriesCombobox` (Headless UI) replaces MUI Autocomplete; all dialogs are native modals.
+  - `JPCardList.jsx` (JP) and `ENCardList.jsx` (EN) — fully migrated. JP card_type values are Japanese (`"クライマックス"`, `"キャラ"`, `"イベント"`); Climax rotation check must use `"クライマックス"`, not `"Climax"`.
+- **General tool pages** — all fully migrated to Tailwind: `FirstSecond`, `Dice`, `ChessClock`, `AudioBoard`, `Login`.
+- **Home.jsx** — fully migrated to Tailwind.
+- **Mahjong pages** — Tailwind-first. `/mahjong/centrepiece` is a special transparent fixed board below the NavBar.
 
-## Tailwind migration conventions (WS tools)
+## Tailwind migration conventions
 
-WS tools are being incrementally migrated from MUI to Tailwind. These conventions define the target style system, derived from the existing Mahjong tool design language adapted for the Spring Rain theme.
+These conventions define the target style system for all Tailwind pages, derived from the Mahjong tool design language adapted for the Spring Rain theme. All pages now use these conventions.
 
 ### Migration rules
 
 - Migrate **whole pages** at once, not partially. A page is either MUI or Tailwind — no mixing `sx` props and `className` at the same component level.
 - **MUI islands** are no longer needed in `Record.jsx`. `DatePicker` has been replaced with native `<input type="date">`. All pages that still use MUI may retain MUI islands where MUI components have no direct Tailwind replacement.
-- `ButtonVariants` (`PrimaryButton`, `DangerButton`, etc.) belong to still-MUI pages and MUI islands only. Fully migrated Tailwind sections use plain `<button>` with Tailwind classes.
+- `ButtonVariants` and `AnimatedButton` have been deleted — all pages now use plain `<button>` with Tailwind classes.
 - Use **Lucide icons** (`lucide-react`) in all new Tailwind components. MUI icons only in components that still use MUI.
 - Never mix `className` and `sx` on the same element.
 - **`Autocomplete` → `@headlessui/react` `Combobox`**: use the `SeriesCombobox` pattern in `Record.jsx` as reference. Key points: `immediate` prop for open-on-focus, `anchor={{ to: "bottom start", gap: 4 }}` on `Combobox.Options` to portal the dropdown outside stacking contexts (`backdrop-filter` creates a stacking context that traps `z-index`).
@@ -497,19 +498,7 @@ This project uses **MUI v7**. Always use the `size` prop, never the v5 `item` pr
 
 ## Button components
 
-Import from `src/components/ButtonVariants.jsx`. Never set `backgroundColor` or `color` directly on these buttons.
-
-| Variant | Use case |
-|---------|----------|
-| `PrimaryButton` | Confirm, submit, save |
-| `DangerButton` | Delete, reset |
-| `SecondaryButton` | Cancel, back |
-| `GenerateButton` | Generate, randomise |
-| `SubtleButton` | Icon buttons, links |
-| `InfoButton` | Details, help |
-| `WarningButton` | Caution actions |
-
-Custom toggle buttons (e.g. AudioBoard track buttons that toggle between active/inactive states) may use `Box component="button"` with CSS variable colors when no ButtonVariant fits the interaction pattern.
+`ButtonVariants.jsx` and `AnimatedButton.jsx` have been deleted. All pages use plain `<button>` with Tailwind classes — see the Tailwind migration conventions section for button patterns.
 
 ## Localisation
 

@@ -52,7 +52,7 @@ const LazyImage = ({
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: "#f5f5f5",
+		backgroundColor: "var(--card-background)",
 		borderRadius: "4px",
 		...style,
 	};
@@ -63,7 +63,7 @@ const LazyImage = ({
 	}
 
 	const placeholderStyle = {
-		color: "#666",
+		color: "var(--text-muted)",
 		fontSize: "14px",
 		textAlign: "center",
 	};

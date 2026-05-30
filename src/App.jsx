@@ -27,7 +27,7 @@ const AudioBoard = lazy(() => import("./pages/AudioBoard.jsx"));
 const Record = lazy(() => import("./pages/Record.jsx"));
 
 
-const CardList   = lazy(() => import("./pages/CardList.jsx"));
+const JPCardList = lazy(() => import("./pages/JPCardList.jsx"));
 const ENCardList = lazy(() => import("./pages/ENCardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
 const MahjongTrainer    = lazy(() => import("./pages/MahjongTrainer.jsx"));
@@ -103,7 +103,7 @@ function AnimatedRoutes() {
 				<Route path="/" element={withPageTransition(Home)} />
 
 				{/* Weiss Schwarz */}
-				<Route path="/ws/cards" element={withPageTransition(CardList)} />
+				<Route path="/ws/cards" element={withPageTransition(JPCardList)} />
 				<Route path="/ws/cards/en" element={withPageTransition(ENCardList)} />
 				<Route path="/ws/packs" element={withPageTransition(PickPacks)} />
 				<Route path="/ws/simulator" element={withPageTransition(Simulator)} />

@@ -166,7 +166,7 @@ function RecentUpdates({ t }) {
 		}).finally(() => setLoading(false));
 	}, []);
 
-	const Divider = () => <div className="border-t border-[rgba(166,206,182,0.28)] my-1" />;
+	const Divider = () => <div className="border-t border-[var(--border)] my-1" />;
 
 	return (
 		<div className="mt-8 border border-[var(--border)] rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md">
