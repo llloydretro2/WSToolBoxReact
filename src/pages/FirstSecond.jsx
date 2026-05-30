@@ -26,7 +26,7 @@ function FirstSecondV2() {
 	const isFirst = result === "first";
 
 	return (
-		<div className="max-w-xs mx-auto px-4 py-10 sm:py-14 flex flex-col items-center gap-8">
+		<div className="max-w-xs mx-auto px-4 pb-10 sm:py-14 flex flex-col items-center gap-8">
 
 			{/* Title */}
 			<div className="text-center">

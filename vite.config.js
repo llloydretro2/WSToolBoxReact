@@ -16,11 +16,26 @@ export default defineConfig({
 				short_name: "CardToolBox",
 				description: "卡牌与桌游多合一工具集",
 				theme_color: "#ffffff",
+				background_color: "#ffffff",
+				display: "standalone",
+				start_url: "/",
 				icons: [
 					{
-						src: "/favicon.ico",
-						sizes: "64x64 32x32 24x24 16x16",
-						type: "image/x-icon",
+						src: "/web-app-manifest-192x192.png",
+						sizes: "192x192",
+						type: "image/png",
+						purpose: "maskable",
+					},
+					{
+						src: "/web-app-manifest-512x512.png",
+						sizes: "512x512",
+						type: "image/png",
+						purpose: "maskable",
+					},
+					{
+						src: "/favicon-96x96.png",
+						sizes: "96x96",
+						type: "image/png",
 					},
 				],
 			},
@@ -30,46 +45,19 @@ export default defineConfig({
 		rollupOptions: {
 			output: {
 				manualChunks: {
-					// React 核心库
 					"react-vendor": ["react", "react-dom", "react-router-dom"],
-					// Material-UI 库
 					"mui-vendor": [
 						"@mui/material",
 						"@mui/icons-material",
 						"@mui/lab",
-						"@mui/x-date-pickers",
 						"@emotion/react",
 						"@emotion/styled",
 					],
-					// 图表库
-					"charts-vendor": [
-						"echarts",
-						"echarts-for-react",
-						"apexcharts",
-						"react-apexcharts",
-						"recharts",
-						"react-chartjs-2",
-						"chartjs-plugin-datalabels",
-						"@nivo/core",
-						"@nivo/pie",
-					],
-					// D3 和数据可视化
-					"d3-vendor": ["d3", "d3-interpolate", "d3-scale-chromatic"],
-					// 其他工具库
-					"utils-vendor": [
-						"framer-motion",
-						"react-draggable",
-						"react-zoom-pan-pinch",
-						"html2canvas",
-						"date-fns",
-						"@date-io/date-fns",
-						"seedrandom",
-					],
+					"motion-vendor": ["framer-motion"],
 				},
 			},
 		},
-		// 调整 chunk 大小警告限制
-		chunkSizeWarningLimit: 1000,
+		chunkSizeWarningLimit: 500,
 	},
 	server: {
 		port: 3000,

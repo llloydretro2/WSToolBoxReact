@@ -180,10 +180,19 @@ const NORMAL_IMG_STYLE = {
 	position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: "0",
 };
 
-function CardImage({ src, alt, cardType, className = "" }) {
+function CardImage({ src, alt, className = "" }) {
+	const [isLandscape, setIsLandscape] = useState(false);
+	const handleNaturalLoad = useCallback((w, h) => {
+		if (w > h) setIsLandscape(true);
+	}, []);
 	return (
 		<div className={`relative overflow-hidden ${className}`} style={{ aspectRatio: "5/7" }}>
-			<LazyImage src={src} alt={alt} style={cardType === "クライマックス" ? CLIMAX_IMG_STYLE : NORMAL_IMG_STYLE} />
+			<LazyImage
+				src={src}
+				alt={alt}
+				style={isLandscape ? CLIMAX_IMG_STYLE : NORMAL_IMG_STYLE}
+				onNaturalLoad={handleNaturalLoad}
+			/>
 		</div>
 	);
 }
@@ -191,7 +200,6 @@ function CardImage({ src, alt, cardType, className = "" }) {
 CardImage.propTypes = {
 	src: PropTypes.string.isRequired,
 	alt: PropTypes.string.isRequired,
-	cardType: PropTypes.string,
 	className: PropTypes.string,
 };
 
@@ -476,7 +484,7 @@ const JPCardList = () => {
 		[productList.power]
 	);
 	const triggerOptions = useMemo(() => (productList.trigger       ?? []).slice().sort(), [productList.trigger]);
-	const rarityOptions  = useMemo(() => (productList.rarity        ?? []).slice().sort(), [productList.rarity]);
+	const rarityOptions  = useMemo(() => (productList.rarity        ?? []).filter((v) => v !== "-").slice().sort(), [productList.rarity]);
 	const productOptions = useMemo(() => (productList.product_name  ?? []).slice().sort(), [productList.product_name]);
 	const seriesOptions  = useMemo(() => (productList.series_number ?? []).slice().sort(), [productList.series_number]);
 
@@ -646,7 +654,7 @@ const JPCardList = () => {
 	);
 
 	return (
-		<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 			{/* Title */}
 			<div className="mb-6">
 				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-1">
@@ -904,7 +912,7 @@ const JPCardList = () => {
 						return (
 							<div key={key} onClick={() => setSelectedCard(card)}
 								className="group flex flex-col overflow-hidden rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer">
-								<CardImage src={card.image_url} alt={card.name} cardType={card.card_type} className="w-full" />
+								<CardImage src={card.image_url} alt={card.name} className="w-full" />
 								<div className="px-2 py-1.5 bg-white flex flex-col gap-0.5">
 									<p className="text-[10px] font-bold text-[var(--text)] leading-tight line-clamp-1">{card.name}</p>
 									{card.zh_name && (

@@ -118,7 +118,11 @@ const CLIMAX_IMG_STYLE = {
 };
 const NORMAL_IMG_STYLE = { position: "absolute", top: 0, left: 0, width: "100%", height: "100%", borderRadius: "0" };
 
-function CardImage({ src, alt, cardType, className = "" }) {
+function CardImage({ src, alt, className = "" }) {
+	const [isLandscape, setIsLandscape] = useState(false);
+	const handleNaturalLoad = useCallback((w, h) => {
+		if (w > h) setIsLandscape(true);
+	}, []);
 	return (
 		<div
 			className={`relative overflow-hidden ${className}`}
@@ -126,7 +130,8 @@ function CardImage({ src, alt, cardType, className = "" }) {
 			<LazyImage
 				src={src}
 				alt={alt}
-				style={cardType === "Climax" ? CLIMAX_IMG_STYLE : NORMAL_IMG_STYLE}
+				style={isLandscape ? CLIMAX_IMG_STYLE : NORMAL_IMG_STYLE}
+				onNaturalLoad={handleNaturalLoad}
 			/>
 		</div>
 	);
@@ -135,7 +140,6 @@ function CardImage({ src, alt, cardType, className = "" }) {
 CardImage.propTypes = {
 	src: PropTypes.string.isRequired,
 	alt: PropTypes.string.isRequired,
-	cardType: PropTypes.string,
 	className: PropTypes.string,
 };
 
@@ -450,7 +454,7 @@ const ENCardList = () => {
 					product_name:  (data.product_name  ?? []).slice().sort(),
 					series_number: (data.series_number ?? []).slice().sort(),
 					trigger:       (data.trigger       ?? []).slice().sort(),
-					rarity:        (data.rarity        ?? []).slice().sort(),
+					rarity:        (data.rarity        ?? []).filter((v) => v !== "-").slice().sort(),
 					level:         data.level  ?? [],
 					cost:          data.cost   ?? [],
 					power:         data.power  ?? [],
@@ -601,7 +605,7 @@ const ENCardList = () => {
 	);
 
 	return (
-		<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 			{/* Title */}
 			<div className="mb-6">
 				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-1">
@@ -871,7 +875,6 @@ const ENCardList = () => {
 								<CardImage
 									src={card.image_url}
 									alt={card.name}
-									cardType={card.card_type}
 									className="w-full"
 								/>
 								{/* Info strip */}

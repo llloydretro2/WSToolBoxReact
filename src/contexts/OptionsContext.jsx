@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
+import { useLocation } from "react-router-dom";
 import { apiRequest } from "../utils/api";
 
 const EMPTY_PRODUCT_LIST = {};
@@ -26,6 +27,9 @@ const INITIAL_STATE = {
 };
 
 export const OptionsProvider = ({ children }) => {
+	const { pathname } = useLocation();
+	const hasFetchedRef = useRef(false);
+
 	const [productList, setProductList] = useState(INITIAL_STATE.productList);
 	const [enProductList, setEnProductList] = useState(INITIAL_STATE.enProductList);
 	const [neostandardMap, setNeostandardMap] = useState(INITIAL_STATE.neostandardMap);
@@ -34,7 +38,11 @@ export const OptionsProvider = ({ children }) => {
 	const [optionsLoading, setOptionsLoading] = useState(true);
 	const [optionsError, setOptionsError] = useState(null);
 
+	const isWsRoute = pathname.startsWith("/ws");
+
 	useEffect(() => {
+		if (!isWsRoute || hasFetchedRef.current) return;
+
 		let active = true;
 		const fetchOptions = async () => {
 			setOptionsLoading(true);
@@ -52,6 +60,7 @@ export const OptionsProvider = ({ children }) => {
 				setNeostandardMap(remoteEnProductList?.neostandard_map ?? EMPTY_NEOSTANDARD_MAP);
 				setJpNeostandardMap(remoteProductList?.neostandard_map ?? EMPTY_NEOSTANDARD_MAP);
 				setTranslationMap(remoteTranslations ?? EMPTY_TRANSLATION_MAP);
+				hasFetchedRef.current = true;
 			} catch (err) {
 				if (!active) return;
 				console.error("加载后台选项数据失败", err);
@@ -65,7 +74,7 @@ export const OptionsProvider = ({ children }) => {
 		return () => {
 			active = false;
 		};
-	}, []);
+	}, [isWsRoute]);
 
 	return (
 		<OptionsContext.Provider

@@ -1,17 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 
-/**
- * 简单的懒加载图片组件
- * 只在图片进入视口时才开始加载
- */
 const LazyImage = ({
 	src,
 	alt,
 	className = "",
 	style = {},
-	placeholder = "加载中...",
 	onClick,
+	onNaturalLoad,
 	...props
 }) => {
 	const [isInView, setIsInView] = useState(false);
@@ -21,30 +17,27 @@ const LazyImage = ({
 	const handleIntersection = useCallback(([entry]) => {
 		if (entry.isIntersecting) {
 			setIsInView(true);
-			// 停止监听，节省性能
-			entry.target.observer?.disconnect();
 		}
 	}, []);
 
 	useEffect(() => {
 		const observer = new IntersectionObserver(handleIntersection, {
-			threshold: 0.1, // 10%可见时开始加载
-			rootMargin: "50px", // 提前50px开始加载
+			threshold: 0.1,
+			rootMargin: "200px",
 		});
 
 		if (imgRef.current) {
-			imgRef.current.observer = observer;
 			observer.observe(imgRef.current);
 		}
 
 		return () => observer.disconnect();
 	}, [handleIntersection]);
 
-	const handleLoad = useCallback(() => {
+	const handleLoad = useCallback((e) => {
 		setIsLoaded(true);
-	}, []);
+		onNaturalLoad?.(e.target.naturalWidth, e.target.naturalHeight);
+	}, [onNaturalLoad]);
 
-	// 如果调用方传入了高度或最小高度，则使用调用方的尺寸。
 	const hasExplicitSize = style && (style.height || style.minHeight);
 	const containerStyle = {
 		position: "relative",
@@ -52,21 +45,13 @@ const LazyImage = ({
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
-		backgroundColor: "var(--card-background)",
 		borderRadius: "4px",
 		...style,
 	};
 
 	if (!hasExplicitSize) {
-		// 只有在没有显式尺寸时才保留占位高度，避免小缩略图出现大空白
 		containerStyle.minHeight = "200px";
 	}
-
-	const placeholderStyle = {
-		color: "var(--text-muted)",
-		fontSize: "14px",
-		textAlign: "center",
-	};
 
 	const imageStyle = {
 		width: "100%",
@@ -84,8 +69,11 @@ const LazyImage = ({
 			className={className}
 			style={containerStyle}
 			onClick={onClick}>
-			{/* 加载占位符 */}
-			{!isInView && <span style={placeholderStyle}>{placeholder}</span>}
+			{/* Shimmer skeleton */}
+			{!isLoaded && (
+				<div className="absolute inset-0 animate-pulse bg-[var(--card-background)]"
+				     style={{ borderRadius: "4px" }} />
+			)}
 
 			{/* 实际图片 */}
 			{isInView && (
@@ -106,8 +94,8 @@ LazyImage.propTypes = {
 	alt: PropTypes.string.isRequired,
 	className: PropTypes.string,
 	style: PropTypes.object,
-	placeholder: PropTypes.string,
 	onClick: PropTypes.func,
+	onNaturalLoad: PropTypes.func,
 };
 
 export default LazyImage;

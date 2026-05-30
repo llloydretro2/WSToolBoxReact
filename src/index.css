@@ -104,7 +104,6 @@ code {
 /* 全局背景和文本颜色 */
 body {
     background-color: transparent;
-    color: var(--background);
     color: var(--text);
 }
 
@@ -144,32 +143,67 @@ body {
     border-bottom: 1px solid var(--divider);
 }
 
-/* Mahjong pages need a black border palette so utility borders stay visible
-   over the translucent backgrounds. */
-.mahjong-black-theme {
-    --border: #111111;
-    --divider: #111111;
-    --primary: #111111;
-    --primary-hover: #111111;
-    --primary-light: #111111;
-    --primary-dark: #111111;
-    --text-secondary: #111111;
-    --text-muted: #111111;
+/* Tools section — Spring Rain green palette */
+[data-section="tools"] {
+    --primary:        #bedcc8;
+    --primary-hover:  #a6ceb6;
+    --primary-light:  #ddeee2;
+    --primary-dark:   #63a47f;
+
+    --background:     #f1f8f3;
+    --surface:        #ffffff;
+    --card-background: rgba(190, 220, 200, 0.2);
+
+    --text:           #0e2018;
+    --text-secondary: #1b392b;
+    --text-muted:     #27553f;
+
+    --border:         #ddeee2;
+    --divider:        #bedcc8;
+
+    --info: #428762;
 }
 
-@font-face {
-    font-family: "agfa_rotis_semi_serif";
-    src: url("./assets/fonts/agfa_rotis_semi_serif.ttf") format("truetype");
+/* WS section — Harlequin green palette */
+[data-section="ws"] {
+    --primary:        #b9fa9c;
+    --primary-hover:  #8df363;
+    --primary-light:  #dbfccb;
+    --primary-dark:   #5ce626;
+
+    --background:     #effee7;
+    --surface:        #ffffff;
+    --card-background: rgba(185, 250, 156, 0.2);
+
+    --text:           #0c2e05;
+    --text-secondary: #205413;
+    --text-muted:     #277d0e;
+
+    --border:         #dbfccb;
+    --divider:        #b9fa9c;
+
+    --info: #45ce14;
 }
 
-@font-face {
-    font-family: "BIZUDPMincho-Bold";
-    src: url("./assets/fonts/BIZUDPMincho-Bold.ttf") format("truetype");
-}
+/* Mahjong section — Cardinal red palette */
+[data-section="mahjong"] {
+    --primary:        #f8a9af;
+    --primary-hover:  #f37985;
+    --primary-light:  #fde6e7;
+    --primary-dark:   #e94a5e;
 
-@font-face {
-    font-family: "BIZUDPMincho-Regular";
-    src: url("./assets/fonts/BIZUDPMincho-Regular.ttf") format("truetype");
+    --background:     #fef2f2;
+    --surface:        #ffffff;
+    --card-background: rgba(253, 230, 231, 0.25);
+
+    --text:           #480918;
+    --text-secondary: #811a35;
+    --text-muted:     #be1e3e;
+
+    --border:         #fbd0d3;
+    --divider:        #f8a9af;
+
+    --info: #e94a5e;
 }
 
 /* Mahjong tile interactive hover */
@@ -183,12 +217,6 @@ body {
 }
 .mj-tile-interactive:active {
     transform: translateY(-1px);
-}
-
-@font-face {
-    font-family: "name_font";
-    src: url("./assets/fonts/NotoSansJP-VariableFont_wght.ttf")
-        format("truetype");
 }
 
 /* Dual-thumb range slider — hides native thumb so custom visuals show through */

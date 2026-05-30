@@ -33,7 +33,7 @@ function RandomShuffleV2() {
 	const maxVal = deck.length > 0 ? Math.max(...deck) : 1;
 
 	return (
-		<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 
 			{/* Title */}
 			<div className="mb-8">

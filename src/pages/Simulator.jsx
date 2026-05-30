@@ -4,6 +4,7 @@ import { ChevronDown, Dices, X, RotateCcw } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 import { useOptions } from "../contexts/OptionsContext";
 import { apiRequest } from "../utils/api.js";
+import LazyImage from "../components/LazyImage.jsx";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -165,7 +166,7 @@ function CardDetailModal({ card, onClose, t }) {
 			<div className="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
 				<div className="flex gap-4 p-5">
 					<div className="w-32 shrink-0">
-						<img src={card.image_url} alt={card.name} className="w-full rounded-xl shadow-md" />
+						<LazyImage src={card.image_url} alt={card.name} style={{ minHeight: "180px", borderRadius: "12px" }} />
 					</div>
 					<div className="flex-1 min-w-0 overflow-y-auto max-h-80">
 						<p className="text-base font-black text-[var(--text)] mb-1 leading-tight">{card.name}</p>
@@ -361,7 +362,7 @@ export default function SimulatorV2() {
 	// ── Render ─────────────────────────────────────────────────────────────────
 
 	return (
-		<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 
 			{/* Title */}
 			<div className="mb-8">
@@ -591,7 +592,7 @@ export default function SimulatorV2() {
 											{grouped.map(({ card, count }, i) => (
 												<div key={i} onClick={() => setSelectedCard(card)}
 													className="relative w-20 cursor-pointer rounded-lg overflow-hidden transition-transform duration-150 hover:scale-105">
-													<img src={card.image_url} alt={card.name} className="w-full h-auto" />
+													<LazyImage src={card.image_url} alt={card.name} style={{ minHeight: "112px" }} />
 													{count > 1 && (
 														<div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-[var(--text-muted)] text-white text-[10px] font-black flex items-center justify-center">
 															{count}
@@ -624,7 +625,7 @@ export default function SimulatorV2() {
 											{pack.map((card, i) => (
 												<div key={i} onClick={() => setSelectedCard(card)}
 													className="w-16 cursor-pointer rounded-lg overflow-hidden transition-transform duration-150 hover:scale-105">
-													<img src={card.image_url} alt={card.name} className="w-full h-auto" />
+													<LazyImage src={card.image_url} alt={card.name} style={{ minHeight: "112px" }} />
 												</div>
 											))}
 										</div>

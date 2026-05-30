@@ -38,7 +38,7 @@ function SectionCard({ section, t, locale, onNavigate }) {
 	return (
 		<div
 			onClick={() => onNavigate(path)}
-			className="cursor-pointer rounded-2xl border border-[var(--border)] overflow-hidden h-full
+			className="group cursor-pointer rounded-2xl border border-[var(--border)] overflow-hidden h-full
 			           flex flex-col relative transition-all duration-200
 			           hover:-translate-y-1.5 hover:shadow-lg"
 			style={{
@@ -48,47 +48,42 @@ function SectionCard({ section, t, locale, onNavigate }) {
 			}}
 		>
 			{/* Overlay */}
-			<div
-				className="absolute inset-0 transition-colors duration-200"
-				style={{ backgroundColor: "rgba(255,255,255,0.58)" }}
-				onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.44)")}
-				onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.58)")}
-			/>
+			<div className="absolute inset-0 bg-white/[0.78] group-hover:bg-white/[0.65] transition-colors duration-200" />
 
 			{/* Accent bar */}
-			<div className="h-1.5 flex-shrink-0 relative z-10" style={{ backgroundColor: accent }} />
+			<div className="h-1 flex-shrink-0 relative z-10" style={{ backgroundColor: accent }} />
 
 			{/* Body */}
-			<div className="p-5 flex flex-col flex-1 relative z-10 gap-3">
+			<div className="p-4 flex flex-col flex-1 relative z-10 gap-2">
 
 				{/* Icon + title + count */}
-				<div className="flex items-start gap-3">
+				<div className="flex items-center gap-2.5">
 					<div
-						className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+						className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
 						style={{ backgroundColor: `${accent}18` }}>
-						<Icon size={20} style={{ color: accent }} />
+						<Icon size={16} style={{ color: accent }} />
 					</div>
 					<div>
-						<p className="text-base font-bold text-[var(--text)] leading-tight mb-0.5">
+						<p className="text-sm font-bold text-[var(--text)] leading-tight">
 							{t(section.labelKey)}
 						</p>
-						<p className="text-xs font-semibold" style={{ color: accent }}>
+						<p className="text-[11px] font-semibold" style={{ color: accent }}>
 							{toolCountLabel}
 						</p>
 					</div>
 				</div>
 
 				{/* Description */}
-				<p className="text-sm text-[var(--text-secondary)] leading-relaxed flex-1">
+				<p className="text-xs text-[var(--text-secondary)] leading-relaxed flex-1">
 					{t(section.descKey)}
 				</p>
 
 				{/* Tool chips */}
-				<div className="flex flex-wrap gap-1.5">
+				<div className="flex flex-wrap gap-1">
 					{toolItems.map((item) => (
 						<span
 							key={item.path}
-							className="text-[11px] font-semibold px-2 py-0.5 rounded-full border"
+							className="text-[10px] font-semibold px-2 py-0.5 rounded-full border"
 							style={{
 								backgroundColor: `${accent}14`,
 								color: accent,
@@ -140,6 +135,28 @@ function renderMarkdown(md) {
 // ─── RecentUpdates ─────────────────────────────────────────────────────────────
 
 const GITHUB_API = "https://api.github.com/repos/llloydretro2/WSToolBoxReact/commits?per_page=3";
+const GITHUB_CACHE_KEY = "gh_commits_cache";
+const GITHUB_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+function getCachedCommits() {
+	try {
+		const raw = localStorage.getItem(GITHUB_CACHE_KEY);
+		if (!raw) return null;
+		const { data, ts } = JSON.parse(raw);
+		if (Date.now() - ts > GITHUB_CACHE_TTL) return null;
+		return data;
+	} catch {
+		return null;
+	}
+}
+
+function setCachedCommits(data) {
+	try {
+		localStorage.setItem(GITHUB_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+	} catch {
+		// localStorage 不可用时静默失败
+	}
+}
 
 function formatDate(iso) {
 	const d = new Date(iso);
@@ -157,8 +174,16 @@ function RecentUpdates({ t }) {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		const cached = getCachedCommits();
+		const githubFetch = cached
+			? Promise.resolve(cached)
+			: fetch(GITHUB_API).then((r) => r.json()).then((data) => {
+				if (Array.isArray(data)) setCachedCommits(data);
+				return data;
+			}).catch(() => []);
+
 		Promise.all([
-			fetch(GITHUB_API).then((r) => r.json()).catch(() => []),
+			githubFetch,
 			apiRequest("/api/options/recent-updates").then((r) => r.json()).catch(() => ({ jp: [], en: [] })),
 		]).then(([commitData, seriesData]) => {
 			if (Array.isArray(commitData)) setCommits(commitData);
@@ -281,7 +306,7 @@ export default function Home() {
 	}));
 
 	return (
-		<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 
 			{/* Header */}
 			<div className="text-center mb-8">

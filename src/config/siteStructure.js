@@ -4,7 +4,7 @@ export const SITE_SECTIONS = [
 		label: "Weiss Schwarz",
 		labelKey: "pages.home.ws.name",
 		descKey: "pages.home.ws.desc",
-		accent: "#4f9b78",
+		accent: "#277d0e",
 		homeImage: "/assets/home/ws.webp",
 		defaultPath: "/ws/cards",
 		nav: [
@@ -25,7 +25,7 @@ export const SITE_SECTIONS = [
 		key: "mahjong",
 		labelKey: "pages.home.mahjong.name",
 		descKey: "pages.home.mahjong.desc",
-		accent: "#d26a6a",
+		accent: "#be1e3e",
 		homeImage: "/assets/home/mahjong.webp",
 		defaultPath: "/mahjong/trainer",
 		nav: [
@@ -50,7 +50,7 @@ export const SITE_SECTIONS = [
 		key: "tools",
 		labelKey: "pages.home.tools.name",
 		descKey: "pages.home.tools.desc",
-		accent: "#5b84d6",
+		accent: "#27553f",
 		homeImage: "/assets/home/tools.webp",
 		defaultPath: "/tools/first-second",
 		nav: [

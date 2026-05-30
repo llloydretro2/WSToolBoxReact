@@ -684,7 +684,7 @@ const Record = () => {
 	};
 
 	return (
-		<div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+		<div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 			<div className="mb-8">
 				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none">
 					{t("record.title")}

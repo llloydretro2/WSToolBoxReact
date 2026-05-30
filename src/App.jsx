@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -36,16 +36,7 @@ const MahjongCentrepiece = lazy(() => import("./pages/MahjongCentrepiece.jsx"));
 
 
 const LoadingFallback = () => (
-	<div
-		style={{
-			display: "flex",
-			alignItems: "center",
-			justifyContent: "center",
-			minHeight: "40vh",
-			color: "#2a5b46",
-			fontWeight: 600,
-			fontSize: "1rem",
-		}}>
+	<div className="flex items-center justify-center min-h-[40vh] text-base font-semibold text-[var(--text-muted)]">
 		正在加载…
 	</div>
 );
@@ -68,14 +59,22 @@ function RouteBackground() {
 	const { pathname } = useLocation();
 	const section = getSectionByPath(pathname);
 	const backgroundImage = section?.homeImage ?? "/bg.webp";
+
+	useEffect(() => {
+		document.documentElement.dataset.section = section?.key ?? "hub";
+	}, [section?.key]);
+
 	return (
 		<AnimatePresence initial={false} mode="sync">
 			<motion.div
 				key={backgroundImage}
-				initial={{ opacity: 0, scale: 1.035, filter: "blur(10px)" }}
-				animate={{ opacity: 0.18, scale: 1, filter: "blur(0px)" }}
-				exit={{ opacity: 0, scale: 0.985, filter: "blur(10px)" }}
-				transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+				initial={{ opacity: 0, scale: 1.04 }}
+				animate={{ opacity: 0.18, scale: 1 }}
+				exit={{ opacity: 0, scale: 1 }}
+				transition={{
+					opacity: { duration: 0.2, ease: "easeIn" },
+					scale: { type: "spring", stiffness: 80, damping: 20, mass: 0.8 },
+				}}
 				style={{
 					backgroundImage: `url(${backgroundImage})`,
 					backgroundSize: "cover",
@@ -85,8 +84,7 @@ function RouteBackground() {
 					position: "fixed",
 					zIndex: -1,
 					pointerEvents: "none",
-					transformOrigin: "center center",
-					willChange: "opacity, transform, filter",
+					willChange: "opacity, transform",
 				}}
 			/>
 		</AnimatePresence>
@@ -154,13 +152,13 @@ function App() {
 			}}>
 			<ThemeProvider>
 				<AuthProvider>
-					<OptionsProvider>
-						<Router>
+					<Router>
+						<OptionsProvider>
 							<RouteBackground />
 							<NavBar />
 							<AnimatedRoutes />
-						</Router>
-					</OptionsProvider>
+						</OptionsProvider>
+					</Router>
 				</AuthProvider>
 			</ThemeProvider>
 		</div>

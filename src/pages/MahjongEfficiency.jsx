@@ -33,17 +33,17 @@ function removeOne(tiles, key) {
 function ShantenBadge({ shanten, locale }) {
   if (shanten === undefined || shanten === null) return null;
   if (shanten === -1) return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-950 text-white">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[var(--text)] text-white">
       {locale === 'zh' ? '和牌' : 'Complete'}
     </span>
   );
   if (shanten === 0) return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-700 text-white">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-[var(--text-secondary)] text-white">
       {locale === 'zh' ? '听牌' : 'Tenpai'}
     </span>
   );
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-200 text-black">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[var(--primary)] text-[var(--text)]">
       {shanten}{locale === 'zh' ? '向听' : '-shanten'}
     </span>
   );
@@ -64,15 +64,15 @@ function WaitsPanel({ waits, concealedTiles, openMelds, locale }) {
   }), [waits, concealedTiles, openMelds]);
 
   if (!waits || waits.length === 0) return (
-    <div className="border border-black rounded-2xl p-5 text-sm text-black bg-transparent">
+    <div className="border border-[var(--border)] rounded-2xl p-5 text-sm text-[var(--text)] bg-transparent">
       {locale === 'zh' ? '当前手牌无和牌方式' : 'No winning tiles found'}
     </div>
   );
   const total = waits.reduce((s, e) => s + e.remaining, 0);
 
   return (
-    <div className="border border-black rounded-2xl p-5 sm:p-6 bg-transparent">
-      <p className="text-[10px] font-black tracking-widest uppercase text-black mb-4">
+    <div className="border border-[var(--border)] rounded-2xl p-5 sm:p-6 bg-transparent">
+      <p className="text-[10px] font-black tracking-widest uppercase text-[var(--text)] mb-4">
         {locale === 'zh' ? `待ち牌 · ${waits.length}种 · ${total}张` : `Waits · ${waits.length} kinds · ${total} tiles`}
       </p>
       <div className="flex flex-col gap-3">
@@ -84,36 +84,36 @@ function WaitsPanel({ waits, concealedTiles, openMelds, locale }) {
               {/* Tile + remaining */}
               <div className="flex flex-col items-center gap-0.5 w-12 shrink-0">
                 <MahjongTile tile={w.tile} size="md" />
-                <span className="text-[10px] font-bold text-black">×{w.remaining}</span>
+                <span className="text-[10px] font-bold text-[var(--text)]">×{w.remaining}</span>
               </div>
               {/* Score info */}
               {sc && p ? (
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-black">
+                  <p className="text-[11px] text-[var(--text)]">
                     {sc.han === 'yakuman'
                       ? p.limitName
                       : `${sc.han}${locale === 'zh' ? '番' : 'han'} ${sc.fu}${locale === 'zh' ? '符' : 'fu'}${p.limitName ? ' · ' + p.limitName : ''}`}
                   </p>
-                  <p className="text-xs font-bold text-black">
+                  <p className="text-xs font-bold text-[var(--text)]">
                     {locale === 'zh' ? '荣' : 'Ron'} {p.ron.nonDealer.toLocaleString()}
-                    <span className="font-normal text-black ml-1">
+                    <span className="font-normal text-[var(--text)] ml-1">
                       ({locale === 'zh' ? '庄' : 'dlr'} {p.ron.dealer.toLocaleString()})
                     </span>
                   </p>
                   {!p.isLimit && (
-                    <p className="text-[10px] text-black">
+                    <p className="text-[10px] text-[var(--text)]">
                       {locale === 'zh' ? '自摸' : 'Tsumo'} {p.tsumo.nonDealer.toLocaleString()} / {p.tsumo.dealer.toLocaleString()}
                     </p>
                   )}
                   {p.isLimit && (
-                    <p className="text-[10px] text-black">
+                    <p className="text-[10px] text-[var(--text)]">
                       {locale === 'zh' ? '自摸' : 'Tsumo'} {p.tsumo.nonDealer.toLocaleString()} / {p.tsumo.dealer.toLocaleString()}
                     </p>
                   )}
                 </div>
               ) : (
                 <div className="flex-1">
-                  <p className="text-[11px] text-black">{locale === 'zh' ? '无役' : 'No yaku'}</p>
+                  <p className="text-[11px] text-[var(--text)]">{locale === 'zh' ? '无役' : 'No yaku'}</p>
                 </div>
               )}
             </div>
@@ -137,9 +137,9 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
   );
 
   return (
-    <div className="mt-3 p-4 bg-transparent rounded-xl border border-black">
+    <div className="mt-3 p-4 bg-transparent rounded-xl border border-[var(--border)]">
       {/* After-discard hand */}
-      <p className="text-[10px] font-bold text-black uppercase tracking-widest mb-2.5">
+      <p className="text-[10px] font-bold text-[var(--text)] uppercase tracking-widest mb-2.5">
         {locale === 'zh' ? '打出后手牌' : 'After discarding'}
         <ShantenBadge shanten={result.shanten} locale={locale} />
       </p>
@@ -148,7 +148,7 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
           <MahjongTile key={i} tile={t} size="xs" />
         ))}
         {openMelds.map((meld, mi) => (
-          <div key={mi} className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-black bg-transparent">
+          <div key={mi} className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-[var(--border)] bg-transparent">
             {meld.map((t, ti) => <MahjongTile key={ti} tile={t} size="xs" />)}
           </div>
         ))}
@@ -157,7 +157,7 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
       {/* Tenpai waits */}
       {result.shanten === 0 && result.waits.length > 0 && (
         <>
-          <p className="text-[10px] font-bold text-black uppercase tracking-widest mb-2">
+          <p className="text-[10px] font-bold text-[var(--text)] uppercase tracking-widest mb-2">
             {locale === 'zh'
               ? `待ち牌 · ${result.waits.length}种 · ${result.waits.reduce((s,w)=>s+w.remaining,0)}张`
               : `Waits · ${result.waits.length} kinds`}
@@ -166,7 +166,7 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
             {result.waits.map((w, i) => (
               <div key={i} className="flex flex-col items-center gap-0.5">
                 <MahjongTile tile={w.tile} size="sm" />
-                <span className="text-[10px] text-black">×{w.remaining}</span>
+                <span className="text-[10px] text-[var(--text)]">×{w.remaining}</span>
               </div>
             ))}
           </div>
@@ -176,17 +176,17 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
       {/* Next ukeire (best 3 discards) */}
       {result.shanten > 0 && result.ukeire.length > 0 && (
         <>
-          <p className="text-[10px] font-bold text-black uppercase tracking-widest mb-2">
+          <p className="text-[10px] font-bold text-[var(--text)] uppercase tracking-widest mb-2">
             {locale === 'zh' ? '有效摸牌（最优打法）' : 'Effective draws (best discards)'}
           </p>
           <div className="flex flex-col gap-1.5">
             {result.ukeire.slice(0, 3).map((entry, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] text-black">{locale === 'zh' ? '打' : 'D'}</span>
+                  <span className="text-[10px] text-[var(--text)]">{locale === 'zh' ? '打' : 'D'}</span>
                   <MahjongTile tile={entry.discardTile} size="xs" />
-                  <span className="text-[10px] text-black mx-1">→</span>
-                  <span className="text-[10px] font-semibold text-black">
+                  <span className="text-[10px] text-[var(--text)] mx-1">→</span>
+                  <span className="text-[10px] font-semibold text-[var(--text)]">
                     {entry.kinds}{locale === 'zh' ? '种' : 'k'} {entry.totalCount}{locale === 'zh' ? '张' : 't'}
                   </span>
                 </div>
@@ -195,7 +195,7 @@ function DrillDown({ discardTile, concealedTiles, openMelds, locale }) {
                     <MahjongTile key={j} tile={e.tile} size="xs" />
                   ))}
                   {entry.effectiveTiles.length > 8 && (
-                    <span className="text-[10px] text-black self-end">+{entry.effectiveTiles.length - 8}</span>
+                    <span className="text-[10px] text-[var(--text)] self-end">+{entry.effectiveTiles.length - 8}</span>
                   )}
                 </div>
               </div>
@@ -223,7 +223,7 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
         {/* Main row */}
         <div
           onClick={() => onToggle(isOpen ? null : key)}
-          className={`flex items-center gap-2.5 px-4 py-2 border-b border-black cursor-pointer select-none transition-colors
+          className={`flex items-center gap-2.5 px-4 py-2 border-b border-[var(--border)] cursor-pointer select-none transition-colors
             ${dimmed ? 'opacity-35' : 'hover:bg-white/5'}
             ${isOpen ? 'bg-white/5' : ''}`}
         >
@@ -233,7 +233,7 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
           </div>
 
           {/* Arrow */}
-          <span className="text-black text-xs shrink-0">→</span>
+          <span className="text-[var(--text)] text-xs shrink-0">→</span>
 
           {/* Effective tiles — horizontal wrap, clickable to draw */}
           <div
@@ -253,24 +253,24 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
                   size="xs"
                   onClick={onDrawTile ? () => onDrawTile(e.tile) : undefined}
                 />
-                <span className="text-[9px] text-black leading-none">×{e.remaining}</span>
+                <span className="text-[9px] text-[var(--text)] leading-none">×{e.remaining}</span>
               </div>
             ))}
             {entry.effectiveTiles.length === 0 && (
-              <span className="text-[11px] text-black self-center">—</span>
+              <span className="text-[11px] text-[var(--text)] self-center">—</span>
             )}
           </div>
 
           {/* Count + tenpai badge */}
           <div className="shrink-0 flex items-center gap-1.5">
             {isTenpai && (
-              <span className="text-[10px] font-bold bg-gray-900 text-white px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-bold bg-[var(--text)] text-white px-1.5 py-0.5 rounded">
                 {locale === 'zh' ? '听牌' : 'Tenpai'}
               </span>
             )}
-            <span className="text-[12px] font-bold text-black tabular-nums">
+            <span className="text-[12px] font-bold text-[var(--text)] tabular-nums">
               {entry.totalCount}
-              <span className="text-[10px] font-normal text-black ml-0.5">
+              <span className="text-[10px] font-normal text-[var(--text)] ml-0.5">
                 {locale === 'zh' ? '张' : 't'}
               </span>
             </span>
@@ -279,7 +279,7 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
 
         {/* Drill-down */}
         {isOpen && (
-          <div className="px-4 pb-3 border-b border-black">
+          <div className="px-4 pb-3 border-b border-[var(--border)]">
             <DrillDown
               discardTile={entry.discardTile}
               concealedTiles={concealedTiles}
@@ -293,11 +293,11 @@ function UkeireTable({ ukeire, shanten, concealedTiles, openMelds, locale, expan
   };
 
   return (
-    <div className="border border-black rounded-2xl overflow-hidden bg-transparent">
+    <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-transparent">
       {good.map(e => <Row key={tileKey(e.discardTile)} entry={e} />)}
       {bad.length > 0 && good.length > 0 && (
-        <div className="px-4 py-1.5 bg-transparent border-b border-black">
-          <span className="text-[10px] text-black uppercase tracking-wider">
+        <div className="px-4 py-1.5 bg-transparent border-b border-[var(--border)]">
+          <span className="text-[10px] text-[var(--text)] uppercase tracking-wider">
             {locale === 'zh' ? '以下打法会使向听数升高' : 'Discards that worsen shanten'}
           </span>
         </div>
@@ -471,42 +471,42 @@ function MahjongEfficiency() {
 
   return (
     <div className="mahjong-black-theme min-h-screen bg-transparent">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 sm:py-12">
 
         {/* Title */}
         <div className="mb-8">
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-black leading-none mb-2">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
             {t('efficiency.title')}
           </h1>
-          <p className="text-sm text-black">{t('efficiency.subtitle')}</p>
+          <p className="text-sm text-[var(--text)]">{t('efficiency.subtitle')}</p>
         </div>
 
         {/* Input card */}
-        <div className="border border-black rounded-2xl overflow-hidden mb-6 bg-transparent">
+        <div className="border border-[var(--border)] rounded-2xl overflow-hidden mb-6 bg-transparent">
 
           {/* Text notation input */}
-          <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-black bg-transparent">
+          <div className="px-5 sm:px-6 pt-4 pb-3 border-b border-[var(--border)] bg-transparent">
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={textInput}
                 onChange={e => handleTextChange(e.target.value)}
                 placeholder={locale === 'zh' ? '例：123m456p789s11z' : 'e.g. 123m456p789s11z'}
-                className="flex-1 text-sm bg-transparent border border-black rounded-lg px-3 py-2 font-mono text-black placeholder:text-black/60 focus:outline-none focus:border-black transition-colors"
+                className="flex-1 text-sm bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 font-mono text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--border)] transition-colors"
               />
               {textInput && (
                 <button
                   onClick={() => { setTextInput(''); setTextError(''); }}
-                  className="p-2 text-black hover:text-black transition-colors"
+                  className="p-2 text-[var(--text)] hover:text-[var(--text)] transition-colors"
                 >
                   <X size={14} />
                 </button>
               )}
             </div>
             {textError && (
-              <p className="text-[11px] text-black mt-1.5">{textError}</p>
+              <p className="text-[11px] text-[var(--text)] mt-1.5">{textError}</p>
             )}
-            <p className="text-[10px] text-black mt-1.5">
+            <p className="text-[10px] text-[var(--text)] mt-1.5">
               {locale === 'zh'
                 ? '格式：数字+花色  m=万 p=饼 s=索 z=字(1-7)  0m/0p/0s=赤五'
                 : 'Format: digits+suit  m=man p=pin s=sou z=honours(1-7)  0m/0p/0s=red five'}
@@ -516,17 +516,17 @@ function MahjongEfficiency() {
           {/* Hand display */}
           <div className="px-5 sm:px-6 pt-5 pb-4">
             <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] font-black tracking-widest uppercase text-black">
+              <span className="text-[10px] font-black tracking-widest uppercase text-[var(--text)]">
                 {locale === 'zh' ? '当前手牌' : 'Hand'}
               </span>
               {analysis && <ShantenBadge shanten={analysis.shanten} locale={locale} />}
-              <span className="text-[10px] font-bold text-black">
+              <span className="text-[10px] font-bold text-[var(--text)]">
                 {totalCount}/14
               </span>
               <div className="flex-1" />
               {hasHand && (
                 <button onClick={handleClearAll}
-                  className="text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors">
+                  className="text-[11px] font-bold px-3 py-1 rounded-full bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors">
                   {t('efficiency.clearAll')}
                 </button>
               )}
@@ -534,7 +534,7 @@ function MahjongEfficiency() {
 
             <div className="min-h-[44px] flex flex-wrap gap-1.5 items-end">
               {!hasHand ? (
-                <p className="text-sm text-black leading-[40px] select-none">
+                <p className="text-sm text-[var(--text)] leading-[40px] select-none">
                   {t('efficiency.noHand')}
                 </p>
               ) : (
@@ -545,10 +545,10 @@ function MahjongEfficiency() {
                     </div>
                   ))}
                   {openMelds.map((meld, mi) => (
-                    <div key={mi} className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg border border-black bg-transparent">
+                    <div key={mi} className="flex items-center gap-0.5 px-1.5 py-1 rounded-lg border border-[var(--border)] bg-transparent">
                       {meld.map((tile, ti) => <MahjongTile key={ti} tile={tile} size="sm" />)}
                       <button onClick={() => setOpenMelds(prev => prev.filter((_,i) => i !== mi))}
-                        className="ml-1 p-0.5 text-black hover:text-black transition-colors">
+                        className="ml-1 p-0.5 text-[var(--text)] hover:text-[var(--text)] transition-colors">
                         <X size={11} />
                       </button>
                     </div>
@@ -558,12 +558,12 @@ function MahjongEfficiency() {
             </div>
             <div className="flex items-center justify-between mt-1.5">
               {hasHand && (
-                <p className="text-[10px] text-black">{t('efficiency.removeHint')}</p>
+                <p className="text-[10px] text-[var(--text)]">{t('efficiency.removeHint')}</p>
               )}
               {isWaitingForDraw && (
                 <button
                   onClick={handleRandomDraw}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors ml-auto"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors ml-auto"
                 >
                   <Shuffle size={11} />
                   {locale === 'zh' ? '随机摸牌' : 'Random Draw'}
@@ -573,7 +573,7 @@ function MahjongEfficiency() {
           </div>
 
           {/* Tile picker */}
-          <div className="border-t border-black px-5 sm:px-6 py-5 bg-transparent">
+          <div className="border-t border-[var(--border)] px-5 sm:px-6 py-5 bg-transparent">
             <MahjongTilePicker
               allTiles={allTiles}
               totalCount={totalCount}
@@ -594,11 +594,11 @@ function MahjongEfficiency() {
         {analysis && hasHand && (
           <div>
             {analysis.shanten === -1 && (
-              <div className="border border-black rounded-2xl p-5 text-center bg-transparent">
-                <p className="font-black text-2xl text-black mb-1">
+              <div className="border border-[var(--border)] rounded-2xl p-5 text-center bg-transparent">
+                <p className="font-black text-2xl text-[var(--text)] mb-1">
                   {locale === 'zh' ? '✓ 和牌' : '✓ Complete Hand'}
                 </p>
-                <p className="text-sm text-black">
+                <p className="text-sm text-[var(--text)]">
                   {locale === 'zh' ? '当前手牌已构成完整和牌' : 'The current hand is a winning hand.'}
                 </p>
               </div>
@@ -632,7 +632,7 @@ function MahjongEfficiency() {
 
       {/* Tile warning toast */}
       {tileWarning && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-950 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[var(--text)] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap">
           {tileWarning}
         </div>
       )}
@@ -641,7 +641,7 @@ function MahjongEfficiency() {
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label={locale === 'zh' ? '返回顶部' : 'Back to top'}
-        className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 w-9 h-9 rounded-full bg-gray-300 text-black flex items-center justify-center hover:bg-gray-400 transition-colors"
+        className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 w-9 h-9 rounded-full bg-[var(--primary-hover)] text-[var(--text)] flex items-center justify-center hover:bg-[var(--primary-hover)] transition-colors"
       >
         <ArrowUp size={15} />
       </button>

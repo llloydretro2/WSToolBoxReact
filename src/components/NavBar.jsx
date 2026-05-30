@@ -6,10 +6,7 @@ import Avatar from "@mui/material/Avatar";
 import { Snackbar, Badge, Tooltip } from "@mui/material";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
+import { ChevronLeft, ChevronDown, Menu as MenuIcon, X as CloseIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { getSectionByPath, getSectionToolItems } from "../config/siteStructure";
@@ -75,7 +72,7 @@ function DropBtn({ label, isActive, onClick }) {
 				backgroundColor: isActive ? "rgba(166,206,182,0.35)" : "transparent",
 			}}>
 			{label}
-			<KeyboardArrowDownIcon style={{ fontSize: 14, opacity: 0.55, marginLeft: 1 }} />
+			<ChevronDown size={14} className="opacity-55 ml-px" />
 		</button>
 	);
 }
@@ -270,9 +267,7 @@ export default function NavBar() {
 												exit={{ opacity: 0, x: -5, width: 0 }}
 												transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
 												className="md:hidden flex shrink-0 overflow-hidden">
-												<ArrowBackIosNewIcon
-													style={{ fontSize: 14, color: "var(--text)", opacity: 0.7 }}
-												/>
+												<ChevronLeft size={14} className="text-[var(--text)] opacity-70" />
 											</motion.span>
 										)}
 									</AnimatePresence>
@@ -346,8 +341,8 @@ export default function NavBar() {
 												: "transparent",
 										}}>
 										{mobileMenuOpen
-											? <CloseIcon style={{ fontSize: 18, display: "block" }} />
-											: <MenuIcon style={{ fontSize: 18, display: "block" }} />}
+											? <CloseIcon size={18} className="block" />
+											: <MenuIcon size={18} className="block" />}
 									</button>
 								)}
 

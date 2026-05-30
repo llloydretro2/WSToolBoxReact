@@ -194,7 +194,7 @@ export default function AudioBoardV2() {
 					transition: box-shadow 0.15s;
 				}
 				.ws-range::-webkit-slider-thumb:hover {
-					box-shadow: 0 0 0 6px rgba(166,206,182,0.3);
+					box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 30%, transparent);
 				}
 				.ws-range::-moz-range-thumb {
 					width: 12px; height: 12px;
@@ -205,7 +205,7 @@ export default function AudioBoardV2() {
 				}
 			`}</style>
 
-			<div className={`max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 ${hasPlayer ? "pb-36" : ""}`}>
+			<div className={`max-w-3xl mx-auto px-4 sm:px-6 pb-8 sm:py-10 ${hasPlayer ? "pb-36" : ""}`}>
 
 				{/* Title */}
 				<div className="mb-8">

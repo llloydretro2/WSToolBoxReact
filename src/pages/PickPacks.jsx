@@ -16,7 +16,7 @@ function Toast({ message, onClose }) {
 	if (!message) return null;
 	return (
 		<div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3
-		                px-5 py-3 rounded-2xl shadow-xl text-sm font-bold bg-[#e05c5c] text-white">
+		                px-5 py-3 rounded-2xl shadow-xl text-sm font-bold bg-[var(--error)] text-white">
 			{message}
 			<button type="button" onClick={onClose} className="opacity-70 hover:opacity-100 transition-opacity ml-1">✕</button>
 		</div>
@@ -31,21 +31,23 @@ function Stepper({ label, value, onChange, min = 1 }) {
 			<span className="text-[11px] font-bold text-[var(--text-secondary)]">{label}</span>
 			<div className="flex items-center border border-[var(--border)] rounded-xl overflow-hidden">
 				<button type="button" onClick={() => onChange(String(Math.max(min, num - 1)))}
-					className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)]
-					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0">
+					className="w-10 h-10 flex items-center justify-center text-[var(--text-muted)]
+					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0
+					           border-r border-[var(--border)]">
 					−
 				</button>
 				<input
 					type="number" min={min} value={value}
 					onChange={(e) => onChange(e.target.value)}
-					className="flex-1 text-center text-lg font-black text-[var(--text)] bg-transparent
-					           focus:outline-none py-2 [appearance:textfield]
+					className="flex-1 min-w-0 text-center text-lg font-black text-[var(--text)] bg-transparent
+					           border-0 focus:outline-none py-2 [appearance:textfield]
 					           [&::-webkit-outer-spin-button]:appearance-none
 					           [&::-webkit-inner-spin-button]:appearance-none"
 				/>
 				<button type="button" onClick={() => onChange(String(num + 1))}
-					className="w-10 h-10 flex items-center justify-center text-[var(--text-secondary)]
-					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0">
+					className="w-10 h-10 flex items-center justify-center text-[var(--text-muted)]
+					           hover:bg-[var(--card-background)] transition-colors text-xl font-bold shrink-0
+					           border-l border-[var(--border)]">
 					+
 				</button>
 			</div>
@@ -140,16 +142,16 @@ export default function PickPacksV2() {
 			<style>{`
 				@keyframes pack-light {
 					0%   { transform: scale(1.0); filter: drop-shadow(0 0 0px transparent); }
-					40%  { transform: scale(1.22); filter: drop-shadow(0 0 14px rgba(166,206,182,0.95)); }
-					100% { transform: scale(1.1);  filter: drop-shadow(0 0 6px rgba(166,206,182,0.5)); }
+					40%  { transform: scale(1.22); filter: drop-shadow(0 0 14px color-mix(in srgb, var(--primary-dark) 95%, transparent)); }
+					100% { transform: scale(1.1);  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary-dark) 50%, transparent)); }
 				}
 				.pack-lit { animation: pack-light 0.55s cubic-bezier(0.4,0,0.2,1) forwards; }
-				.pack-selected { transform: scale(1.1); filter: drop-shadow(0 0 6px rgba(166,206,182,0.5)); }
+				.pack-selected { transform: scale(1.1); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary-dark) 50%, transparent)); }
 			`}</style>
 
 			<Toast message={toastMsg} onClose={() => setToastMsg("")} />
 
-			<div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+			<div className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
 
 				{/* Title */}
 				<div className="mb-8">
@@ -287,9 +289,9 @@ export default function PickPacksV2() {
 								</p>
 							</div>
 
-							<div className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(224,92,92,0.08)] border-l-4 border-[#e05c5c]">
+							<div className="flex items-center gap-3 p-3 rounded-xl bg-[rgba(224,92,92,0.08)] border-l-4 border-[var(--error)]">
 								<img src={lilja} alt="Lilja" className="h-10 shrink-0" />
-								<p className="text-sm font-bold text-[#760f10] leading-relaxed">
+								<p className="text-sm font-bold text-[var(--reset)] leading-relaxed">
 									完全没有！<br />
 									就是普通的随机数生成器，只不过我设定了一个和我有关的、会随着时间变化的种子
 								</p>

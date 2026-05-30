@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   Search, RefreshCw, X, ChevronDown, ChevronUp, ArrowUp,
 } from "lucide-react";
@@ -16,13 +16,13 @@ import { computeScore } from "../utils/mahjong/scoring";
 const FEASIBILITY_ACHIEVED = 'achieved';
 
 const FEASIBILITY_CONFIG = {
-  [FEASIBILITY.CONFIRMED]: { label: { zh: '已确立', en: 'Confirmed' }, badgeCls: 'bg-gray-950 text-white',                          borderColor: '#000000' },
-  [FEASIBILITY_ACHIEVED]:  { label: { zh: '已达成', en: 'Achieved'  }, badgeCls: 'bg-gray-700 text-white',                          borderColor: '#000000' },
-  [FEASIBILITY.HIGH]:      { label: { zh: '高可行', en: 'High'      }, badgeCls: 'bg-gray-500 text-white',                          borderColor: '#000000' },
-  [FEASIBILITY.MEDIUM]:    { label: { zh: '可行',   en: 'Medium'    }, badgeCls: 'bg-gray-200 text-black',                         borderColor: '#000000' },
-  [FEASIBILITY.LOW]:       { label: { zh: '较低',   en: 'Low'       }, badgeCls: 'bg-gray-100 text-black',                         borderColor: '#000000' },
-  [FEASIBILITY.VERY_LOW]:  { label: { zh: '极低',   en: 'Very Low'  }, badgeCls: 'border border-black text-black bg-white/70',     borderColor: '#000000' },
-  [FEASIBILITY.IMPOSSIBLE]:{ label: { zh: '不可能', en: 'Impossible' }, badgeCls: 'border border-black text-black bg-white/70',    borderColor: '#000000' },
+  [FEASIBILITY.CONFIRMED]: { label: { zh: '已确立', en: 'Confirmed' }, badgeCls: 'bg-[var(--text)] text-white',                                        borderColor: 'var(--text)' },
+  [FEASIBILITY_ACHIEVED]:  { label: { zh: '已达成', en: 'Achieved'  }, badgeCls: 'bg-[var(--text-secondary)] text-white',                              borderColor: 'var(--text-secondary)' },
+  [FEASIBILITY.HIGH]:      { label: { zh: '高可行', en: 'High'      }, badgeCls: 'bg-[var(--text-muted)] text-white',                                  borderColor: 'var(--text-muted)' },
+  [FEASIBILITY.MEDIUM]:    { label: { zh: '可行',   en: 'Medium'    }, badgeCls: 'bg-[var(--primary)] text-[var(--text)]',                             borderColor: 'var(--primary-hover)' },
+  [FEASIBILITY.LOW]:       { label: { zh: '较低',   en: 'Low'       }, badgeCls: 'bg-[var(--primary-light)] text-[var(--text)]',                       borderColor: 'var(--primary)' },
+  [FEASIBILITY.VERY_LOW]:  { label: { zh: '极低',   en: 'Very Low'  }, badgeCls: 'border border-[var(--border)] text-[var(--text)] bg-white/70',       borderColor: 'var(--border)' },
+  [FEASIBILITY.IMPOSSIBLE]:{ label: { zh: '不可能', en: 'Impossible' }, badgeCls: 'border border-[var(--border)] text-[var(--text)] bg-white/70',      borderColor: 'var(--border)' },
 };
 
 const FEASIBILITY_ORDER = [
@@ -89,21 +89,21 @@ function FeasibilityChip({ feasibility, locale }) {
 
 function HanDisplay({ han, isOpen, locale }) {
   if (han.closed === 'yakuman') {
-    return <Pill className="bg-gray-950 text-white">{locale === 'zh' ? '役满' : 'Yakuman'}</Pill>;
+    return <Pill className="bg-[var(--text)] text-white">{locale === 'zh' ? '役满' : 'Yakuman'}</Pill>;
   }
   const v = isOpen
     ? (han.open != null
         ? `${han.open}${locale === 'zh' ? '番' : 'han (open)'}`
         : (locale === 'zh' ? '仅门清' : 'closed only'))
     : `${han.closed}${locale === 'zh' ? '番' : 'han'}`;
-  return <Pill className="border border-black text-black bg-transparent">{v}</Pill>;
+  return <Pill className="border border-[var(--border)] text-[var(--text)] bg-transparent">{v}</Pill>;
 }
 
 function ShantenLine({ shanten, locale }) {
   if (shanten === null || shanten === undefined) return null;
-  if (shanten === -1) return <span className="text-[11px] font-bold text-black">✓ {locale === 'zh' ? '和牌' : 'Complete'}</span>;
-  if (shanten === 0)  return <span className="text-[11px] font-bold text-black">{locale === 'zh' ? '听牌' : 'Tenpai'}</span>;
-  return <span className="text-[11px] text-black">{shanten}{locale === 'zh' ? '向听' : '-shanten'}</span>;
+  if (shanten === -1) return <span className="text-[11px] font-bold text-[var(--text)]">✓ {locale === 'zh' ? '和牌' : 'Complete'}</span>;
+  if (shanten === 0)  return <span className="text-[11px] font-bold text-[var(--text)]">{locale === 'zh' ? '听牌' : 'Tenpai'}</span>;
+  return <span className="text-[11px] text-[var(--text)]">{shanten}{locale === 'zh' ? '向听' : '-shanten'}</span>;
 }
 
 // ── Tile display helpers ──────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ function LabeledTiles({ label, labelCls, tiles }) {
   if (!tiles?.length) return null;
   return (
     <div className="flex items-start gap-1.5">
-      <span className={`text-[10px] font-bold shrink-0 leading-[22px] ${labelCls ?? 'text-black'}`}>{label}</span>
+      <span className={`text-[10px] font-bold shrink-0 leading-[22px] ${labelCls ?? 'text-[var(--text)]'}`}>{label}</span>
       <div className="flex flex-wrap gap-0.5">{tiles.map((t, i) => <MahjongTile key={i} tile={t} size="xs" />)}</div>
     </div>
   );
@@ -152,28 +152,28 @@ function Scenario({ scenario, locale }) {
     : null;
 
   return (
-    <div className="mt-2 p-3 rounded-xl bg-transparent border border-black">
+    <div className="mt-2 p-3 rounded-xl bg-transparent border border-[var(--border)]">
       {typeLabel && (
-        <span className="text-[10px] font-semibold text-black uppercase tracking-wider mr-1">
+        <span className="text-[10px] font-semibold text-[var(--text)] uppercase tracking-wider mr-1">
           {typeLabel}
         </span>
       )}
       {(neededTiles.length > 0 || discardTiles.length > 0) && (
         <div className="flex flex-wrap gap-3 mt-1">
-          <LabeledTiles label={locale === 'zh' ? '摸：' : 'Need:'} labelCls="text-black" tiles={neededTiles} />
-          <LabeledTiles label={locale === 'zh' ? '打：' : 'Discard:'} labelCls="text-black" tiles={discardTiles} />
+          <LabeledTiles label={locale === 'zh' ? '摸：' : 'Need:'} labelCls="text-[var(--text)]" tiles={neededTiles} />
+          <LabeledTiles label={locale === 'zh' ? '打：' : 'Discard:'} labelCls="text-[var(--text)]" tiles={discardTiles} />
         </div>
       )}
       {targetGroups?.length > 0 && (
         <div className="mt-2">
-          <p className="text-[10px] font-semibold text-black mb-1">
+          <p className="text-[10px] font-semibold text-[var(--text)] mb-1">
             {locale === 'zh' ? '目标役种结构' : 'Target structure'}
           </p>
           <TileGroups groups={targetGroups} />
         </div>
       )}
       {text?.explanation && (
-        <p className="text-[11px] text-black mt-1.5 leading-relaxed">{text.explanation}</p>
+        <p className="text-[11px] text-[var(--text)] mt-1.5 leading-relaxed">{text.explanation}</p>
       )}
     </div>
   );
@@ -181,7 +181,7 @@ function Scenario({ scenario, locale }) {
 
 // ── Fixed hand bar ────────────────────────────────────────────────────────────
 
-function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, onClearAll, locale, barRef }) {
+const FixedHandBar = React.memo(function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMeld, onClearAll, locale, barRef }) {
   if (!concealedTiles.length && !openMelds.length) return null;
 
   const shanten    = vm?.hand?.shanten ?? null;
@@ -191,25 +191,25 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
   return (
     <div
       ref={barRef}
-      className="fixed top-[64px] md:top-[72px] left-0 right-0 z-40 bg-transparent backdrop-blur-sm border-b border-black"
+      className="fixed top-[64px] md:top-[72px] left-0 right-0 z-40 bg-transparent backdrop-blur-sm border-b border-[var(--border)]"
     >
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-2.5">
 
         {/* Status row + clear */}
         <div className="flex items-center gap-1.5 mb-2">
           <ShantenLine shanten={shanten} locale={locale} />
-          <span className="text-[10px] text-black">·</span>
-          <span className="text-[10px] text-black">
+          <span className="text-[10px] text-[var(--text)]">·</span>
+          <span className="text-[10px] text-[var(--text)]">
             {isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
           </span>
-          <span className="text-[10px] text-black">·</span>
-          <span className="text-[10px] font-bold text-black">
+          <span className="text-[10px] text-[var(--text)]">·</span>
+          <span className="text-[10px] font-bold text-[var(--text)]">
             {totalCount}{locale === 'zh' ? '张' : ''}
           </span>
           <div className="flex-1" />
           <button
             onClick={onClearAll}
-            className="text-[11px] font-bold px-3 py-1 rounded-full bg-black text-white hover:bg-gray-700 transition-colors shrink-0"
+            className="text-[11px] font-bold px-3 py-1 rounded-full bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors shrink-0"
           >
             {locale === 'zh' ? '清空' : 'Clear'}
           </button>
@@ -224,11 +224,11 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
           ))}
           {openMelds.length > 0 && (
             <>
-              <span className="text-[10px] text-black self-end pb-0.5 mx-0.5 shrink-0">+</span>
+              <span className="text-[10px] text-[var(--text)] self-end pb-0.5 mx-0.5 shrink-0">+</span>
               {openMelds.map((meld, mi) => (
-                <div key={mi} className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-black bg-transparent shrink-0">
+                <div key={mi} className="flex items-center gap-0.5 px-1 py-0.5 rounded border border-[var(--border)] bg-transparent shrink-0">
                   {meld.map((tile, ti) => <MahjongTile key={ti} tile={tile} size="xs" />)}
-                  <button onClick={() => onRemoveMeld(mi)} className="ml-0.5 p-0.5 text-black hover:text-black transition-colors">
+                  <button onClick={() => onRemoveMeld(mi)} className="ml-0.5 p-0.5 text-[var(--text)] hover:text-[var(--text)] transition-colors">
                     <X size={9} />
                   </button>
                 </div>
@@ -240,11 +240,11 @@ function FixedHandBar({ concealedTiles, openMelds, vm, onRemoveTile, onRemoveMel
       </div>
     </div>
   );
-}
+});
 
 // ── Route card ────────────────────────────────────────────────────────────────
 
-function RouteCard({ route, isOpen, locale }) {
+const RouteCard = React.memo(function RouteCard({ route, isOpen, locale }) {
   const [open, setOpen] = useState(false);
 
   const {
@@ -262,7 +262,7 @@ function RouteCard({ route, isOpen, locale }) {
 
   return (
     <div
-      className={`rounded-xl border border-black overflow-hidden bg-transparent ${isImpossible ? 'opacity-50' : ''}`}
+      className={`rounded-xl border border-[var(--border)] overflow-hidden bg-transparent ${isImpossible ? 'opacity-50' : ''}`}
       style={{ borderLeftWidth: 3, borderLeftColor: cfg.borderColor }}
     >
       {/* Header — always visible */}
@@ -272,19 +272,19 @@ function RouteCard({ route, isOpen, locale }) {
       >
         {/* Name row */}
         <div className="flex items-start gap-2 flex-wrap mb-1">
-          <span className="font-bold text-sm text-black leading-tight">{name}</span>
-          <span className="text-[11px] text-black italic leading-tight mt-[1px]">{nameJa}</span>
+          <span className="font-bold text-sm text-[var(--text)] leading-tight">{name}</span>
+          <span className="text-[11px] text-[var(--text)] italic leading-tight mt-[1px]">{nameJa}</span>
           <div className="flex-1" />
           <div className="flex items-center gap-1 flex-wrap justify-end">
             <FeasibilityChip feasibility={feasibility} locale={locale} />
             <HanDisplay han={han} isOpen={isOpen} locale={locale} />
             {!openAllowed && (
-              <Pill className="border border-black text-black bg-transparent">
+              <Pill className="border border-[var(--border)] text-[var(--text)] bg-transparent">
                 {locale === 'zh' ? '门清限定' : 'Closed'}
               </Pill>
             )}
             {hasDetail && (
-              <span className="text-black ml-0.5">
+              <span className="text-[var(--text)] ml-0.5">
                 {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </span>
             )}
@@ -293,18 +293,18 @@ function RouteCard({ route, isOpen, locale }) {
 
         {/* Meaning */}
         {meaningText && (
-          <p className="text-[11px] text-black italic leading-relaxed mb-2">{meaningText}</p>
+          <p className="text-[11px] text-[var(--text)] italic leading-relaxed mb-2">{meaningText}</p>
         )}
 
         {/* Impossible reason */}
         {isImpossible && reason && (
-          <p className="text-[11px] text-black mb-1">{locale === 'zh' ? '不可达：' : 'Blocked: '}{reason}</p>
+          <p className="text-[11px] text-[var(--text)] mb-1">{locale === 'zh' ? '不可达：' : 'Blocked: '}{reason}</p>
         )}
 
         {/* Example hand */}
         {exampleHand?.length > 0 && (
           <div>
-            <p className="text-[10px] font-semibold text-black mb-1">
+            <p className="text-[10px] font-semibold text-[var(--text)] mb-1">
               {locale === 'zh' ? '示例牌型' : 'Example hand'}
             </p>
             <TileGroups groups={exampleHand} />
@@ -315,28 +315,28 @@ function RouteCard({ route, isOpen, locale }) {
       {/* Expanded detail */}
       {open && (
         <>
-          <div className="border-t border-black" />
+          <div className="border-t border-[var(--border)]" />
           <div className="px-4 pb-4 pt-1">
             {scenarios?.length > 0
               ? scenarios.map((s, i) => <Scenario key={i} scenario={s} locale={locale} />)
               : text?.explanation && (
-                  <p className="text-[11px] text-black mt-2 leading-relaxed">{text.explanation}</p>
+                  <p className="text-[11px] text-[var(--text)] mt-2 leading-relaxed">{text.explanation}</p>
                 )}
           </div>
         </>
       )}
     </div>
   );
-}
+});
 
 // ── Results sub-components ────────────────────────────────────────────────────
 
-function Warnings({ warnings, locale }) {
+const Warnings = React.memo(function Warnings({ warnings, locale }) {
   if (!warnings?.length) return null;
   const sev = {
-    error:   'border-black bg-transparent text-black',
-    warning: 'border-black bg-transparent text-black',
-    info:    'border-black bg-transparent text-black',
+    error:   'border-[var(--border)] bg-transparent text-[var(--text)]',
+    warning: 'border-[var(--border)] bg-transparent text-[var(--text)]',
+    info:    'border-[var(--border)] bg-transparent text-[var(--text)]',
   };
   return (
     <div className="flex flex-col gap-2 mb-4">
@@ -351,29 +351,29 @@ function Warnings({ warnings, locale }) {
       })}
     </div>
   );
-}
+});
 
-function ResultsSummary({ vm, locale }) {
+const ResultsSummary = React.memo(function ResultsSummary({ vm, locale }) {
   const { achievedRoutes, achievedHan, isOpen, shanten, concealedCount, numMelds } = vm.hand;
   const totalTiles = concealedCount + numMelds * 3;
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-black">
+    <div className="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-[var(--border)]">
       <ShantenLine shanten={shanten} locale={locale} />
-      <span className="text-black">·</span>
-      <span className="text-[11px] text-black">
+      <span className="text-[var(--text)]">·</span>
+      <span className="text-[11px] text-[var(--text)]">
         {isOpen ? (locale === 'zh' ? '副露' : 'Open') : (locale === 'zh' ? '门清' : 'Closed')}
       </span>
-      <span className="text-black">·</span>
-      <span className="text-[11px] text-black">{totalTiles}{locale === 'zh' ? '张' : ' tiles'}</span>
+      <span className="text-[var(--text)]">·</span>
+      <span className="text-[11px] text-[var(--text)]">{totalTiles}{locale === 'zh' ? '张' : ' tiles'}</span>
       {achievedRoutes?.length > 0 && (
         <>
-          <span className="text-black">·</span>
-          <span className="text-[11px] font-semibold text-black">
+          <span className="text-[var(--text)]">·</span>
+          <span className="text-[11px] font-semibold text-[var(--text)]">
             {locale === 'zh' ? `已达成 ${achievedHan}番` : `${achievedHan} han achieved`}
           </span>
           <div className="flex flex-wrap gap-1">
             {achievedRoutes.map((r) => (
-              <Pill key={r.id} className="bg-gray-900 text-white">
+              <Pill key={r.id} className="bg-[var(--text)] text-white">
                 {locale === 'zh' ? r.nameZh : r.nameEn}
               </Pill>
             ))}
@@ -381,31 +381,31 @@ function ResultsSummary({ vm, locale }) {
         </>
       )}
       {isOpen && achievedRoutes?.length === 0 && (
-        <span className="text-[11px] text-black">{locale === 'zh' ? '无确立役种' : 'No confirmed yaku'}</span>
+        <span className="text-[11px] text-[var(--text)]">{locale === 'zh' ? '无确立役种' : 'No confirmed yaku'}</span>
       )}
     </div>
   );
-}
+});
 
-function CompletedPanel({ vm, locale, scoreResult }) {
+const CompletedPanel = React.memo(function CompletedPanel({ vm, locale, scoreResult }) {
   const { achievedRoutes, achievedHan } = vm.hand;
   const p = scoreResult?.points;
   return (
-    <div className="p-5 border border-black rounded-2xl bg-transparent" style={{ borderLeftWidth: 3, borderLeftColor: '#111' }}>
-      <p className="font-black text-lg text-black mb-1">
+    <div className="p-5 border border-[var(--border)] rounded-2xl bg-transparent" style={{ borderLeftWidth: 3, borderLeftColor: 'var(--text-muted)' }}>
+      <p className="font-black text-lg text-[var(--text)] mb-1">
         {locale === 'zh' ? '✓ 和牌！' : '✓ Complete hand!'}
       </p>
-      <p className="text-xs text-black mb-4">
+      <p className="text-xs text-[var(--text)] mb-4">
         {locale === 'zh' ? '手牌已完整和牌，无需进一步分析。' : 'This hand is complete. No further analysis needed.'}
       </p>
       {achievedRoutes?.length > 0 && (
         <>
-          <p className="text-[11px] font-bold text-black uppercase tracking-wider mb-2">
+          <p className="text-[11px] font-bold text-[var(--text)] uppercase tracking-wider mb-2">
             {locale === 'zh' ? `达成役种 · ${achievedHan}番` : `Achieved · ${achievedHan} han`}
           </p>
           <div className="flex flex-wrap gap-1.5 mb-4">
             {achievedRoutes.map((r) => (
-              <Pill key={r.id} className="bg-gray-950 text-white text-xs px-2.5 py-1">
+              <Pill key={r.id} className="bg-[var(--text)] text-white text-xs px-2.5 py-1">
                 {locale === 'zh' ? r.nameZh : r.nameEn}
               </Pill>
             ))}
@@ -415,44 +415,44 @@ function CompletedPanel({ vm, locale, scoreResult }) {
 
       {/* Score display */}
       {scoreResult && p && (
-        <div className="border-t border-black pt-3">
-          <p className="text-[10px] font-bold text-black uppercase tracking-widest mb-2">
+        <div className="border-t border-[var(--border)] pt-3">
+          <p className="text-[10px] font-bold text-[var(--text)] uppercase tracking-widest mb-2">
             {locale === 'zh' ? '得点' : 'Score'}
             {scoreResult.han !== 'yakuman' && (
-              <span className="ml-2 font-normal normal-case text-black">
+              <span className="ml-2 font-normal normal-case text-[var(--text)]">
                 {scoreResult.han}{locale === 'zh' ? '番' : 'han'} · {scoreResult.fu}{locale === 'zh' ? '符' : 'fu'}
                 {p.limitName ? ` · ${p.limitName}` : ''}
               </span>
             )}
             {scoreResult.han === 'yakuman' && (
-              <span className="ml-2 font-normal normal-case text-black">{p.limitName}</span>
+              <span className="ml-2 font-normal normal-case text-[var(--text)]">{p.limitName}</span>
             )}
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
             <div>
-              <span className="text-black">{locale === 'zh' ? '荣和（非庄）' : 'Ron (non-dealer)'}</span>
-              <span className="ml-1.5 font-bold text-black">{p.ron.nonDealer.toLocaleString()}</span>
+              <span className="text-[var(--text)]">{locale === 'zh' ? '荣和（非庄）' : 'Ron (non-dealer)'}</span>
+              <span className="ml-1.5 font-bold text-[var(--text)]">{p.ron.nonDealer.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-black">{locale === 'zh' ? '荣和（庄家）' : 'Ron (dealer)'}</span>
-              <span className="ml-1.5 font-bold text-black">{p.ron.dealer.toLocaleString()}</span>
+              <span className="text-[var(--text)]">{locale === 'zh' ? '荣和（庄家）' : 'Ron (dealer)'}</span>
+              <span className="ml-1.5 font-bold text-[var(--text)]">{p.ron.dealer.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-black">{locale === 'zh' ? '自摸（庄付）' : 'Tsumo (dealer pays)'}</span>
-              <span className="ml-1.5 font-bold text-black">{p.tsumo.dealer.toLocaleString()}</span>
+              <span className="text-[var(--text)]">{locale === 'zh' ? '自摸（庄付）' : 'Tsumo (dealer pays)'}</span>
+              <span className="ml-1.5 font-bold text-[var(--text)]">{p.tsumo.dealer.toLocaleString()}</span>
             </div>
             <div>
-              <span className="text-black">{locale === 'zh' ? '自摸（闲付）' : 'Tsumo (others pay)'}</span>
-              <span className="ml-1.5 font-bold text-black">{p.tsumo.nonDealer.toLocaleString()}</span>
+              <span className="text-[var(--text)]">{locale === 'zh' ? '自摸（闲付）' : 'Tsumo (others pay)'}</span>
+              <span className="ml-1.5 font-bold text-[var(--text)]">{p.tsumo.nonDealer.toLocaleString()}</span>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+});
 
-function YakuRoutes({ vm, locale }) {
+const YakuRoutes = React.memo(function YakuRoutes({ vm, locale }) {
   const { regularRoutes, yakumanRoutes, hand } = vm;
   const [showImp,    setShowImp]    = useState(false);
   const [showYk,     setShowYk]     = useState(false);
@@ -467,7 +467,7 @@ function YakuRoutes({ vm, locale }) {
   const ToggleBtn = ({ onClick, active, children }) => (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1 text-[11px] font-semibold text-black hover:text-black transition-colors"
+      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--text)] hover:text-[var(--text)] transition-colors"
     >
       {active ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
       {children}
@@ -504,7 +504,7 @@ function YakuRoutes({ vm, locale }) {
       )}
 
       {/* Yakuman divider */}
-      <div className="border-t border-black pt-4">
+      <div className="border-t border-[var(--border)] pt-4">
         <ToggleBtn onClick={() => setShowYk((v) => !v)} active={showYk}>
           {locale === 'zh'
             ? `${showYk ? '收起' : '显示'}役满参考（${ykFeasible.length + ykImp.length}种）`
@@ -541,21 +541,21 @@ function YakuRoutes({ vm, locale }) {
       </div>
     </div>
   );
-}
+});
 
 // ── Toggle group ──────────────────────────────────────────────────────────────
 
-function ToggleGroup({ options, value, onChange, locale }) {
+const ToggleGroup = React.memo(function ToggleGroup({ options, value, onChange, locale }) {
   return (
-    <div className="inline-flex border border-black rounded-lg overflow-hidden bg-transparent">
+    <div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden bg-transparent">
       {options.map((opt) => {
         const active = value === opt.value;
         return (
           <button
             key={opt.value}
             onClick={() => onChange(opt.value)}
-            className={`px-3 py-1 text-[11px] font-bold transition-colors border-r border-black last:border-r-0
-              ${active ? 'bg-gray-950 text-white' : 'bg-transparent text-black hover:bg-white/5'}`}
+            className={`px-3 py-1 text-[11px] font-bold transition-colors border-r border-[var(--border)] last:border-r-0
+              ${active ? 'bg-[var(--text)] text-white' : 'bg-transparent text-[var(--text)] hover:bg-white/5'}`}
           >
             {locale === 'zh' ? opt.zh : opt.en}
           </button>
@@ -563,23 +563,23 @@ function ToggleGroup({ options, value, onChange, locale }) {
       })}
     </div>
   );
-}
+});
 
-function ToggleSwitch({ checked, onChange, label }) {
+const ToggleSwitch = React.memo(function ToggleSwitch({ checked, onChange, label }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <button
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative w-8 h-[18px] rounded-full transition-colors shrink-0 ${checked ? 'bg-gray-950' : 'bg-gray-300'}`}
+        className={`relative w-8 h-[18px] rounded-full transition-colors shrink-0 ${checked ? 'bg-[var(--text)]' : 'bg-[var(--primary-hover)]'}`}
       >
         <span className={`absolute top-[1px] left-[1px] w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${checked ? 'translate-x-[14px]' : ''}`} />
       </button>
-      <span className="text-[11px] text-black whitespace-nowrap">{label}</span>
+      <span className="text-[11px] text-[var(--text)] whitespace-nowrap">{label}</span>
     </label>
   );
-}
+});
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -683,27 +683,27 @@ function MahjongTrainer() {
     });
   };
 
-  const handleRemoveFromHand = (tile) => {
+  const handleRemoveFromHand = useCallback((tile) => {
     setConcealedTiles((prev) => {
       const copy = [...prev];
       const idx  = copy.findIndex((t) => tileKey(t) === tileKey(tile));
       if (idx >= 0) copy.splice(idx, 1);
       return copy;
     });
-  };
+  }, []);
 
-  const handleAddMeld = () => {
+  const handleAddMeld = useCallback(() => {
     if (meldBuilder.length < 3) {
       setTileWarning(locale === 'zh' ? '副露至少需要3张牌' : 'A meld needs at least 3 tiles.');
       return;
     }
     setOpenMelds((prev) => [...prev, [...meldBuilder]]);
     setMeldBuilder([]);
-  };
+  }, [meldBuilder, locale]);
 
-  const handleClearMeldBuilder  = () => setMeldBuilder([]);
-  const handleRemoveFromBuilder  = (idx) => setMeldBuilder((prev) => prev.filter((_, i) => i !== idx));
-  const handleRemoveMeld         = (idx) => setOpenMelds((prev) => prev.filter((_, i) => i !== idx));
+  const handleClearMeldBuilder  = useCallback(() => setMeldBuilder([]), []);
+  const handleRemoveFromBuilder  = useCallback((idx) => setMeldBuilder((prev) => prev.filter((_, i) => i !== idx)), []);
+  const handleRemoveMeld         = useCallback((idx) => setOpenMelds((prev) => prev.filter((_, i) => i !== idx)), []);
 
   const handleAnalyze = () => {
     setAnalyzeError('');
@@ -728,10 +728,10 @@ function MahjongTrainer() {
     setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = useCallback(() => {
     setConcealedTiles([]); setOpenMelds([]); setMeldBuilder([]);
     setResult(null); setAnalyzeError('');
-  };
+  }, []);
 
   const handleReset = () => {
     handleClearAll();
@@ -760,25 +760,25 @@ function MahjongTrainer() {
 
         {/* ── Title ── */}
         <div className="mb-10">
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-black leading-none mb-2">
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-[var(--text)] leading-none mb-2">
             {t('mahjong.title')}
           </h1>
-          <p className="text-sm text-black">{t('mahjong.subtitle')}</p>
+          <p className="text-sm text-[var(--text)]">{t('mahjong.subtitle')}</p>
         </div>
 
         {/* ── Input card ── */}
-        <div className="border border-black rounded-2xl overflow-hidden mb-4 bg-transparent">
+        <div className="border border-[var(--border)] rounded-2xl overflow-hidden mb-4 bg-transparent">
 
           {/* Settings */}
           <div className="px-5 sm:px-6 py-4 flex flex-wrap items-center gap-x-5 gap-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-black uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-[var(--text)] uppercase tracking-wider">
                 {t('mahjong.seatWind')}
               </span>
               <ToggleGroup options={WIND_OPTIONS} value={seatWind} onChange={setSeatWind} locale={locale} />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-black uppercase tracking-wider">
+              <span className="text-[10px] font-bold text-[var(--text)] uppercase tracking-wider">
                 {t('mahjong.roundWind')}
               </span>
               <ToggleGroup options={WIND_OPTIONS.slice(0, 2)} value={roundWind} onChange={setRoundWind} locale={locale} />
@@ -788,14 +788,14 @@ function MahjongTrainer() {
           </div>
 
           {/* CTA */}
-          <div className="px-5 sm:px-6 py-4 border-t border-black">
+          <div className="px-5 sm:px-6 py-4 border-t border-[var(--border)]">
             {analyzeError && (
-              <p className="text-xs text-black mb-3">{analyzeError}</p>
+              <p className="text-xs text-[var(--text)] mb-3">{analyzeError}</p>
             )}
             <div className="flex gap-2">
               <button
                 onClick={handleAnalyze}
-                className="flex-1 py-3 bg-gray-950 text-white text-sm font-bold rounded-xl hover:bg-gray-800 active:bg-black transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-[var(--text)] text-white text-sm font-bold rounded-xl hover:bg-[var(--text-secondary)] active:bg-[var(--text-muted)] transition-colors flex items-center justify-center gap-2"
               >
                 <Search size={14} />
                 {t('mahjong.analyzeButton')}
@@ -803,7 +803,7 @@ function MahjongTrainer() {
               <button
                 onClick={handleReset}
                 title={locale === 'zh' ? '重置' : 'Reset'}
-                className="px-4 py-3 border border-black rounded-xl text-black hover:bg-gray-50 hover:text-black transition-colors"
+                className="px-4 py-3 border border-[var(--border)] rounded-xl text-[var(--text)] hover:bg-[var(--primary-light)] transition-colors"
               >
                 <RefreshCw size={15} />
               </button>
@@ -812,7 +812,7 @@ function MahjongTrainer() {
         </div>
 
         {/* ── Tile picker card ── */}
-        <div className="border border-black rounded-2xl p-5 sm:p-6 mb-4 bg-transparent">
+        <div className="border border-[var(--border)] rounded-2xl p-5 sm:p-6 mb-4 bg-transparent">
           <MahjongTilePicker
             allTiles={allTiles}
             totalCount={totalCount}
@@ -832,10 +832,10 @@ function MahjongTrainer() {
         {result && (
           <div ref={resultRef} className="pt-2">
             <div className="flex items-center gap-3 mb-5">
-              <span className="text-[10px] font-black tracking-widest uppercase text-black">
+              <span className="text-[10px] font-black tracking-widest uppercase text-[var(--text)]">
                 {locale === 'zh' ? '分析结果' : 'Analysis'}
               </span>
-              <div className="flex-1 border-t border-black" />
+              <div className="flex-1 border-t border-[var(--border)]" />
             </div>
 
             <Warnings warnings={result.vm.warnings} locale={locale} />
@@ -853,7 +853,7 @@ function MahjongTrainer() {
 
       {/* Tile warning toast */}
       {tileWarning && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-950 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[var(--text)] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-xl whitespace-nowrap">
           {tileWarning}
         </div>
       )}
@@ -862,7 +862,7 @@ function MahjongTrainer() {
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         aria-label={locale === 'zh' ? '返回顶部' : 'Back to top'}
-        className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 w-9 h-9 rounded-full bg-gray-300 text-black flex items-center justify-center hover:bg-gray-400 transition-colors"
+        className="fixed bottom-5 right-4 sm:bottom-7 sm:right-7 z-40 w-9 h-9 rounded-full bg-[var(--primary-hover)] text-[var(--text)] flex items-center justify-center hover:bg-[var(--primary-hover)] transition-colors"
       >
         <ArrowUp size={15} />
       </button>

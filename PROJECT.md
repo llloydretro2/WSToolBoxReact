@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-29 (session 16)
+> Last updated: 2026-05-30 (session 18)
 
 ## Deployment
 
@@ -470,6 +470,94 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### 性能审计 & 资产清理 (2026-05-30 session 18，第二阶段)
+
+#### 性能审计发现的问题（按优先级）
+
+| 优先级 | 问题 | 状态 |
+|---|---|---|
+| 🔴 | `public/assets/character/`+`event/`+`climax/` 共 39MB 无引用资产 | ✅ 已删除，public/ 从 56MB→17MB |
+| 🟠 | PWA 图标缺失（只有 favicon.ico，无 192/512px PNG） | ✅ 已完成 |
+| 🟠 | 背景图对 0.18 透明度过重（~1MB，可压缩至 ~100KB） | ✅ 已完成，缩至 1280×720 + q20，~1MB→196KB |
+| 🟠 | PWA 图标 + index.html CRA 遗留语法修复 | ✅ 已完成 |
+| 🟡 | Simulator 卡图无懒加载 | ✅ 三处 `<img>` 改为 `LazyImage`（结果网格×2、详情 Modal×1） |
+| 🟡 | MahjongTrainer 14 个子组件无 `React.memo` | ✅ 8 个重渲染敏感组件加 memo，FixedHandBar/RouteCard 相关 callbacks 加 useCallback，测试 279/279 通过。Bug 修复：`useCallback` 漏加 import 导致白屏，已补。 |
+| 🟢 | Record.jsx 两个 useEffect 无 cleanup | ✅ 误报——实际只有 1 个 useEffect 且是同步 localStorage 读取，无需 cleanup |
+| 🟢 | `chunkSizeWarningLimit: 1000` 过高抑制警告 | ✅ 改回默认值 500，构建时 MUI chunk 警告重新可见 |
+
+---
+
+### 主页 SectionCard 视觉优化 (2026-05-30 session 18)
+
+- **Accent 色对齐分区主题**：`siteStructure.js` 中三个分区的 accent 色更新为各自 `--text-muted` 值——WS `#4f9b78`→`#277d0e`（harlequin-700）、麻将 `#d26a6a`→`#be1e3e`（cardinal-700）、工具 `#5b84d6`→`#27553f`（spring-rain-700）。工具分区原本是蓝色，现已对齐绿色主题。
+- **蒙版加白提升可读性**：白色蒙版从 `rgba(255,255,255,0.58)` 提升到 `0.78`，hover 时降至 `0.65`；同时将 `onMouseEnter/onMouseLeave` 命令式 JS 改为 Tailwind `group`/`group-hover:` 纯 CSS 实现，消除 hover 状态卡住的 bug。
+- **布局紧凑化**：Body padding `p-5`→`p-4`，内部间距 `gap-3`→`gap-2`，图标盒 `w-10 h-10`→`w-8 h-8`，描述字号 `text-sm`→`text-xs`，chip 间距 `gap-1.5`→`gap-1`，色条高度 `h-1.5`→`h-1`。
+
+---
+
+### 优化收尾 & 查卡器改进 (2026-05-30 session 18)
+
+#### 性能优化 backlog 清理
+
+- **首页 GitHub commits 缓存**：localStorage + 24 小时 TTL，命中缓存零网络请求，避免 GitHub API 60次/小时限速。
+- **index.css body 死代码**：删除语义错误且永远不生效的 `color: var(--background)` 声明。
+- **NavBar MUI Icons → Lucide**：`ArrowBackIosNewIcon`→`ChevronLeft`、`KeyboardArrowDownIcon`→`ChevronDown`、`MenuIcon`→`Menu`、`CloseIcon`→`X`。NavBar 不再 import `@mui/icons-material`。
+- **LoadingFallback 颜色规范**：inline style 改为 Tailwind className，`color: "#2a5b46"` → `text-[var(--text-muted)]`。
+- **路由背景动画重设计**：移除 `blur(10px)` + scale，改为 opacity + spring scale（stiffness 80/damping 20/mass 0.8）。入场 1.04→1 自然落定，出场 0.2s 快速淡出，纯 GPU 合成。
+- **LazyImage shimmer 骨架**：文字占位符改为 `animate-pulse bg-[var(--card-background)]` 全尺寸 shimmer，条件从 `!isInView` 改为 `!isLoaded`。
+- **字体文件全部清理**：删除 `src/assets/fonts/` 全部 29 个文件（~30MB）及 index.css 4 个 `@font-face` 声明。BIZUDPMincho 因名称不匹配从未实际加载，删除无视觉影响。
+
+#### 移动端 responsive 优化
+
+- **页面顶部间距**：所有页面容器 `py-8 sm:py-10` 拆分为 `pb-8 sm:py-10`（移动端顶部 padding 清零），最终 NavBar pill 到 title 间距约 4px（spacer 64px - pill 底部 60px）。桌面端 `sm:py-10` 不变。涉及 14 个页面文件。
+
+#### 查卡器修复 & 改进
+
+- **稀有度筛选过滤 `-`**：JP `rarityOptions`、EN `options.rarity` 均加 `.filter((v) => v !== "-")`，去除数据库占位值出现在下拉列表中。
+- **CardImage 长宽比自动检测旋转**：废弃基于 `cardType`/`rarity` 的旋转判断，改为 `LazyImage` 的 `onNaturalLoad(w, h)` 回调检测实际图片尺寸，`w > h` 才旋转。React 18 自动批处理保证 `isLoaded` 与 `isLandscape` 同帧更新，零闪烁。JP/EN 两个查卡器同步改造。`LazyImage` 新增 `onNaturalLoad` prop 供外部监听自然尺寸。
+
+---
+
+### 性能优化 & 分区颜色系统 (2026-05-29 session 17)
+
+#### 性能优化
+
+- **死亡依赖清理**：从 `package.json` 移除 18 个未使用依赖（全套图表库 echarts/apexcharts/recharts/@nivo 等、d3、react-draggable、react-zoom-pan-pinch、html2canvas、@mui/x-date-pickers、date-fns 等），删除 114 个 package。`vite.config.js` manualChunks 清理为 react-vendor / mui-vendor / motion-vendor 三项。
+- **OptionsContext 按需加载**：将 `OptionsProvider` 移入 `Router` 内部，使用 `useLocation` + `hasFetchedRef` 实现懒加载——只有进入 `/ws/*` 时才触发 3 个 filter option API 请求，首页/麻将/工具页完全零请求。
+- **LazyImage 优化**：`rootMargin` 从 `50px` 扩大到 `200px`，减少快速滚动时卡片白块弹出；删除无效的 `entry.target.observer?.disconnect()` 代码。
+
+#### 分区颜色系统（`data-section`）
+
+**架构：** 路由切换时由 `RouteBackground`（App.jsx）将 `document.documentElement.dataset.section` 设为当前 section key（`ws` / `mahjong` / `tools` / `hub`）。各分区在 `index.css` 中通过 `[data-section="ws"]` 等选择器覆盖 CSS 变量，实现零 JS、纯 CSS 的主题切换。
+
+**WS 分区 — Harlequin 绿（`[data-section="ws"]`）：**
+- 调色板：harlequin（鲜艳石灰绿），50–950 完整色阶
+- 主色 `--primary` = harlequin-200 (#b9fa9c)，按钮/强调 `--text-muted` = harlequin-700 (#277d0e)
+- WS 页面已全部使用 CSS 变量，变量覆盖自动生效，无需改动组件
+- `PickPacks.jsx`：动画 glow 改用 `color-mix(in srgb, var(--primary-dark) …)` 跟随主题；错误色替换为 `--error`/`--reset` 变量
+
+**麻将分区 — Cardinal 红（`[data-section="mahjong"]`）：**
+- 调色板：cardinal（深红），50–950 完整色阶
+- 删除旧 `.mahjong-black-theme` 全局覆盖，改由 `data-section` 接管
+- `MahjongTrainer.jsx`、`MahjongEfficiency.jsx`、`MahjongTilePicker.jsx`：全部 `text-black`/`border-black`/`bg-black`/`bg-gray-*` 替换为 CSS 变量
+- `FEASIBILITY_CONFIG` borderColor 从硬编码 `#000000` 改为对应变量
+- MahjongTile 牌面颜色（`#111`/`#fff`）保持不动——牌面始终黑白
+
+**主页（hub）：** 沿用默认 Spring Rain 变量，暂无覆盖。
+
+**工具分区（tools）— Spring Rain 新版（`[data-section="tools"]`）：**
+- 调色板：spring-rain 重新定义版（50–950 完整色阶，色值与 hub 默认不同）
+- 主色 `--primary` = spring-rain-200 (#bedcc8)，按钮/强调 `--text-muted` = spring-rain-700 (#27553f)
+- `AudioBoard` slider glow 改用 `color-mix(in srgb, var(--primary) 30%, transparent)`
+
+#### Bug 修复（session 17）
+
+- **OptionsContext StrictMode 竞态**：`hasFetchedRef.current = true` 原本在 fetch 启动时设置，导致 React 18 StrictMode 双 mount 下：第一次 fetch 被 `active = false` 丢弃，第二次 mount 被 ref 拦截不再 fetch，JP 查卡器 level/cost/power 三个范围选项永远显示 Loading。修复：将 `hasFetchedRef.current = true` 移至数据成功写入 state 之后。
+- **PickPacks Stepper `+` 按钮被裁剪**：`<input type="number">` 默认 `min-width: auto` 使 input 无法在 flex 容器内充分收缩，将 `+` 按钮挤到 `overflow-hidden` 范围外不可见。修复：为 input 添加 `min-w-0`。
+- **PickPacks Stepper input 黑色边框**：`<input>` 未设置 `border-0`，浏览器默认边框在 `preflight: false` 下直接透出。修复：添加 `border-0`。同时为 `−`/`+` 按钮添加 `border-r`/`border-l` 分隔线并统一使用 `text-[var(--text-muted)]`。
+
+---
+
 ### WS 筛选体系重构：Neostandard + filter_option (2026-05-29 session 15)
 
 #### filter_option 重命名与清理
@@ -651,11 +739,71 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ## Future backlog
 
+### 性能 & 维护优化（2026-05-29 审计，按优先级排序）
+
+> 以下条目来自一次系统性代码审计。☑ 表示已完成。
+
+#### ★★★ 高优先级（简单、收益大）
+
+- [x] **清理死亡依赖**：`package.json` 中安装但代码中一处都没有 import 的库：所有图表库（`echarts`/`echarts-for-react`、`apexcharts`/`react-apexcharts`、`recharts`、`react-chartjs-2`/`chartjs-plugin-datalabels`、`@nivo/core`/`@nivo/pie`）、数据可视化（`d3`、`d3-interpolate`、`d3-scale-chromatic`）、`react-draggable`、`react-zoom-pan-pinch`、`html2canvas`（Record.jsx 用原生 Canvas API）、`@mui/x-date-pickers`、`@date-io/date-fns`、`date-fns`。同步清理 `vite.config.js` 中对应的 `manualChunks` 条目。删除 114 个 package。
+- [x] **OptionsContext 按需加载**：将 `OptionsProvider` 移入 `Router` 内部以支持 `useLocation`；加 `hasFetchedRef` 确保只 fetch 一次；`isWsRoute` 判断使非 WS 页面（首页/麻将/工具）完全不触发这 3 个请求。
+- [x] **LazyImage rootMargin 扩大**：`rootMargin: “50px”` → `”200px”`，快速滚动时减少图片白块弹出感。同时删除 `entry.target.observer?.disconnect()` 无效代码。
+- [x] **LoadingFallback 硬编码颜色修复**：inline style 全部换为 Tailwind className，颜色改为 `text-[var(--text-muted)]`。
+
+#### ★★★ 颜色系统重设计（部分完成）
+
+> 四分区颜色系统已全部实施完成。
+>
+> | 分区 | 调色板 | 主色 | 按钮/强调 |
+> |---|---|---|---|
+> | `hub`（主页） | Spring Rain 原版 | `#a6ceb6` | `#52675a` |
+> | `ws` | Harlequin 绿 | `#b9fa9c` | `#277d0e` |
+> | `mahjong` | Cardinal 红 | `#f8a9af` | `#be1e3e` |
+> | `tools` | Spring Rain 新版 | `#bedcc8` | `#27553f` |
+>
+> **已完成：**
+> - `data-section` attribute 机制（App.jsx RouteBackground）
+> - `[data-section="ws"]` harlequin 绿变量；`PickPacks` 动画 glow 改用 `color-mix`
+> - `[data-section="mahjong"]` cardinal 红变量；组件全量颜色迁移，删除 `.mahjong-black-theme`
+> - `[data-section="tools"]` spring-rain 新版变量；`AudioBoard` slider glow 改用 `color-mix`
+>
+> **遗留待处理（不阻塞当前功能）：**
+> - [x] `App.jsx` LoadingFallback `#2a5b46` 硬编码 → `var(--text-muted)`
+> - [x] `index.css` body 死代码 `color: var(--background)` 删除
+> - [ ] `Home.jsx` SectionCard accent 色与分区主题色对齐（目前仍硬编码在 `siteStructure.js`）
+> - [ ] `NavBar.jsx` pill Spring Rain 硬编码（`rgba(166,206,182,...)` 等）考虑变量化
+> - [ ] `Record.jsx` canvas export 硬编码 hex（画布渲染，需单独处理）
+
+#### ★★ 中优先级
+
+- [x] **首页 GitHub API 缓存**：`Home.jsx` 改用 localStorage + 24 小时 TTL 缓存 commits 数据。命中缓存时零网络请求；缓存失效才 fetch 并更新；localStorage 不可用时静默降级。
+- [x] **index.css body 死代码清理**：删除语义错误且永远不生效的 `color: var(--background)` 声明。
+- [x] **NavBar MUI Icons → Lucide**：`ArrowBackIosNewIcon`→`ChevronLeft`，`KeyboardArrowDownIcon`→`ChevronDown`，`MenuIcon`→`Menu`，`CloseIcon`→`X`。`style={{ fontSize }}` 改为 `size` prop，颜色/opacity 改为 className。
+- [x] **路由背景过渡动画重设计**：移除 `blur(10px)` + scale 动画，改为 opacity + spring scale（stiffness 80 / damping 20 / mass 0.8）。入场 1.04→1 自然落定，出场 0.2s 快速淡出。纯 GPU 合成，零 blur 计算开销。
+
+#### ★ 低优先级 / 较大改动
+
+- [ ] **JPCardList / ENCardList 共享组件抽取**：两文件各 ~950 行，`CardImage`、`PaginationBar`、`CardDetailModal`、`FilterCombobox`、`ValueListbox`、`RangeSelect` 几乎完全相同。抽到 `src/components/ws/` 下共享可减少约 400 行重复。
+- [x] **LazyImage 改为 shimmer 骨架**：删除文字占位符，改为 `animate-pulse bg-[var(--card-background)]` 全尺寸 shimmer div。条件从 `!isInView` 改为 `!isLoaded`，图片加载期间持续显示。颜色跟随分区主题变化。
+- [x] **未使用字体文件清理**：删除 `src/assets/fonts/` 全部 29 个文件（~30MB）。BIZUDPMincho 因 `@font-face` 名称与代码引用不匹配从未实际加载，与其修复不如删除（修复反而引入 12MB 首次加载开销）。同步清理 index.css 中 4 个死 `@font-face` 声明。
+- [ ] **overflow-x hidden 重复清理**：`html`、`body`、`#root`（CSS）和 `App.jsx` 根 div 各设一遍，多层 `overflow-x: hidden` 在部分浏览器会破坏 `position: sticky`，精简至必要层级。
+- [ ] **页面顶部间距不一致（已知，暂不处理）**：大多数页面顶部 padding 为 0（pill 到 title 约 4px），但 `MahjongTrainer`（`py-2.5`，约 14px）和 `ChessClock`（`py-6`，约 28px）有差异。ChessClock 是全屏布局（`minHeight: 100dvh`），差异有视觉设计意图；MahjongTrainer 的差异是历史遗留。
+- [ ] **页面标题对齐方式（已知，设计合理，无需修改）**：展示型页面（`Home`、`FirstSecond`）标题居中；所有工具/查询类页面（JPCardList、ENCardList、Record、Simulator、PickPacks、RandomShuffle、AudioBoard、Dice、MahjongTrainer、MahjongEfficiency 等）标题左对齐。`Login` 表单内部居中。这种分组符合「展示型居中 / 内容型左对齐」的设计惯例。
+- [x] **移动端页面顶部间距优化**：将所有页面容器的 `py-8 sm:py-10` 拆分为 `pb-8 sm:py-10`（移除移动端顶部 padding），使 title 尽可能靠近 NavBar。移动端 gap 最终为 4px（spacer 64px - pill 底部 60px），桌面端 `sm:py-10` 不变。涉及全部 14 个页面文件。
+
+---
+
 ### Near-term candidates
+
+- **对战记录编辑功能**：需前后端同时改动。后端：`matchRoutes.js` 新增 `PUT /api/matches/update/:id`（authMiddleware + userName 校验，可更新 result/playerDeckName/opponentDeckName/playerSeries/opponentSeries/tournamentName/notes）。前端：`Record.jsx` 每条记录加「编辑」按钮，复用现有创建表单作为预填 dialog，提交走新 PUT 接口。
+
+- **Trigger 图标化显示**：用图标替代文字名称展示 trigger，作用于查卡器筛选选择器和卡片展示两处。图标资源已存在于 `public/assets/triggers/`（soul/gate/shot/standby/choice/bounce/bank/anchor/ticket/wheel/door 等 PNG）。实施步骤：① 建立 trigger 值 → 图标路径的映射表（如 `soul+1`→`soul.png`、`soul+2`→`climaxsoul.png`、`return`→`bounce.png`、`pool`→`bank.png`、`comeback`→`anchor.png`、`draw`→`wheel.png`、`treasure`→`ticket.png`、`discovery`→`magnify.png`）；② `JPCardList`/`ENCardList` 筛选器中 trigger 选项改为图标 chip；③ 卡片详情 Modal 和卡片网格 trigger 字段改为图标行。
+
+- **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
 
 - **移动端 NavBar 实机校验**：当前动画和布局已在代码层收敛，但仍建议用真实手机尺寸重点检查 `/ws/*`、`/mahjong/*`、`/tools/*` 的进入/返回状态：标题是否换行合理、箭头点击区是否足够、下拉菜单是否和品牌区动画冲突。该项不应引入新设计，只做小幅 CSS 微调。
 - **首页组件拆分**：`Home.jsx` 已承担 section card、recent updates、contact links、布局容器等职责。建议先抽出 `SectionCard`、`RecentUpdates`、`ContactLinks` 到 `src/components/home/`，保持现有视觉不变，只降低页面文件复杂度。
-- **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少“移动一个工具但漏改首页/导航/跳转”的风险。
+- **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。
 - **AudioBoard 通用化文案检查**：音效面板已经移到 `/tools/audio`，后续需要确认页面文案、空状态、错误提示不再暗示它只属于 WS。这个优化应以 locale 文案和小范围 UI 文案为主，不改变播放器逻辑。
 
 ### Documentation candidates
