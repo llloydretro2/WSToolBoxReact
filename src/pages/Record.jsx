@@ -416,6 +416,7 @@ const Record = () => {
 	// 自定义日期变更时自动向服务器重新请求
 	useEffect(() => {
 		if (datePreset === "custom" && hasFetchedRef.current) {
+			setVisibleCount(20);
 			setLoading(true);
 			getHistory({ start: startDate, end: endDate });
 		}
@@ -438,6 +439,7 @@ const Record = () => {
 			setAndSaveStartDate(start); setAndSaveEndDate(end);
 		}
 		// 非 custom 预设立即用新日期请求服务器
+		setVisibleCount(20);
 		if (preset !== "custom") {
 			setLoading(true);
 			getHistory({ start, end });
@@ -607,8 +609,8 @@ const Record = () => {
 		);
 	}, [filteredRecords, searchQuery]);
 
-	// 过滤条件变化时重置分页
-	useEffect(() => { setVisibleCount(20); }, [tagFilter, deckFilter, records, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+	// 用户主动改变过滤条件时重置分页（不包含 records，避免编辑/创建/删除误触发）
+	useEffect(() => { setVisibleCount(20); }, [tagFilter, deckFilter, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const totalMatches = searchedRecords.length;
 
@@ -1219,7 +1221,7 @@ const Record = () => {
 								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
 									${formState.result === "win"
 										? "bg-[var(--success)] border-[var(--success)] text-white"
-										: "bg-[rgba(82,183,136,0.12)] border-[rgba(82,183,136,0.4)] text-[#3a9d6e] hover:bg-[rgba(82,183,136,0.2)]"
+										: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
 									}`}>
 								<Trophy size={18} className="hidden sm:block" />
 								{t("record.form.result.win")}
@@ -1230,7 +1232,7 @@ const Record = () => {
 								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
 									${formState.result === "lose"
 										? "bg-[var(--error)] border-[var(--error)] text-white"
-										: "bg-[rgba(224,92,92,0.10)] border-[rgba(224,92,92,0.4)] text-[#c94444] hover:bg-[rgba(224,92,92,0.18)]"
+										: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
 									}`}>
 								<XIcon size={18} className="hidden sm:block" />
 								{t("record.form.result.lose")}
@@ -1241,7 +1243,7 @@ const Record = () => {
 								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
 									${formState.result === "doubleLose"
 										? "bg-[#7b8fa1] border-[#7b8fa1] text-white"
-										: "bg-[rgba(123,143,161,0.10)] border-[rgba(123,143,161,0.4)] text-[#5a6f80] hover:bg-[rgba(123,143,161,0.18)]"
+										: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
 									}`}>
 								<Swords size={18} className="hidden sm:block" />
 								{t("record.form.result.doubleLose")}
