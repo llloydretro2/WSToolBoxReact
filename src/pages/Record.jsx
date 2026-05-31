@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Combobox } from "@headlessui/react";
 import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown, Trash2, TrendingUp, LayoutGrid, Layers, Calendar, ArrowLeftRight, Pencil, Tag, Plus, Check } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { toPng } from "html-to-image";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -268,6 +269,282 @@ TagSelector.propTypes = {
 	onChange:  PropTypes.func.isRequired,
 };
 
+// ── Stats Card Export ─────────────────────────────────────────────────────────
+
+const EXPORT_MODULES = [
+	{ id: "overview",    label: "总战绩",          type: "half" },
+	{ id: "streak",      label: "当前连胜/连败",   type: "half" },
+	{ id: "bestStreak",  label: "历史最长连胜",    type: "half" },
+	{ id: "goesFirst",   label: "先手/後手胜率",   type: "half" },
+	{ id: "topDecks",    label: "最常用卡组 Top3", type: "half" },
+	{ id: "bestDeck",    label: "胜率最高卡组",    type: "half" },
+	{ id: "hardestOpp",  label: "最难对手系列",    type: "half" },
+	{ id: "easiestOpp",  label: "最容易对手系列",  type: "half" },
+	{ id: "topTags",     label: "标签战绩 Top3",   type: "half" },
+	{ id: "trend",       label: "近期胜率走势",    type: "full" },
+];
+
+
+// ── Stats Card (HTML → PNG via html-to-image) ────────────────────────────────
+
+const S = {
+	bg:     "#0d0d0d",
+	mod:    "#1a1a1a",
+	bdr:    "1px solid rgba(255,255,255,0.07)",
+	text:   "#ffffff",
+	muted:  "rgba(255,255,255,0.40)",
+	dim:    "rgba(255,255,255,0.16)",
+	rule:   "rgba(255,255,255,0.08)",
+	radius: 10,
+	pad:    "14px 16px",
+	mb:     10,
+};
+
+function CardLabel({ children }) { // eslint-disable-line react/prop-types
+	return (
+		<div style={{ fontSize: 9, fontWeight: 700, color: S.muted,
+			textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>
+			{children}
+		</div>
+	);
+}
+
+/* eslint-disable react/prop-types */
+function CardTrendChart({ data }) {
+	if (!data || data.length < 2)
+		return <div style={{ fontSize: 11, color: S.muted }}>数据不足，至少需要 2 个时间段</div>;
+	const W = 432, H = 130, pL = 28, pR = 8, pT = 8, pB = 22;
+	const iW = W - pL - pR, iH = H - pT - pB;
+	const pts = data.map((d, i) => ({
+		x: pL + (data.length === 1 ? iW / 2 : (i / (data.length - 1)) * iW),
+		y: pT + iH - (d.winRate / 100) * iH,
+		label: d.label,
+	}));
+	const step = data.length <= 8 ? 1 : data.length <= 14 ? 2 : Math.ceil(data.length / 7);
+	return (
+		<svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+			{[0, 50, 100].map((pct) => {
+				const gy = pT + iH - (pct / 100) * iH;
+				return (
+					<g key={pct}>
+						<line x1={pL} y1={gy} x2={W - pR} y2={gy}
+							stroke={pct === 50 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)"}
+							strokeWidth={pct === 50 ? 1 : 0.5}
+							strokeDasharray={pct === 50 ? "4 3" : undefined} />
+						<text x={pL - 3} y={gy + 3.5} textAnchor="end" fontSize="7.5" fill={S.muted}>{pct}%</text>
+					</g>
+				);
+			})}
+			<polyline points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+				fill="none" stroke="#ffffff" strokeWidth="1.6"
+				strokeLinejoin="round" strokeLinecap="round" />
+			{pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#ffffff" />)}
+			{pts.map((p, i) => {
+				if (i % step !== 0 && i !== pts.length - 1) return null;
+				return <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="7.5" fill={S.muted}>{p.label}</text>;
+			})}
+		</svg>
+	);
+}
+
+/* eslint-enable react/prop-types */
+
+function StatModule({ id, stats }) {
+	const box = { background: S.mod, border: S.bdr, borderRadius: S.radius,
+		padding: S.pad, marginBottom: S.mb };
+	const noData = (msg = "暂无数据") =>
+		<div style={{ fontSize: 11, color: S.muted }}>{msg}</div>;
+
+	if (id === "overview") return (
+		<div style={box}>
+			<CardLabel>总战绩</CardLabel>
+			<div style={{ display: "flex" }}>
+				{[{ v: stats.total, l: "总场数" }, { v: stats.wins, l: "胜" },
+				  { v: stats.losses, l: "负" }, { v: stats.winRate + "%", l: "胜率" }]
+					.map((it, i, arr) => (
+						<div key={i} style={{ flex: 1, textAlign: "center", padding: "0 4px",
+							borderRight: i < arr.length - 1 ? `1px solid ${S.rule}` : "none" }}>
+							<div style={{ fontSize: 22, fontWeight: 700, color: S.text }}>{it.v}</div>
+							<div style={{ fontSize: 10, color: S.muted, marginTop: 4 }}>{it.l}</div>
+						</div>
+					))}
+			</div>
+		</div>
+	);
+
+	if (id === "streak") return (
+		<div style={box}>
+			<CardLabel>当前状态</CardLabel>
+			{!stats.currentStreak ? noData()
+				: <div style={{ fontSize: 26, fontWeight: 700, color: S.text }}>
+					{stats.currentStreak.count}{" "}
+					{stats.currentStreak.result === "win" ? "连胜"
+						: stats.currentStreak.result === "lose" ? "连败" : "连平"}
+				  </div>}
+		</div>
+	);
+
+	if (id === "bestStreak") return (
+		<div style={box}>
+			<CardLabel>历史最长连胜</CardLabel>
+			<div style={{ fontSize: 26, fontWeight: 700, color: S.text }}>
+				{stats.longestWinStreak} <span style={{ fontSize: 14, color: S.muted }}>场</span>
+			</div>
+		</div>
+	);
+
+	if (id === "goesFirst") {
+		const sides = [
+			{ l: "先手", rate: stats.goesFirst.firstRate,  total: stats.goesFirst.firstTotal },
+			{ l: "後手", rate: stats.goesFirst.secondRate, total: stats.goesFirst.secondTotal },
+		];
+		return (
+			<div style={box}>
+				<CardLabel>先手/後手胜率</CardLabel>
+				<div style={{ display: "flex" }}>
+					{sides.map((s, i) => (
+						<div key={i} style={{ flex: 1, textAlign: "center",
+							borderRight: i === 0 ? `1px solid ${S.rule}` : "none", padding: "0 8px" }}>
+							<div style={{ fontSize: 10, color: S.muted, marginBottom: 6 }}>{s.l}</div>
+							<div style={{ fontSize: 24, fontWeight: 700, color: S.text }}>
+								{s.total > 0 ? `${s.rate}%` : "—"}
+							</div>
+							<div style={{ fontSize: 10, color: S.dim, marginTop: 4 }}>{s.total} 场</div>
+						</div>
+					))}
+				</div>
+			</div>
+		);
+	}
+
+	if (id === "topDecks") return (
+		<div style={box}>
+			<CardLabel>最常用卡组 Top 3</CardLabel>
+			{!stats.topDecks.length ? noData() : stats.topDecks.slice(0, 3).map((d, i) => (
+				<div key={i} style={{ display: "flex", justifyContent: "space-between",
+					alignItems: "flex-start", marginBottom: i < 2 ? 10 : 0 }}>
+					<div>
+						<div style={{ fontSize: 11, fontWeight: 700, color: S.text }}>{d.series}</div>
+						<div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>{d.deck}</div>
+					</div>
+					<div style={{ fontSize: 10, color: S.muted, whiteSpace: "nowrap", marginLeft: 8, paddingTop: 2 }}>
+						{d.total}场 &nbsp;{d.winRate}%
+					</div>
+				</div>
+			))}
+		</div>
+	);
+
+	if (id === "bestDeck") return (
+		<div style={box}>
+			<CardLabel>胜率最高卡组</CardLabel>
+			{!stats.bestDeck ? noData("暂无数据（需 ≥3 场）") : (
+				<>
+					<div style={{ fontSize: 28, fontWeight: 700, color: S.text, marginBottom: 8 }}>
+						{stats.bestDeck.winRate}%
+					</div>
+					<div style={{ fontSize: 12, fontWeight: 700, color: S.text }}>{stats.bestDeck.series}</div>
+					<div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>{stats.bestDeck.deck}</div>
+				</>
+			)}
+		</div>
+	);
+
+	if (id === "hardestOpp") return (
+		<div style={box}>
+			<CardLabel>最难对手系列</CardLabel>
+			{!stats.hardestOpp ? noData("暂无数据（需 ≥3 场）") : (
+				<>
+					<div style={{ fontSize: 28, fontWeight: 700, color: S.text, marginBottom: 8 }}>
+						{stats.hardestOpp.winRate}%
+					</div>
+					<div style={{ fontSize: 12, fontWeight: 700, color: S.text }}>{stats.hardestOpp.name}</div>
+					<div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>{stats.hardestOpp.total} 场</div>
+				</>
+			)}
+		</div>
+	);
+
+	if (id === "easiestOpp") return (
+		<div style={box}>
+			<CardLabel>最容易对手系列</CardLabel>
+			{!stats.easiestOpp ? noData("暂无数据（需 ≥3 场）") : (
+				<>
+					<div style={{ fontSize: 28, fontWeight: 700, color: S.text, marginBottom: 8 }}>
+						{stats.easiestOpp.winRate}%
+					</div>
+					<div style={{ fontSize: 12, fontWeight: 700, color: S.text }}>{stats.easiestOpp.name}</div>
+					<div style={{ fontSize: 10, color: S.muted, marginTop: 2 }}>{stats.easiestOpp.total} 场</div>
+				</>
+			)}
+		</div>
+	);
+
+	if (id === "topTags") return (
+		<div style={box}>
+			<CardLabel>标签战绩 Top 3</CardLabel>
+			{!stats.topTags.length ? noData() : stats.topTags.slice(0, 3).map((tg, i) => (
+				<div key={i} style={{ display: "flex", justifyContent: "space-between",
+					alignItems: "center", marginBottom: i < 2 ? 10 : 0 }}>
+					<div style={{ fontSize: 11, fontWeight: 700, color: S.text }}>{tg.name}</div>
+					<div style={{ fontSize: 10, color: S.muted }}>{tg.total}场 &nbsp;{tg.winRate}%</div>
+				</div>
+			))}
+		</div>
+	);
+
+	if (id === "trend") return (
+		<div style={box}>
+			<CardLabel>近期胜率走势</CardLabel>
+			<CardTrendChart data={stats.trendData} />
+		</div>
+	);
+
+	return null;
+}
+
+StatModule.propTypes = { id: PropTypes.string.isRequired, stats: PropTypes.object.isRequired };
+
+function StatsCardView({ selectedIds, stats, username, dateLabel, cardRef }) {
+	const ordered = EXPORT_MODULES.filter((m) => selectedIds.includes(m.id));
+	return (
+		<div ref={cardRef} style={{
+			width: 480, background: S.bg, padding: 24,
+			fontFamily: "system-ui, -apple-system, sans-serif",
+			boxSizing: "border-box",
+		}}>
+			{/* Header */}
+			<div style={{ marginBottom: 16 }}>
+				<div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+					<div style={{ fontSize: 18, fontWeight: 700, color: S.text }}>{username || "战绩卡片"}</div>
+					<div style={{ fontSize: 10, color: S.muted, marginTop: 4 }}>{dateLabel}</div>
+				</div>
+				<div style={{ fontSize: 10, color: S.muted, marginTop: 4 }}>cardtoolbox.org</div>
+			</div>
+			<div style={{ height: 1, background: S.rule, marginBottom: 12 }} />
+
+			{/* Modules */}
+			{ordered.map((m) => <StatModule key={m.id} id={m.id} stats={stats} />)}
+
+			{/* Footer */}
+			<div style={{ height: 1, background: S.rule, marginTop: 4, marginBottom: 12 }} />
+			<div style={{ display: "flex", justifyContent: "space-between" }}>
+				<span style={{ fontSize: 9, color: S.dim }}>cardtoolbox.org</span>
+				<span style={{ fontSize: 9, color: S.dim }}>@{username || "user"}</span>
+			</div>
+		</div>
+	);
+}
+
+StatsCardView.propTypes = {
+	selectedIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+	stats:       PropTypes.object.isRequired,
+	username:    PropTypes.string,
+	dateLabel:   PropTypes.string,
+	cardRef:     PropTypes.object,
+};
+
+
 const Record = () => {
 	const { t } = useLocale();
 	const { user } = useAuth();
@@ -407,6 +684,8 @@ const Record = () => {
 	}, []);
 	const [deleteDialog, setDeleteDialog] = useState({ open: false, record: null });
 	const [resetDialogOpen, setResetDialogOpen] = useState(false);
+	const [exportDialog, setExportDialog] = useState({ open: false, step: "select", selected: EXPORT_MODULES.map((m) => m.id) });
+	const cardRef = useRef(null);
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
 
@@ -786,6 +1065,56 @@ const Record = () => {
 			}))
 			.sort((a, b) => b.total - a.total);
 	}, [searchedRecords]);
+
+	const getCardStats = () => {
+		const oppMin = opponentSeriesWinRate.filter((s) => s.total >= 3);
+		const goesFirstRecs  = searchedRecords.filter((r) => r.goesFirst === true);
+		const goesSecondRecs = searchedRecords.filter((r) => r.goesFirst === false);
+		const gfRate = (recs) => recs.length === 0 ? 0
+			: Math.round(recs.filter((r) => r.result === "win").length / recs.length * 100);
+		return {
+			total: totalMatches, wins, losses, winRate, currentStreak, longestWinStreak,
+			goesFirst: {
+				firstRate:   gfRate(goesFirstRecs),  firstTotal:  goesFirstRecs.length,
+				secondRate:  gfRate(goesSecondRecs), secondTotal: goesSecondRecs.length,
+			},
+			topDecks:   deckData.slice(0, 3),
+			bestDeck:   [...deckData].sort((a, b) => parseFloat(b.winRate) - parseFloat(a.winRate)).find((d) => d.total >= 3) || null,
+			hardestOpp: [...oppMin].sort((a, b) => parseFloat(a.winRate) - parseFloat(b.winRate))[0] || null,
+			easiestOpp: [...oppMin].sort((a, b) => parseFloat(b.winRate) - parseFloat(a.winRate))[0] || null,
+			topTags:    tournamentData.slice(0, 3),
+			trendData,
+		};
+	};
+
+	const getDateLabel = () =>
+		datePreset === "all"    ? "全部记录"
+		: datePreset === "7d"  ? "近 7 天"
+		: datePreset === "30d" ? "近 30 天"
+		: startDate && endDate
+			? `${startDate.toLocaleDateString()} – ${endDate.toLocaleDateString()}`
+			: "自定义";
+
+	const handleExportCard = async () => {
+		// 等待隐藏元素完成渲染
+		await new Promise((r) => setTimeout(r, 100));
+		if (!cardRef.current) return;
+		try {
+			const dataUrl = await toPng(cardRef.current, {
+				pixelRatio: 2,
+				backgroundColor: "#0d0d0d",
+				// 明确指定元素完整尺寸，忽略视口裁切
+				width:  cardRef.current.offsetWidth,
+				height: cardRef.current.offsetHeight,
+			});
+			const link = document.createElement("a");
+			link.download = `stats-${user?.username || "card"}.png`;
+			link.href = dataUrl;
+			link.click();
+		} catch (err) {
+			console.error("导出失败:", err);
+		}
+	};
 
 	const resetForm = () => {
 		setFormState({
@@ -1470,7 +1799,89 @@ const Record = () => {
 						)}
 					</div>
 
-					{/* ── Edit dialog ───────────────────────────── */}
+					{/* ── Export dialog ─────────────────────────── */}
+				{exportDialog.open && exportDialog.step === "select" && (
+					<div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+						onClick={() => setExportDialog((d) => ({ ...d, open: false, step: "select" }))}>
+						<div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4"
+							onClick={(e) => e.stopPropagation()}>
+							<p className="text-base font-bold text-[var(--text)]">{t("record.export.title")}</p>
+							<div className="flex flex-col gap-1.5">
+								{EXPORT_MODULES.map((m) => (
+									<label key={m.id} className="flex items-center gap-3 cursor-pointer py-1">
+										<input
+											type="checkbox"
+											checked={exportDialog.selected.includes(m.id)}
+											onChange={(e) => setExportDialog((d) => ({
+												...d,
+												selected: e.target.checked
+													? [...d.selected, m.id]
+													: d.selected.filter((id) => id !== m.id),
+											}))}
+											className="w-4 h-4 accent-[var(--text-muted)]"
+										/>
+										<span className="text-sm text-[var(--text)]">{m.label}</span>
+									</label>
+								))}
+							</div>
+							<div className="flex gap-2 pt-1">
+								<button onClick={() => setExportDialog((d) => ({ ...d, open: false, step: "select" }))}
+									className="flex-1 py-2 rounded-xl border border-[var(--border)] text-sm font-bold text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+									{t("record.export.cancel")}
+								</button>
+								<button
+									onClick={() => setExportDialog((d) => ({ ...d, step: "preview" }))}
+									disabled={exportDialog.selected.length === 0}
+									className="flex-1 py-2 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold hover:bg-[var(--text-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+									{t("record.export.preview")}
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{exportDialog.open && exportDialog.step === "preview" && (
+					<div className="fixed inset-0 z-[9998] flex flex-col bg-[#111]">
+						{/* Preview toolbar */}
+						<div className="flex items-center justify-between px-5 py-3 border-b border-white/10 shrink-0">
+							<button
+								onClick={() => setExportDialog((d) => ({ ...d, step: "select" }))}
+								className="flex items-center gap-1.5 text-sm font-bold text-white/60 hover:text-white transition-colors">
+								<ChevronDown size={14} className="-rotate-90" />
+								{t("record.export.back")}
+							</button>
+							<button
+								onClick={handleExportCard}
+								className="px-4 py-1.5 rounded-full bg-white text-[#111] text-sm font-bold hover:bg-white/80 transition-colors">
+								{t("record.export.save")}
+							</button>
+						</div>
+						{/* Scrollable preview (display only, no ref) */}
+						<div className="flex-1 overflow-y-auto flex justify-center py-8 px-4">
+							<StatsCardView
+								selectedIds={exportDialog.selected}
+								stats={getCardStats()}
+								username={user?.username}
+								dateLabel={getDateLabel()}
+							/>
+						</div>
+					</div>
+				)}
+
+				{/* ── Off-screen full-size card for export (always rendered when preview open) ── */}
+				{exportDialog.open && exportDialog.step === "preview" && (
+					<div style={{ position: "fixed", left: "-9999px", top: 0, pointerEvents: "none", opacity: 0, zIndex: -1 }}>
+						<StatsCardView
+							cardRef={cardRef}
+							selectedIds={exportDialog.selected}
+							stats={getCardStats()}
+							username={user?.username}
+							dateLabel={getDateLabel()}
+						/>
+					</div>
+				)}
+
+				{/* ── Edit dialog ───────────────────────────── */}
 				{editDialog.open && (
 					<div
 						className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
@@ -1772,6 +2183,12 @@ const Record = () => {
 									</button>
 								))}
 							</div>
+							<button
+								onClick={() => setExportDialog((d) => ({ ...d, open: true }))}
+								className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[var(--border)] bg-white/60 backdrop-blur-sm text-[11px] font-bold text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:bg-white/90 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-150">
+								<Layers size={13} />
+								{t("record.export.button")}
+							</button>
 						</div>
 						{searchedRecords.slice(0, visibleCount).map((record) => (
 								<div

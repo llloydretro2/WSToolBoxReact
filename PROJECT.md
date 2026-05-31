@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-30 (session 33)
+> Last updated: 2026-05-30 (session 34)
 
 ## Deployment
 
@@ -467,6 +467,38 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
   - section 简介保留为一句概览文案，不列出所有工具；具体工具交给 chips 展示。
 - **Locale 约束**：`zh.json` / `en.json` 只保留 section 名称和一句简介，不维护 `5 个工具`、`4 tools` 或工具清单。
 - **清理项**：删除/避免使用 `pages.home.*.count` 这类易过期 key；移动工具时只改 `siteStructure.js`，首页自动更新。
+
+---
+
+### 对战记录页 Phase 3 完成 + Phase 4 P5 战绩卡片导出 (2026-05-31 session 31–34)
+
+#### Phase 3 完成
+
+- **P2 列表分页** ✅：「加载更多」每次追加 20 条；修复编辑/删除/创建误触发分页重置 bug（移除 records 依赖，改为 applyPreset 和自定义日期变更时显式重置）
+- **P3 关键字搜索** ✅：实时匹配 6 个字段，统计条和分析弹窗均跟随搜索结果
+
+#### Phase 4 — P5 战绩卡片导出
+
+采用 **html-to-image**（~50KB）替代手写 Canvas 方案，根本解决了 Canvas 路径坐标导致的形变 bug。
+
+**技术架构：**
+- `StatsCardView`：纯 React 组件 + inline styles，暗色主题（`#0d0d0d` 背景）
+- `StatModule`：10 个模块各自独立组件，flexbox 布局，不会溢出
+- `CardTrendChart`：内联 SVG 折线图
+- `toPng(offscreenRef, { pixelRatio: 2 })`：截图脱离视口的隐藏容器，避免 overflow 裁切
+
+**10 个可选模块：** 总战绩 / 当前连胜状态 / 历史最长连胜 / 先手後手胜率 / 最常用卡组 Top3 / 胜率最高卡组 / 最难/最容易对手系列 / 标签战绩 Top3 / 近期走势图
+
+**导出流程（两步）：**
+1. 弹窗勾选模块 → 点「预览」
+2. 全屏黑色预览界面（可滚动查看完整卡片）→ 点「保存 PNG」
+
+**截图不截断的关键设计：** 隐藏容器 `position: fixed; left: -9999px` 脱离视口，与可见预览分开渲染；明确传 `width/height` 给 toPng；导出前等待 100ms 确保渲染完成。
+
+#### 其他优化
+
+- 创建表单胜负选择器：未选中状态改为无色（与先手/後手按钮风格一致）
+- 分页重置 bug root cause fix
 
 ---
 
@@ -979,21 +1011,21 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   **P8d 分析弹窗标签 Tab**：原「赛事」Tab 改为按标签分组统计（方案 X，重复计数）
   ---
 
-  **Phase 3 — 前端增强功能**（进行中）
+  **Phase 3 — 前端增强功能** ✅ 完成（2026-05-30）
 
   - **P2 列表分页** ✅：前端「加载更多」，每次追加 20 条，过滤条件变化自动重置
   - **P3 关键字搜索** ✅：搜索框实时过滤，匹配 6 个字段，统计条和分析弹窗均跟随搜索结果
-    - 方向 A（客户端 useMemo）：全量已加载，无需后端改动，输入即时响应
-    - 方向 B（服务端 ?q= + $regex）：适合已引入服务端分页的场景
-    - **决策原则**：P2 完成后若仍全量加载选方向 A，否则选方向 B
-  - **P4 扩展统计分析** 🔄：待定，根据使用中发现的需求再决定
 
   ---
 
-  **Phase 4 — 创意功能**（设计讨论后再开工）
+  **Phase 4 — 创意功能**（进行中）
 
   - **P5 可组合式战绩档案图片导出**：用户勾选统计组件组合后导出 PNG（Canvas API）；组件种类、布局、风格待设计讨论
   - **P9 赛季总结报告**：每月/赛季末生成图文总结（Canvas），类似 Spotify Wrapped；是否与 P5 共用组件待定
+
+  **Phase 5 — 未来功能扩展**（根据实际使用需求再决定）
+
+  - **P4 扩展统计分析**：在现有 6 个分析 Tab 基础上新增维度；具体模块待使用中发现真实需求后再定，不提前设计。候选方向：赛事专项分析、时间段对比、对手卡组追踪、矩阵增强（按先後手分开）等
 
 - **Trigger 图标化显示**：用图标替代文字名称展示 trigger，作用于查卡器筛选选择器和卡片展示两处。图标资源已存在于 `public/assets/triggers/`（soul/gate/shot/standby/choice/bounce/bank/anchor/ticket/wheel/door 等 PNG）。实施步骤：① 建立 trigger 值 → 图标路径的映射表（如 `soul+1`→`soul.png`、`soul+2`→`climaxsoul.png`、`return`→`bounce.png`、`pool`→`bank.png`、`comeback`→`anchor.png`、`draw`→`wheel.png`、`treasure`→`ticket.png`、`discovery`→`magnify.png`）；② `JPCardList`/`ENCardList` 筛选器中 trigger 选项改为图标 chip；③ 卡片详情 Modal 和卡片网格 trigger 字段改为图标行。
 

@@ -407,6 +407,14 @@
         "opponentSeries": "对手系列"
       }
     },
+    "export": {
+      "button": "导出战绩卡片",
+      "title": "选择导出模块",
+      "cancel": "取消",
+      "preview": "预览",
+      "back": "返回",
+      "save": "保存 PNG"
+    },
     "edit": {
       "button": "编辑记录",
       "title": "编辑记录",

@@ -407,6 +407,14 @@
         "opponentSeries": "Opponent series"
       }
     },
+    "export": {
+      "button": "Export stats card",
+      "title": "Select modules to export",
+      "cancel": "Cancel",
+      "preview": "Preview",
+      "back": "Back",
+      "save": "Save PNG"
+    },
     "edit": {
       "button": "Edit record",
       "title": "Edit Record",
