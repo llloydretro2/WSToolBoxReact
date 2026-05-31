@@ -62,7 +62,8 @@ const PageTransition = ({ children }) => {
 					minHeight: "100%",
 					flexGrow: 1,
 					overflow: "visible",
-					py: { xs: 3, md: 4 },
+					pt: { xs: 0, md: 4 },
+					pb: { xs: 3, md: 4 },
 				}}>
 				{children}
 			</Box>

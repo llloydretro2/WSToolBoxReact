@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import PropTypes from "prop-types";
 import { useLocale } from "../contexts/LocaleContext";
 import {
 	Play, Pause, SkipBack, SkipForward,
@@ -52,6 +53,17 @@ function RangeInput({ value, min = 0, max = 1, step = 0.01, onChange, onMouseDow
 		/>
 	);
 }
+
+RangeInput.propTypes = {
+	value:       PropTypes.number.isRequired,
+	min:         PropTypes.number,
+	max:         PropTypes.number,
+	step:        PropTypes.number,
+	onChange:    PropTypes.func.isRequired,
+	onMouseDown: PropTypes.func,
+	onTouchStart: PropTypes.func,
+	className:   PropTypes.string,
+};
 
 export default function AudioBoardV2() {
 	const { t } = useLocale();

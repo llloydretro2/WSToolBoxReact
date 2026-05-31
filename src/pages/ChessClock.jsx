@@ -26,7 +26,7 @@ export default function ChessClockV2() {
 			if (typeof d.p2Seconds === "number") setP2Seconds(d.p2Seconds);
 			if (d.side === 1 || d.side === 2) setSide(d.side);
 			if (typeof d.isRunning === "boolean") setIsRunning(d.isRunning);
-		} catch {}
+		} catch { /* localStorage not available */ }
 	}, []);
 
 	// Tick
@@ -65,6 +65,7 @@ export default function ChessClockV2() {
 
 	const total = formatTime(p1Seconds + p2Seconds);
 
+	// eslint-disable-next-line react/prop-types
 	const PlayerPanel = ({ id }) => {
 		const isActive = isRunning && side === id;
 		const time = formatTime(id === 1 ? p1Seconds : p2Seconds);

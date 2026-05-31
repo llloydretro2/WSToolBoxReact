@@ -256,6 +256,12 @@
       "create": "Create Record",
       "query": "Query Records"
     },
+    "filter": {
+      "all": "All",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "custom": "Custom"
+    },
     "form": {
       "matchName": "Match Name (Optional)",
       "notes": "Notes (Optional)",
@@ -264,9 +270,18 @@
       "opponentDeckName": "Opponent Deck Name",
       "opponentSeries": "Opponent Series",
       "resultLabel": "Result",
+      "tagsLabel": "Tags",
+      "goesFirst": {
+        "label": "Going First/Second",
+        "first": "First",
+        "second": "Second",
+        "unset": "Unset"
+      },
       "startDate": "Start Date",
       "endDate": "End Date",
       "filterButton": "Filter",
+      "refreshButton": "Refresh records",
+      "renameButton": "Batch rename",
       "myInfo": "My Information",
       "opponentInfo": "Opponent Information",
       "submitButton": "Submit",
@@ -280,6 +295,7 @@
     "display": {
       "noRecords": "No match records",
       "startFirst": "Start your first match!",
+      "loadMore": "Load more (showing {{current}} of {{total}})",
       "noFilterResults": "No records for this deck in the current date range",
       "clearFilter": "Clear filter",
       "myDeck": "My Deck",
@@ -321,6 +337,8 @@
       "winRateLabel": "Win Rate",
       "analysisTitle": "Match Analysis",
       "tabForm": "Form",
+      "goesFirstTitle": "First/Second Win Rate",
+      "matchesUnit": "games",
       "tabMySeries": "My Side",
       "tabOpponentSeries": "Opponent",
       "recentFormTitle": "Recent Form",
@@ -349,6 +367,8 @@
       "trendNotEnough": "Need at least 2 time periods of data",
       "tabTournament": "Events",
       "tournamentDesc": "Grouped by event name (records with event names only) — win rate from my perspective",
+      "tabTags": "Tags",
+      "tagsDesc": "Grouped by tag — a record with multiple tags contributes to each. Records without tags are excluded.",
       "tabDeck": "Deck",
       "deckDesc": "Grouped by my deck name — compare win rates across different builds in the same series. Click any row to filter records to that deck.",
       "deckFilterLabel": "Active filter"
@@ -363,6 +383,52 @@
       "legendFull": "{{series}} ({{count}} entries, {{percentage}}%)",
       "legendShort": "{{count}} entries ({{percentage}}%)",
       "legendCount": "{{count}} entries"
+    },
+    "search": {
+      "placeholder": "Search decks, series, notes, tags…"
+    },
+    "rename": {
+      "button": "Batch rename",
+      "title": "Batch Rename",
+      "subtitle": "Replace a field value across all matching records",
+      "field": "Field",
+      "oldValue": "Current name",
+      "newValue": "New name",
+      "oldPlaceholder": "Enter the name to replace",
+      "newPlaceholder": "Enter new name",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "success": "{{count}} records updated",
+      "error": "Rename failed, please try again",
+      "fields": {
+        "playerDeckName": "My deck name",
+        "opponentDeckName": "Opponent deck name",
+        "playerSeries": "My series",
+        "opponentSeries": "Opponent series"
+      }
+    },
+    "edit": {
+      "button": "Edit record",
+      "title": "Edit Record",
+      "cancel": "Cancel",
+      "confirm": "Save",
+      "success": "Record updated",
+      "error": "Update failed, please try again"
+    },
+    "tags": {
+      "panelButton": "Tag management",
+      "panelTitle": "Tag Library",
+      "inputPlaceholder": "New tag name",
+      "empty": "No tags yet. Type a name and press Enter to create one.",
+      "confirmDelete": "Deleting \"{{name}}\" will also remove it from all records. Confirm?",
+      "yes": "Confirm",
+      "no": "Cancel",
+      "createError": "Create failed, please try again",
+      "existsError": "Tag already exists",
+      "deleteSuccess": "Tag deleted",
+      "deleteError": "Delete failed, please try again",
+      "renameSuccess": "Tag renamed",
+      "renameError": "Rename failed, please try again"
     },
     "deleteDialog": {
       "title": "Confirm Delete",

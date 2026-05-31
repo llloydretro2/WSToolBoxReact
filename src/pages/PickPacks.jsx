@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import seedrandom from "seedrandom";
 import { useLocale } from "../contexts/LocaleContext";
 import packImage from "../assets/765_box.png";
@@ -82,6 +83,18 @@ function generateFixedBaziSeed() {
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
+Toast.propTypes = {
+	message: PropTypes.string,
+	onClose: PropTypes.func.isRequired,
+};
+
+Stepper.propTypes = {
+	label:    PropTypes.string.isRequired,
+	value:    PropTypes.number.isRequired,
+	onChange: PropTypes.func.isRequired,
+	min:      PropTypes.number,
+};
+
 export default function PickPacksV2() {
 	const { t } = useLocale();
 	const [totalPacks, setTotalPacks] = useState("");

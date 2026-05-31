@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
 import { Combobox } from "@headlessui/react";
 import { ChevronDown, Dices, X, RotateCcw } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
@@ -202,6 +203,23 @@ function SectionEyebrow({ label }) {
 }
 
 // ── Main ───────────────────────────────────────────────────────────────────────
+
+SectionEyebrow.propTypes = {
+	label: PropTypes.string.isRequired,
+};
+
+ProductCombobox.propTypes = {
+	value:       PropTypes.string,
+	onChange:    PropTypes.func.isRequired,
+	options:     PropTypes.arrayOf(PropTypes.string).isRequired,
+	placeholder: PropTypes.string,
+};
+
+CardDetailModal.propTypes = {
+	card:    PropTypes.object,
+	onClose: PropTypes.func.isRequired,
+	t:       PropTypes.func.isRequired,
+};
 
 export default function SimulatorV2() {
 	const { t } = useLocale();

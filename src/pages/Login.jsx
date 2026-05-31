@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useLocation, useNavigate } from "react-router-dom";
 import { User, Lock, Eye, EyeOff, LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
@@ -31,6 +32,12 @@ function Toast({ message, severity, onClose }) {
 }
 
 // ── LoginPage ──────────────────────────────────────────────────────────────────
+
+Toast.propTypes = {
+	message:  PropTypes.string,
+	severity: PropTypes.string,
+	onClose:  PropTypes.func.isRequired,
+};
 
 export default function LoginPage() {
 	const { t } = useLocale();

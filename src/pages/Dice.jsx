@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 import { Plus, RotateCcw, Dices, Trash2 } from "lucide-react";
 import { useLocale } from "../contexts/LocaleContext";
 
@@ -100,6 +101,28 @@ function DiceResult({ value, isMax, multiDice }) {
 		</div>
 	);
 }
+
+Stepper.propTypes = {
+	value:    PropTypes.number.isRequired,
+	onChange: PropTypes.func.isRequired,
+	min:      PropTypes.number,
+	max:      PropTypes.number,
+	label:    PropTypes.string,
+};
+
+DiceRow.propTypes = {
+	input:    PropTypes.shape({ sides: PropTypes.number, count: PropTypes.number }).isRequired,
+	index:    PropTypes.number.isRequired,
+	onChange: PropTypes.func.isRequired,
+	onRemove: PropTypes.func.isRequired,
+	canRemove: PropTypes.bool.isRequired,
+};
+
+DiceResult.propTypes = {
+	value:     PropTypes.number.isRequired,
+	isMax:     PropTypes.bool.isRequired,
+	multiDice: PropTypes.bool.isRequired,
+};
 
 export default function DiceV2() {
 	const { t } = useLocale();

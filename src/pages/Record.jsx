@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { Combobox } from "@headlessui/react";
-import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown, Trash2, TrendingUp, LayoutGrid, Layers } from "lucide-react";
+import { Trophy, X as XIcon, Swords, User, RotateCcw, ChevronDown, Trash2, TrendingUp, LayoutGrid, Layers, Calendar, ArrowLeftRight, Pencil, Tag, Plus, Check } from "lucide-react";
+import { DayPicker } from "react-day-picker";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -124,22 +125,170 @@ SeriesCombobox.propTypes = {
 	name: PropTypes.string.isRequired,
 };
 
+const DAY_PICKER_CLASS = {
+	root: "p-4 select-none",
+	months: "flex",
+	month: "w-[280px]",
+	month_caption: "flex items-center justify-between mb-3 px-1",
+	caption_label: "text-sm font-bold text-[var(--text)]",
+	nav: "flex items-center gap-1",
+	button_previous: "p-1.5 rounded-lg hover:bg-[var(--card-background)] text-[var(--text-muted)] transition-colors",
+	button_next: "p-1.5 rounded-lg hover:bg-[var(--card-background)] text-[var(--text-muted)] transition-colors",
+	chevron: "size-4 fill-current",
+	weekdays: "flex mb-1",
+	weekday: "w-10 text-center text-[10px] font-bold text-[var(--text-muted)] py-1",
+	weeks: "space-y-0.5",
+	week: "flex",
+	day: "w-10 h-10 p-0.5",
+	day_button: "w-full h-full rounded-full text-sm text-[var(--text)] hover:bg-[var(--card-background)] transition-colors flex items-center justify-center",
+	today: "font-bold text-[var(--text-muted)]",
+	selected: "!bg-[var(--text-muted)] !text-white hover:!bg-[var(--text-secondary)]",
+	range_start: "!bg-[var(--text-muted)] !text-white hover:!bg-[var(--text-secondary)]",
+	range_end: "!bg-[var(--text-muted)] !text-white hover:!bg-[var(--text-secondary)]",
+	range_middle: "!bg-[var(--primary)] !text-[var(--text-secondary)] !rounded-none hover:!bg-[var(--primary-hover)]",
+	outside: "opacity-30 pointer-events-none",
+	disabled: "opacity-20 cursor-not-allowed pointer-events-none",
+	hidden: "invisible",
+};
+
+function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, t }) {
+	const [open, setOpen] = useState(false);
+
+	const range = { from: startDate || undefined, to: endDate || undefined };
+
+	const handleSelect = (newRange) => {
+		onStartChange(newRange?.from ?? null);
+		if (newRange?.to) {
+			const end = new Date(newRange.to);
+			end.setHours(23, 59, 59, 999);
+			onEndChange(end);
+			if (newRange.from) setOpen(false);
+		} else {
+			onEndChange(null);
+		}
+	};
+
+	const fmt = (d) => d ? `${d.getMonth() + 1}月${d.getDate()}日` : null;
+
+	return (
+		<div className="relative">
+			<button
+				onClick={() => setOpen((v) => !v)}
+				className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--border)] text-sm hover:bg-[var(--card-background)] transition-colors">
+				<Calendar size={14} className="text-[var(--text-muted)] shrink-0" />
+				<span className={startDate ? "text-[var(--text)]" : "text-[var(--text-muted)]"}>
+					{fmt(startDate) ?? t("record.form.startDate")}
+				</span>
+				<span className="text-[var(--text-muted)] shrink-0 px-0.5">—</span>
+				<span className={endDate ? "text-[var(--text)]" : "text-[var(--text-muted)]"}>
+					{fmt(endDate) ?? t("record.form.endDate")}
+				</span>
+				{(startDate || endDate) && (
+					<button
+						onClick={(e) => { e.stopPropagation(); onStartChange(null); onEndChange(null); }}
+						className="ml-auto text-[var(--text-muted)] hover:text-[var(--text)] transition-colors shrink-0">
+						<XIcon size={13} />
+					</button>
+				)}
+			</button>
+
+			{open && (
+				<>
+					<div className="fixed inset-0 z-[100]" onClick={() => setOpen(false)} />
+					<div className="absolute top-full mt-2 left-0 z-[101] bg-white rounded-2xl shadow-xl border border-[var(--border)] overflow-hidden">
+						<DayPicker
+							mode="range"
+							selected={range}
+							onSelect={handleSelect}
+							captionLayout="label"
+							formatters={{
+								formatCaption: (date) => `${date.getFullYear()}年${date.getMonth() + 1}月`,
+								formatWeekdayName: (d) => ["日", "一", "二", "三", "四", "五", "六"][d.getDay()],
+							}}
+							classNames={DAY_PICKER_CLASS}
+						/>
+					</div>
+				</>
+			)}
+		</div>
+	);
+}
+
+DateRangePicker.propTypes = {
+	startDate: PropTypes.instanceOf(Date),
+	endDate:   PropTypes.instanceOf(Date),
+	onStartChange: PropTypes.func.isRequired,
+	onEndChange:   PropTypes.func.isRequired,
+	t: PropTypes.func.isRequired,
+};
+
+function TagSelector({ selected, available, onChange }) {
+	const [open, setOpen] = useState(false);
+	const unselected = available.filter((t) => !selected.includes(t));
+
+	const remove = (tag) => onChange(selected.filter((t) => t !== tag));
+	const add    = (tag) => { onChange([...selected, tag]); setOpen(false); };
+
+	return (
+		<div className="relative">
+			<div className="flex flex-wrap gap-1.5 min-h-[36px] border border-[var(--border)] rounded-lg px-2 py-1.5 bg-transparent">
+				{selected.map((tag) => (
+					<span key={tag} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--card-background)] border border-[var(--border)] text-[11px] font-bold text-[var(--text-muted)]">
+						{tag}
+						<button type="button" onClick={() => remove(tag)} className="hover:text-[var(--reset)] transition-colors"><XIcon size={10} /></button>
+					</span>
+				))}
+				{unselected.length > 0 && (
+					<button type="button" onClick={() => setOpen((v) => !v)}
+						className="flex items-center gap-0.5 px-2 py-0.5 rounded-full border border-dashed border-[var(--border)] text-[11px] text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors">
+						<Plus size={10} /> 添加
+					</button>
+				)}
+			</div>
+			{open && unselected.length > 0 && (
+				<>
+					<div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+					<div className="absolute top-full mt-1 left-0 z-20 bg-white rounded-xl shadow-lg border border-[var(--border)] overflow-hidden min-w-[140px]">
+						{unselected.map((tag) => (
+							<button key={tag} type="button" onClick={() => add(tag)}
+								className="w-full text-left px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+								{tag}
+							</button>
+						))}
+					</div>
+				</>
+			)}
+		</div>
+	);
+}
+
+TagSelector.propTypes = {
+	selected:  PropTypes.arrayOf(PropTypes.string).isRequired,
+	available: PropTypes.arrayOf(PropTypes.string).isRequired,
+	onChange:  PropTypes.func.isRequired,
+};
+
 const Record = () => {
 	const { t } = useLocale();
 	const { user } = useAuth();
 
-	const [records, setRecords] = useState([]);
+	const [rawRecords, setRawRecords] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [tabValue, setTabValue] = useState(0);
+	const hasFetchedRef = useRef(false);
+	const [datePreset, setDatePreset] = useState("all");
 	const [formState, setFormState] = useState({
 		playerDeckName: "",
 		opponentDeckName: "",
 		playerSeries: "",
 		opponentSeries: "",
-		tournamentName: "",
 		notes: "",
 		result: "",
+		goesFirst: null,
+		tags: [],
 	});
+	const [editDialog, setEditDialog] = useState({ open: false, record: null });
+	const [editFormState, setEditFormState] = useState({});
 
 	// 简单的按字段保存到 localStorage 的实现
 	const storagePrefix = "record:";
@@ -184,12 +333,12 @@ const Record = () => {
 				"opponentDeckName",
 				"playerSeries",
 				"opponentSeries",
-				"tournamentName",
 				"notes",
 				"result",
 				"startDate",
 				"endDate",
 				"tabValue",
+				"datePreset",
 			];
 			const restored = {};
 			keys.forEach((k) => {
@@ -218,9 +367,6 @@ const Record = () => {
 				...(restored.opponentSeries
 					? { opponentSeries: restored.opponentSeries }
 					: {}),
-				...(restored.tournamentName
-					? { tournamentName: restored.tournamentName }
-					: {}),
 				...(restored.notes ? { notes: restored.notes } : {}),
 				...(restored.result ? { result: restored.result } : {}),
 			}));
@@ -244,15 +390,187 @@ const Record = () => {
 			) {
 				const v = Number(restored.tabValue) || 0;
 				setTabValue(v);
+				if (v === 1) { getHistory(); fetchTags(); }
+			}
+			if (restored.datePreset && restored.datePreset !== "custom") {
+				// 时间相对预设在恢复时重新计算，不沿用旧的日期值
+				setDatePreset(restored.datePreset);
+			} else if (restored.datePreset === "custom") {
+				setDatePreset("custom");
+				// startDate/endDate 已由上方逻辑恢复
 			}
 		} catch (err) {
 			console.warn("Record: failed to restore per-field draft", err);
 		}
+		// 清理已废弃的 tournamentName localStorage key
+		try { localStorage.removeItem(`${storagePrefix}tournamentName`); } catch (e) { void e; }
 	}, []);
 	const [deleteDialog, setDeleteDialog] = useState({ open: false, record: null });
 	const [resetDialogOpen, setResetDialogOpen] = useState(false);
 	const [startDate, setStartDate] = useState(null);
 	const [endDate, setEndDate] = useState(null);
+
+	// 挂载时加载标签库（创建表单 Tab 0 也需要）
+	useEffect(() => { fetchTags(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// 自定义日期变更时自动向服务器重新请求
+	useEffect(() => {
+		if (datePreset === "custom" && hasFetchedRef.current) {
+			setLoading(true);
+			getHistory({ start: startDate, end: endDate });
+		}
+	}, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const applyPreset = (preset) => {
+		setDatePreset(preset);
+		try { localStorage.setItem(`${storagePrefix}datePreset`, JSON.stringify(preset)); } catch (e) { void e; }
+		let start = null, end = null;
+		if (preset === "all") {
+			setAndSaveStartDate(null);
+			setAndSaveEndDate(null);
+		} else if (preset === "7d") {
+			end = new Date(); end.setHours(23, 59, 59, 999);
+			start = new Date(); start.setDate(start.getDate() - 6); start.setHours(0, 0, 0, 0);
+			setAndSaveStartDate(start); setAndSaveEndDate(end);
+		} else if (preset === "30d") {
+			end = new Date(); end.setHours(23, 59, 59, 999);
+			start = new Date(); start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0);
+			setAndSaveStartDate(start); setAndSaveEndDate(end);
+		}
+		// 非 custom 预设立即用新日期请求服务器
+		if (preset !== "custom") {
+			setLoading(true);
+			getHistory({ start, end });
+		}
+	};
+
+	// 日期过滤由服务端完成，rawRecords 已是过滤后结果
+	const records = rawRecords;
+
+	// 标签管理
+	const [tags, setTags] = useState([]);
+	const [tagsPanel, setTagsPanel] = useState(false);
+	const [newTagInput, setNewTagInput] = useState("");
+	const [editingTag, setEditingTag] = useState(null);
+	const [editingTagValue, setEditingTagValue] = useState("");
+	const [deletingTag, setDeletingTag] = useState(null);
+
+	const fetchTags = async () => {
+		try {
+			const res = await apiRequest("/api/tags");
+			setTags(await res.json());
+		} catch (err) {
+			console.error("获取标签失败:", err);
+		}
+	};
+
+	const handleCreateTag = async () => {
+		if (!newTagInput.trim()) return;
+		try {
+			const res = await apiRequest("/api/tags", {
+				method: "POST",
+				body: JSON.stringify({ name: newTagInput.trim() }),
+			});
+			if (res.status === 409) { showToast(t("record.tags.existsError"), "error"); return; }
+			const data = await res.json();
+			setTags((prev) => [...prev, data.name].sort());
+			setNewTagInput("");
+		} catch (err) {
+			console.error("创建标签失败:", err);
+			showToast(t("record.tags.createError"), "error");
+		}
+	};
+
+	const handleDeleteTag = async (name) => {
+		try {
+			await apiRequest(`/api/tags/${encodeURIComponent(name)}`, { method: "DELETE" });
+			setTags((prev) => prev.filter((t) => t !== name));
+			setRawRecords((prev) => prev.map((r) => ({ ...r, tags: (r.tags || []).filter((tg) => tg !== name) })));
+			setDeletingTag(null);
+			showToast(t("record.tags.deleteSuccess"));
+		} catch (err) {
+			console.error("删除标签失败:", err);
+			showToast(t("record.tags.deleteError"), "error");
+		}
+	};
+
+	const handleRenameTag = async (oldName) => {
+		const newName = editingTagValue.trim();
+		if (!newName || newName === oldName) { setEditingTag(null); return; }
+		try {
+			await apiRequest("/api/tags/rename", {
+				method: "PUT",
+				body: JSON.stringify({ oldName, newName }),
+			});
+			setTags((prev) => prev.map((t) => t === oldName ? newName : t).sort());
+			setRawRecords((prev) => prev.map((r) => ({ ...r, tags: (r.tags || []).map((tg) => tg === oldName ? newName : tg) })));
+			setEditingTag(null);
+			showToast(t("record.tags.renameSuccess"));
+		} catch (err) {
+			if (err?.status === 409) showToast(t("record.tags.existsError"), "error");
+			else showToast(t("record.tags.renameError"), "error");
+			setEditingTag(null);
+		}
+	};
+
+	// 批量重命名对话框
+	const [renameDialog, setRenameDialog] = useState({ open: false, field: "playerDeckName", oldValue: "", newValue: "" });
+	const [toast, setToast] = useState(null);
+
+	const showToast = (message, type = "success") => {
+		setToast({ message, type });
+		setTimeout(() => setToast(null), 3000);
+	};
+
+	const handleBatchRename = async () => {
+		const { field, oldValue, newValue } = renameDialog;
+		if (!oldValue.trim() || !newValue.trim()) return;
+		try {
+			const res = await apiRequest("/api/matches/rename", {
+				method: "PUT",
+				body: JSON.stringify({ field, oldValue: oldValue.trim(), newValue: newValue.trim() }),
+			});
+			const data = await res.json();
+			setRenameDialog({ open: false, field: "playerDeckName", oldValue: "", newValue: "" });
+			setLoading(true);
+			getHistory();
+			showToast(t("record.rename.success", { count: data.modifiedCount }));
+		} catch (err) {
+			console.error("批量重命名失败:", err);
+			showToast(t("record.rename.error"), "error");
+		}
+	};
+
+	const openEdit = (record) => {
+		setEditFormState({
+			playerDeckName:   record.playerDeckName   || "",
+			opponentDeckName: record.opponentDeckName || "",
+			playerSeries:     record.playerSeries     || "",
+			opponentSeries:   record.opponentSeries   || "",
+			result:           record.result           || "",
+			notes:            record.notes            || "",
+			goesFirst:        record.goesFirst        ?? null,
+			tags:             record.tags             || [],
+		});
+		setEditDialog({ open: true, record });
+	};
+
+	const handleSaveEdit = async () => {
+		if (!editDialog.record) return;
+		try {
+			const res = await apiRequest(`/api/matches/update/${editDialog.record._id}`, {
+				method: "PUT",
+				body: JSON.stringify(editFormState),
+			});
+			const updated = await res.json();
+			setRawRecords((prev) => prev.map((r) => r._id === updated._id ? updated : r));
+			setEditDialog({ open: false, record: null });
+			showToast(t("record.edit.success"));
+		} catch (err) {
+			console.error("编辑记录失败:", err);
+			showToast(t("record.edit.error"), "error");
+		}
+	};
 
 	// 分析对话框
 	const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
@@ -260,25 +578,47 @@ const Record = () => {
 	const [seriesSort, setSeriesSort] = useState("total");
 	const [trendPeriod, setTrendPeriod] = useState("month");
 	const [deckFilter, setDeckFilter] = useState(null);
+	const [tagFilter, setTagFilter] = useState(null);
+	const [visibleCount, setVisibleCount] = useState(20);
+	const [searchQuery, setSearchQuery] = useState("");
 
 	const filteredRecords = useMemo(() => {
-		if (!deckFilter) return records;
-		return records.filter(
-			(rec) =>
-				(rec.playerSeries || "") === deckFilter.series &&
-				(rec.playerDeckName || "") === deckFilter.deck
-		);
-	}, [records, deckFilter]);
+		let result = records;
+		if (deckFilter) {
+			result = result.filter(
+				(rec) =>
+					(rec.playerSeries || "") === deckFilter.series &&
+					(rec.playerDeckName || "") === deckFilter.deck
+			);
+		}
+		if (tagFilter) {
+			result = result.filter((rec) => (rec.tags || []).includes(tagFilter));
+		}
+		return result;
+	}, [records, deckFilter, tagFilter]);
 
-	const totalMatches = filteredRecords.length;
+	const searchedRecords = useMemo(() => {
+		const q = searchQuery.trim().toLowerCase();
+		if (!q) return filteredRecords;
+		return filteredRecords.filter((rec) =>
+			[rec.playerDeckName, rec.opponentDeckName,
+			 rec.playerSeries, rec.opponentSeries, rec.notes,
+			 ...(rec.tags || [])].some((v) => v?.toLowerCase().includes(q))
+		);
+	}, [filteredRecords, searchQuery]);
+
+	// 过滤条件变化时重置分页
+	useEffect(() => { setVisibleCount(20); }, [tagFilter, deckFilter, records, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	const totalMatches = searchedRecords.length;
 
 	const wins = useMemo(
-		() => filteredRecords.filter((record) => record.result === "win").length,
-		[filteredRecords]
+		() => searchedRecords.filter((record) => record.result === "win").length,
+		[searchedRecords]
 	);
 	const losses = useMemo(
-		() => filteredRecords.filter((record) => record.result === "lose").length,
-		[filteredRecords]
+		() => searchedRecords.filter((record) => record.result === "lose").length,
+		[searchedRecords]
 	);
 	const winRate = totalMatches
 		? ((wins / totalMatches) * 100).toFixed(1)
@@ -302,12 +642,12 @@ const Record = () => {
 				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
 			}))
 			.sort((a, b) => b.total - a.total);
-	}, [records, t]);
+	}, [searchedRecords, t]);
 
 	const opponentSeriesWinRate = useMemo(() => {
 		const unknownLabel = t("record.display.unknownSeries");
 		const map = {};
-		records.forEach((rec) => {
+		searchedRecords.forEach((rec) => {
 			const key = rec.opponentSeries || unknownLabel;
 			if (!map[key]) map[key] = { total: 0, wins: 0, losses: 0, draws: 0 };
 			map[key].total++;
@@ -322,25 +662,25 @@ const Record = () => {
 				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
 			}))
 			.sort((a, b) => b.total - a.total);
-	}, [records, t]);
+	}, [searchedRecords, t]);
 
-	const recentForm = useMemo(() => records.slice(0, 15).reverse(), [records]);
+	const recentForm = useMemo(() => searchedRecords.slice(0, 15).reverse(), [searchedRecords]);
 
 	const currentStreak = useMemo(() => {
-		if (!records.length) return null;
-		const first = records[0].result;
+		if (!searchedRecords.length) return null;
+		const first = searchedRecords[0].result;
 		let count = 0;
-		for (const rec of records) {
+		for (const rec of searchedRecords) {
 			if (rec.result === first) count++;
 			else break;
 		}
 		return { result: first, count };
-	}, [records]);
+	}, [searchedRecords]);
 
 	const longestWinStreak = useMemo(() => {
-		if (!records.length) return 0;
+		if (!searchedRecords.length) return 0;
 		let max = 0, cur = 0;
-		const sorted = [...records].sort(
+		const sorted = [...searchedRecords].sort(
 			(a, b) => new Date(a.timestamp) - new Date(b.timestamp)
 		);
 		for (const rec of sorted) {
@@ -348,12 +688,12 @@ const Record = () => {
 			else cur = 0;
 		}
 		return max;
-	}, [records]);
+	}, [searchedRecords]);
 
 	const trendData = useMemo(() => {
-		if (!records.length) return [];
+		if (!searchedRecords.length) return [];
 		const groups = {};
-		records.forEach((rec) => {
+		searchedRecords.forEach((rec) => {
 			const date = new Date(rec.timestamp);
 			let key;
 			if (trendPeriod === "week") {
@@ -378,14 +718,14 @@ const Record = () => {
 					? key.slice(5).replace("-", "/")
 					: key.slice(2).replace("-", "/"),
 			}));
-	}, [records, trendPeriod]);
+	}, [searchedRecords, trendPeriod]);
 
 	const matchupMatrix = useMemo(() => {
 		const unknownLabel = t("record.display.unknownSeries");
 		const matrix = {};
 		const mySeriesSet = new Set();
 		const oppSeriesSet = new Set();
-		records.forEach((rec) => {
+		searchedRecords.forEach((rec) => {
 			const ms = rec.playerSeries || unknownLabel;
 			const os = rec.opponentSeries || unknownLabel;
 			mySeriesSet.add(ms);
@@ -398,13 +738,13 @@ const Record = () => {
 		const myRows = [...mySeriesSet].sort();
 		const oppCols = [...oppSeriesSet].sort();
 		return { matrix, myRows, oppCols };
-	}, [records, t]);
+	}, [searchedRecords, t]);
 
 	const deckData = useMemo(() => {
 		const unknownSeries = t("record.display.unknownSeries");
 		const unknownDeck = t("record.display.unknownDeck");
 		const map = {};
-		records.forEach((rec) => {
+		searchedRecords.forEach((rec) => {
 			const series = rec.playerSeries || unknownSeries;
 			const deck = rec.playerDeckName || unknownDeck;
 			const key = `${series}\x00${deck}`;
@@ -423,18 +763,19 @@ const Record = () => {
 				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
 			}))
 			.sort((a, b) => b.total - a.total);
-	}, [records, t]);
+	}, [searchedRecords, t]);
 
 	const tournamentData = useMemo(() => {
 		const map = {};
-		records.forEach((rec) => {
-			if (!rec.tournamentName) return;
-			const key = rec.tournamentName;
-			if (!map[key]) map[key] = { total: 0, wins: 0, losses: 0, draws: 0 };
-			map[key].total++;
-			if (rec.result === "win") map[key].wins++;
-			else if (rec.result === "lose") map[key].losses++;
-			else map[key].draws++;
+		searchedRecords.forEach((rec) => {
+			if (!rec.tags?.length) return;
+			rec.tags.forEach((tag) => {
+				if (!map[tag]) map[tag] = { total: 0, wins: 0, losses: 0, draws: 0 };
+				map[tag].total++;
+				if (rec.result === "win") map[tag].wins++;
+				else if (rec.result === "lose") map[tag].losses++;
+				else map[tag].draws++;
+			});
 		});
 		return Object.entries(map)
 			.map(([name, s]) => ({
@@ -442,7 +783,7 @@ const Record = () => {
 				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
 			}))
 			.sort((a, b) => b.total - a.total);
-	}, [records]);
+	}, [searchedRecords]);
 
 	const resetForm = () => {
 		setFormState({
@@ -451,8 +792,9 @@ const Record = () => {
 			opponentDeckName: "",
 			opponentSeries: "",
 			result: "",
-			tournamentName: "",
 			notes: "",
+			goesFirst: null,
+			tags: [],
 		});
 		setResetDialogOpen(false);
 
@@ -463,7 +805,6 @@ const Record = () => {
 				"opponentDeckName",
 				"playerSeries",
 				"opponentSeries",
-				"tournamentName",
 				"notes",
 				"result",
 				"startDate",
@@ -500,11 +841,11 @@ const Record = () => {
 				}
 			);
 
-			setRecords((prev) =>
+			setRawRecords((prev) =>
 				prev.filter((record) => record._id !== deleteDialog.record._id)
 			);
 			setDeleteDialog({ open: false, record: null });
-			getHistory();
+			getHistory({ start: startDate, end: endDate });
 		} catch (err) {
 			console.error("Failed to delete record:", err);
 		}
@@ -532,6 +873,14 @@ const Record = () => {
 		const ctx = canvas.getContext("2d");
 		ctx.scale(dpr, dpr);
 
+		const cs = getComputedStyle(document.documentElement);
+		const cText          = cs.getPropertyValue("--text").trim();
+		const cTextSecondary = cs.getPropertyValue("--text-secondary").trim();
+		const cTextMuted     = cs.getPropertyValue("--text-muted").trim();
+		const cBorder        = cs.getPropertyValue("--border").trim();
+		const cBackground    = cs.getPropertyValue("--background").trim();
+		const cPrimary       = cs.getPropertyValue("--primary").trim();
+
 		const roundedRect = (x, y, w, h, r) => {
 			ctx.beginPath();
 			ctx.moveTo(x + r, y);
@@ -558,7 +907,7 @@ const Record = () => {
 		ctx.fillRect(0, 0, logicalW, logicalH);
 
 		// Title
-		ctx.fillStyle = "#35443b";
+		ctx.fillStyle = cTextSecondary;
 		ctx.font = "bold 16px sans-serif";
 		ctx.textBaseline = "middle";
 		ctx.fillText(t("record.stats.matchupTitle"), pad, pad + titleH / 2);
@@ -573,7 +922,7 @@ const Record = () => {
 			ctx.save();
 			ctx.translate(cx, pad + titleH + colHeaderH - 10);
 			ctx.rotate(-Math.PI / 4);
-			ctx.fillStyle = "#52675a";
+			ctx.fillStyle = cTextMuted;
 			ctx.font = colFont;
 			ctx.textAlign = "left";
 			ctx.textBaseline = "middle";
@@ -582,7 +931,7 @@ const Record = () => {
 		});
 
 		// Grid lines
-		ctx.strokeStyle = "#e8f0eb";
+		ctx.strokeStyle = cBorder;
 		ctx.lineWidth = 1;
 		myRows.forEach((_, ri) => {
 			const y = startY + ri * cellH;
@@ -599,7 +948,7 @@ const Record = () => {
 			const cy = y + cellH / 2;
 
 			// Row label
-			ctx.fillStyle = "#0c120f";
+			ctx.fillStyle = cText;
 			ctx.font = rowLabelFont;
 			ctx.textAlign = "left";
 			ctx.textBaseline = "middle";
@@ -611,10 +960,10 @@ const Record = () => {
 				const cell = matrix[row]?.[col];
 
 				if (!cell) {
-					ctx.fillStyle = "#f4f8f5";
+					ctx.fillStyle = cBackground;
 					roundedRect(x + 3, y + 4, cellW - 6, cellH - 8, 6);
 					ctx.fill();
-					ctx.fillStyle = "#aac0b0";
+					ctx.fillStyle = cPrimary;
 					ctx.font = "13px sans-serif";
 					ctx.textAlign = "center";
 					ctx.textBaseline = "middle";
@@ -649,7 +998,7 @@ const Record = () => {
 			ctx.fillStyle = `hsla(${hue}, 55%, 45%, 0.88)`;
 			ctx.fillRect(legendStartX + i, legendY, 1, 8);
 		}
-		ctx.fillStyle = "#52675a";
+		ctx.fillStyle = cTextMuted;
 		ctx.font = "10px sans-serif";
 		ctx.textAlign = "right";
 		ctx.textBaseline = "top";
@@ -663,19 +1012,16 @@ const Record = () => {
 		link.click();
 	};
 
-	const getHistory = async () => {
+	const getHistory = async ({ start = startDate, end = endDate } = {}) => {
 		try {
-			const res = await apiRequest(`/api/matches/history`);
+			const params = new URLSearchParams();
+			if (start) params.set("startDate", new Date(start).toISOString());
+			if (end)   params.set("endDate",   new Date(end).toISOString());
+			const qs = params.toString();
+			const res = await apiRequest(`/api/matches/history${qs ? `?${qs}` : ""}`);
 			const data = await res.json();
-
-			// 筛选时间范围
-			const filtered = data.filter((record) => {
-				const time = new Date(record.timestamp).getTime();
-				if (startDate && time < new Date(startDate).getTime()) return false;
-				if (endDate && time > new Date(endDate).getTime()) return false;
-				return true;
-			});
-			setRecords(filtered);
+			setRawRecords(data);
+			hasFetchedRef.current = true;
 		} catch (err) {
 			console.error("Error fetching match records:", err);
 		} finally {
@@ -685,6 +1031,14 @@ const Record = () => {
 
 	return (
 		<div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
+			{/* ── Toast ───────────────────────────────── */}
+			{toast && (
+				<div className={`fixed top-5 left-1/2 -translate-x-1/2 z-[10000] px-4 py-2.5 rounded-xl shadow-lg text-sm font-bold text-white transition-all ${
+					toast.type === "error" ? "bg-[var(--error)]" : "bg-[var(--text-muted)]"
+				}`}>
+					{toast.message}
+				</div>
+			)}
 			<div className="mb-8">
 				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none">
 					{t("record.title")}
@@ -699,7 +1053,8 @@ const Record = () => {
 					<button
 						key={index}
 						onClick={() => {
-							if (index === 1) getHistory();
+							if (index === 1 && !hasFetchedRef.current) getHistory();
+							if (index === 1) fetchTags();
 							setTabValue(index);
 							try {
 								localStorage.setItem(
@@ -737,8 +1092,8 @@ const Record = () => {
 						data.playerSeries = formState.playerSeries.trim();
 						data.opponentSeries = formState.opponentSeries.trim();
 						data.result = formState.result.trim();
-						if (formState.tournamentName.trim())
-							data.tournamentName = formState.tournamentName.trim();
+						data.goesFirst = formState.goesFirst;
+						data.tags = formState.tags;
 						if (formState.notes.trim()) data.notes = formState.notes.trim();
 
 						try {
@@ -750,10 +1105,10 @@ const Record = () => {
 								}
 							);
 							const newRecord = await res.json();
-							setRecords((prev) => [newRecord, ...prev]);
+							setRawRecords((prev) => [newRecord, ...prev]);
 							setTabValue(1);
 							setLoading(true);
-							getHistory();
+							getHistory({ start: startDate, end: endDate });
 						} catch (err) {
 							console.error("Failed to submit record:", err);
 						}
@@ -863,7 +1218,7 @@ const Record = () => {
 								onClick={() => updateFormField("result", formState.result === "win" ? "" : "win")}
 								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
 									${formState.result === "win"
-										? "bg-[#52b788] border-[#52b788] text-white"
+										? "bg-[var(--success)] border-[var(--success)] text-white"
 										: "bg-[rgba(82,183,136,0.12)] border-[rgba(82,183,136,0.4)] text-[#3a9d6e] hover:bg-[rgba(82,183,136,0.2)]"
 									}`}>
 								<Trophy size={18} className="hidden sm:block" />
@@ -874,7 +1229,7 @@ const Record = () => {
 								onClick={() => updateFormField("result", formState.result === "lose" ? "" : "lose")}
 								className={`flex-1 flex flex-col items-center gap-1.5 py-3 sm:py-4 rounded-xl border-2 font-bold text-sm transition-all
 									${formState.result === "lose"
-										? "bg-[#e05c5c] border-[#e05c5c] text-white"
+										? "bg-[var(--error)] border-[var(--error)] text-white"
 										: "bg-[rgba(224,92,92,0.10)] border-[rgba(224,92,92,0.4)] text-[#c94444] hover:bg-[rgba(224,92,92,0.18)]"
 									}`}>
 								<XIcon size={18} className="hidden sm:block" />
@@ -894,20 +1249,43 @@ const Record = () => {
 						</div>
 					</div>
 
+					{/* ── Goes first ────────────────────────────────── */}
+					<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md">
+						<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] block mb-3">
+							{t("record.form.goesFirst.label")}
+						</span>
+						<div className="flex gap-2">
+							{[
+								{ value: true,  label: t("record.form.goesFirst.first") },
+								{ value: false, label: t("record.form.goesFirst.second") },
+								{ value: null,  label: t("record.form.goesFirst.unset") },
+							].map(({ value, label }) => (
+								<button
+									key={String(value)}
+									type="button"
+									onClick={() => updateFormField("goesFirst", formState.goesFirst === value ? null : value)}
+									className={`flex-1 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
+										formState.goesFirst === value
+											? "bg-[var(--text-muted)] border-[var(--text-muted)] text-white"
+											: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+									}`}>
+									{label}
+								</button>
+							))}
+						</div>
+					</div>
+
 					{/* ── Match details ─────────────────────────────── */}
 					<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md flex flex-col gap-4">
-						<div className="flex flex-col gap-1.5">
-							<label htmlFor="tournamentName" className="text-[11px] font-bold text-[var(--text-secondary)]">
-								{t("record.form.matchName")}
-							</label>
-							<input
-								id="tournamentName"
-								name="tournamentName"
-								value={formState.tournamentName}
-								onChange={(e) => updateFormField("tournamentName", e.target.value)}
-								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
-							/>
-						</div>
+						{tags.length > 0 && (
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.tagsLabel")}</label>
+								<TagSelector
+									selected={formState.tags}
+									available={tags}
+									onChange={(v) => updateFormField("tags", v)} />
+							</div>
+						)}
 						<div className="flex flex-col gap-1.5">
 							<label htmlFor="notes" className="text-[11px] font-bold text-[var(--text-secondary)]">
 								{t("record.form.notes")}
@@ -943,37 +1321,335 @@ const Record = () => {
 			{tabValue === 1 && (
 				<div>
 					{/* ── Filter bar ─────────────────────────────── */}
-					<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5">
-						<div className="flex-1 flex flex-col gap-1.5">
-							<label htmlFor="startDate" className="text-[11px] font-bold text-[var(--text-secondary)]">
-								{t("record.form.startDate")}
-							</label>
-							<input
-								type="date"
-								id="startDate"
-								value={startDate ? startDate.toISOString().split("T")[0] : ""}
-								onChange={(e) => setAndSaveStartDate(e.target.value ? new Date(e.target.value + "T00:00:00") : null)}
-								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
-							/>
+					<div className="mb-5">
+						<div className="flex items-center gap-2 flex-wrap">
+							{[
+								{ key: "all",    label: t("record.filter.all") },
+								{ key: "7d",     label: t("record.filter.last7") },
+								{ key: "30d",    label: t("record.filter.last30") },
+								{ key: "custom", label: t("record.filter.custom") },
+							].map(({ key, label }) => (
+								<button
+									key={key}
+									onClick={() => applyPreset(key)}
+									className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
+										datePreset === key
+											? "bg-[var(--text-muted)] text-white"
+											: "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+									}`}>
+									{label}
+								</button>
+							))}
+							<div className="ml-auto flex items-center gap-1.5">
+								<button
+									onClick={() => setTagsPanel((v) => !v)}
+									title={t("record.tags.panelButton")}
+									className={`p-1.5 rounded-full border transition-colors ${
+										tagsPanel
+											? "bg-[var(--text-muted)] border-[var(--text-muted)] text-white"
+											: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+									}`}>
+									<Tag size={14} />
+								</button>
+								<button
+									onClick={() => setRenameDialog((d) => ({ ...d, open: true }))}
+									title={t("record.rename.button")}
+									className="p-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors">
+									<ArrowLeftRight size={14} />
+								</button>
+								<button
+									onClick={() => { setLoading(true); getHistory({ start: startDate, end: endDate }); }}
+									title={t("record.form.refreshButton")}
+									className="p-1.5 rounded-full border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors">
+									<RotateCcw size={14} />
+								</button>
+							</div>
 						</div>
-						<div className="flex-1 flex flex-col gap-1.5">
-							<label htmlFor="endDate" className="text-[11px] font-bold text-[var(--text-secondary)]">
-								{t("record.form.endDate")}
-							</label>
+
+						{datePreset === "custom" && (
+							<div className="mt-3">
+								<DateRangePicker
+									startDate={startDate}
+									endDate={endDate}
+									onStartChange={setAndSaveStartDate}
+									onEndChange={setAndSaveEndDate}
+									t={t}
+								/>
+							</div>
+						)}
+
+						{/* ── Search input ─────────────────────────── */}
+						<div className="relative mt-3">
 							<input
-								type="date"
-								id="endDate"
-								value={endDate ? endDate.toISOString().split("T")[0] : ""}
-								onChange={(e) => setAndSaveEndDate(e.target.value ? new Date(e.target.value + "T23:59:59") : null)}
-								className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								placeholder={t("record.search.placeholder")}
+								className="w-full bg-transparent border border-[var(--border)] rounded-xl px-4 py-2 pr-8 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
 							/>
+							{searchQuery && (
+								<button
+									onClick={() => setSearchQuery("")}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+									<XIcon size={13} />
+								</button>
+							)}
 						</div>
-						<button
-							onClick={() => { setLoading(true); getHistory(); }}
-							className="py-2.5 px-5 rounded-xl bg-[var(--text-muted)] text-white font-bold text-sm hover:bg-[var(--text-secondary)] transition-colors whitespace-nowrap">
-							{t("record.form.filterButton")}
-						</button>
+
+						{/* ── Tags panel ───────────────────────────── */}
+						{tagsPanel && (
+							<div className="mt-3 border border-[var(--border)] rounded-2xl p-4 bg-white/70 backdrop-blur-md">
+								<div className="flex items-center gap-3 mb-3">
+									<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.tags.panelTitle")}</span>
+									<div className="flex-1 border-t border-[var(--border)]" />
+								</div>
+
+								{/* Create new tag */}
+								<div className="flex gap-2 mb-3">
+									<input
+										value={newTagInput}
+										onChange={(e) => setNewTagInput(e.target.value)}
+										onKeyDown={(e) => e.key === "Enter" && handleCreateTag()}
+										placeholder={t("record.tags.inputPlaceholder")}
+										className="flex-1 bg-transparent border border-[var(--border)] rounded-lg px-3 py-1.5 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors" />
+									<button
+										onClick={handleCreateTag}
+										disabled={!newTagInput.trim()}
+										className="px-3 py-1.5 rounded-lg bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+										<Plus size={14} />
+									</button>
+								</div>
+
+								{/* Tag list */}
+								{tags.length === 0 ? (
+									<p className="text-sm text-[var(--text-muted)] text-center py-2">{t("record.tags.empty")}</p>
+								) : (
+									<div className="flex flex-col gap-1.5">
+										{tags.map((tag) => (
+											<div key={tag} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--card-background)]">
+												{editingTag === tag ? (
+													<input
+														autoFocus
+														value={editingTagValue}
+														onChange={(e) => setEditingTagValue(e.target.value)}
+														onKeyDown={(e) => {
+															if (e.key === "Enter") handleRenameTag(tag);
+															if (e.key === "Escape") setEditingTag(null);
+														}}
+														className="flex-1 bg-transparent border-b border-[var(--text-muted)] text-sm text-[var(--text)] focus:outline-none" />
+												) : deletingTag === tag ? (
+													<span className="flex-1 text-sm font-medium text-[var(--error)]">
+														{t("record.tags.confirmDelete", { name: tag })}
+													</span>
+												) : (
+													<span className="flex-1 text-sm font-medium text-[var(--text)]">{tag}</span>
+												)}
+
+												{editingTag === tag ? (
+													<>
+														<button onClick={() => handleRenameTag(tag)} className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"><Check size={13} /></button>
+														<button onClick={() => setEditingTag(null)} className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"><XIcon size={13} /></button>
+													</>
+												) : deletingTag === tag ? (
+													<>
+														<button onClick={() => handleDeleteTag(tag)} className="text-[11px] font-bold text-[var(--error)] hover:text-red-700 transition-colors">{t("record.tags.yes")}</button>
+														<button onClick={() => setDeletingTag(null)} className="text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">{t("record.tags.no")}</button>
+													</>
+												) : (
+													<>
+														<button onClick={() => { setEditingTag(tag); setEditingTagValue(tag); setDeletingTag(null); }} className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"><Pencil size={13} /></button>
+														<button onClick={() => { setDeletingTag(tag); setEditingTag(null); }} className="text-[var(--text-muted)] hover:text-[var(--reset)] transition-colors"><Trash2 size={13} /></button>
+													</>
+												)}
+											</div>
+										))}
+									</div>
+								)}
+							</div>
+						)}
 					</div>
+
+					{/* ── Edit dialog ───────────────────────────── */}
+				{editDialog.open && (
+					<div
+						className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+						onClick={() => setEditDialog({ open: false, record: null })}>
+						<div
+							className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4 flex flex-col gap-4 max-h-[90dvh] overflow-y-auto"
+							onClick={(e) => e.stopPropagation()}>
+							<p className="text-base font-bold text-[var(--text)]">{t("record.edit.title")}</p>
+
+							{/* Result */}
+							<div>
+								<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] block mb-2">{t("record.form.resultLabel")}</span>
+								<div className="flex gap-2">
+									{[
+										{ value: "win",        label: t("record.form.result.win") },
+										{ value: "lose",       label: t("record.form.result.lose") },
+										{ value: "doubleLose", label: t("record.form.result.doubleLose") },
+									].map(({ value, label }) => (
+										<button key={value} type="button"
+											onClick={() => setEditFormState((s) => ({ ...s, result: value }))}
+											className={`flex-1 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
+												editFormState.result === value
+													? value === "win" ? "bg-[var(--success)] border-[var(--success)] text-white"
+													: value === "lose" ? "bg-[var(--error)] border-[var(--error)] text-white"
+													: "bg-[#7b8fa1] border-[#7b8fa1] text-white"
+													: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+											}`}>{label}</button>
+									))}
+								</div>
+							</div>
+
+							{/* Goes first */}
+							<div>
+								<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] block mb-2">{t("record.form.goesFirst.label")}</span>
+								<div className="flex gap-2">
+									{[
+										{ value: true,  label: t("record.form.goesFirst.first") },
+										{ value: false, label: t("record.form.goesFirst.second") },
+										{ value: null,  label: t("record.form.goesFirst.unset") },
+									].map(({ value, label }) => (
+										<button key={String(value)} type="button"
+											onClick={() => setEditFormState((s) => ({ ...s, goesFirst: value }))}
+											className={`flex-1 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
+												editFormState.goesFirst === value
+													? "bg-[var(--text-muted)] border-[var(--text-muted)] text-white"
+													: "border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+											}`}>{label}</button>
+									))}
+								</div>
+							</div>
+
+							{/* My deck */}
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.myDeckName")}</label>
+								<input value={editFormState.playerDeckName || ""}
+									onChange={(e) => setEditFormState((s) => ({ ...s, playerDeckName: e.target.value }))}
+									className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors" />
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.mySeries")}</label>
+								<SeriesCombobox id="edit-playerSeries" name="edit-playerSeries" label=""
+									value={editFormState.playerSeries || ""}
+									onChange={(key) => setEditFormState((s) => ({ ...s, playerSeries: key ?? "" }))} />
+							</div>
+
+							{/* Opponent deck */}
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.opponentDeckName")}</label>
+								<input value={editFormState.opponentDeckName || ""}
+									onChange={(e) => setEditFormState((s) => ({ ...s, opponentDeckName: e.target.value }))}
+									className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors" />
+							</div>
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.opponentSeries")}</label>
+								<SeriesCombobox id="edit-opponentSeries" name="edit-opponentSeries" label=""
+									value={editFormState.opponentSeries || ""}
+									onChange={(key) => setEditFormState((s) => ({ ...s, opponentSeries: key ?? "" }))} />
+							</div>
+
+							{/* Tags */}
+							{tags.length > 0 && (
+								<div className="flex flex-col gap-1.5">
+									<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.tagsLabel")}</label>
+									<TagSelector
+										selected={editFormState.tags || []}
+										available={tags}
+										onChange={(v) => setEditFormState((s) => ({ ...s, tags: v }))} />
+								</div>
+							)}
+
+							{/* Notes */}
+							<div className="flex flex-col gap-1.5">
+								<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.form.notes")}</label>
+								<textarea rows={2} value={editFormState.notes || ""}
+									onChange={(e) => setEditFormState((s) => ({ ...s, notes: e.target.value }))}
+									className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--text-muted)] transition-colors resize-none" />
+							</div>
+
+							<div className="flex gap-2">
+								<button onClick={() => setEditDialog({ open: false, record: null })}
+									className="flex-1 py-2 rounded-xl border border-[var(--border)] text-sm font-bold text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+									{t("record.edit.cancel")}
+								</button>
+								<button onClick={handleSaveEdit}
+									disabled={!editFormState.result}
+									className="flex-1 py-2 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold hover:bg-[var(--text-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+									{t("record.edit.confirm")}
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
+
+				{/* ── Rename dialog ─────────────────────────── */}
+					{renameDialog.open && (
+						<div
+							className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm"
+							onClick={() => setRenameDialog((d) => ({ ...d, open: false }))}>
+							<div
+								className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4 flex flex-col gap-4"
+								onClick={(e) => e.stopPropagation()}>
+								<div>
+									<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.rename.title")}</p>
+									<p className="text-xs text-[var(--text-muted)]">{t("record.rename.subtitle")}</p>
+								</div>
+								<div className="flex flex-col gap-3">
+									<div className="flex flex-col gap-1.5">
+										<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.rename.field")}</label>
+										<div className="grid grid-cols-2 gap-1.5">
+											{[
+												{ value: "playerDeckName",   label: t("record.rename.fields.playerDeckName") },
+												{ value: "opponentDeckName", label: t("record.rename.fields.opponentDeckName") },
+												{ value: "playerSeries",     label: t("record.rename.fields.playerSeries") },
+												{ value: "opponentSeries",   label: t("record.rename.fields.opponentSeries") },
+											].map(({ value, label }) => (
+												<button
+													key={value}
+													onClick={() => setRenameDialog((d) => ({ ...d, field: value }))}
+													className={`px-3 py-2 rounded-lg text-[11px] font-bold transition-colors text-left ${
+														renameDialog.field === value
+															? "bg-[var(--text-muted)] text-white"
+															: "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+													}`}>
+													{label}
+												</button>
+											))}
+										</div>
+									</div>
+									<div className="flex flex-col gap-1.5">
+										<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.rename.oldValue")}</label>
+										<input
+											value={renameDialog.oldValue}
+											onChange={(e) => setRenameDialog((d) => ({ ...d, oldValue: e.target.value }))}
+											placeholder={t("record.rename.oldPlaceholder")}
+											className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors" />
+									</div>
+									<div className="flex flex-col gap-1.5">
+										<label className="text-[11px] font-bold text-[var(--text-secondary)]">{t("record.rename.newValue")}</label>
+										<input
+											value={renameDialog.newValue}
+											onChange={(e) => setRenameDialog((d) => ({ ...d, newValue: e.target.value }))}
+											placeholder={t("record.rename.newPlaceholder")}
+											className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors" />
+									</div>
+								</div>
+								<div className="flex gap-2">
+									<button
+										onClick={() => setRenameDialog((d) => ({ ...d, open: false }))}
+										className="flex-1 py-2 rounded-xl border border-[var(--border)] text-sm font-bold text-[var(--text)] hover:bg-[var(--card-background)] transition-colors">
+										{t("record.rename.cancel")}
+									</button>
+									<button
+										onClick={handleBatchRename}
+										disabled={!renameDialog.oldValue.trim() || !renameDialog.newValue.trim()}
+										className="flex-1 py-2 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold hover:bg-[var(--text-secondary)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+										{t("record.rename.confirm")}
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
 
 					{/* ── Delete dialog ──────────────────────────── */}
 					{deleteDialog.open && (
@@ -1012,15 +1688,33 @@ const Record = () => {
 							<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.display.noRecords")}</p>
 							<p className="text-sm text-[var(--text-secondary)]">{t("record.display.startFirst")}</p>
 						</div>
-					) : filteredRecords.length === 0 ? (
+					) : searchedRecords.length === 0 ? (
 						<div className="text-center py-12 px-4 border border-[var(--border)] rounded-2xl bg-[var(--card-background)]">
 							<p className="text-base font-bold text-[var(--text)] mb-1">{t("record.display.noFilterResults")}</p>
-							<button onClick={() => setDeckFilter(null)} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors mt-1">
+							<button onClick={() => { setDeckFilter(null); setTagFilter(null); }} className="text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors mt-1">
 								{t("record.display.clearFilter")}
 							</button>
 						</div>
 					) : (
 						<div className="flex flex-col gap-3">
+							{/* ── Tag filter pills ───────────────────── */}
+							{tags.length > 0 && (
+								<div className="flex flex-wrap gap-1.5">
+									{tags.map((tag) => (
+										<button
+											key={tag}
+											onClick={() => setTagFilter(tagFilter === tag ? null : tag)}
+											className={`px-3 py-1 rounded-full text-[11px] font-bold transition-colors ${
+												tagFilter === tag
+													? "bg-[var(--text-muted)] text-white"
+													: "border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+											}`}>
+											{tag}
+										</button>
+									))}
+								</div>
+							)}
+
 							{/* ── Deck filter chip ───────────────────── */}
 							{deckFilter && (
 								<div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-[var(--text-muted)] bg-[var(--card-background)]">
@@ -1039,8 +1733,8 @@ const Record = () => {
 							<div className="grid grid-cols-4 gap-px bg-[var(--border)] rounded-2xl overflow-hidden border border-[var(--border)] mb-5">
 								{[
 									{ value: totalMatches, label: t("record.stats.totalLabel"), color: "text-[var(--text)]" },
-									{ value: wins, label: t("record.stats.winsLabel"), color: "text-[#52b788]" },
-									{ value: losses, label: t("record.stats.lossesLabel"), color: "text-[#e05c5c]" },
+									{ value: wins, label: t("record.stats.winsLabel"), color: "text-[var(--success)]" },
+									{ value: losses, label: t("record.stats.lossesLabel"), color: "text-[var(--error)]" },
 									{ value: `${winRate}%`, label: t("record.stats.winRateLabel"), color: "text-[var(--text-muted)]" },
 								].map(({ value, label, color }) => (
 									<div key={label} className="bg-white/70 backdrop-blur-md py-3 flex flex-col items-center gap-0.5">
@@ -1064,7 +1758,7 @@ const Record = () => {
 									{ tab: 1, Icon: User,        label: t("record.stats.tabMySeries") },
 									{ tab: 2, Icon: Swords,      label: t("record.stats.tabOpponentSeries") },
 									{ tab: 3, Icon: LayoutGrid,  label: t("record.stats.tabMatchup") },
-									{ tab: 4, Icon: Trophy,      label: t("record.stats.tabTournament") },
+									{ tab: 4, Icon: Trophy,      label: t("record.stats.tabTags") },
 									{ tab: 5, Icon: Layers,      label: t("record.stats.tabDeck") },
 								].map(({ tab, Icon, label }) => (
 									<button
@@ -1077,14 +1771,14 @@ const Record = () => {
 								))}
 							</div>
 						</div>
-						{filteredRecords.map((record) => (
+						{searchedRecords.slice(0, visibleCount).map((record) => (
 								<div
 									key={record._id}
 									className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
 									{/* Result header */}
 									<div className={`px-4 py-3 flex items-center justify-between text-white ${
-										record.result === "win" ? "bg-[#52b788]"
-										: record.result === "lose" ? "bg-[#e05c5c]"
+										record.result === "win" ? "bg-[var(--success)]"
+										: record.result === "lose" ? "bg-[var(--error)]"
 										: "bg-[#7b8fa1]"
 									}`}>
 										<div className="flex items-center gap-2">
@@ -1094,16 +1788,23 @@ const Record = () => {
 													: record.result === "lose" ? t("record.form.result.lose")
 													: t("record.form.result.doubleLose")}
 											</span>
+											{record.goesFirst !== null && record.goesFirst !== undefined && (
+												<span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-white/20">
+													{record.goesFirst ? t("record.form.goesFirst.first") : t("record.form.goesFirst.second")}
+												</span>
+											)}
 										</div>
 										<span className="text-xs opacity-90">{new Date(record.timestamp).toLocaleDateString()}</span>
 									</div>
 									{/* Card body */}
 									<div className="p-4">
-										{record.tournamentName && (
-											<div className="flex justify-center mb-3">
-												<span className="text-[11px] font-bold px-3 py-1 rounded-full bg-[var(--card-background)] text-[var(--text-secondary)] border border-[var(--border)]">
-													{record.tournamentName}
-												</span>
+										{record.tags?.length > 0 && (
+											<div className="flex flex-wrap gap-1 justify-center mb-3">
+												{record.tags.map((tag) => (
+													<span key={tag} className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[var(--card-background)] text-[var(--text-secondary)] border border-[var(--border)]">
+														{tag}
+													</span>
+												))}
 											</div>
 										)}
 										<div className="mb-3">
@@ -1134,7 +1835,13 @@ const Record = () => {
 										)}
 									</div>
 									{/* Footer */}
-									<div className="px-4 py-2.5 flex items-center justify-end border-t border-[var(--border)]">
+									<div className="px-4 py-2.5 flex items-center justify-between border-t border-[var(--border)]">
+										<button
+											title={t("record.edit.button")}
+											onClick={() => openEdit(record)}
+											className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+											<Pencil size={15} />
+										</button>
 										<button
 											title={t("record.display.deleteTooltip")}
 											onClick={() => setDeleteDialog({ open: true, record: record })}
@@ -1144,10 +1851,17 @@ const Record = () => {
 									</div>
 							</div>
 							))}
-						</div>
-					)}
-				</div>
-			)}
+						{searchedRecords.length > visibleCount && (
+							<button
+								onClick={() => setVisibleCount((v) => v + 20)}
+								className="w-full py-2.5 rounded-xl border border-[var(--border)] text-sm font-bold text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors">
+								{t("record.display.loadMore", { current: visibleCount, total: searchedRecords.length })}
+							</button>
+						)}
+					</div>
+				)}
+			</div>
+		)}
 
 		{/* ── Unified analysis dialog ────────────────── */}
 		{analysisDialogOpen && (
@@ -1174,7 +1888,7 @@ const Record = () => {
 								{ idx: 1, label: t("record.stats.tabMySeries") },
 								{ idx: 2, label: t("record.stats.tabOpponentSeries") },
 								{ idx: 3, label: t("record.stats.tabMatchup") },
-							{ idx: 4, label: t("record.stats.tabTournament") },
+							{ idx: 4, label: t("record.stats.tabTags") },
 							{ idx: 5, label: t("record.stats.tabDeck") },
 							].map(({ idx, label }) => (
 								<button
@@ -1210,8 +1924,8 @@ const Record = () => {
 											key={rec._id || i}
 											title={new Date(rec.timestamp).toLocaleDateString()}
 											className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-black select-none ${
-												rec.result === "win" ? "bg-[#52b788]"
-												: rec.result === "lose" ? "bg-[#e05c5c]"
+												rec.result === "win" ? "bg-[var(--success)]"
+												: rec.result === "lose" ? "bg-[var(--error)]"
 												: "bg-[#7b8fa1]"}`}>
 											{rec.result === "win" ? "W" : rec.result === "lose" ? "L" : "D"}
 										</div>
@@ -1243,9 +1957,9 @@ const Record = () => {
 								<div className="grid grid-cols-2 gap-2">
 									{[
 										{ label: t("record.stats.totalLabel"), value: totalMatches, color: "text-[var(--text)]" },
-										{ label: t("record.stats.winRateLabel"), value: `${winRate}%`, color: "text-[#52b788]" },
-										{ label: t("record.stats.winsLabel"), value: wins, color: "text-[#52b788]" },
-										{ label: t("record.stats.lossesLabel"), value: losses, color: "text-[#e05c5c]" },
+										{ label: t("record.stats.winRateLabel"), value: `${winRate}%`, color: "text-[var(--success)]" },
+										{ label: t("record.stats.winsLabel"), value: wins, color: "text-[var(--success)]" },
+										{ label: t("record.stats.lossesLabel"), value: losses, color: "text-[var(--error)]" },
 									].map(({ label, value, color }) => (
 										<div key={label} className="border border-[var(--border)] rounded-xl p-3 flex flex-col gap-0.5 bg-white/70">
 											<span className={`text-2xl font-black ${color}`}>{value}</span>
@@ -1296,10 +2010,10 @@ const Record = () => {
 												return (
 													<g key={pct}>
 														<line x1={pL} y1={gy} x2={cW - pR} y2={gy}
-															stroke={pct === 50 ? "#a6ceb6" : "#e8f0eb"}
+															stroke={pct === 50 ? "var(--primary)" : "var(--border)"}
 															strokeWidth={pct === 50 ? 1 : 0.5}
 															strokeDasharray={pct === 50 ? "4 3" : undefined} />
-														<text x={pL - 3} y={gy + 3.5} textAnchor="end" fontSize="7.5" fill="#7b9987">{pct}%</text>
+														<text x={pL - 3} y={gy + 3.5} textAnchor="end" fontSize="7.5" fill="var(--text-muted)">{pct}%</text>
 													</g>
 												);
 											})}
@@ -1307,21 +2021,21 @@ const Record = () => {
 												const bW = Math.min(iW / trendData.length * 0.55, 20);
 												const bH = maxTotal > 0 ? (pt.total / maxTotal) * iH * 0.28 : 0;
 												return <rect key={i} x={pt.x - bW / 2} y={pT + iH - bH}
-													width={bW} height={bH} fill="rgba(166,206,182,0.30)" rx="2" />;
+													width={bW} height={bH} fill="var(--card-background)" rx="2" />;
 											})}
 											<polyline
 												points={pts.map((pt) => `${pt.x},${pt.y}`).join(" ")}
-												fill="none" stroke="#52675a" strokeWidth="1.8"
+												fill="none" stroke="var(--text-muted)" strokeWidth="1.8"
 												strokeLinejoin="round" strokeLinecap="round" />
 											{pts.map((pt, i) => (
-												<circle key={i} cx={pt.x} cy={pt.y} r="3" fill="#52675a" stroke="white" strokeWidth="1.2">
+												<circle key={i} cx={pt.x} cy={pt.y} r="3" fill="var(--text-muted)" stroke="white" strokeWidth="1.2">
 													<title>{`${pt.key}  ${pt.winRate.toFixed(0)}%  (${pt.wins}胜 / ${pt.total}局)`}</title>
 												</circle>
 											))}
 											{pts.map((pt, i) => {
 												if (i % step !== 0 && i !== pts.length - 1) return null;
 												return (
-													<text key={i} x={pt.x} y={cH - 4} textAnchor="middle" fontSize="8" fill="#7b9987">
+													<text key={i} x={pt.x} y={cH - 4} textAnchor="middle" fontSize="8" fill="var(--text-muted)">
 														{pt.label}
 													</text>
 												);
@@ -1332,6 +2046,36 @@ const Record = () => {
 							</div>
 						)}
 
+						{/* ── Goes first stats (Tab 0) ─────────────── */}
+						{analysisTab === 0 && (() => {
+							const firstRecs  = records.filter((r) => r.goesFirst === true);
+							const secondRecs = records.filter((r) => r.goesFirst === false);
+							const rate = (recs) => recs.length === 0 ? null : Math.round(recs.filter((r) => r.result === "win").length / recs.length * 100);
+							const firstRate  = rate(firstRecs);
+							const secondRate = rate(secondRecs);
+							if (firstRecs.length === 0 && secondRecs.length === 0) return null;
+							return (
+								<div className="mt-4 border border-[var(--border)] rounded-2xl p-4 bg-white/70">
+									<div className="flex items-center gap-3 mb-3">
+										<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("record.stats.goesFirstTitle")}</span>
+										<div className="flex-1 border-t border-[var(--border)]" />
+									</div>
+									<div className="grid grid-cols-2 gap-3">
+										{[
+											{ label: t("record.form.goesFirst.first"),  recs: firstRecs,  rate: firstRate },
+											{ label: t("record.form.goesFirst.second"), recs: secondRecs, rate: secondRate },
+										].map(({ label, recs, rate: r }) => (
+											<div key={label} className="text-center p-3 rounded-xl bg-[var(--card-background)]">
+												<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">{label}</p>
+												<p className="text-2xl font-black text-[var(--text-muted)]">{r === null ? "—" : `${r}%`}</p>
+												<p className="text-[11px] text-[var(--text-muted)]">{recs.length} {t("record.stats.matchesUnit")}</p>
+											</div>
+										))}
+									</div>
+								</div>
+							);
+						})()}
+
 						{/* ── Tab 1: My Series ─────────────────────── */}
 						{(analysisTab === 1 || analysisTab === 2 || analysisTab === 4 || analysisTab === 5) && (() => {
 							const baseData = analysisTab === 1 ? mySeriesWinRate
@@ -1340,7 +2084,7 @@ const Record = () => {
 								: deckData;
 							const desc = analysisTab === 1 ? t("record.stats.mySeriesDesc")
 								: analysisTab === 2 ? t("record.stats.opponentSeriesDesc")
-								: analysisTab === 4 ? t("record.stats.tournamentDesc")
+								: analysisTab === 4 ? t("record.stats.tagsDesc")
 								: t("record.stats.deckDesc");
 							const sorted = [...baseData].sort((a, b) => {
 								if (seriesSort === "winRate_desc") return parseFloat(b.winRate) - parseFloat(a.winRate);
@@ -1394,9 +2138,9 @@ const Record = () => {
 																<span className="text-xs text-[var(--text)] truncate shrink-0 w-24">{item.name}</span>
 															)}
 													<div className={`flex-1 flex rounded-full overflow-hidden bg-[var(--card-background)] ${analysisTab === 5 ? "h-8" : "h-5"}`}>
-														{item.wins > 0 && <div className="bg-[#52b788] h-full" style={{ width: `${(item.wins / item.total) * 100}%` }} />}
+														{item.wins > 0 && <div className="bg-[var(--success)] h-full" style={{ width: `${(item.wins / item.total) * 100}%` }} />}
 														{item.draws > 0 && <div className="bg-[#7b8fa1] h-full" style={{ width: `${(item.draws / item.total) * 100}%` }} />}
-														{item.losses > 0 && <div className="bg-[#e05c5c] h-full" style={{ width: `${(item.losses / item.total) * 100}%` }} />}
+														{item.losses > 0 && <div className="bg-[var(--error)] h-full" style={{ width: `${(item.losses / item.total) * 100}%` }} />}
 													</div>
 													<div className="shrink-0 text-right w-20">
 														<span className="text-xs font-bold text-[var(--text-muted)]">{item.winRate}%</span>

@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-30 (session 18)
+> Last updated: 2026-05-30 (session 33)
 
 ## Deployment
 
@@ -470,6 +470,129 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### 对战记录页 Phase 2 完成 & Lint 修复 (2026-05-30 session 23–30)
+
+#### Phase 2 全部实施完成
+
+| 步骤 | 内容 |
+|------|------|
+| P7 批量重命名 | 卡组/系列名批量替换，pill 字段选择器 + toast 提示 |
+| P1 服务端日期过滤 | 切换预设直接带日期参数请求后端，移除前端 useMemo 日期层 |
+| P0 编辑记录 | 每条记录编辑弹窗，预填所有字段，提交走 PUT /update/:id |
+| P6 先手/後手 | 创建/编辑表单加三选按钮，卡片顶部显示标记，分析走势 Tab 显示先後手胜率 |
+| P8b 标签管理 | 展开/收起面板，创建/重命名（内联编辑）/删除（含确认警告）标签 |
+| P8a 表单加标签 | 移除 tournamentName 输入框，加 TagSelector 多选；清理 localStorage 旧 key |
+| P8c 标签过滤 | 查询 Tab 标签 pill 过滤，与 deckFilter 可叠加 |
+| P8d 标签分析 | 分析弹窗「赛事」Tab 改为「标签」Tab，按 tags 分组统计（方案 X，重复计数） |
+
+#### 新增组件
+
+- **DateRangePicker**：react-day-picker v10，中文月历，范围高亮跟随分区主题
+- **TagSelector**：多选标签 pill，从标签库选择，下拉展示未选标签
+
+#### Lint 全量修复
+
+全站 prop-types errors 从 75 → 0，涉及 7 个文件（AudioBoard、ChessClock、Dice、Login、PickPacks、Simulator、Record）
+
+---
+
+### 对战记录页 Phase 1 完成 (2026-05-30 session 22)
+
+Phase 1 后端升级全部实施完毕，已推送 main 并部署生产环境（`pm2 restart ws-backend`）。
+
+生产环境测试结果（12 项全部通过）：
+- Schema：`goesFirst`、`tags` 字段存在，`tournamentName` 已移除 ✅
+- GET /history 日期过滤正确返回区间内记录 ✅
+- POST /api/tags 创建标签、重复创建返回 409 ✅
+- GET /api/tags 按名称排序返回 ✅
+- POST /create 支持 goesFirst、tags 新字段 ✅
+- PUT /update/:id 编辑单条，白名单保护（tournamentName 被正确忽略） ✅
+- DELETE /delete/:id 返回 204 ✅
+- PUT /api/tags/rename 重命名标签并同步更新记录 ✅
+- DELETE /api/tags/:name 硬删除（标签库 + 记录同步） ✅
+- PUT /api/matches/rename 白名单保护（result 字段返回 400） ✅
+
+注：`tournamentName` 已从 Schema 移除，生产环境现有记录中该字段在 API 层不可见。前端赛事相关功能暂时失效，Phase 2 完成后由标签系统接替。
+
+---
+
+### 对战记录页升级规划 (2026-05-30 session 21)
+
+#### 架构决策
+
+- **后端优先策略**：所有 Schema 变更和新 API 先完成并测试，再统一做前端改造，避免边等接口边写 UI
+- **tournamentName 废弃**：原自由文本赛事名难以管理（大小写不一致、输入随机），替换为统一标签系统
+- **标签系统设计**：
+  - 新建 `Tag` 集合（`models/tag.js`），存储用户的标签库；`(userName, name)` 唯一约束
+  - `Match.tags: [String]` 存标签名字符串（去引用，查询简单）
+  - 用户预先创建标签（赛事名/练习赛/关键失误等），记录时从中多选
+  - 标签重命名通过 `PUT /api/tags/rename` 同步更新 Tag 集合和所有 Match 记录
+
+#### Phase 1 后端改动（已规划，待实施）
+
+Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`tags: [String]`
+
+新增 API：
+- `PUT /api/matches/update/:id`（编辑单条）
+- `PUT /api/matches/rename`（批量重命名卡组/系列名）
+- `GET/POST/DELETE /api/tags`（标签库 CRUD）
+- `PUT /api/tags/rename`（标签重命名，同步更新记录）
+
+修改 API：
+- `GET /api/matches/history` 新增可选 `?startDate=&endDate=` 参数
+
+详细规范见 Near-term candidates 中「对战记录页升级计划」。
+
+---
+
+### 对战记录页优化 (2026-05-30 session 20)
+
+#### 请求逻辑重构
+
+- **问题**：每次切到「查询」tab 都全量 fetch；页面刷新后恢复 tabValue=1 但不自动加载数据（空列表）
+- **架构调整**：
+  - `records` state 拆分为 `rawRecords`（服务器原始数据）+ `records`（useMemo 按日期过滤）
+  - `getHistory()` 只负责 fetch，不再做日期过滤
+  - 日期过滤移到 `useMemo`，切换预设无需重新请求服务器
+  - 新增 `hasFetchedRef`：首次访问查询 tab 才 fetch，后续切 tab 跳过
+  - `useEffect` 恢复 localStorage 时若 tabValue=1 自动触发 fetch，修复刷新后空列表 bug
+- **删除操作**同步改为 `setRawRecords`
+
+#### 日期过滤 UI 重设计
+
+旧设计：两个原生 `<input type="date">`（弹出浏览器原生日历，无法跟随主题）
+
+新设计：
+- **预设 pill 按钮**：全部 / 近 7 天 / 近 30 天 / 自定义；切换即时过滤，无需请求服务器
+- **DateRangePicker 组件**（仅在「自定义」时展开）：
+  - 触发器：单行按钮显示"M月D日 — M月D日"，含 ✕ 清除
+  - 弹出月历：圆角白卡，中文月份/星期（日/一/二…六）
+  - 范围高亮：起止日期深色圆形（`--text-muted`），中间日期淡色填充（`--primary`），跟随分区主题
+  - 关闭：选完终止日期自动关闭，或点外部关闭
+- **手动刷新按钮**：pill 行右侧图标按钮（RotateCcw），强制重新 fetch
+- 新增依赖：`react-day-picker` v10（3KB gzipped，无额外依赖，完全 CSS 自定义）
+- `datePreset` state 持久化到 localStorage，刷新后恢复；时间相对预设（近7天/近30天）恢复时重新计算
+
+---
+
+### 文档整理 & 移动端间距修复 (2026-05-30 session 19)
+
+#### Backlog 清理
+
+- 删除中优先级颜色 backlog 中的两条不可行/无必要项：`Home.jsx` SectionCard accent 色（首页在 hub 分区下无法引用各分区 CSS 变量，by design）、`NavBar.jsx` pill Spring Rain 硬编码（品牌色永远 Spring Rain，变量化无收益）
+- `Record.jsx` 硬编码颜色全面修复：canvas export 用 `getComputedStyle` 读取 CSS 变量，SVG 走势图改用 `var(--primary)`/`var(--border)`/`var(--text-muted)`/`var(--card-background)`，胜负色统一改为 `var(--success)`/`var(--error)`（共 8 处）
+- 低优先级 backlog 三条删除：`overflow-x hidden` 重复清理（无 sticky 使用，风险实为零）、页面顶部间距不一致（已知设计意图）、页面标题对齐方式（已知设计惯例）
+- JPCardList / ENCardList 共享组件抽取分析（85% 代码可共享，约 2 小时工作量）移入 Deferred，触发条件：新增第三个卡牌列表页面时再做
+- 新增 `/mahjong/defense` 守备分析页面构想至 Near-term candidates，含调研结论和算法分层规划
+
+#### 移动端 NavBar 下方间距修复
+
+- **问题**：移动端 pill 底部到页面标题距离 28px，比设计意图（4px）多出 24px
+- **根源**：`PageTransition.jsx` 内层 Box 的 `py: { xs: 3, md: 4 }` 在移动端产生 24px 顶部内边距；Session 18 已去掉所有页面容器的移动端顶部 padding（`py-8 → pb-8`），但 PageTransition 未同步
+- **修复**：`py: { xs: 3, md: 4 }` → `pt: { xs: 0, md: 4 }, pb: { xs: 3, md: 4 }`，桌面端和底部间距不受影响
+
+---
+
 ### 性能审计 & 资产清理 (2026-05-30 session 18，第二阶段)
 
 #### 性能审计发现的问题（按优先级）
@@ -770,9 +893,7 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 > **遗留待处理（不阻塞当前功能）：**
 > - [x] `App.jsx` LoadingFallback `#2a5b46` 硬编码 → `var(--text-muted)`
 > - [x] `index.css` body 死代码 `color: var(--background)` 删除
-> - [ ] `Home.jsx` SectionCard accent 色与分区主题色对齐（目前仍硬编码在 `siteStructure.js`）
-> - [ ] `NavBar.jsx` pill Spring Rain 硬编码（`rgba(166,206,182,...)` 等）考虑变量化
-> - [ ] `Record.jsx` canvas export 硬编码 hex（画布渲染，需单独处理）
+> - [x] `Record.jsx` canvas export / SVG 走势图 / 胜负色 硬编码 hex → CSS 变量（canvas 用 `getComputedStyle` 读取，SVG 直接用 `var(...)`，win/loss 用 `--success`/`--error`）
 
 #### ★★ 中优先级
 
@@ -783,19 +904,96 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 #### ★ 低优先级 / 较大改动
 
-- [ ] **JPCardList / ENCardList 共享组件抽取**：两文件各 ~950 行，`CardImage`、`PaginationBar`、`CardDetailModal`、`FilterCombobox`、`ValueListbox`、`RangeSelect` 几乎完全相同。抽到 `src/components/ws/` 下共享可减少约 400 行重复。
 - [x] **LazyImage 改为 shimmer 骨架**：删除文字占位符，改为 `animate-pulse bg-[var(--card-background)]` 全尺寸 shimmer div。条件从 `!isInView` 改为 `!isLoaded`，图片加载期间持续显示。颜色跟随分区主题变化。
 - [x] **未使用字体文件清理**：删除 `src/assets/fonts/` 全部 29 个文件（~30MB）。BIZUDPMincho 因 `@font-face` 名称与代码引用不匹配从未实际加载，与其修复不如删除（修复反而引入 12MB 首次加载开销）。同步清理 index.css 中 4 个死 `@font-face` 声明。
-- [ ] **overflow-x hidden 重复清理**：`html`、`body`、`#root`（CSS）和 `App.jsx` 根 div 各设一遍，多层 `overflow-x: hidden` 在部分浏览器会破坏 `position: sticky`，精简至必要层级。
-- [ ] **页面顶部间距不一致（已知，暂不处理）**：大多数页面顶部 padding 为 0（pill 到 title 约 4px），但 `MahjongTrainer`（`py-2.5`，约 14px）和 `ChessClock`（`py-6`，约 28px）有差异。ChessClock 是全屏布局（`minHeight: 100dvh`），差异有视觉设计意图；MahjongTrainer 的差异是历史遗留。
-- [ ] **页面标题对齐方式（已知，设计合理，无需修改）**：展示型页面（`Home`、`FirstSecond`）标题居中；所有工具/查询类页面（JPCardList、ENCardList、Record、Simulator、PickPacks、RandomShuffle、AudioBoard、Dice、MahjongTrainer、MahjongEfficiency 等）标题左对齐。`Login` 表单内部居中。这种分组符合「展示型居中 / 内容型左对齐」的设计惯例。
 - [x] **移动端页面顶部间距优化**：将所有页面容器的 `py-8 sm:py-10` 拆分为 `pb-8 sm:py-10`（移除移动端顶部 padding），使 title 尽可能靠近 NavBar。移动端 gap 最终为 4px（spacer 64px - pill 底部 60px），桌面端 `sm:py-10` 不变。涉及全部 14 个页面文件。
 
 ---
 
 ### Near-term candidates
 
-- **对战记录编辑功能**：需前后端同时改动。后端：`matchRoutes.js` 新增 `PUT /api/matches/update/:id`（authMiddleware + userName 校验，可更新 result/playerDeckName/opponentDeckName/playerSeries/opponentSeries/tournamentName/notes）。前端：`Record.jsx` 每条记录加「编辑」按钮，复用现有创建表单作为预填 dialog，提交走新 PUT 接口。
+- **对战记录页升级计划**（四期实施，基于 2026-05-30 全面代码审计 + 架构讨论）
+
+  **背景与关键设计决策**：
+  - 采用**后端优先策略**：Phase 1 完成所有 Schema 变更和新 API 并测试，Phase 2 再统一做前端改造
+  - `tournamentName` 从 Match Schema **移除**，替换为统一标签系统
+  - 标签库独立存储（Tag 集合），Match.tags 存字符串（去引用，查询简单）
+  - 用户预先在标签库中创建标签（赛事名/练习赛/关键失误等），记录时从中多选
+
+  ---
+
+  **Phase 1 — 后端 Schema + API** ✅ 完成并已部署生产环境（2026-05-30）
+
+  文件：`models/match.js`（改）、`models/tag.js`（新）、`routes/matchRoutes.js`（改）、`routes/tagRoutes.js`（新）、`server.js`（挂载）
+
+  Match Schema 变更：移除 `tournamentName`；新增 `goesFirst: Boolean`（default: null）、`tags: [String]`（default: []）
+
+  Tag 模型：`{ userName, name, createdAt }`，`(userName, name)` 唯一约束
+
+  | 方法 | 路径 | 新/改 | 说明 |
+  |------|------|-------|------|
+  | POST | /api/matches/create | 不变 | 可传 tags、goesFirst |
+  | GET | /api/matches/history | **改** | 新增可选 ?startDate=&endDate= |
+  | DELETE | /api/matches/delete/:id | 不变 | — |
+  | PUT | /api/matches/update/:id | **新** | 编辑单条，字段白名单保护 |
+  | PUT | /api/matches/rename | **新** | 批量重命名卡组/系列名 |
+  | GET | /api/tags | **新** | 获取用户标签库 |
+  | POST | /api/tags | **新** | 创建标签（409 if 重复） |
+  | DELETE | /api/tags/:name | **新** | 从库中删除（不影响已有记录） |
+  | PUT | /api/tags/rename | **新** | 重命名（同步更新所有 Match.tags） |
+
+  ---
+
+  **Phase 2 — 前端核心改造** ✅ 完成（2026-05-30）
+
+  实施顺序（已确认）：
+
+  | 顺序 | 项目 | 依赖 | 状态 |
+  |------|------|------|------|
+  | 1 | P7 批量重命名 | 无 | ✅ |
+  | 2 | P1 服务端日期过滤 | 无 | ✅ |
+  | 3 | P0 + P6 编辑记录 + 先手/後手 | 无 | ✅ |
+  | 4 | P8b 标签管理界面 | 无 | ✅ |
+  | 5 | P8a 表单加标签 | P0、P8b | ✅ |
+  | 6 | P8c 查询 Tab 标签过滤 | P8a | ✅ |
+  | 7 | P8d 分析弹窗标签 Tab | P8a、P8c | ✅ |
+
+  设计决策（已确认）：
+  - 多标签统计：方案 X，记录贡献到所有标签，重复计数，各标签独立
+  - 删除标签 UX：显示警告「将同时从 N 条记录中移除」
+  - localStorage：Phase 2 移除 `tournamentName` key
+  - 旧记录 tags=[]：不进入任何标签分组，自然过滤
+
+  **P7 批量重命名**：查询 Tab 内工具入口，输入旧名称→新名称，确认后调 `PUT /api/matches/rename`，字段范围：playerDeckName / opponentDeckName / playerSeries / opponentSeries
+
+  **P1 服务端日期过滤**：日期 preset 计算结果作为 query params 传后端，移除前端 records useMemo 日期过滤层
+
+  **P0 + P6 编辑记录 + 先手/後手**：每条记录加编辑图标，弹窗复用创建表单；创建/编辑同时加先手/後手三选（先手/後手/未记录）；旧记录 goesFirst=null 视为"未记录"
+
+  **P8b 标签管理界面**：独立入口（查询 Tab 内），支持新增/删除（含警告）/重命名标签
+
+  **P8a 创建/编辑表单加标签**：移除 tournamentName 输入框，替换为从标签库多选的 Combobox；清理 localStorage tournamentName key
+
+  **P8c 查询 Tab 标签过滤**：标签 pill 筛选，前端 useMemo 按 tags 过滤
+
+  **P8d 分析弹窗标签 Tab**：原「赛事」Tab 改为按标签分组统计（方案 X，重复计数）
+  ---
+
+  **Phase 3 — 前端增强功能**（进行中）
+
+  - **P2 列表分页** ✅：前端「加载更多」，每次追加 20 条，过滤条件变化自动重置
+  - **P3 关键字搜索** ✅：搜索框实时过滤，匹配 6 个字段，统计条和分析弹窗均跟随搜索结果
+    - 方向 A（客户端 useMemo）：全量已加载，无需后端改动，输入即时响应
+    - 方向 B（服务端 ?q= + $regex）：适合已引入服务端分页的场景
+    - **决策原则**：P2 完成后若仍全量加载选方向 A，否则选方向 B
+  - **P4 扩展统计分析** 🔄：待定，根据使用中发现的需求再决定
+
+  ---
+
+  **Phase 4 — 创意功能**（设计讨论后再开工）
+
+  - **P5 可组合式战绩档案图片导出**：用户勾选统计组件组合后导出 PNG（Canvas API）；组件种类、布局、风格待设计讨论
+  - **P9 赛季总结报告**：每月/赛季末生成图文总结（Canvas），类似 Spotify Wrapped；是否与 P5 共用组件待定
 
 - **Trigger 图标化显示**：用图标替代文字名称展示 trigger，作用于查卡器筛选选择器和卡片展示两处。图标资源已存在于 `public/assets/triggers/`（soul/gate/shot/standby/choice/bounce/bank/anchor/ticket/wheel/door 等 PNG）。实施步骤：① 建立 trigger 值 → 图标路径的映射表（如 `soul+1`→`soul.png`、`soul+2`→`climaxsoul.png`、`return`→`bounce.png`、`pool`→`bank.png`、`comeback`→`anchor.png`、`draw`→`wheel.png`、`treasure`→`ticket.png`、`discovery`→`magnify.png`）；② `JPCardList`/`ENCardList` 筛选器中 trigger 选项改为图标 chip；③ 卡片详情 Modal 和卡片网格 trigger 字段改为图标行。
 
@@ -806,11 +1004,54 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 - **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。
 - **AudioBoard 通用化文案检查**：音效面板已经移到 `/tools/audio`，后续需要确认页面文案、空状态、错误提示不再暗示它只属于 WS。这个优化应以 locale 文案和小范围 UI 文案为主，不改变播放器逻辑。
 
+- **麻将守备分析页面** `/mahjong/defense`：根据对手牌河和副露推理危险牌，帮助玩家训练场上信息读取能力。
+
+  **调研结论（2026-05-30）**：主流平台（天凤、雀魂）均无内置的实时守备推理界面；商业工具 MahjongMasterAI 有类似功能但闭源收费；开源的 Akagi 通过拦截游戏 WebSocket 流量实现，不是独立工具。**纯前端教学型守备分析工具目前是空白，有做的价值。**
+
+  **算法分层：**
+  - 第一层（规则，确定性）：现物（Genbutsu）/ 筋（Suji）/ 壁・无机会（Kabe / No Chance）/ ワンチャンス — 查表即可，O(n)
+  - 第二层（启发式，统计近似）：综合副露形态、打牌时机（早打/晚打）、Dora 接近度、中张/幺九权重加权评分
+  - 第三层（AI，不做）：接入 Mortal 等深度学习模型，需后端，超出范围
+
+  **实现范围：第一层 + 第二层，纯前端，不接 AI。**
+
+  **所需输入：** 三家各自的牌河（含巡目顺序）+ 副露（吃/碰/杠内容）+ 自家手牌（用于壁/ワンチャンス 的可见牌计数）。
+
+  **输出：** 对 34 种牌标注安全等级（现物 / 筋 / 壁 / ワンチャンス / 无保护），并附文字解释。
+
+  **与现有引擎的关系：** 需新写守备推理逻辑，可复用 `tileParser.js` 的牌面模型；`shanten.js` 不直接复用。严禁在实现过程中修改现有引擎文件。
+
+  **参考资源：** riichi.wiki/Defense、riichi.wiki/Suji、riichi.wiki/Kabe；开源参考 killer_mortal_gui（启发式评分权重设计）、Riichi-Trainer（Folding 模块交互模式）。
+
+
 ### Documentation candidates
 
 - **文档结构进一步分层**：当前 `CLAUDE.md` 负责当前架构规则，`PROJECT.md` 同时保存当前状态和历史 session。后续可把较长历史迁移到 `docs/history.md`，把麻将引擎说明迁移到 `docs/mahjong-engine.md`，让 `PROJECT.md` 更聚焦当前状态、近期记录和 backlog。
 
 ### Deferred / high-complexity
+
+- **JPCardList / ENCardList 共享组件抽取**（触发条件：新增第三个卡牌列表页面时再做）：
+
+  两文件约 85% 代码完全相同，可共享约 1200 行。分析如下：
+
+  **可直接抽取（无差异，各 ~5 分钟）：**
+  `CardImage`、`PaginationBar`、`FilterCombobox`、`ValueListbox`、`RangeSelect` → `src/components/ws/`
+
+  **需配置化抽取（~30 分钟）：**
+  `CardDetailModal` 有 6 处实质差异：JP 显示 zh_name/zh_trait/zh_effect/zh_flavor，EN 无；
+  JP 展开信息包含 series_number + series + product_name，EN 仅 product_name；
+  effect 标签文本不同；Side badge 渲染方式不同。
+  做法：带 `config` 对象的共享组件，JP/EN 各传不同配置。
+
+  **Hook 层（~30 分钟）：**
+  `useCardGroups`（变体分组）、`useCardSearch`（搜索/分页/重置）完全相同可直接抽；
+  `buildParams` 的 soul 参数名不同（JP: `soul=1`，EN: `soul_min=1`），需参数化。
+
+  **不可抽取：** NeoCombobox（JP 专用双语组件）、CARD_TYPE_OPTIONS（JP 日文 vs EN 英文）、
+  COLOR_OPTIONS（JP 含 purple，EN 无）、SIDE_OPTIONS（JP 含 ws，EN 无）、
+  数据加载方式（JP 用 OptionsContext，EN 自己 fetch）。
+
+  **建议执行顺序：** P0 纯 UI 组件（30 min）→ P1 CardDetailModal + Hook（60 min）→ 验证（30 min），合计约 2 小时。
 
 - **CardList 拆分**（已从 deferred 移除）：`JPCardList.jsx` 已于 Session 16 完成重写，旧 `CardList.jsx` 已删除。若未来需要进一步拆分子组件，参考 ENCardList 模式。
 - **牌桌中枢后续增强（谨慎）**：当前 `/mahjong/centrepiece` 已按 `mahtools/riichi-centrepiece` 收敛为轻量中枢。后续如增强，优先保持 mahtools 的极简交互；只有用户明确要求时再考虑供托、分数、流局/和牌结算或手动设庄。

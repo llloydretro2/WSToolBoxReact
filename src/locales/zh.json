@@ -256,6 +256,12 @@
       "create": "创建记录",
       "query": "查询记录"
     },
+    "filter": {
+      "all": "全部",
+      "last7": "近 7 天",
+      "last30": "近 30 天",
+      "custom": "自定义"
+    },
     "form": {
       "matchName": "比赛名（可选）",
       "notes": "备注（可选）",
@@ -264,9 +270,18 @@
       "opponentDeckName": "对方卡组名称",
       "opponentSeries": "对手系列",
       "resultLabel": "胜负",
+      "tagsLabel": "标签",
+      "goesFirst": {
+        "label": "先手/後手",
+        "first": "先手",
+        "second": "後手",
+        "unset": "未记录"
+      },
       "startDate": "起始日期",
       "endDate": "结束日期",
       "filterButton": "筛选",
+      "refreshButton": "刷新记录",
+      "renameButton": "批量重命名",
       "myInfo": "我方信息",
       "opponentInfo": "对手信息",
       "submitButton": "提交",
@@ -280,6 +295,7 @@
     "display": {
       "noRecords": "暂无比赛记录",
       "startFirst": "开始你的第一场比赛吧！",
+      "loadMore": "加载更多（已显示 {{current}} / 共 {{total}} 条）",
       "noFilterResults": "该卡组在当前时间范围内无记录",
       "clearFilter": "清除筛选",
       "myDeck": "我的牌组",
@@ -321,6 +337,8 @@
       "winRateLabel": "胜率",
       "analysisTitle": "对战分析",
       "tabForm": "走势",
+      "goesFirstTitle": "先手/後手胜率",
+      "matchesUnit": "场",
       "tabMySeries": "我方",
       "tabOpponentSeries": "对手",
       "recentFormTitle": "近期走势",
@@ -349,6 +367,8 @@
       "trendNotEnough": "至少需要 2 个时间段的数据",
       "tabTournament": "赛事",
       "tournamentDesc": "按赛事名称分组（仅含有赛事名称的记录），胜率为我方视角",
+      "tabTags": "标签",
+      "tagsDesc": "按标签分组统计，一条记录可贡献到多个标签（仅含标签的记录），胜率为我方视角",
       "tabDeck": "卡组",
       "deckDesc": "按我方具体卡组名分组，可对比同系列不同卡组的胜率差异，点击任意行可只看该卡组的记录",
       "deckFilterLabel": "当前筛选"
@@ -363,6 +383,52 @@
       "legendFull": "{{series}}（{{count}} 个，{{percentage}}%）",
       "legendShort": "{{count}} 个（{{percentage}}%）",
       "legendCount": "{{count}} 个"
+    },
+    "search": {
+      "placeholder": "搜索卡组、系列、备注、标签…"
+    },
+    "rename": {
+      "button": "批量重命名",
+      "title": "批量重命名",
+      "subtitle": "将所有记录中匹配的字段值统一替换",
+      "field": "字段",
+      "oldValue": "当前名称",
+      "newValue": "新名称",
+      "oldPlaceholder": "输入要替换的名称",
+      "newPlaceholder": "输入新名称",
+      "cancel": "取消",
+      "confirm": "确认替换",
+      "success": "已成功更新 {{count}} 条记录",
+      "error": "重命名失败，请重试",
+      "fields": {
+        "playerDeckName": "我方卡组名",
+        "opponentDeckName": "对手卡组名",
+        "playerSeries": "我方系列",
+        "opponentSeries": "对手系列"
+      }
+    },
+    "edit": {
+      "button": "编辑记录",
+      "title": "编辑记录",
+      "cancel": "取消",
+      "confirm": "保存",
+      "success": "记录已更新",
+      "error": "更新失败，请重试"
+    },
+    "tags": {
+      "panelButton": "标签管理",
+      "panelTitle": "标签库",
+      "inputPlaceholder": "新标签名称",
+      "empty": "暂无标签，输入名称后按回车创建",
+      "confirmDelete": "删除「{{name}}」将同时从所有记录中移除，确认？",
+      "yes": "确认",
+      "no": "取消",
+      "createError": "创建失败，请重试",
+      "existsError": "标签已存在",
+      "deleteSuccess": "标签已删除",
+      "deleteError": "删除失败，请重试",
+      "renameSuccess": "标签已重命名",
+      "renameError": "重命名失败，请重试"
     },
     "deleteDialog": {
       "title": "确认删除",
