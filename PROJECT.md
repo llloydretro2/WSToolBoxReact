@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-30 (session 34)
+> Last updated: 2026-05-31 (session 35)
 
 ## Deployment
 
@@ -650,6 +650,23 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
 ---
 
+### 查卡器样式 & 功能修复 (2026-05-31 session 35)
+
+#### 样式改进（JP/EN 查卡器同步）
+
+- **颜色筛选按钮重设计**：未选中态改为白底 + 黑色实线边框 + 黑色字母（`border-solid border-black`），选中态变为对应颜色填充；彻底解决原先"已选中"难以识别的问题。全局 `button { border: none }` 重置需配合 `border-solid` 显式覆盖。
+- **卡片类型汉化**：筛选按钮和详情 Modal 的 card_type 均通过 `t()` 翻译。JP 复用 `pages.cardList.cardTypes.*` 键（キャラ→角色、イベント→事件、クライマックス→高潮），EN 新增 `enCardList.cardTypes.*` 键（Character/Event/Climax → 角色/事件/高潮）。`CardDetailModal` 补加 `const { t } = useLocale()` 解决白屏。
+- **颜色名称汉化**：筛选按钮 title、字母标签、详情 Modal 颜色 badge 均改用 `t("pages.cardList.colors.${value}")`（已有键，直接复用）。
+- **Level / Cost / Power 各加重置按钮**：行尾加 `RotateCcw` 小按钮，范围未修改时 `opacity-0 pointer-events-none` 占位，修改后显现并点击复位。
+- **Trigger 图标化**：从 `en.ws-tcg.com` 官方网站下载 11 种 trigger GIF（soul/2soul/gate/standby/pool/shot/return/comeback/treasure/choice/draw），存入 `public/assets/triggers/`。筛选下拉改为 `TriggerCombobox`（Listbox），选中显示图标，选项显示图标+文字；详情 Modal trigger 改为图标行。`discovery` / `chance` / `focus` 三个 JP 专属 trigger 无官方 GIF，保留文字降级。图标背景为官方 GIF 本身的黑色底（非 CSS 造成），待后续处理。
+
+#### 功能修复
+
+- **关联卡双向展示**：后端 `attachRelatedCards`（JP/EN）改为同时查询 outgoing（`cardno.$in`）和 incoming（`related_cardnos.$in`）两个方向，`Promise.all` 并发后合并 Set，确保「提到这张卡的卡」也出现在相关卡里。
+- **点击相关卡重新 fetch**：`CardDetailModal` 的 `onRelatedCardClick` 改为重新调 `/api/cards/jp?cardno=X` 取完整数据（含 `related_cards`），解决点进相关卡后 Modal 里关联卡为空的问题；fetch 失败时降级使用原轻量对象。
+
+---
+
 ### 优化收尾 & 查卡器改进 (2026-05-30 session 18)
 
 #### 性能优化 backlog 清理
@@ -1026,8 +1043,6 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   **Phase 5 — 未来功能扩展**（根据实际使用需求再决定）
 
   - **P4 扩展统计分析**：在现有 6 个分析 Tab 基础上新增维度；具体模块待使用中发现真实需求后再定，不提前设计。候选方向：赛事专项分析、时间段对比、对手卡组追踪、矩阵增强（按先後手分开）等
-
-- **Trigger 图标化显示**：用图标替代文字名称展示 trigger，作用于查卡器筛选选择器和卡片展示两处。图标资源已存在于 `public/assets/triggers/`（soul/gate/shot/standby/choice/bounce/bank/anchor/ticket/wheel/door 等 PNG）。实施步骤：① 建立 trigger 值 → 图标路径的映射表（如 `soul+1`→`soul.png`、`soul+2`→`climaxsoul.png`、`return`→`bounce.png`、`pool`→`bank.png`、`comeback`→`anchor.png`、`draw`→`wheel.png`、`treasure`→`ticket.png`、`discovery`→`magnify.png`）；② `JPCardList`/`ENCardList` 筛选器中 trigger 选项改为图标 chip；③ 卡片详情 Modal 和卡片网格 trigger 字段改为图标行。
 
 - **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
 

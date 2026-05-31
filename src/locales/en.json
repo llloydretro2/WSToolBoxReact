@@ -625,6 +625,11 @@
     "errorTitle": "Failed to load",
     "errorHint": "Please check your connection and try again",
     "prev": "Prev",
-    "next": "Next"
+    "next": "Next",
+    "cardTypes": {
+      "Character": "Character",
+      "Event": "Event",
+      "Climax": "Climax"
+    }
   }
 }

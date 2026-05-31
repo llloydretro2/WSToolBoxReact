@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import PropTypes from "prop-types";
 import { Combobox, Listbox } from "@headlessui/react";
 import {
-	Search, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, SlidersHorizontal,
+	Search, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, X, SlidersHorizontal, RotateCcw,
 } from "lucide-react";
 import { apiRequest } from "../utils/api.js";
 import { useLocale } from "../contexts/LocaleContext";
@@ -32,6 +32,22 @@ const EMPTY_DRAFT = {
 	search: "", series_number: "", product_name: "",
 	card_type: "", color: "", side: "", trigger: "", rarity: "",
 };
+
+const TRIGGER_ICON_MAP = {
+	"soul+1":   "/assets/triggers/soul.gif",
+	"soul+2":   "/assets/triggers/2soul.gif",
+	"pool":     "/assets/triggers/pool.gif",
+	"comeback": "/assets/triggers/comeback.gif",
+	"return":   "/assets/triggers/return.gif",
+	"draw":     "/assets/triggers/draw.gif",
+	"treasure": "/assets/triggers/treasure.gif",
+	"shot":     "/assets/triggers/shot.gif",
+	"gate":     "/assets/triggers/gate.gif",
+	"standby":  "/assets/triggers/standby.gif",
+	"choice":   "/assets/triggers/choice.gif",
+};
+
+
 
 const extractBaseCardNo = (cardno) => {
 	if (!cardno) return null;
@@ -96,6 +112,57 @@ FilterCombobox.propTypes = {
 	onChange: PropTypes.func.isRequired,
 	options: PropTypes.arrayOf(PropTypes.string).isRequired,
 	placeholder: PropTypes.string,
+};
+
+// ── Trigger selector (icon-based) ────────────────────────────────────────────
+
+function TriggerCombobox({ value, onChange, options }) {
+	return (
+		<Listbox value={value} onChange={onChange}>
+			<div className="relative">
+				<Listbox.Button className="w-full border border-[var(--border)] rounded-lg px-3 py-2 pr-8 bg-transparent focus:outline-none focus:border-[var(--text-muted)] transition-colors text-left cursor-pointer flex items-center min-h-[38px]">
+					{value ? (
+						TRIGGER_ICON_MAP[value]
+							? <img src={TRIGGER_ICON_MAP[value]} alt={value} title={value} className="w-5 h-5 object-contain" />
+							: <span className="text-sm text-[var(--text)]">{value}</span>
+					) : (
+						<span className="text-sm text-[var(--text-muted)]">Trigger type</span>
+					)}
+					{!value && <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--border)]" />}
+				</Listbox.Button>
+				{value && (
+					<button type="button" onClick={(e) => { e.stopPropagation(); onChange(""); }}
+						className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+						<X size={12} />
+					</button>
+				)}
+				<Listbox.Options anchor={{ to: "bottom start", gap: 4 }}
+					className="z-[9999] w-[var(--button-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
+					{options.map((opt) => (
+						<Listbox.Option key={opt} value={opt}
+							className={({ active, selected }) =>
+								`px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 ${
+									selected ? "bg-[var(--text-muted)] text-white font-medium"
+									: active ? "bg-[var(--card-background)] text-[var(--text)]"
+									: "text-[var(--text)]"
+								}`
+							}>
+							{TRIGGER_ICON_MAP[opt]
+								? <img src={TRIGGER_ICON_MAP[opt]} alt={opt} className="w-4 h-4 object-contain shrink-0" />
+								: <span className="w-4 h-4 shrink-0" />}
+							<span className="text-sm">{opt}</span>
+						</Listbox.Option>
+					))}
+				</Listbox.Options>
+			</div>
+		</Listbox>
+	);
+}
+
+TriggerCombobox.propTypes = {
+	value: PropTypes.string.isRequired,
+	onChange: PropTypes.func.isRequired,
+	options: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 // ── Bilingual neostandard combobox (JP名（中文名）) ───────────────────────────
@@ -311,6 +378,7 @@ PaginationBar.propTypes = {
 // ── Card detail modal ─────────────────────────────────────────────────────────
 
 function CardDetailModal({ card, onClose, onRelatedCardClick }) {
+	const { t } = useLocale();
 	useEffect(() => {
 		const handler = (e) => { if (e.key === "Escape") onClose(); };
 		window.addEventListener("keydown", handler);
@@ -351,7 +419,7 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 							{/* Badges */}
 							<div className="flex flex-wrap gap-1.5">
 								{colorMeta && (
-									<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${colorMeta.pill}`}>{colorMeta.label}</span>
+									<span className={`text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${colorMeta.pill}`}>{t(`pages.cardList.colors.${colorMeta.value}`) || colorMeta.label}</span>
 								)}
 								{sideLabel && sideLabel !== "All" && (
 									<span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--card-background)] text-[var(--text-muted)]">{sideLabel}</span>
@@ -360,7 +428,7 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 									<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{card.rarity}</span>
 								)}
 								{card.card_type && (
-									<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{card.card_type}</span>
+									<span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--border)] text-[var(--text-secondary)]">{t(`pages.cardList.cardTypes.${card.card_type}`) || card.card_type}</span>
 								)}
 							</div>
 							{/* Stat grid */}
@@ -380,7 +448,13 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 							{card.trigger?.length > 0 && (
 								<div className="flex items-center gap-1.5">
 									<span className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)]">Trigger</span>
-									<span className="text-xs font-medium text-[var(--text)] capitalize">{card.trigger.join(", ")}</span>
+									<div className="flex items-center gap-1.5">
+										{card.trigger.map((trig) => (
+											TRIGGER_ICON_MAP[trig]
+												? <img key={trig} src={TRIGGER_ICON_MAP[trig]} alt={trig} title={trig} className="w-5 h-5 object-contain" />
+												: <span key={trig} className="text-xs font-medium text-[var(--text)] capitalize">{trig}</span>
+										))}
+									</div>
 								</div>
 							)}
 							{card.feature && (
@@ -749,11 +823,10 @@ const JPCardList = () => {
 								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
 									{t("enCardList.trigger")}
 								</label>
-								<FilterCombobox
+								<TriggerCombobox
 									value={draft.trigger}
 									onChange={(v) => setDraft((p) => ({ ...p, trigger: v ?? "" }))}
 									options={triggerOptions}
-									placeholder="Trigger type"
 								/>
 							</div>
 							<div>
@@ -782,7 +855,7 @@ const JPCardList = () => {
 													? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
 													: "border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--text-muted)] hover:text-[var(--text)]"
 											}`}>
-											{type}
+											{t(`pages.cardList.cardTypes.${type}`) || type}
 										</button>
 									))}
 								</div>
@@ -803,14 +876,14 @@ const JPCardList = () => {
 								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">{t("enCardList.color")}</p>
 								<div className="flex gap-2">
 									{COLOR_OPTIONS.map(({ value, label, dot }) => (
-										<button key={value} title={label}
+										<button key={value} title={t(`pages.cardList.colors.${value}`) || label}
 											onClick={() => setDraft((p) => ({ ...p, color: p.color === value ? "" : value }))}
-											className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${dot} ${
+											className={`w-7 h-7 rounded-full border-2 border-solid border-black flex items-center justify-center transition-all ${
 												draft.color === value
-													? "border-[var(--text)] scale-110 shadow-sm"
-													: "border-transparent opacity-50 hover:opacity-90 hover:scale-105"
+													? `${dot} scale-110 shadow-sm`
+													: "bg-white opacity-60 hover:opacity-90 hover:scale-105"
 											}`}>
-											<span className="text-[9px] font-black text-white drop-shadow">{label[0]}</span>
+											<span className="text-[9px] font-black text-black">{(t(`pages.cardList.colors.${value}`) || label)[0]}</span>
 										</button>
 									))}
 								</div>
@@ -835,19 +908,25 @@ const JPCardList = () => {
 
 						{/* Level / Cost / Power ranges */}
 						{[
-							{ label: "Level", content: validLevels.length > 0
-								? <RangeSelect value={levelRange} options={validLevels} onChange={setLevelRange} />
-								: null },
-							{ label: "Cost",  content: validCosts.length > 0
-								? <RangeSelect value={costRange}  options={validCosts}  onChange={setCostRange} />
-								: null },
-							{ label: "Power", content: validPowers.length > 0 && powerRange !== null
-								? <RangeSelect value={powerRange} options={validPowers} onChange={setPowerRange} formatOption={(v) => v.toLocaleString()} />
-								: null },
-						].map(({ label, content }) => (
+							{ label: "Level",
+							  content: validLevels.length > 0 ? <RangeSelect value={levelRange} options={validLevels} onChange={setLevelRange} /> : null,
+							  isModified: levelRange[0] > 0 || levelRange[1] < maxLevel,
+							  onReset: () => setLevelRange([0, maxLevel]) },
+							{ label: "Cost",
+							  content: validCosts.length > 0 ? <RangeSelect value={costRange} options={validCosts} onChange={setCostRange} /> : null,
+							  isModified: costRange[0] > 0 || costRange[1] < maxCost,
+							  onReset: () => setCostRange([0, maxCost]) },
+							{ label: "Power",
+							  content: validPowers.length > 0 && powerRange !== null ? <RangeSelect value={powerRange} options={validPowers} onChange={setPowerRange} formatOption={(v) => v.toLocaleString()} /> : null,
+							  isModified: powerRange && validPowers.length > 0 && (powerRange[0] > validPowers[0] || powerRange[1] < validPowers[validPowers.length - 1]),
+							  onReset: () => setPowerRange([validPowers[0], validPowers[validPowers.length - 1]]) },
+						].map(({ label, content, isModified, onReset }) => (
 							<div key={label} className="flex items-center gap-4">
 								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] w-10 shrink-0">{label}</p>
 								<div className="flex-1">{content ?? <p className="text-xs text-[var(--text-muted)]">Loading…</p>}</div>
+								<button onClick={onReset} className={`text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors shrink-0 ${isModified ? "" : "opacity-0 pointer-events-none"}`}>
+									<RotateCcw size={12} />
+								</button>
 							</div>
 						))}
 
@@ -963,7 +1042,16 @@ const JPCardList = () => {
 				<CardDetailModal
 					card={selectedCard}
 					onClose={() => setSelectedCard(null)}
-					onRelatedCardClick={setSelectedCard}
+					onRelatedCardClick={async (rc) => {
+						try {
+							const params = new URLSearchParams({ cardno: rc.cardno, pageSize: 1 });
+							const res  = await apiRequest(`/api/cards/jp?${params}`);
+							const data = await res.json();
+							setSelectedCard(data.data?.[0] ?? rc);
+						} catch {
+							setSelectedCard(rc);
+						}
+					}}
 				/>
 			)}
 		</div>
