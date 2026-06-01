@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-31 (session 35)
+> Last updated: 2026-05-31 (session 36)
 
 ## Deployment
 
@@ -647,6 +647,25 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 - **Accent 色对齐分区主题**：`siteStructure.js` 中三个分区的 accent 色更新为各自 `--text-muted` 值——WS `#4f9b78`→`#277d0e`（harlequin-700）、麻将 `#d26a6a`→`#be1e3e`（cardinal-700）、工具 `#5b84d6`→`#27553f`（spring-rain-700）。工具分区原本是蓝色，现已对齐绿色主题。
 - **蒙版加白提升可读性**：白色蒙版从 `rgba(255,255,255,0.58)` 提升到 `0.78`，hover 时降至 `0.65`；同时将 `onMouseEnter/onMouseLeave` 命令式 JS 改为 Tailwind `group`/`group-hover:` 纯 CSS 实现，消除 hover 状态卡住的 bug。
 - **布局紧凑化**：Body padding `p-5`→`p-4`，内部间距 `gap-3`→`gap-2`，图标盒 `w-10 h-10`→`w-8 h-8`，描述字号 `text-sm`→`text-xs`，chip 间距 `gap-1.5`→`gap-1`，色条高度 `h-1.5`→`h-1`。
+
+---
+
+### 查卡器 UI 全面汉化 & 交互重设计 (2026-05-31 session 36)
+
+#### 全站 UI 汉化（JP/EN 同步）
+
+- **20 处英文硬编码全部 i18n 化**：卡片详情弹窗（Level/Cost/Power/Soul/Trigger/Traits/Expansion/Effect/Ability Text/Flavor/Related Cards）、筛选面板（All、Loading…、No results、Trigger type）、所有输入框 placeholder（商品名→例：Fate/stay night、系列→例：刀剑神域、稀有度→例：RR、系列代号→例：SAO）。JP 复用 `pages.cardList.*` 已有键，EN 新增 `enCardList.*` 键。
+- **`CardDetailModal` 补加 `useLocale()`** 修复因缺少 `t` 导致的白屏。
+
+#### 筛选输入框交互重设计
+
+- **选中后锁定为 tag 模式**：`FilterCombobox` 和 `NeoCombobox`（JP 双语）选中后 `Combobox.Input` 改为 `readOnly + pointer-events-none`，深色背景白字，边框透明，`pr-8` 预留 × 按钮空间。原生 `<input>` 天然截断超长文字，彻底解决 flex 布局撑宽问题。`TriggerCombobox`（Listbox）同步采用 `<input readOnly>` 呈现选中态。
+- **`Combobox.Options` 条件渲染**：仅在无值时渲染，选中后不触发下拉。
+
+#### 激活筛选视觉强化
+
+- **圆点指示器**：筛选面板所有 11 个标签（关键词/系列/系列代号/商品/触发/稀有度/卡片类型/魂/颜色/阵营/等级/费用/攻击力）均加 `1.5×1.5` 实心圆点，激活时可见，未激活时 `invisible` 占位（不产生布局抖动）。标签文字同步由 `text-[var(--text-secondary)]` 切换为 `text-[var(--text-muted)]`。
+- **range 标签修复**：等级/费用/攻击力 label 从 `w-10 tracking-widest` 改为 `w-12 tracking-wide`，防止"攻击力"加圆点后换行。
 
 ---
 

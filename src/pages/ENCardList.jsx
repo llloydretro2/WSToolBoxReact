@@ -56,28 +56,30 @@ const extractBaseCardNo = (cardno) => {
 // ── Generic searchable combobox ───────────────────────────────────────────────
 
 function FilterCombobox({ value, onChange, options, placeholder }) {
+	const { t } = useLocale();
 	const [query, setQuery] = useState("");
-
-	const filtered =
-		query === ""
-			? options
-			: options.filter((o) => o.toLowerCase().includes(query.toLowerCase()));
+	const filtered = query === ""
+		? options
+		: options.filter((o) => o.toLowerCase().includes(query.toLowerCase()));
 
 	return (
 		<Combobox value={value} onChange={onChange} onClose={() => setQuery("")} immediate>
 			<div className="relative">
 				<Combobox.Input
 					autoComplete="off"
+					readOnly={!!value}
 					placeholder={placeholder}
 					displayValue={(v) => v || ""}
 					onChange={(e) => setQuery(e.target.value)}
-					className="w-full bg-transparent border border-[var(--border)] rounded-lg px-3 py-2 pr-8 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
+					className={`w-full border border-solid rounded-lg px-3 py-2 pr-8 text-sm focus:outline-none transition-colors ${
+						value
+							? "bg-[var(--text-muted)] text-white border-transparent cursor-default pointer-events-none"
+							: "bg-transparent border-[var(--border)] text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-[var(--text-muted)]"
+					}`}
 				/>
 				{value ? (
-					<button
-						type="button"
-						onClick={() => onChange("")}
-						className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+					<button type="button" onClick={() => onChange("")}
+						className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors">
 						<X size={12} />
 					</button>
 				) : (
@@ -85,30 +87,27 @@ function FilterCombobox({ value, onChange, options, placeholder }) {
 						<ChevronDown size={14} />
 					</Combobox.Button>
 				)}
-				<Combobox.Options
-					anchor={{ to: "bottom start", gap: 4 }}
-					className="z-[9999] w-[var(--input-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
-					{filtered.length === 0 ? (
-						<div className="px-3 py-2 text-sm text-[var(--text-muted)]">No results</div>
-					) : (
-						filtered.map((opt) => (
-							<Combobox.Option
-								key={opt}
-								value={opt}
-								className={({ active, selected }) =>
-									`px-3 py-2 text-sm cursor-pointer transition-colors ${
-										selected
-											? "bg-[var(--text-muted)] text-white font-medium"
-											: active
-											? "bg-[var(--card-background)] text-[var(--text)]"
+				{!value && (
+					<Combobox.Options anchor={{ to: "bottom start", gap: 4 }}
+						className="z-[9999] w-[var(--input-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
+						{filtered.length === 0 ? (
+							<div className="px-3 py-2 text-sm text-[var(--text-muted)]">{t("enCardList.comboboxEmpty")}</div>
+						) : (
+							filtered.map((opt) => (
+								<Combobox.Option key={opt} value={opt}
+									className={({ active, selected }) =>
+										`px-3 py-2 text-sm cursor-pointer transition-colors ${
+											selected ? "bg-[var(--text-muted)] text-white font-medium"
+											: active ? "bg-[var(--card-background)] text-[var(--text)]"
 											: "text-[var(--text)]"
-									}`
-								}>
-								{opt}
-							</Combobox.Option>
-						))
-					)}
-				</Combobox.Options>
+										}`
+									}>
+									{opt}
+								</Combobox.Option>
+							))
+						)}
+					</Combobox.Options>
+				)}
 			</div>
 		</Combobox>
 	);
@@ -124,43 +123,48 @@ FilterCombobox.propTypes = {
 // ── Trigger selector (icon-based) ────────────────────────────────────────────
 
 function TriggerCombobox({ value, onChange, options }) {
+	const { t } = useLocale();
 	return (
 		<Listbox value={value} onChange={onChange}>
 			<div className="relative">
-				<Listbox.Button className="w-full border border-[var(--border)] rounded-lg px-3 py-2 pr-8 bg-transparent focus:outline-none focus:border-[var(--text-muted)] transition-colors text-left cursor-pointer flex items-center min-h-[38px]">
-					{value ? (
-						TRIGGER_ICON_MAP[value]
-							? <img src={TRIGGER_ICON_MAP[value]} alt={value} title={value} className="w-5 h-5 object-contain" />
-							: <span className="text-sm text-[var(--text)]">{value}</span>
-					) : (
-						<span className="text-sm text-[var(--text-muted)]">Trigger type</span>
-					)}
-					{!value && <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--border)]" />}
-				</Listbox.Button>
-				{value && (
-					<button type="button" onClick={(e) => { e.stopPropagation(); onChange(""); }}
-						className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
-						<X size={12} />
-					</button>
+				{value ? (
+					<>
+						<input
+							readOnly
+							value={value}
+							className="w-full border border-solid border-transparent rounded-lg px-3 py-2 pr-8 bg-[var(--text-muted)] text-white text-sm cursor-default pointer-events-none focus:outline-none"
+						/>
+						<button type="button" onClick={() => onChange("")}
+							className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors">
+							<X size={12} />
+						</button>
+					</>
+				) : (
+					<>
+						<Listbox.Button className="w-full border border-solid border-[var(--border)] rounded-lg px-3 py-2 pr-8 bg-transparent text-sm text-left cursor-pointer flex items-center focus:outline-none focus:border-[var(--text-muted)] transition-colors">
+							<span className="text-[var(--text-muted)]">{t("enCardList.triggerPlaceholder")}</span>
+						</Listbox.Button>
+						<ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--border)] pointer-events-none" />
+						<Listbox.Options anchor={{ to: "bottom start", gap: 4 }}
+							className="z-[9999] w-[var(--button-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
+							{options.map((opt) => (
+								<Listbox.Option key={opt} value={opt}
+									className={({ active, selected }) =>
+										`px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 ${
+											selected ? "bg-[var(--text-muted)] text-white font-medium"
+											: active ? "bg-[var(--card-background)] text-[var(--text)]"
+											: "text-[var(--text)]"
+										}`
+									}>
+									{TRIGGER_ICON_MAP[opt]
+										? <img src={TRIGGER_ICON_MAP[opt]} alt={opt} className="w-4 h-4 object-contain shrink-0" />
+										: <span className="w-4 h-4 shrink-0" />}
+									<span className="text-sm">{opt}</span>
+								</Listbox.Option>
+							))}
+						</Listbox.Options>
+					</>
 				)}
-				<Listbox.Options anchor={{ to: "bottom start", gap: 4 }}
-					className="z-[9999] w-[var(--button-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-56 overflow-auto">
-					{options.map((opt) => (
-						<Listbox.Option key={opt} value={opt}
-							className={({ active, selected }) =>
-								`px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 ${
-									selected ? "bg-[var(--text-muted)] text-white font-medium"
-									: active ? "bg-[var(--card-background)] text-[var(--text)]"
-									: "text-[var(--text)]"
-								}`
-							}>
-							{TRIGGER_ICON_MAP[opt]
-								? <img src={TRIGGER_ICON_MAP[opt]} alt={opt} className="w-4 h-4 object-contain shrink-0" />
-								: <span className="w-4 h-4 shrink-0" />}
-							<span className="text-sm">{opt}</span>
-						</Listbox.Option>
-					))}
-				</Listbox.Options>
 			</div>
 		</Listbox>
 	);
@@ -392,10 +396,10 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 							</div>
 							<div className="grid grid-cols-2 gap-1.5">
 								{[
-									{ label: "Level", value: card.level },
-									{ label: "Cost",  value: card.cost },
-									{ label: "Power", value: card.power != null ? card.power.toLocaleString() : "—" },
-									{ label: "Soul",  value: card.soul },
+									{ label: t("enCardList.statLevel"), value: card.level },
+									{ label: t("enCardList.statCost"),  value: card.cost },
+									{ label: t("enCardList.statPower"), value: card.power != null ? card.power.toLocaleString() : "—" },
+									{ label: t("enCardList.statSoul"),  value: card.soul },
 								].map(({ label, value }) => (
 									<div key={label} className="border border-[var(--border)] rounded-lg p-2 bg-[var(--card-background)]">
 										<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)]">{label}</p>
@@ -405,7 +409,7 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 							</div>
 							{card.trigger?.length > 0 && (
 								<div className="flex items-center gap-1.5">
-									<span className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)]">Trigger</span>
+									<span className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)]">{t("enCardList.labelTrigger")}</span>
 									<div className="flex items-center gap-1.5">
 										{card.trigger.map((trig) => (
 											TRIGGER_ICON_MAP[trig]
@@ -417,7 +421,7 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 							)}
 							{card.feature && (
 								<div>
-									<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">Traits</p>
+									<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">{t("enCardList.labelTraits")}</p>
 									<p className="text-xs text-[var(--text)]">{card.feature}</p>
 								</div>
 							)}
@@ -426,25 +430,25 @@ function CardDetailModal({ card, onClose, onRelatedCardClick }) {
 
 					{card.product_name && (
 						<div>
-							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">Expansion</p>
+							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">{t("enCardList.labelExpansion")}</p>
 							<p className="text-sm text-[var(--text)]">{card.product_name}</p>
 						</div>
 					)}
 					{card.effect && (
 						<div className="border border-[var(--border)] rounded-xl p-3">
-							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">Ability Text</p>
+							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">{t("enCardList.labelAbilityText")}</p>
 							<p className="text-xs text-[var(--text)] whitespace-pre-line leading-relaxed">{card.effect}</p>
 						</div>
 					)}
 					{card.flavor && (
 						<div className="border border-[var(--border)] rounded-xl p-3 bg-[var(--card-background)]">
-							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">Flavor</p>
+							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">{t("enCardList.labelFlavor")}</p>
 							<p className="text-xs italic text-[var(--text-secondary)]">{card.flavor}</p>
 						</div>
 					)}
 					{card.related_cards?.length > 0 && (
 						<div>
-							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">Related Cards</p>
+							<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">{t("enCardList.labelRelatedCards")}</p>
 							<div className="grid grid-cols-2 gap-2">
 								{card.related_cards.map((rc) => (
 									<button
@@ -717,7 +721,10 @@ const ENCardList = () => {
 
 						{/* Row 1: Search keyword */}
 						<div>
-							<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+							<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+								draft.search ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+							}`}>
+								<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.search) ? "invisible" : ""}`} />
 								{t("enCardList.search")}
 							</label>
 							<div className="relative">
@@ -734,39 +741,48 @@ const ENCardList = () => {
 
 						{/* Row 2: Product */}
 						<div>
-							<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+							<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+								draft.product_name ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+							}`}>
+								<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.product_name) ? "invisible" : ""}`} />
 								{t("enCardList.product")}
 							</label>
 							<FilterCombobox
 								value={draft.product_name}
 								onChange={(v) => setDraft((p) => ({ ...p, product_name: v ?? "" }))}
 								options={options.product_name}
-								placeholder="Product name"
+								placeholder={t("enCardList.productPlaceholder")}
 							/>
 						</div>
 
 						{/* Row 3: Neostandard Title + Series Number */}
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+								<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+									draftNeostandard ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draftNeostandard) ? "invisible" : ""}`} />
 									{t("enCardList.series")}
 								</label>
 								<FilterCombobox
 									value={draftNeostandard}
 									onChange={(v) => setDraftNeostandard(v ?? "")}
 									options={Object.keys(neostandardMap)}
-									placeholder="Title / Series"
+									placeholder={t("enCardList.seriesPlaceholder")}
 								/>
 							</div>
 							<div>
-								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+								<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+									draft.series_number ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.series_number) ? "invisible" : ""}`} />
 									{t("enCardList.seriesNumber")}
 								</label>
 								<FilterCombobox
 									value={draft.series_number}
 									onChange={(v) => setDraft((p) => ({ ...p, series_number: v ?? "" }))}
 									options={options.series_number}
-									placeholder="e.g. SAO"
+									placeholder={t("enCardList.seriesCodePlaceholder")}
 								/>
 							</div>
 						</div>
@@ -774,7 +790,10 @@ const ENCardList = () => {
 						{/* Row 4: Trigger + Rarity */}
 						<div className="grid grid-cols-2 gap-3">
 							<div>
-								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+								<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+									draft.trigger ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.trigger) ? "invisible" : ""}`} />
 									{t("enCardList.trigger")}
 								</label>
 								<TriggerCombobox
@@ -784,14 +803,17 @@ const ENCardList = () => {
 								/>
 							</div>
 							<div>
-								<label className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1 block">
+								<label className={`text-[10px] font-black tracking-widest uppercase mb-1 flex items-center gap-1.5 transition-colors ${
+									draft.rarity ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.rarity) ? "invisible" : ""}`} />
 									{t("enCardList.rarity")}
 								</label>
 								<FilterCombobox
 									value={draft.rarity}
 									onChange={(v) => setDraft((p) => ({ ...p, rarity: v ?? "" }))}
 									options={options.rarity}
-									placeholder="Rarity"
+									placeholder={t("enCardList.rarityPlaceholder")}
 								/>
 							</div>
 						</div>
@@ -799,7 +821,12 @@ const ENCardList = () => {
 						{/* Row 5: Card Type + Soul + Color + Side */}
 						<div className="flex flex-wrap items-start gap-x-6 gap-y-3">
 							<div>
-								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">{t("enCardList.cardType")}</p>
+								<p className={`text-[10px] font-black tracking-widest uppercase mb-1.5 flex items-center gap-1.5 transition-colors ${
+									draft.card_type ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.card_type) ? "invisible" : ""}`} />
+									{t("enCardList.cardType")}
+								</p>
 								<div className="flex gap-1.5">
 									{CARD_TYPE_OPTIONS.map((type) => (
 										<button
@@ -816,7 +843,12 @@ const ENCardList = () => {
 								</div>
 							</div>
 							<div>
-								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">{t("enCardList.soul")}</p>
+								<p className={`text-[10px] font-black tracking-widest uppercase mb-1.5 flex items-center gap-1.5 transition-colors ${
+									draftSoul ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draftSoul) ? "invisible" : ""}`} />
+									{t("enCardList.soul")}
+								</p>
 								<button
 									onClick={() => setDraftSoul((s) => !s)}
 									className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
@@ -828,14 +860,19 @@ const ENCardList = () => {
 								</button>
 							</div>
 							<div>
-								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">{t("enCardList.color")}</p>
+								<p className={`text-[10px] font-black tracking-widest uppercase mb-1.5 flex items-center gap-1.5 transition-colors ${
+									draft.color ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.color) ? "invisible" : ""}`} />
+									{t("enCardList.color")}
+								</p>
 								<div className="flex gap-2">
 									{COLOR_OPTIONS.map(({ value, label, dot }) => (
 										<button
 											key={value}
 											title={t(`pages.cardList.colors.${value}`) || label}
 											onClick={() => setDraft((p) => ({ ...p, color: p.color === value ? "" : value }))}
-											className={`w-7 h-7 rounded-full border-2 border-solid border-black flex items-center justify-center transition-all ${
+											className={`w-7 h-7 rounded-full border-2 border-solid border-[var(--border)] flex items-center justify-center transition-all ${
 												draft.color === value
 													? `${dot} scale-110 shadow-sm`
 													: "bg-white opacity-60 hover:opacity-90 hover:scale-105"
@@ -846,7 +883,12 @@ const ENCardList = () => {
 								</div>
 							</div>
 							<div>
-								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-1.5">{t("enCardList.side")}</p>
+								<p className={`text-[10px] font-black tracking-widest uppercase mb-1.5 flex items-center gap-1.5 transition-colors ${
+									draft.side ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(draft.side) ? "invisible" : ""}`} />
+									{t("enCardList.side")}
+								</p>
 								<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
 									{SIDE_OPTIONS.map(({ value, label }) => (
 										<button
@@ -866,22 +908,27 @@ const ENCardList = () => {
 
 						{/* Row 6–8: Level / Cost / Power — each on its own row */}
 						{[
-							{ label: "Level",
+							{ label: t("enCardList.statLevel"),
 							  content: validLevels.length > 0 ? <RangeSelect value={levelRange} options={validLevels} onChange={setLevelRange} /> : null,
 							  isModified: levelRange[0] > 0 || levelRange[1] < maxLevel,
 							  onReset: () => setLevelRange([0, maxLevel]) },
-							{ label: "Cost",
+							{ label: t("enCardList.statCost"),
 							  content: validCosts.length > 0 ? <RangeSelect value={costRange} options={validCosts} onChange={setCostRange} /> : null,
 							  isModified: costRange[0] > 0 || costRange[1] < maxCost,
 							  onReset: () => setCostRange([0, maxCost]) },
-							{ label: "Power",
+							{ label: t("enCardList.statPower"),
 							  content: validPowers.length > 0 && powerRange !== null ? <RangeSelect value={powerRange} options={validPowers} onChange={setPowerRange} formatOption={(v) => v.toLocaleString()} /> : null,
 							  isModified: powerRange && validPowers.length > 0 && (powerRange[0] > validPowers[0] || powerRange[1] < validPowers[validPowers.length - 1]),
 							  onReset: () => setPowerRange([validPowers[0], validPowers[validPowers.length - 1]]) },
 						].map(({ label, content, isModified, onReset }) => (
 							<div key={label} className="flex items-center gap-4">
-								<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] w-10 shrink-0">{label}</p>
-								<div className="flex-1">{content ?? <p className="text-xs text-[var(--text-muted)]">Loading…</p>}</div>
+								<p className={`text-[10px] font-black tracking-wide uppercase w-12 shrink-0 flex items-center gap-1 transition-colors ${
+									isModified ? "text-[var(--text-muted)]" : "text-[var(--text-secondary)]"
+								}`}>
+									<span className={`w-1.5 h-1.5 rounded-full bg-[var(--text-muted)] shrink-0 ${!(isModified) ? "invisible" : ""}`} />
+									{label}
+								</p>
+								<div className="flex-1">{content ?? <p className="text-xs text-[var(--text-muted)]">{t("enCardList.rangeLoading")}</p>}</div>
 								<button onClick={onReset} className={`text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors shrink-0 ${isModified ? "" : "opacity-0 pointer-events-none"}`}>
 									<RotateCcw size={12} />
 								</button>
