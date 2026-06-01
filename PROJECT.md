@@ -1375,7 +1375,96 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   - `このカードを【スタンド】`（战斗相关）：113 hits（J2）
   - `ダメージを与える`：2000+ hits（A/B/C类）
 
-- **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
+- **WS 卡片 DIY 制作页面** `/ws/card-maker`（2026-06-01 计划完成）
+
+  纯前端，无需后端。素材来源：`weiss-mse-plugin`（Magic Set Editor 2 的 WS 插件），全套 PNG 已下载至 `public/assets/card-maker/`。
+
+  ---
+
+  ### 素材体系（已完整）
+
+  **画布尺寸**：角色/事件卡 **448×626px**，高潮卡 **626×448px**（旋转 270°）
+
+  **坐标来源**：`public/assets/card-maker/style`（MSE 插件布局文件），所有元素精确坐标已知，无需手动测量。
+
+  **框架文件命名规律**：
+  - 角色卡：`character/{side}/{color}{souls}s{0|1}t.png`（side: weiss/schwarz/both；color: b/g/p/r/y；souls: 0–3；trigger: 0=无/1=有）
+  - 事件卡：`event/{side}/{color}.png`
+  - 高潮卡：`climax/{side}/{color}.png`
+
+  **已有素材目录**：
+
+  | 目录 | 内容 | V1 用途 |
+  |------|------|---------|
+  | `character/` `event/` `climax/` | 三种卡型 × weiss/schwarz/both × 5色 的完整框架 | 核心图层 |
+  | `character/mask2.png` 等 | 各卡型卡图裁剪遮罩（mask2 为当前标准） | 裁剪卡图 |
+  | `level/` | `l0.png` + `{b/g/p/r/y}l{1/2/3}.png` | 等级图标 |
+  | `cost/` | `c0.png`–`c15.png`, `c20.png` | 费用图标 |
+  | `triggers/` | 20 种 trigger 图标 PNG | Trigger 图标 |
+  | `backup/` | `back.png`（Backup 徽章）/ `clock.png`（Clock Shift 徽章）/ `nobackup.png` | 能力徽章 |
+  | `traits/` | `trait_border_{on/off}_{left/middle/right}.png` × 6 | 特征边框 |
+  | `bars/` | 颜色条、风味栏、JP 名字栏（climax/other/普通三套） | 文字背景栏 |
+  | `souls/` | `{1/2/3}s.png` + mask（卡图上的魂水印叠层） | 可选水印 |
+  | `clear/` | `clear.png`（最终保护层） | 顶层覆盖 |
+  | `foil/v2/` | SP/SSP 卡框架 + copyright 栏 | 暂不实现 |
+  | `font/` | Vagabond / Open Sans / Agfa Rotis Semi Serif / Warnock Pro / Souvenir LT 等完整 TTF/OTF | 文字渲染 |
+
+  ---
+
+  ### 精确坐标（来自 style 文件，基于 448×626 画布）
+
+  | 元素 | top | left | width | height | 字体 / 备注 |
+  |------|-----|------|-------|--------|------------|
+  | 等级图标 | 13 | 16 | 50 | 60 | `level/` 图片 |
+  | 费用图标 | 73 | 16 | 50 | 42 | `cost/` 图片 |
+  | Backup 徽章 1 | 118 | 23 | 38 | 38 | `backup/` 图片 |
+  | Backup 徽章 2 | 156 | 23 | 38 | 38 | `backup/` 图片 |
+  | Trigger（角色/事件） | 14 | 385 | 51 | 58 | `triggers/` 图片 |
+  | Trigger 2（高潮） | 14 | 333 | 51 | 58 | 高潮专用第二 trigger |
+  | 卡名文字（角色） | 557 | 152 | 204 | 24 | Agfa Rotis Semi Serif Bold 白色 |
+  | 卡名文字（事件） | 573 | 152 | 204 | 24 | 同上 |
+  | 卡名文字（高潮） | 377 | 54 | 204 | 24 | 旋转 270° |
+  | 攻击力文字 | 574 | 32 | 90 | 25 | Warnock Pro Bold size:23 白色 |
+  | 特征1（regular） | 587 | 212 | 90 | 14 | Vagabond Bold size:9 黑色 |
+  | 特征2（regular） | 587 | 314 | 90 | 14 | 同上 |
+  | 效果文本 | bottom≈543 | 26 | 394 | 动态 | Vagabond Normal，从底部向上增长 |
+  | 风味文字 | 效果文本上方 | 20 | 406 | 动态 | Souvenir LT size:11 |
+  | 卡号文字 | 553 | 44 | 77 | 10 | Open Sans size:6.1 |
+  | 画师名文字 | 608 | 61 | 323 | 18 | Open Sans Condensed Bold size:6 |
+
+  ---
+
+  ### 图层叠加顺序（角色卡 Canvas 渲染）
+
+  ```
+  ① 卡图（用户上传，用 character/{side}/mask2.png 裁剪到美术区）
+  ② 魂水印（souls/{N}s.png，可选叠层）
+  ③ 框架（character/{side}/{color}{N}s{0|1}t.png）
+  ④ 名字栏（bars/jp_name_bar/{color}.png，JP/EN import 模式启用）
+  ⑤ 等级图标（level/）
+  ⑥ 费用图标（cost/）
+  ⑦ Backup 徽章（backup/）
+  ⑧ Trigger 图标（triggers/）
+  ⑨ 特征边框（traits/trait_border_{on/off}_{left/middle/right}.png）
+  ⑩ Canvas 文字：卡名、攻击力、效果文本（含内联符号）、风味文字、特征名、卡号、画师名
+  ⑪ 保护层（clear/clear.png）
+  ```
+
+  ---
+
+  ### 实现计划
+
+  **Phase 1 — 角色卡渲染（核心）**
+  - 文件：`src/pages/CardMaker.jsx` + `src/utils/wsCardMaker/renderer.js` + `src/utils/wsCardMaker/layout.js`
+  - 卡片数据模型：type / side / color / level / cost / power / souls / trigger / backup / name / trait1 / trait2 / effect / flavor / art(dataURL)
+  - 字体通过 `@font-face` 加载 `public/assets/card-maker/font/` 中的 TTF/OTF
+  - 效果文本内联符号：解析 `{ACT}` 等标记 → 从 `symbolMap.json` 查路径 → Canvas `drawImage` 嵌入行内
+  - UI：左栏输入（选择器 + 数值 + 文字域 + 卡图上传拖拽）/ 右栏 Canvas 实时预览 / 底部导出 PNG 按钮
+
+  **Phase 2 — 事件卡 / 高潮卡**
+  - 框架已有，逻辑比角色卡简单（事件卡无魂/trigger 变体；高潮卡旋转 + 无等级/费用/攻击力）
+
+  **暂不实现**：SP/foil 闪卡效果、卡背、卡序号印刷风格
 
 - ~~**首页组件拆分**~~：✅ 完成（2026-06-01）。`SectionCard` / `RecentUpdates` 已抽离至 `src/components/home/`，`Home.jsx` 从 368 行缩减至 ~90 行。
 - **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。
