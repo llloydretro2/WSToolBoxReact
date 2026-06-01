@@ -1063,7 +1063,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
   - **P4 扩展统计分析**：在现有 6 个分析 Tab 基础上新增维度；具体模块待使用中发现真实需求后再定，不提前设计。候选方向：赛事专项分析、时间段对比、对手卡组追踪、矩阵增强（按先後手分开）等
 
-- **【最高优先级】WS 伤害计算器** `/ws/damage`：帮助玩家量化攻击伤害预期的计算工具。纯前端，无需后端。
+- **WS 伤害计算器** `/ws/damage`：帮助玩家量化攻击伤害预期的计算工具。纯前端，无需后端。
 
   **规则背景（来源：WSE Comprehensive Rules v2.10，2025-09）**
 
@@ -1327,6 +1327,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   #### 待完成
   - 更多伤害模板（翻顶系列、顶牌条件等）
   - 对比模式（并排比较多种伤害序列）
+  - **伤害反推**：针对可宣言 X 点伤害的效果（如集中），枚举 X 的所有合法取值，用引擎分别计算，找出期望伤害最高 / 斩杀率最高的最优 X；结果以列表或小图展示，辅助玩家决策宣言几点
 
   ---
 
@@ -1361,8 +1362,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
 - **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
 
-- **移动端 NavBar 实机校验**：当前动画和布局已在代码层收敛，但仍建议用真实手机尺寸重点检查 `/ws/*`、`/mahjong/*`、`/tools/*` 的进入/返回状态：标题是否换行合理、箭头点击区是否足够、下拉菜单是否和品牌区动画冲突。该项不应引入新设计，只做小幅 CSS 微调。
-- **首页组件拆分**：`Home.jsx` 已承担 section card、recent updates、contact links、布局容器等职责。建议先抽出 `SectionCard`、`RecentUpdates`、`ContactLinks` 到 `src/components/home/`，保持现有视觉不变，只降低页面文件复杂度。
+- **首页组件拆分**：`Home.jsx` 已承担 section card、recent updates、contact links、布局容器等职责。建议先抽出 `SectionCard`、`RecentUpdates` 到 `src/components/home/`，保持现有视觉不变，只降低页面文件复杂度。
 - **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。
 - **AudioBoard 通用化文案检查**：音效面板已经移到 `/tools/audio`，后续需要确认页面文案、空状态、错误提示不再暗示它只属于 WS。这个优化应以 locale 文案和小范围 UI 文案为主，不改变播放器逻辑。
 
@@ -1391,6 +1391,8 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 - **文档结构进一步分层**：当前 `CLAUDE.md` 负责当前架构规则，`PROJECT.md` 同时保存当前状态和历史 session。后续可把较长历史迁移到 `docs/history.md`，把麻将引擎说明迁移到 `docs/mahjong-engine.md`，让 `PROJECT.md` 更聚焦当前状态、近期记录和 backlog。
 
 ### Deferred / high-complexity
+
+- **移动端 NavBar 实机校验**：代码层面无明显 bug。唯一风险是极小屏下 "Weiss Schwarz" 副标题可能截断（`max-w-[9rem]`）。按需处理，发现真机问题再修。
 
 - **JPCardList / ENCardList 共享组件抽取**（触发条件：新增第三个卡牌列表页面时再做）：
 
