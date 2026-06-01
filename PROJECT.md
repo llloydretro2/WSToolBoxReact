@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-31 (session 37)
+> Last updated: 2026-06-01 (session 38)
 
 ## Deployment
 
@@ -1063,7 +1063,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
   - **P4 扩展统计分析**：在现有 6 个分析 Tab 基础上新增维度；具体模块待使用中发现真实需求后再定，不提前设计。候选方向：赛事专项分析、时间段对比、对手卡组追踪、矩阵增强（按先後手分开）等
 
-- **WS 伤害计算器** `/ws/damage`：帮助玩家量化攻击伤害预期的计算工具。纯前端，无需后端。
+- **【最高优先级】WS 伤害计算器** `/ws/damage`：帮助玩家量化攻击伤害预期的计算工具。纯前端，无需后端。
 
   **规则背景（来源：WSE Comprehensive Rules v2.10，2025-09）**
 
@@ -1275,7 +1275,52 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   `E[damage] = P(非Climax at top) = 42/50 = 0.840`，而非 `(42/50)² = 0.706`。
   已有项目用 DT>RS1:N+1 近似（移走后再伤害），少算约 14%。
 
-  **下一步**：`/ws/damage` 前端页面设计与实现。
+  ---
+
+  ### 前端页面开发状态（2026-06-01，session 38）
+
+  **路由**：`/ws/damage`，已在 `siteStructure.js` 和 `App.jsx` 注册，NavBar 显示"伤害计算"。
+
+  **页面文件**：`src/pages/DamageCalculator.jsx`
+
+  #### 对手状态区
+  三个独立容器并排（`grid-cols-3`）：
+  - **牌库状态**：总张数 + 高潮数（上限 60）
+  - **弃牌堆状态**：总张数 + 高潮数
+  - **血量状态**：Level（0–3）+ Clock（0–6）
+
+  #### 伤害序列区
+  6 种预设模板（badge 颜色通过 inline `style` 而非动态 Tailwind class 实现，避免构建时被 purge）：
+
+  | 模板 ID | 标签 | 参数 | 引擎映射 |
+  |---------|------|------|---------|
+  | `direct` | 直接伤害 | `n` | `Damage(n)` |
+  | `cancel` | 取消追加 | `n, m, times` | `Damage(n, onCancel: [Damage(m)]×times)` |
+  | `bottom_flip` | 翻底X潮次伤害 | `n, perClimax, dmg, times` | MoveOp(bottom n) + ConditionalOp×n（每perClimax张高潮触发 dmg×times次）|
+  | `bottom_flip_any` | 翻底有潮打X | `n, dmg` | MoveOp(bottom n, onClimax: [Damage(dmg)]) |
+  | `bottom_flip_count` | 翻底潮数单伤 | `n` | MoveOp(bottom n) + VariableDamageOp(climaxCount) |
+  | `top_remove_cx` | 看X顶送潮入墓 | `n` | MoveOp(top n, selections: CX→rest, remainder→source original) |
+
+  每个步骤卡片：
+  - `bg-[var(--card-background)]` 背景包裹
+  - 多行断句布局（每行一个语义单元，手机友好）
+  - 操作按钮：↑ ↓ ⧉（复制，插入当前步骤正下方）🗑（删除）
+
+  #### 计算与结果区
+  - 10 万次 Monte Carlo 模拟（`setTimeout(0)` 避免阻塞 UI，显示 loading 态）
+  - 主结果：**斩杀率**（大字，≥50% 绿 / 20–50% 橙 / <20% 红）
+  - 辅助：期望进 Clock 张数 / 平均 Refresh / 平均 LevelUp
+  - 概率分布：≥1/7/8/14/15/21 张的概率，7/14/21 为高亮 threshold（Level Up 触发点）
+
+  #### 已验证的计算逻辑
+  - `x x 2 x x 2 2` 模式：x=5 时斩杀率最高（44.3%，20张3CX牌组，Level2 Clock0）
+  - `x x 2 y y 2 2` 模式：(x,y)=(5,5) 全局最优
+  - 「看顶送潮」后后续伤害命中率提升约 40%（将顶部高潮清除后非潮原序放回）
+
+  #### 待完成
+  - UI 设计持续打磨（用户反馈中）
+  - 更多伤害模板（翻顶系列、顶牌条件等）
+  - 考虑加入"对比模式"并排比较多种序列
 
   ---
 

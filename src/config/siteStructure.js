@@ -13,6 +13,7 @@ export const SITE_SECTIONS = [
 			{ type: "link", labelKey: "menu.pickPacks", path: "/ws/packs" },
 			{ type: "link", labelKey: "menu.simulator", path: "/ws/simulator" },
 			{ type: "link", labelKey: "menu.shuffle", path: "/ws/shuffle" },
+			{ type: "link", labelKey: "menu.damage", path: "/ws/damage" },
 			{
 				type: "link",
 				labelKey: "menu.record",

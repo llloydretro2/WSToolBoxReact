@@ -22,7 +22,8 @@
     "mahjongTrainer": "役种分析",
     "mahjongEfficiency": "牌理",
     "mahjongCentrepiece": "牌桌中枢",
-    "enCardSearch": "EN卡片查询"
+    "enCardSearch": "EN卡片查询",
+    "damage": "伤害计算"
   },
   "common": {
     "language": {
