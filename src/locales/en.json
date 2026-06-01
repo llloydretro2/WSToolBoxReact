@@ -651,5 +651,12 @@
       "Event": "Event",
       "Climax": "Climax"
     }
+  },
+  "damage": {
+    "levelLabel": "Level",
+    "clockLabel": "Clock",
+    "expectedClock": "Exp. Clock Dmg",
+    "avgRefresh": "Avg. Refresh",
+    "avgLevelUp": "Avg. Level-Up"
   }
 }

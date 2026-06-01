@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Plus, Trash2, ChevronUp, ChevronDown, Play, Loader2, Copy } from "lucide-react";
 import { simulate } from "../utils/wsDamage/simulator.js";
 import { buildSimpleDeck, makeCharacter } from "../utils/wsDamage/card.js";
 import { OpType, ZoneId } from "../utils/wsDamage/types.js";
+import { useLocale } from "../contexts/LocaleContext.jsx";
 
 // ── Step type definitions ─────────────────────────────────────────────────────
 
@@ -13,6 +14,8 @@ const STEP_TYPES = [
 	{ id: "bottom_flip_any",  label: "翻底有潮打X",  badgeColor: "#db2777", defaults: { n: 4, dmg: 2 } },
 	{ id: "bottom_flip_count",label: "翻底潮数单伤", badgeColor: "#b45309", defaults: { n: 4 } },
 	{ id: "top_remove_cx",    label: "看X顶送潮入墓", badgeColor: "#0d9488", defaults: { n: 4 } },
+	{ id: "cancel_return",    label: "取消后X洗回卡组", badgeColor: "#7c3aed", defaults: { n: 2, y: 3 } },
+	{ id: "return_cx",        label: "洗X非潮回卡组",  badgeColor: "#ea580c", defaults: { n: 1 } },
 ];
 
 function stepToOps(step) {
@@ -96,6 +99,16 @@ function stepToOps(step) {
 					onClimax: [{ type: OpType.DAMAGE, n: step.dmg }],
 				},
 			];
+		case "cancel_return":
+			// 打 n 点伤害，取消后从休息室回最多 y 张非潮入库并洗牌（不足则取全部）
+			return [{
+				type:     OpType.DAMAGE,
+				n:        step.n,
+				onCancel: [{ type: OpType.FX, n: step.y, filter: { type: "non_climax" } }],
+			}];
+		case "return_cx":
+			// 直接从休息室取最多 n 张非潮回卡组并洗牌（不足则取全部）
+			return [{ type: OpType.FX, n: step.n, filter: { type: "non_climax" } }];
 		default:
 			return [];
 	}
@@ -104,6 +117,8 @@ function stepToOps(step) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function DamageCalculator() {
+	const { t } = useLocale();
+
 	// Opponent state
 	const [deckTotal,  setDeckTotal]  = useState(20);
 	const [deckCX,     setDeckCX]     = useState(3);
@@ -256,11 +271,11 @@ export default function DamageCalculator() {
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
 							<NumInput value={opLevel} onChange={v => { setOpLevel(Math.min(v, 3)); setResult(null); }} max={3} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">Level</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.levelLabel")}</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<NumInput value={clockCount} onChange={v => { setClockCount(Math.min(v, 6)); setResult(null); }} max={6} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">Clock</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.clockLabel")}</span>
 						</div>
 					</div>
 				</div>
@@ -352,17 +367,14 @@ export default function DamageCalculator() {
 						<p className={`text-6xl font-black leading-none ${killColor}`}>
 							{killRate.toFixed(1)}%
 						</p>
-						<p className="text-xs text-[var(--text-muted)] mt-1">
-							{killRate < 20 ? "较难斩杀" : killRate < 50 ? "有一定机会" : "斩杀率较高"}
-						</p>
 					</div>
 
 					{/* Secondary stats */}
 					<div className="grid grid-cols-3 gap-3 mb-4">
 						{[
-							{ label: "期望进Clock", value: result.total.mean.toFixed(2) + " 张" },
-							{ label: "平均Refresh", value: result.refresh.mean.toFixed(2) + " 次" },
-							{ label: "平均LevelUp", value: result.levelUp.mean.toFixed(2) + " 次" },
+							{ label: t("damage.expectedClock"), value: result.total.mean.toFixed(2) + " 张" },
+							{ label: t("damage.avgRefresh"),   value: result.refresh.mean.toFixed(2) + " 次" },
+							{ label: t("damage.avgLevelUp"),   value: result.levelUp.mean.toFixed(2) + " 次" },
 						].map(({ label, value }) => (
 							<div key={label} className="border border-[var(--border)] rounded-xl p-3 text-center bg-[var(--card-background)]">
 								<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">
@@ -373,31 +385,7 @@ export default function DamageCalculator() {
 						))}
 					</div>
 
-					{/* Level threshold breakdown */}
-					<div className="border-t border-[var(--border)] pt-4">
-						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-2.5">
-							至少 N 张进 Clock 的概率
-						</p>
-						<div className="flex flex-wrap gap-2">
-							{[1, 7, 8, 14, 15, 21].map(n => {
-								const p = (result.total.probAtLeast[n] ?? 0) * 100;
-								const isThreshold = n === 7 || n === 14 || n === 21;
-								return (
-									<span key={n}
-										className={`text-xs font-bold px-2.5 py-1 rounded-full transition-colors ${
-											isThreshold
-												? "bg-[var(--text-muted)] text-white"
-												: "bg-[var(--card-background)] text-[var(--text)] border border-[var(--border)]"
-										}`}>
-										≥{n}: {p.toFixed(1)}%
-									</span>
-								);
-							})}
-						</div>
-						<p className="text-[9px] text-[var(--text-muted)] mt-2">
-							≥7 = 触发 Level Up，≥14 = 两次 Level Up（斩杀）
-						</p>
-					</div>
+					<DistributionSection total={result.total} />
 				</div>
 			)}
 		</div>
@@ -500,6 +488,27 @@ function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate })
 					</Row>
 				</>)}
 
+				{step.type === "return_cx" && (<>
+					<Row>
+						<span className="text-xs text-[var(--text-secondary)]">从休息室洗</span>
+						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={8} />
+						<L>张非潮回卡组（不足取全部）</L>
+					</Row>
+				</>)}
+
+				{step.type === "cancel_return" && (<>
+					<Row>
+						<span className="text-xs text-[var(--text-secondary)]">主伤</span>
+						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} />
+						<L>点</L>
+					</Row>
+					<Row>
+						<span className="text-xs text-[var(--text-secondary)]">取消后从休息室回</span>
+						<StepInput value={step.y} onChange={v => onUpdate(step.id, "y", v)} max={20} />
+						<L>张非潮入库（不足取全部）</L>
+					</Row>
+				</>)}
+
 				{step.type === "bottom_flip" && (<>
 					<Row>
 						<span className="text-xs text-[var(--text-secondary)]">底部翻</span>
@@ -549,16 +558,120 @@ function NumInput({ value, onChange, min = 0, max = 99 }) {
 }
 
 function StepInput({ value, onChange, min = 1, max = 20 }) {
+	const [draft, setDraft] = useState(String(value));
+
+	useEffect(() => { setDraft(String(value)); }, [value]);
+
+	const commit = (raw) => {
+		const n = parseInt(raw, 10);
+		const clamped = isNaN(n) ? min : Math.max(min, Math.min(max, n));
+		setDraft(String(clamped));
+		if (clamped !== value) onChange(clamped);
+	};
+
 	return (
-		<input
-			type="number"
-			value={value}
-			min={min}
-			max={max}
-			onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || min)))}
-			className="w-10 border border-solid border-[var(--border)] rounded-md px-1 py-1
-			           text-xs text-[var(--text)] bg-transparent focus:outline-none
-			           focus:border-[var(--text-muted)] transition-colors text-center"
-		/>
+		<div className="inline-flex items-center border border-solid border-[var(--border)] rounded-md overflow-hidden">
+			<button type="button"
+				onClick={() => onChange(Math.max(min, value - 1))}
+				disabled={value <= min}
+				className="px-1.5 py-1 text-[var(--text-muted)] hover:bg-[var(--card-background)]
+				           hover:text-[var(--text)] transition-colors disabled:opacity-30 text-xs leading-none select-none">
+				−
+			</button>
+			<input
+				type="text"
+				inputMode="numeric"
+				value={draft}
+				onChange={e => setDraft(e.target.value)}
+				onBlur={e => commit(e.target.value)}
+				onKeyDown={e => { if (e.key === "Enter") commit(e.target.value); }}
+				className="w-8 text-xs text-[var(--text)] bg-transparent focus:outline-none
+				           text-center border-x border-[var(--border)] py-1"
+			/>
+			<button type="button"
+				onClick={() => onChange(Math.min(max, value + 1))}
+				disabled={value >= max}
+				className="px-1.5 py-1 text-[var(--text-muted)] hover:bg-[var(--card-background)]
+				           hover:text-[var(--text)] transition-colors disabled:opacity-30 text-xs leading-none select-none">
+				+
+			</button>
+		</div>
+	);
+}
+
+// ── Distribution Section ───────────────────────────────────────────────────────
+
+const LEVEL_THRESHOLDS = new Set([7, 14, 21]);
+
+function DistributionSection({ total }) {
+	const max  = total.max;
+	const data = Array.from({ length: max + 1 }, (_, k) => ({
+		k,
+		p: total.distribution[k] ?? 0,
+	}));
+
+	const maxP   = Math.max(...data.map(d => d.p), 0.001);
+	const BAR_W  = 18;
+	const CHART_H = 80;
+	const LABEL_H = 14;
+	const svgW   = data.length * BAR_W;
+
+	return (
+		<div className="border-t border-[var(--border)] pt-4 mt-2">
+
+			{/* Eyebrow */}
+			<div className="flex items-center gap-3 mb-4">
+				<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+					伤害分布
+				</span>
+				<div className="flex-1 border-t border-[var(--border)]" />
+			</div>
+
+			{/* Bar chart */}
+			<div className="overflow-x-auto mb-4">
+				<svg width={svgW} height={CHART_H + LABEL_H} className="block">
+					{data.map(({ k, p }, i) => {
+						const barH = Math.max((p / maxP) * CHART_H, p > 0 ? 1 : 0);
+						const x    = i * BAR_W;
+						const isT  = LEVEL_THRESHOLDS.has(k);
+						return (
+							<g key={k}>
+								<rect
+									x={x + 1} y={CHART_H - barH}
+									width={BAR_W - 2} height={barH}
+									rx={2}
+									style={{ fill: isT ? "var(--text-secondary)" : "var(--primary)" }}
+								/>
+								<text
+									x={x + BAR_W / 2} y={CHART_H + LABEL_H - 1}
+									textAnchor="middle" fontSize="7"
+									style={{ fill: "var(--text-muted)", fontFamily: "inherit" }}
+								>
+									{k}
+								</text>
+							</g>
+						);
+					})}
+				</svg>
+			</div>
+
+			{/* Probability table */}
+			<div className="grid grid-cols-3 sm:grid-cols-4 gap-x-1 gap-y-0.5">
+				{data.map(({ k, p }) => {
+					const isT = LEVEL_THRESHOLDS.has(k);
+					return (
+						<div key={k}
+							className={`flex items-center justify-between px-2 py-0.5 rounded text-[11px] ${
+								isT
+									? "bg-[var(--text-muted)] text-white font-bold"
+									: "text-[var(--text)]"
+							}`}>
+							<span>{k} 张</span>
+							<span>{(p * 100).toFixed(1)}%</span>
+						</div>
+					);
+				})}
+			</div>
+		</div>
 	);
 }

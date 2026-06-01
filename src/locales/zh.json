@@ -651,5 +651,12 @@
       "Event": "事件",
       "Climax": "高潮"
     }
+  },
+  "damage": {
+    "levelLabel": "等级",
+    "clockLabel": "血量",
+    "expectedClock": "期望进血量",
+    "avgRefresh": "平均刷新",
+    "avgLevelUp": "平均升级"
   }
 }
