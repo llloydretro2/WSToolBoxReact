@@ -470,6 +470,21 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### 伤害计算器 UI 完善 & 首页组件拆分 (2026-06-01 session 39)
+
+#### 伤害计算器
+- **新增步骤模板**：`cancel_return`（取消后X洗回卡组）、`return_cx`（洗X非潮回卡组），均复用现有 `OpType.FX` 引擎零改动
+- **StepInput 步进器**：`−`/`+` 按钮 ±1，中间输入框允许清空，blur 时 clamp 回合法值
+- **结果区重构**：移除分析文本和旧版"至少N张"chips，新增 `DistributionSection`（SVG 柱状图 + 概率列表，7/14/21 升级阈值高亮）
+- **i18n**：接入 `useLocale()`，新增 `damage` locale section；Level→等级、Clock→血量
+- **术语修正**：平均回收→平均刷新
+
+#### 首页组件拆分
+- `SectionCard` / `RecentUpdates` 抽离至 `src/components/home/`
+- `Home.jsx` 从 368 行缩减至 ~90 行，视觉和逻辑零改动
+
+---
+
 ### 对战记录页 Phase 3 完成 + Phase 4 P5 战绩卡片导出 (2026-05-31 session 31–34)
 
 #### Phase 3 完成
@@ -1362,7 +1377,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
 - **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
 
-- **首页组件拆分**：`Home.jsx` 已承担 section card、recent updates、contact links、布局容器等职责。建议先抽出 `SectionCard`、`RecentUpdates` 到 `src/components/home/`，保持现有视觉不变，只降低页面文件复杂度。
+- ~~**首页组件拆分**~~：✅ 完成（2026-06-01）。`SectionCard` / `RecentUpdates` 已抽离至 `src/components/home/`，`Home.jsx` 从 368 行缩减至 ~90 行。
 - **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。
 - **AudioBoard 通用化文案检查**：音效面板已经移到 `/tools/audio`，后续需要确认页面文案、空状态、错误提示不再暗示它只属于 WS。这个优化应以 locale 文案和小范围 UI 文案为主，不改变播放器逻辑。
 
