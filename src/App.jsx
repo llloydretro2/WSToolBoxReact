@@ -31,6 +31,7 @@ const JPCardList = lazy(() => import("./pages/JPCardList.jsx"));
 const ENCardList = lazy(() => import("./pages/ENCardList.jsx"));
 const Simulator = lazy(() => import("./pages/Simulator.jsx"));
 const DamageCalculator = lazy(() => import("./pages/DamageCalculator.jsx"));
+const CardMaker        = lazy(() => import("./pages/CardMaker.jsx"));
 const MahjongTrainer    = lazy(() => import("./pages/MahjongTrainer.jsx"));
 const MahjongEfficiency = lazy(() => import("./pages/MahjongEfficiency.jsx"));
 const MahjongCentrepiece = lazy(() => import("./pages/MahjongCentrepiece.jsx"));
@@ -106,7 +107,8 @@ function AnimatedRoutes() {
 				<Route path="/ws/cards/en" element={withPageTransition(ENCardList)} />
 				<Route path="/ws/packs" element={withPageTransition(PickPacks)} />
 				<Route path="/ws/simulator" element={withPageTransition(Simulator)} />
-				<Route path="/ws/damage"    element={withPageTransition(DamageCalculator)} />
+				<Route path="/ws/damage"      element={withPageTransition(DamageCalculator)} />
+				<Route path="/ws/card-maker" element={withPageTransition(CardMaker)} />
 				<Route
 					path="/ws/record"
 					element={
