@@ -348,13 +348,55 @@ export const FIXTURES = [
     id: 'H3_mill_opp_deck_bottom',
     category: 'H',
     cardId: '5HY/W83-106',
-    cardName: '迈出的一步 中野 三玖（CX连携效果1）',
-    effectSummary: 'CX连携：对手牌组底2张→废弃堆，造成X点（X=其中Climax数）+ 看对手牌组顶2张并选择安排',
-    engineSupport: 'skip',
-    skipReason: '同B2，X=Climax数需要 VariableDamageOp。此外，看并重排顶2张需要 ReorderOp，复合操作较复杂。',
+    cardName: '迈出的一步 中野 三玖（CX连携）',
+    effectSummary: [
+      '① 对手牌组底2张→废弃堆，造成X点伤害（X=其中Climax数）',
+      '② 看对手牌组顶2张：Climax送废弃堆（最优策略），非Climax原序放回顶部',
+    ].join(' + '),
+    engineSupport: 'engine_only',
+    // ① VariableDamageOp 处理变量伤害（已实现）
+    // ② MoveOp + selections 分拣：Climax→rest，非Climax→source original order
+    //    不需要 ReorderOp，selections + remainder 足够表达最优策略
+
+    ourSequence: [
+      // ① 牌组底2张→废弃堆
+      {
+        type: OpType.MOVE,
+        source: { zone: ZoneId.DECK, method: { type: 'bottom', n: 2 } },
+        act: { selections: [], remainder: { destination: ZoneId.REST, order: 'any' } },
+      },
+      // ① 造成 X 点伤害（X = 刚才揭出的 Climax 数，单一伤害流程）
+      {
+        type: OpType.VARIABLE_DAMAGE,
+        nFn: (state) => {
+          const cards = state.lastResult?.cardsRevealed ?? [];
+          return cards.filter(c => c.type === 'climax').length;
+        },
+      },
+      // ② 看顶2张：最优策略 — Climax 全送废弃堆，非 Climax 原序放回顶部
+      {
+        type: OpType.MOVE,
+        source: { zone: ZoneId.DECK, method: { type: 'top', n: 2 } },
+        act: {
+          selections: [
+            {
+              filter: { type: 'climax' },
+              count: { type: 'all' },
+              destination: ZoneId.REST,
+            },
+          ],
+          remainder: { destination: 'source', order: 'original' },
+        },
+      },
+    ],
     theirSyntax: null,
 
     initialState: { deck: makeStandardDeck() },
+    // 验证逻辑：
+    // ① E[damage] = E[CX in bottom 2] × P(no cancel | that CX count)
+    //   E[CX in bottom 2] = 2 × (8/50) = 0.32，加权期望伤害较低（多为0点）
+    // ② 效果执行后牌组顶部Climax被清除，对后续伤害命中率有实质提升
+    //   验证方式：在 ② 之后追加 Damage(2)，比较有无 ② 时的命中率差异
   },
 
   // ── I: Clock 换牌 ─────────────────────────────────────────────────────────────

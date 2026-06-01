@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-05-31 (session 36)
+> Last updated: 2026-05-31 (session 37)
 
 ## Deployment
 
@@ -1062,6 +1062,251 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
   **Phase 5 — 未来功能扩展**（根据实际使用需求再决定）
 
   - **P4 扩展统计分析**：在现有 6 个分析 Tab 基础上新增维度；具体模块待使用中发现真实需求后再定，不提前设计。候选方向：赛事专项分析、时间段对比、对手卡组追踪、矩阵增强（按先後手分开）等
+
+- **WS 伤害计算器** `/ws/damage`：帮助玩家量化攻击伤害预期的计算工具。纯前端，无需后端。
+
+  **规则背景（来源：WSE Comprehensive Rules v2.10，2025-09）**
+
+  **伤害来源**
+  - 攻击角色的 Soul 值 = 基础伤害
+  - Direct Attack（正面无对手）：自动 +1 Soul
+  - Side Attack（横置攻击）：−X Soul，X = 对面角色等级（可为负不等于0则不造成伤害）
+  - Frontal Attack：Soul 不变
+  - Trigger Step（攻击触发步骤）：攻击前翻牌组顶一张，若含 **Soul 图标** → 强制 +1 Soul；Shot 图标 → 若伤害被取消则额外造成 1 点伤害（新的独立伤害流程）
+
+  **伤害取消（Damage Cancel）**
+  - 造成 N 点伤害：对手逐张翻顶牌放入 resolution zone
+  - 任意一张是 **Climax 卡** → 全部已翻牌进废弃堆，本次伤害**完全取消（0 点进 Clock）**
+  - 翻满 N 张均非 Climax → 所有 N 张进 Clock（全额伤害）
+  - 结果严格二元：要么 **N 点全中**，要么 **0 点全取消**，不存在部分伤害
+
+  **概率模型（超几何分布）**
+
+  ```
+  P(伤害不取消 | N 点伤害, 牌组剩余 D 张, 其中 C 张 Climax)
+    = C(D−C, N) / C(D, N)
+    = [(D−C)(D−C−1)···(D−C−N+1)] / [D(D−1)···(D−N+1)]
+
+  期望伤害 = N × P(不取消)
+  ```
+
+  举例（标准牌组 50 张，8 张 Climax）：
+  | 伤害值 N | P(不取消) | 期望伤害 |
+  |---------|---------|--------|
+  | 1 | 42/50 = 84.0% | 0.84 |
+  | 2 | (42×41)/(50×49) ≈ 70.6% | 1.41 |
+  | 3 | (42×41×40)/(50×49×48) ≈ 58.8% | 1.76 |
+
+  **其他关键规则**
+  - **Refresh**：牌组耗尽时，废弃堆回牌组洗牌，再放 1 张进 Clock
+  - **Level Up**：Clock 满 7 张时，从底部 7 张选 1 张升 Level，其余 6 张进废弃堆
+  - **败北条件**：Level = 4 时立即败北
+
+  **规则文档来源**：[WSE Comprehensive Rules v2.10](https://en.ws-tcg.com/wordpress/wp-content/uploads/2025/09/17165346/WSE-Comprehensive-Rules-v2.10.pdf)（2025-09，章节 4.10、4.11、4.12、7.2、7.3、7.5、9.2、9.3）
+
+  **参考项目分析（2026-05-31）**：[WS-DamageSim by NoFaMe](https://nofameway.github.io/WS-DamageSim/)
+
+  - **方法**：蒙特卡洛模拟（10 万次 trial），支持多段连续攻击序列
+  - **输入**：牌组大小、Climax 数、废弃堆数量/Climax 数、Clock 数量/Climax 数 + 自定义伤害序列语法
+  - **输出**：平均伤害、伤害范围、至少 N 点伤害的概率表、平均 Refresh/升级次数
+
+  算法准确性评估：
+
+  | 机制 | 实现 | 评价 |
+  |------|------|------|
+  | Damage Cancel（二元） | 翻到 Climax → 所有已翻牌进废弃堆，return false | ✅ 正确 |
+  | Refresh | 牌组空 → 废弃堆洗回 → 顶牌进 Clock +1 | ✅ 正确 |
+  | Level Up | clock.shift() × 7（从底部取），优先选非 Climax 升级 | ✅ 逻辑正确，Level Up 选牌简化为最优策略（合理） |
+  | Shot / 追加（zj）触发 | 取消时执行 effectSeq 子序列 | ✅ 正确 |
+  | "Draw to hand" checkbox | 实际把牌放进 Clock +1 伤害 | ❌ 与标注不符，疑似建模特定卡效果 |
+  | 用户体验 | 需学自定义语法（`2,3zj(1),DT>RS4:C+2`） | ⚠️ 门槛高，不适合普通玩家 |
+
+  **我们要做的差异化**：算法核心相同（Monte Carlo 或解析概率均可），但用直观 UI 代替语法输入，降低使用门槛。
+
+  **引擎优先，UI 暂缓**。模型设计已确认，见下方。
+
+  ---
+
+  ### 模拟引擎模型设计（2026-05-31 已确认）
+
+  **文件结构**：`src/utils/wsDamage/`
+  - `types.js` — 常量枚举（CardType / Color / TriggerType / ZoneId）
+  - `card.js` — Card 构造 + CardFilter 多维度匹配
+  - `state.js` — GameState 创建 + 区域操作工具
+  - `window.js` — Window 取牌 / 放牌 / WindowView 可查询视图
+  - `rules.js` — 自动规则（Refresh / LevelUp / 败北判定）
+  - `executor.js` — 所有 Operation 执行器
+  - `simulator.js` — 模拟主循环 + 结果分析
+  - `index.js` — 对外 API
+  - `test-engine.js` — 引擎验证测试
+
+  **Card 完整属性**：`type / color / level / cost / trigger / soul / power / traits[] / name / id`
+
+  **CardFilter 多维度**：`type / color / level(min-max) / cost(min-max) / power / soul / trigger / name / traits / hasTrigger / non_climax`
+
+  **7 个区域**（ZoneId）：
+
+  | 区域 | 有序 | 约定 | 参与 Refresh |
+  |------|------|------|-------------|
+  | deck | ✅ | index0=底，末=顶 | 目标 |
+  | clock | ✅ | index0=底（LevelUp 取），末=顶（伤害加） | 否 |
+  | level | ✅ | 进入顺序 | 否 |
+  | stock | ✅ | index0=底，末=顶 | 否 |
+  | rest | ❌ | 无序 | 来源 |
+  | memory | ❌ | 无序，不参与 Refresh | 否 |
+  | hand | ❌ | 无序 | 否 |
+
+  **Window**：每张牌携带 `{ card, sourceZone, sourceIndex }`；ActSpec 支持多条 Selection（filter + count + destination）+ remainder（original / shuffle / reverse / any 顺序 + 目标区域）。
+
+  **Operation 类型**（12 种）：`damage / true_damage / mill / move / search / fx / shuffle / reorder / state_edit / conditional / refresh / sequence`
+
+  **传播系统**：`propagated.inheritedCancel`（传火，下一伤害继承 onCancel）+ `propagated.watchCancel`（Shot，等待下次取消事件触发）。
+
+  **自动规则**：
+  - Refresh：牌组空 → rest 全量洗入 deck → 顶牌进 Clock（true_damage +1）
+  - LevelUp：clock.length ≥ 7 → 底部 7 张取 1 进 level（优先 Normal），余 6 进 rest
+  - 败北：level.length ≥ 4 → trial 结束记录
+
+  **参考算法基准**（用于验证）：
+  单次 N 点伤害不取消概率 = `∏_{k=0}^{N-1} (D-C-k)/(D-k)`，D=牌组总数，C=Climax 数
+
+  ---
+
+  ### 系统化测试方案（2026-05-31）
+
+  **范围**：仅使用 JP 卡牌（约 29k+ 张，涵盖情况比 EN 更广），从 `/api/cards/jp` 数据库中提取造伤害卡，构造 fixture，与已有项目双引擎比对。
+
+  **三步流程**：
+
+  #### Step 1：从 JP 数据库提取伤害卡并分类
+
+  搜索关键词（`effect` 或 `zh_effect` 字段）：
+
+  | 分类 | 关键词 | 典型效果 |
+  |------|--------|---------|
+  | A — 直接 N 点伤害 | `ダメージを与える` / `点のダメージ` | "给予对手 X 点伤害" |
+  | B — 顶牌条件伤害 | `山札の上` + `ダメージ` | "看对手牌组顶 N 张，若含高潮则伤害" |
+  | C — 取消追加（zj）| `キャンセル` + `ダメージ` | "若伤害被取消，再造成 X 点伤害" |
+  | D — 传火（szj） | `次のダメージ` + `キャンセル` | "若取消，下次伤害继承此效果" |
+  | E — 直接进 Clock | `クロックに置く` | "将牌直接放入对手血量区（不走取消机制）" |
+
+  每类目标：5–8 张代表性卡，优先选效果文本清晰、无复杂嵌套条件的卡。
+
+  #### Step 2：构造双引擎输入
+
+  每个 fixture 包含：
+  - 卡牌信息（cardId / cardName / effectText / category）
+  - `ourSequence: Operation[]` — 我们引擎的输入
+  - `theirSyntax: string` — 已有项目的语法字符串
+  - `initialState` — 标准 50 张 8 Climax 牌组（特殊测试可调整）
+  - `sanityMeanRange: [min, max]` — 宽松合理性区间
+
+  **分类与双引擎语法对照**：
+
+  | 分类 | 我们的 Operation | 已有项目语法 |
+  |------|-----------------|------------|
+  | A（2点） | `[Damage(2)]` | `2` |
+  | B（顶4含CX→2点） | `[MoveOp(top4, remainder→rest, onClimax:[Damage(2)])]` | `DT>RS4:C+2` |
+  | B（顶4含CX→2点，取消再追加） | `[MoveOp(..., onClimax:[Damage(2, onCancel:[Damage(1)])])]` | `DT>RS4:C+2zj(1)` |
+  | C（2点取消后追加1点） | `[Damage(2, onCancel:[Damage(1)])]` | `2zj(1)` |
+  | D（传火2点） | `[Damage(2, propagate:true, onCancel:[Damage(2)])]` | `*2zj(2)` |
+  | E（直接2张进Clock） | `[TrueDamage(2)]` | — （已有项目无对应） |
+
+  #### Step 3：双引擎比对运行器
+
+  `test-cross-validation.js`：
+  1. 加载所有 fixtures
+  2. 每个 fixture 分别运行我们引擎（100k trials）和已有项目（100k trials）
+  3. 比对 `probAtLeast[1..N]` 和 `mean`
+
+  判定标准：
+
+  | 状态 | 条件 | 行动 |
+  |------|------|------|
+  | ✅ MATCH | 各关键概率差 < 2% | 通过 |
+  | ⚠️ DIVERGE | 差异 2–10% | 人工审查，对照规则书 |
+  | ❌ BUG | 差异 > 10% | 优先修复 |
+  | ⏭️ SKIP | 已有项目不支持该效果 | 只跑我们引擎 + 解析解验证 |
+
+  **已有项目适配**：下载 `script.js`，提取 `performSimulation` 和 `parseDamageSequence`，去掉 DOM 操作后在 Node.js 中直接调用。
+
+  **引擎阶段完成（2026-05-31）**。所有步骤全部完成，SKIP 清零。
+
+  ---
+
+  ### 引擎完成状态总结
+
+  **文件结构**（`src/utils/wsDamage/`）：
+
+  | 文件 | 说明 |
+  |------|------|
+  | `types.js` | 13 种 OpType 常量（含 VARIABLE_DAMAGE） |
+  | `card.js` | Card 构造 + CardFilter 匹配 + `buildRealisticDeck` |
+  | `state.js` | GameState + 7 区域操作 |
+  | `window.js` | Window 取牌 / 放牌 / WindowView |
+  | `rules.js` | Refresh / LevelUp / 败北 |
+  | `executor.js` | 所有 13 种 Operation 执行器（含 VariableDamageOp、onNoneMatch） |
+  | `simulator.js` | Monte Carlo 主循环 + 结果分析（probAtLeast 填充所有整数区间） |
+  | `index.js` | 对外 API |
+  | `test-engine.js` | 27 个单元测试（全通过） |
+  | `fixtures/index.js` | 15 个跨验证 fixture，覆盖 13 种伤害类型 |
+  | `fixtures/existingAdapter.js` | 已有项目 Node.js 适配器 |
+  | `test-cross-validation.js` | 双引擎比对运行器 |
+
+  **最终比对结果**：
+
+  | 状态 | 数量 | 说明 |
+  |------|------|------|
+  | ✅ MATCH | 5 | 与已有项目误差 < 0.4% |
+  | 📝 EXPECTED_DIV | 1 | B1 peek-return，我们更准确（已有项目近似有偏差） |
+  | ❌ BUG | 0 | |
+  | ⏭️ SKIP | **0** | 全部覆盖 |
+  | 🔵 ENGINE_ONLY | 9 | 已有项目无法表达的效果（H/I/J 类） |
+
+  **引擎扩展内容（session 37 新增）**：
+  - `VariableDamageOp`：`nFn(state)` 运行时计算伤害量，支持集中（X=Climax数）、level+1 取消追加等变量伤害
+  - `MoveOp.onNoneMatch`：window 中 0 张匹配 filter 时触发，精确表达"不含特定类型"否定条件
+  - `buildRealisticDeck`：真实等级分布牌组（L0:20/L1:12/L2:8/L3:2/CX:8）用于 level 依赖效果的测试
+
+  **H3 解析修正**：`5HY/W83-106` 的②效果（看顶2张重排）最初误判为需要 `ReorderOp`，实际用 `MoveOp + selections（Climax→rest）+ remainder（non-CX→source original）` 即可精确建模最优策略，无需新操作类型。
+
+  **B1 peek-return 概率分析**：
+  看顶1张后原序放回，若非Climax则后续 1pt 伤害揭同一张牌，必然命中。
+  `E[damage] = P(非Climax at top) = 42/50 = 0.840`，而非 `(42/50)² = 0.706`。
+  已有项目用 DT>RS1:N+1 近似（移走后再伤害），少算约 14%。
+
+  **下一步**：`/ws/damage` 前端页面设计与实现。
+
+  ---
+
+  ### Step 1 结果：JP 伤害类型完整分类（13 类，12 张代表卡）
+
+  | 分类 | 代表卡 | 效果摘要 | 已有项目支持 |
+  |------|--------|---------|------------|
+  | **A 直接 N 点伤害** | `5HY/W83-T88` 认真女孩 五月 | 支付费用→固定1点伤害 | ✅ `1` |
+  | **A2** | `5HY/W101-025` 特别 四叶 | 满足条件→固定2点伤害 | ✅ `2` |
+  | **B1 顶1张条件** | `5HY/W83-076` 圣诞服 一花 | 公开顶1张→若特定角色→1点，**原序放回** | ✅ 近似 |
+  | **B2 集中（X=高潮数）** | `AGS/W108-009` 相河爱花 | 揭顶4张送废弃堆，X点（X=高潮数） | ❌ 无法建模 |
+  | **B3 条件反转** | `AOH/W127-116` 音霊魂子 | 揭顶4张送废，若**无**特定角色→1点×2 | ⚠️ 部分 |
+  | **C1 Shot/固定追加** | `AB/W11-024` 降临的天使（CX） | Shot触发：下次伤害取消→1点追加 | ✅ `NZJ(1)` |
+  | **C3 取消→level+1点** | `LNJ/W85-004` 璃奈（同时是J1） | 取消→送顶1张废弃堆→X点（X=该卡等级+1，CX算0） | ❌ 无法建模 |
+  | **G 多次独立1点** | `DAL/W99-003` 琴里 | CX连携：1点×2次（各自独立取消） | ✅ `1,1` |
+  | **H1 废弃堆CX→对手牌组+洗切** | `DG/S02-001` 树莓派与氟龙 | 对手废弃堆1张CX→对手牌组并洗切（提高对方密度） | ❌ |
+  | **H2 对手牌组顶1张→废弃堆** | `BD/WE31-021` Colorful Poppin! | 自己揭牌含CX→对手牌组顶1张送废弃堆（降低对方密度） | ❌ |
+  | **H3 对手牌组底 mill** | `5HY/W83-106` 三玖 CX连携 | CX连携：对手牌组底2张→废弃堆 | ❌ |
+  | **I Clock换牌** | `5HY/W101-035` 守护的目光 五月 | 对手Clock顶1张→废弃堆，该角色→Clock（净零，改Clock成分） | ❌ |
+  | **J1 CX连携后直立再攻击** | `LNJ/W85-004` / `5HY/W83-105` 二乃 | 攻击结束时满足CX连携→此卡【スタンド】→可再次攻击（追加整套伤害） | ❌ |
+  | **J2 战斗胜利后直立** | `5HY/W83-T35` 壁垒 二乃 | 战斗对手被反转→付费→此卡直立→再次攻击 | ❌ |
+
+  **关键搜索发现**：
+  - 「再次攻击」的正确关键词是`スタンド`（直立），因为攻击时卡片变为Rest状态，效果把它Stand回来就能再攻击。关键词`追加攻撃`/`もう1度アタック`均无命中。
+  - H/I/J 类效果无法被已有项目建模，只能在我们引擎内验证。
+  - `LNJ/W85-004` 同时包含 C3（取消→level+1点）和 J1（CX连携后直立），是最复杂的单张测试卡。
+
+  **数据库规模估计**：
+  - `アタックの終わりに + スタンド`：184 hits（J1）
+  - `このカードを【スタンド】`（战斗相关）：113 hits（J2）
+  - `ダメージを与える`：2000+ hits（A/B/C类）
 
 - **WS 卡片 DIY 制作页面**：新增 `/ws/card-maker` 路由，让用户自定义制作 WS 卡片并导出 PNG。核心功能：① 卡片属性填写（名称、等级/费用/力量/魂、颜色、类型、trigger、特征、效果文本、风味文本）；② 卡图上传（用户本地图片）；③ 实时预览——使用 Canvas API 按 WS 卡片标准比例（400×559 普通卡 / 559×400 Climax 横版）渲染卡面，叠加项目已有的边框/图标/排版素材（`public/assets/` 下已有大量相关资源）；④ 导出为 PNG（`canvas.toDataURL`）。纯前端实现，无需后端。复杂度较高，主要工作量在 Canvas 排版还原 WS 卡片设计规范。
 
