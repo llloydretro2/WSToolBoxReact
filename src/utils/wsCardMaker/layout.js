@@ -119,9 +119,10 @@ export const LAYOUT = {
   // Frame analysis: art area y=0-390, mechanics bar y=392-447.
   // Bar contains: CX label (left), name strip (x=240-355), two asterisk trigger slots (x≈355 and x≈580).
   climax: {
-    // Trigger icons placed on the two asterisk placeholder positions in the bar
-    trigger:  { x: 330, y: 393, w: 52, h: 46 },   // left asterisk  ≈ x=356
-    trigger2: { x: 554, y: 393, w: 52, h: 46 },   // right asterisk ≈ x=580
+    // Two trigger icons at upper-right, side by side (mirrors character card convention)
+    // Main trigger at right edge, extra trigger 52px to its left
+    trigger:  { x: 563, y: 11, w: 51, h: 58 },    // rightmost trigger
+    trigger2: { x: 503, y: 11, w: 51, h: 58 },    // second trigger, 60px left of main
     // Card name in the name strip of the bar (lighter green area x=240-355)
     cardname: { x: 240, y: 396, w: 112, h: 22, angle: 0 },
     // Serial: small text bottom-left of bar
