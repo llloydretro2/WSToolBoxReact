@@ -212,7 +212,7 @@ async function drawTraitBorders(ctx, trait1, trait2, layout) {
   if (layout.trait2) await drawBorder(layout.trait2, !!trait2);
 }
 
-// Climax standalone flavor text — large centered text over art area (no whitebar)
+// Climax standalone flavor text — large text over art area, bottom-anchored (no whitebar)
 async function drawClimaxFlavor(ctx, flavor, layout) {
   if (!flavor) return;
   const fl = layout.flavorText;
@@ -223,19 +223,21 @@ async function drawClimaxFlavor(ctx, flavor, layout) {
 
   setupText(ctx, {
     size: fontSize, family: 'WSFlavor', weight: '400',
-    color: 'rgba(30,30,30,0.9)',
-    shadow: 'rgba(255,255,255,0.7)', shadowBlur: 3,
+    color: 'rgba(25,25,25,0.92)',
+    shadow: 'rgba(255,255,255,0.75)', shadowBlur: 3,
   });
   ctx.textAlign    = 'center';
-  ctx.textBaseline = 'middle';
+  ctx.textBaseline = 'top';
 
   const lines   = wrapText(ctx, flavor, fl.w);
   const totalH  = lines.length * lineH;
-  const startY  = (fl.centerY ?? 280) - totalH / 2;
   const centerX = fl.x + fl.w / 2;
 
+  // Bottom-anchored: last line ends at bottomY
+  const startY = (fl.bottomY ?? 320) - totalH;
+
   lines.forEach((line, i) => {
-    if (line) ctx.fillText(line, centerX, startY + i * lineH + lineH / 2);
+    if (line) ctx.fillText(line, centerX, startY + i * lineH);
   });
   clearShadow(ctx);
 }

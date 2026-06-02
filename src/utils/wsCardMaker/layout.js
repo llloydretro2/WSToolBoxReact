@@ -119,22 +119,23 @@ export const LAYOUT = {
   // Frame analysis: art area y=0-390, mechanics bar y=392-447.
   // Bar contains: CX label (left), name strip (x=240-355), two asterisk trigger slots (x≈355 and x≈580).
   climax: {
-    // Trigger icons at upper-LEFT corner (measured from real card 5HY/W101-021)
-    // trigger2 placed to the right of trigger1 when used
-    trigger:  { x: 9,  y: 9, w: 56, h: 56 },
-    trigger2: { x: 70, y: 9, w: 56, h: 56 },
-    // Card name: right portion of bar (measured: x≈375-611, y≈392-417)
-    cardname: { x: 375, y: 394, w: 236, h: 25, angle: 0 },
-    // Serial/card number: center of bar (measured: x≈196, y≈392-413)
+    // Trigger icons at upper-LEFT corner (measured from 50-card scan)
+    // trigger2 stacked BELOW trigger1 vertically (confirmed on multi-trigger cards)
+    trigger:  { x: 9, y:  9, w: 56, h: 56 },
+    trigger2: { x: 9, y: 70, w: 56, h: 56 },
+    // Card name: right portion of bar (canvas x≈415-610, y≈394-419)
+    cardname: { x: 415, y: 394, w: 195, h: 25, angle: 0 },
+    // Serial: center of bar
     serial:   { x: 196, y: 398, w: 173, h: 18 },
-    // Artist: small, near serial
+    // Artist
     artist:   { x: 196, y: 420, w: 173, h: 14 },
-    // Effect text: lower-left white box (measured: x=22, w≈203, y=343-379)
-    rulesText:  { x: 22, bottomY: 381, w: 204, topY: 343 },
+    // Effect text: lower-left white box
+    // measured: x=8-207, y=286-386 canvas → topY=310 as upper cap
+    rulesText:  { x: 22, bottomY: 381, w: 204, topY: 310 },
     whitebar:   { x: 16, w: 216 },
-    // Flavor text: large standalone text in center-right art area (measured: canvas y≈255-313)
-    // NOT combined with effect text whitebar — rendered separately at larger size
-    flavorText: { x: 190, w: 370, centerY: 284, fontSize: 22, standalone: true },
+    // Flavor text: large standalone, right area, BOTTOM-ANCHORED at y≈320
+    // x=200-575, measured bottom at canvas y≈310-325 across 25 cards
+    flavorText: { x: 200, w: 375, bottomY: 320, fontSize: 22, standalone: true },
   },
 };
 
