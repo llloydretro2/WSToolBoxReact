@@ -115,27 +115,23 @@ export const LAYOUT = {
     whitebar:   { x: 20, w: 406 },
   },
 
-  // Climax canvas: 626×448.
-  // All positions derived from portrait (448×626) via 90° CW: (x_p,y_p) → (625-y_p, x_p)
-  // Elements with portrait angle:270 appear upright in landscape (rotation cancels out).
+  // Climax canvas: 626×448 (landscape).
+  // Frame analysis: art area y=0-390, mechanics bar y=392-447.
+  // Bar contains: CX label (left), name strip (x=240-355), two asterisk trigger slots (x≈355 and x≈580).
   climax: {
-    // Two trigger icons stacked vertically on right side
-    // portrait trigger  (left=385,top=14,w=51,h=58) → landscape (553,385,58,51)
-    // portrait trigger2 (left=333,top=14,w=51,h=58) → landscape (553,333,58,51)
-    trigger:  { x: 553, y: 383, w: 58, h: 51 },
-    trigger2: { x: 553, y: 332, w: 58, h: 51 },
-    // Card name — portrait (left=54,top=377,w=204,h=24) → landscape center (236,156), w=204, h=24
-    cardname: { x: 134, y: 144, w: 204, h: 24, angle: 0 },
-    // Serial — portrait (left=48,top=268,w=77,h=10) → landscape (347,48,10,77)
-    // Drawn as horizontal text at the top area
-    serial:   { x: 48,  y: 258, w: 77,  h: 10 },
-    // Artist — small text, positioned near serial in landscape
-    artist:   { x: 19,  y: 260, w: 323, h: 18 },
-    // Effect text fills the art area horizontally in landscape
-    // Art area: x=0-625, y=0-390; leave margin
-    rulesText:  { x: 20, bottomY: 375, w: 520 },
-    flavorText: { x: 20, w: 520 },
-    whitebar:   { x: 18, w: 524 },
+    // Trigger icons placed on the two asterisk placeholder positions in the bar
+    trigger:  { x: 330, y: 393, w: 52, h: 46 },   // left asterisk  ≈ x=356
+    trigger2: { x: 554, y: 393, w: 52, h: 46 },   // right asterisk ≈ x=580
+    // Card name in the name strip of the bar (lighter green area x=240-355)
+    cardname: { x: 240, y: 396, w: 112, h: 22, angle: 0 },
+    // Serial: small text bottom-left of bar
+    serial:   { x: 20,  y: 430, w: 90,  h: 10 },
+    // Artist: just above serial
+    artist:   { x: 20,  y: 417, w: 180, h: 12 },
+    // Effect text in the art area, full-width, bottom-anchored just above the bar
+    rulesText:  { x: 14, bottomY: 382, w: 598 },
+    flavorText: { x: 14, w: 598 },
+    whitebar:   { x: 12, w: 602 },
   },
 };
 
