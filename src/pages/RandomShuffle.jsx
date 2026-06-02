@@ -81,8 +81,8 @@ function RandomShuffleV2() {
 						</span>
 						<div className="flex-1 border-t border-[var(--border)]" />
 						{[
-							{ label: "组数", value: deck.length },
-							{ label: "总点数", value: totalSum },
+							{ label: t("shuffle.statGroups"), value: deck.length },
+							{ label: t("shuffle.statTotal"), value: totalSum },
 						].map(({ label, value }) => (
 							<div key={label} className="flex items-baseline gap-1.5">
 								<span className="text-base font-black text-[var(--text)]">{value}</span>
@@ -129,7 +129,7 @@ function RandomShuffleV2() {
 			) : (
 				<div className="border border-[var(--border)] rounded-2xl bg-[var(--card-background)] py-16 flex flex-col items-center gap-2">
 					<p className="text-base font-bold text-[var(--text)]">{t("shuffle.summaryEmpty")}</p>
-					<p className="text-sm text-[var(--text-secondary)]">点击「生成牌堆」开始</p>
+					<p className="text-sm text-[var(--text-secondary)]">{t("shuffle.emptyHint")}</p>
 				</div>
 			)}
 		</div>

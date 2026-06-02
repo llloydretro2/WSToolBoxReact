@@ -23,12 +23,12 @@ function isRRR(r) { return r.toUpperCase().startsWith("RRR"); }
 function isRR(r)  { const u = r.toUpperCase(); return u.startsWith("RR") && !u.startsWith("RRR"); }
 function isR(r)   { const u = r.toUpperCase(); return (u === "R" || u === "R+") && !isRR(r) && !isRRR(r); }
 
-// Preset 定义
+// Preset 定义（label/sublabel 通过 t() 在组件内注入）
 const PRESETS = [
 	{
 		id: "classic",
-		label: "经典规格",
-		sublabel: "2024 前 · 16包×8张",
+		label: "",
+		sublabel: "",
 		packsPerBox: 16,
 		cardsPerPack: 8,
 		getRarityCounts: (rarityMap) => {
@@ -52,7 +52,7 @@ const PRESETS = [
 	},
 	{
 		id: "en2024",
-		label: "EN 2024+ 规格",
+		label: "",
 		sublabel: "NIKKE Vol.2起 · 16包×9张 · 无高稀有保底",
 		packsPerBox: 16,
 		cardsPerPack: 9,
@@ -224,6 +224,13 @@ CardDetailModal.propTypes = {
 export default function SimulatorV2() {
 	const { t } = useLocale();
 	const { productList, enProductList } = useOptions();
+
+	// Inject translated labels into PRESETS
+	const presets = PRESETS.map(p => ({
+		...p,
+		label:    t(`simulator.presets.${p.id}`),
+		sublabel: t(`simulator.presets.${p.id}Sub`),
+	}));
 	const [lang, setLang] = useState("jp");
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [cards, setCards] = useState([]);
@@ -274,7 +281,7 @@ export default function SimulatorV2() {
 
 	// Apply preset when rarity map or preset changes
 	useEffect(() => {
-		const preset = PRESETS.find((p) => p.id === presetId);
+		const preset = presets.find((p) => p.id === presetId);
 		if (!preset || !Object.keys(rarityMap).length) return;
 		setCardsPerPack(preset.cardsPerPack);
 		setPacksPerBox(preset.packsPerBox);
@@ -425,7 +432,7 @@ export default function SimulatorV2() {
 
 			{/* Panel 2: Preset + Pack config */}
 			<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md mb-4">
-				<SectionEyebrow label="版本规格" />
+				<SectionEyebrow label={t("simulator.sectionPresets")} />
 				<div className="flex flex-wrap gap-2 mb-5">
 					{PRESETS.map((p) => (
 						<button key={p.id} type="button" onClick={() => setPresetId(p.id)}

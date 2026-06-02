@@ -40,12 +40,9 @@ const COLOR_BG = {
   yellow: "#facc15", green: "#22c55e", red: "#ef4444",
   blue: "#3b82f6",   purple: "#a855f7",
 };
-const COLOR_LABEL = { yellow: "黄", green: "绿", red: "红", blue: "蓝", purple: "紫" };
-const TYPE_LABEL  = { character: "角色", event: "事件", climax: "高潮" };
-const SIDE_LABEL  = { weiss: "Weiß", schwarz: "Schwarz", both: "Both" };
-
+// Labels derived via t() inside component — see useCardMakerLabels()
 const TRIGGER_OPTIONS = [
-  { value: "none",      label: "无" },
+  { value: "none",      label: "—" },
   { value: "soul+1",    label: "Soul" },
   { value: "soul+2",    label: "2 Soul" },
   { value: "gate",      label: "Gate" },
@@ -61,16 +58,23 @@ const TRIGGER_OPTIONS = [
   { value: "chance",    label: "Chance" },
 ];
 
-const BACKUP_OPTIONS = [
-  { value: "none",       label: "无" },
-  { value: "backup",     label: "Backup" },
-  { value: "clockshift", label: "Clock Shift" },
-];
+// BACKUP_OPTIONS labels derived via t() inside component
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function CardMaker() {
-  useLocale();
+  const { t } = useLocale();
+
+  const TYPE_LABEL   = { character: t("cardMaker.types.character"), event: t("cardMaker.types.event"), climax: t("cardMaker.types.climax") };
+  const SIDE_LABEL   = { weiss: "Weiß", schwarz: "Schwarz", both: "Both" };
+  const COLOR_LABEL  = { yellow: t("cardMaker.colors.yellow"), green: t("cardMaker.colors.green"), red: t("cardMaker.colors.red"), blue: t("cardMaker.colors.blue"), purple: t("cardMaker.colors.purple") };
+  const BACKUP_OPTIONS = [
+    { value: "none",       label: t("cardMaker.none") },
+    { value: "backup",     label: "Backup" },
+    { value: "clockshift", label: "Clock Shift" },
+  ];
+  TRIGGER_OPTIONS[0].label = t("cardMaker.none");
+
   const [card, setCard]           = useState(DEFAULT_CARD);
   const [rendering, setRendering] = useState(false);
   const [artURL, setArtURL]       = useState(null);
@@ -156,10 +160,10 @@ export default function CardMaker() {
       {/* Title */}
       <div className="mb-6">
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-1">
-          卡片制作
+          {t("cardMaker.title")}
         </h1>
         <p className="text-sm text-[var(--text-secondary)]">
-          自定义 WS 卡面并导出 PNG
+          {t("cardMaker.subtitle")}
         </p>
       </div>
 
@@ -171,13 +175,13 @@ export default function CardMaker() {
           {/* Card type / Side / Color */}
           <div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
             <p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-4">
-              基础属性
+              {t("cardMaker.sectionBasic")}
             </p>
             <div className="flex flex-col gap-4">
 
               {/* Type */}
               <div>
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">类型</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelType")}</label>
                 <div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
                   {TYPES.map((t, i) => (
                     <button key={t} type="button"
@@ -195,7 +199,7 @@ export default function CardMaker() {
 
               {/* Side */}
               <div>
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">阵营</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelSide")}</label>
                 <div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
                   {SIDES.map((s, i) => (
                     <button key={s} type="button"
@@ -213,7 +217,7 @@ export default function CardMaker() {
 
               {/* Color */}
               <div>
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">颜色</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelColor")}</label>
                 <div className="flex gap-2">
                   {COLORS.map(c => (
                     <button key={c} type="button"
@@ -233,25 +237,25 @@ export default function CardMaker() {
           {/* Stats */}
           <div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
             <p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-4">
-              数值
+              {t("cardMaker.sectionStats")}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
               {hasStats && (
-                <NumberField label="等级" value={card.level} min={0} max={3}
+                <NumberField label={t("cardMaker.labelLevel")} value={card.level} min={0} max={3}
                   onChange={v => update("level", v)} />
               )}
               {hasStats && (
-                <NumberField label="费用" value={card.cost} min={0} max={9}
+                <NumberField label={t("cardMaker.labelCost")} value={card.cost} min={0} max={9}
                   onChange={v => update("cost", v)} />
               )}
               {isCharacter && (
-                <NumberField label="攻击力" value={card.power} min={0} max={99999} step={500}
+                <NumberField label={t("cardMaker.labelPower")} value={card.power} min={0} max={99999} step={500}
                   onChange={v => update("power", v)} wide />
               )}
               {hasSouls && (
                 <div>
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">魂数</label>
+                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelSouls")}</label>
                   <div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
                     {SOULS.map((s, i) => (
                       <button key={s} type="button"
@@ -270,7 +274,7 @@ export default function CardMaker() {
 
               {/* Trigger */}
               <div className="col-span-2 sm:col-span-1">
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">Trigger</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelTrigger")}</label>
                 <select
                   value={card.trigger}
                   onChange={e => update("trigger", e.target.value)}
@@ -286,7 +290,7 @@ export default function CardMaker() {
               {/* Trigger 2 — climax only */}
               {isClimax && (
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">Trigger 2</label>
+                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelTrigger2")}</label>
                   <select
                     value={card.trigger2}
                     onChange={e => update("trigger2", e.target.value)}
@@ -303,7 +307,7 @@ export default function CardMaker() {
               {/* Backup (character/event only) */}
               {!isClimax && (
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">能力徽章</label>
+                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelBackup")}</label>
                   <select
                     value={card.backup}
                     onChange={e => update("backup", e.target.value)}
@@ -322,19 +326,19 @@ export default function CardMaker() {
           {/* Text fields */}
           <div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
             <p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-4">
-              文字内容
+              {t("cardMaker.sectionText")}
             </p>
             <div className="flex flex-col gap-3">
 
-              <TextField label="卡名" value={card.name}
-                onChange={v => update("name", v)} placeholder="例：輝く笑顔 春日野穹" />
+              <TextField label={t("cardMaker.labelCardName")} value={card.name}
+                onChange={v => update("name", v)} placeholder={t("cardMaker.namePlaceholder")} />
 
               {hasTraits && (
                 <div className="grid grid-cols-2 gap-3">
-                  <TextField label="特征1" value={card.trait1}
-                    onChange={v => update("trait1", v)} placeholder="例：魔法" />
-                  <TextField label="特征2" value={card.trait2}
-                    onChange={v => update("trait2", v)} placeholder="例：音楽" />
+                  <TextField label={t("cardMaker.labelTrait1")} value={card.trait1}
+                    onChange={v => update("trait1", v)} placeholder={t("cardMaker.trait1Placeholder")} />
+                  <TextField label={t("cardMaker.labelTrait2")} value={card.trait2}
+                    onChange={v => update("trait2", v)} placeholder={t("cardMaker.trait2Placeholder")} />
                 </div>
               )}
 
@@ -344,7 +348,7 @@ export default function CardMaker() {
                   value={card.effect}
                   onChange={e => update("effect", e.target.value)}
                   rows={4}
-                  placeholder={"例：【AUTO】 当这张卡片被打出到舞台时，你可以选择自己的一张Hand牌，将其放入等待区。"}
+                  placeholder={t("cardMaker.effectPlaceholder")}
                   className="w-full border border-solid border-[var(--border)] rounded-lg px-3 py-2
                              text-sm text-[var(--text)] placeholder:text-[var(--text-muted)]
                              bg-transparent focus:outline-none focus:border-[var(--text-muted)]
@@ -358,7 +362,7 @@ export default function CardMaker() {
                   value={card.flavor}
                   onChange={e => update("flavor", e.target.value)}
                   rows={2}
-                  placeholder="例：「今天也要全力以赴！」"
+                  placeholder={t("cardMaker.flavorPlaceholder")}
                   className="w-full border border-solid border-[var(--border)] rounded-lg px-3 py-2
                              text-sm text-[var(--text)] placeholder:text-[var(--text-muted)]
                              bg-transparent focus:outline-none focus:border-[var(--text-muted)]
@@ -367,10 +371,10 @@ export default function CardMaker() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <TextField label="卡号" value={card.serial}
-                  onChange={v => update("serial", v)} placeholder="例：SAO/S65-001" />
-                <TextField label="画师" value={card.artist}
-                  onChange={v => update("artist", v)} placeholder="例：Taro" />
+                <TextField label={t("cardMaker.labelSerial")} value={card.serial}
+                  onChange={v => update("serial", v)} placeholder={t("cardMaker.serialPlaceholder")} />
+                <TextField label={t("cardMaker.labelArtist")} value={card.artist}
+                  onChange={v => update("artist", v)} placeholder={t("cardMaker.artistPlaceholder")} />
               </div>
             </div>
           </div>
@@ -378,7 +382,7 @@ export default function CardMaker() {
           {/* Art upload */}
           <div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
             <p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">
-              卡图
+              {t("cardMaker.sectionArt")}
             </p>
             <input ref={fileRef} type="file" accept="image/*" className="hidden"
               onChange={e => handleArtFile(e.target.files[0])} />
@@ -403,8 +407,8 @@ export default function CardMaker() {
                            hover:border-[var(--text-muted)] hover:bg-[var(--card-background)]
                            transition-colors">
                 <Upload size={20} className="text-[var(--text-muted)]" />
-                <p className="text-sm text-[var(--text-secondary)]">点击或拖放图片</p>
-                <p className="text-[11px] text-[var(--text-muted)]">支持 JPG / PNG / WebP</p>
+                <p className="text-sm text-[var(--text-secondary)]">{t("cardMaker.artHint")}</p>
+                <p className="text-[11px] text-[var(--text-muted)]">{t("cardMaker.artFormats")}</p>
               </div>
             )}
           </div>
@@ -437,11 +441,11 @@ export default function CardMaker() {
                        bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)]
                        transition-colors shadow-sm w-full justify-center">
             <Download size={16} />
-            导出 PNG
+            {t("cardMaker.exportPng")}
           </button>
 
           <p className="text-[10px] text-[var(--text-muted)] text-center">
-            导出分辨率：{cardW}×{cardH}px
+            {t("cardMaker.exportRes").replace("{{w}}", String(cardW)).replace("{{h}}", String(cardH))}
           </p>
         </div>
       </div>
@@ -460,6 +464,7 @@ ArtEditor.propTypes   = { artURL: PropTypes.string, transform: PropTypes.object,
 const PREVIEW_MAX = 200;
 
 function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace, cardW = 448, cardH = 626 }) {
+  const { t } = useLocale();
   // Scale preview to fit in PREVIEW_MAX on the longer side
   const ratio   = cardW / cardH;
   const PREVIEW_W = ratio >= 1 ? PREVIEW_MAX : Math.round(PREVIEW_MAX * ratio);
@@ -606,7 +611,7 @@ function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace, c
         <div className="flex-1" />
         <button type="button" onClick={onReplace}
           className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
-          换图
+          {t("cardMaker.artReplace")}
         </button>
         <button type="button" onClick={onClear}
           className="p-1 text-[var(--text-muted)] hover:text-red-500 transition-colors">

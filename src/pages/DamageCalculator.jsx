@@ -8,15 +8,15 @@ import { useLocale } from "../contexts/LocaleContext.jsx";
 
 // ── Step type definitions ─────────────────────────────────────────────────────
 
-const STEP_TYPES = [
-	{ id: "direct",           label: "直接伤害",     badgeColor: "#52675a", defaults: { n: 2 } },
-	{ id: "cancel",           label: "取消追加",     badgeColor: "#3b82f6", defaults: { n: 2, m: 1, times: 1 } },
-	{ id: "bottom_flip",      label: "翻底X潮次伤害", badgeColor: "#e11d48", defaults: { n: 4, perClimax: 1, dmg: 1, times: 1 } },
-	{ id: "bottom_flip_any",  label: "翻底有潮打X",  badgeColor: "#db2777", defaults: { n: 4, dmg: 2 } },
-	{ id: "bottom_flip_count",label: "翻底潮数单伤", badgeColor: "#b45309", defaults: { n: 4 } },
-	{ id: "top_remove_cx",    label: "看X顶送潮入墓", badgeColor: "#0d9488", defaults: { n: 4 } },
-	{ id: "cancel_return",    label: "取消后X洗回卡组", badgeColor: "#7c3aed", defaults: { n: 2, y: 3 } },
-	{ id: "return_cx",        label: "洗X非潮回卡组",  badgeColor: "#ea580c", defaults: { n: 1 } },
+const STEP_TYPE_DEFS = [
+	{ id: "direct",           badgeColor: "#52675a", defaults: { n: 2 } },
+	{ id: "cancel",           badgeColor: "#3b82f6", defaults: { n: 2, m: 1, times: 1 } },
+	{ id: "bottom_flip",      badgeColor: "#e11d48", defaults: { n: 4, perClimax: 1, dmg: 1, times: 1 } },
+	{ id: "bottom_flip_any",  badgeColor: "#db2777", defaults: { n: 4, dmg: 2 } },
+	{ id: "bottom_flip_count",badgeColor: "#b45309", defaults: { n: 4 } },
+	{ id: "top_remove_cx",    badgeColor: "#0d9488", defaults: { n: 4 } },
+	{ id: "cancel_return",    badgeColor: "#7c3aed", defaults: { n: 2, y: 3 } },
+	{ id: "return_cx",        badgeColor: "#ea580c", defaults: { n: 1 } },
 ];
 
 function stepToOps(step) {
@@ -120,6 +120,10 @@ function stepToOps(step) {
 export default function DamageCalculator() {
 	const { t } = useLocale();
 
+	// Step types with translated labels (derived from t() so they're reactive)
+	const STEP_TYPES = STEP_TYPE_DEFS.map(d => ({ ...d, label: t(`damage.steps.${d.id}`) }));
+	const sd = (key) => t(`damage.stepDesc.${key}`);
+
 	// Opponent state
 	const [deckTotal,  setDeckTotal]  = useState(20);
 	const [deckCX,     setDeckCX]     = useState(3);
@@ -139,7 +143,7 @@ export default function DamageCalculator() {
 		if (!cfg) return;
 		setSteps(prev => [...prev, { id: Date.now(), type: typeId, ...cfg.defaults }]);
 		setResult(null);
-	}, []);
+	}, [STEP_TYPES]);
 
 	const removeStep = useCallback((id) => {
 		setSteps(prev => prev.filter(s => s.id !== id));
@@ -313,7 +317,7 @@ export default function DamageCalculator() {
 				{/* Step list */}
 				{steps.length === 0 ? (
 					<p className="text-sm text-[var(--text-muted)] text-center py-8">
-						点击上方按钮添加伤害步骤
+						{t("damage.emptyHint")}
 					</p>
 				) : (
 					<div className="flex flex-col gap-2">
@@ -327,6 +331,8 @@ export default function DamageCalculator() {
 								onRemove={removeStep}
 								onMove={moveStep}
 								onDuplicate={duplicateStep}
+								sd={sd}
+								stepTypes={STEP_TYPES}
 							/>
 						))}
 					</div>
@@ -406,8 +412,8 @@ const stepShape = PropTypes.shape({
 	perClimax: PropTypes.number,
 });
 
-function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate }) {
-	const cfg = STEP_TYPES.find(t => t.id === step.type);
+function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate, sd, stepTypes }) {
+	const cfg = stepTypes?.find(t => t.id === step.type);
 
 	return (
 		<div className="border border-[var(--border)] rounded-xl bg-[var(--card-background)] px-3 py-3">
@@ -450,94 +456,94 @@ function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate })
 				{step.type === "direct" && (
 					<Row>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} />
-						<L>点伤害</L>
+						<L>{sd("dmgPts")}</L>
 					</Row>
 				)}
 
 				{step.type === "cancel" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">主伤</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("mainDmg")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} />
-						<L>点</L>
+						<L>{sd("pts")}</L>
 					</Row>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">取消后追加</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("cancelThen")}</span>
 						<StepInput value={step.m} onChange={v => onUpdate(step.id, "m", v)} />
-						<L>点</L>
+						<L>{sd("pts")}</L>
 						<StepInput value={step.times ?? 1} onChange={v => onUpdate(step.id, "times", v)} max={8} />
-						<L>次</L>
+						<L>{sd("times")}</L>
 					</Row>
 				</>)}
 
 				{step.type === "top_remove_cx" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">看对手牌组顶</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("lookTop")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={15} />
-						<L>张</L>
+						<L>{sd("cards")}</L>
 					</Row>
-					<Row><L>高潮送墓地，非潮原序放回</L></Row>
+					<Row><L>{sd("sendCxToGrave")}</L></Row>
 				</>)}
 
 				{step.type === "bottom_flip_count" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">底部翻</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={15} />
-						<L>张</L>
+						<L>{sd("cards")}</L>
 					</Row>
-					<Row><L>单次造成高潮数点伤害</L></Row>
+					<Row><L>{sd("singleCxDmg")}</L></Row>
 				</>)}
 
 				{step.type === "bottom_flip_any" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">底部翻</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={15} />
-						<L>张</L>
+						<L>{sd("cards")}</L>
 					</Row>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">含高潮则造成</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("ifCx")}</span>
 						<StepInput value={step.dmg} onChange={v => onUpdate(step.id, "dmg", v)} />
-						<L>点伤害</L>
+						<L>{sd("dmgPts")}</L>
 					</Row>
 				</>)}
 
 				{step.type === "return_cx" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">从休息室洗</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("fromGrave")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={8} />
-						<L>张非潮回卡组（不足取全部）</L>
+						<L>{sd("backToDeck")}</L>
 					</Row>
 				</>)}
 
 				{step.type === "cancel_return" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">主伤</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("mainDmg")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} />
-						<L>点</L>
+						<L>{sd("pts")}</L>
 					</Row>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">取消后从休息室回</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("returnNonCx")}</span>
 						<StepInput value={step.y} onChange={v => onUpdate(step.id, "y", v)} max={20} />
-						<L>张非潮入库（不足取全部）</L>
+						<L>{sd("notEnough")}</L>
 					</Row>
 				</>)}
 
 				{step.type === "bottom_flip" && (<>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">底部翻</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>
 						<StepInput value={step.n} onChange={v => onUpdate(step.id, "n", v)} max={15} />
-						<L>张</L>
+						<L>{sd("cards")}</L>
 					</Row>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">每</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("cards")}</span>
 						<StepInput value={step.perClimax} onChange={v => onUpdate(step.id, "perClimax", v)} max={step.n} />
-						<L>张高潮</L>
+						<L>{sd("perCx")}</L>
 					</Row>
 					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">造成</span>
+						<span className="text-xs text-[var(--text-secondary)]">{sd("dealDmg")}</span>
 						<StepInput value={step.dmg} onChange={v => onUpdate(step.id, "dmg", v)} />
-						<L>点伤害</L>
+						<L>{sd("dmgPts")}</L>
 						<StepInput value={step.times} onChange={v => onUpdate(step.id, "times", v)} max={8} />
-						<L>次</L>
+						<L>{sd("times")}</L>
 					</Row>
 				</>)}
 
@@ -554,6 +560,8 @@ StepCard.propTypes = {
 	onRemove: PropTypes.func.isRequired,
 	onMove: PropTypes.func.isRequired,
 	onDuplicate: PropTypes.func.isRequired,
+	sd: PropTypes.func,
+	stepTypes: PropTypes.array,
 };
 
 // Tiny layout helpers

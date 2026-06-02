@@ -658,6 +658,136 @@
     "clockLabel": "Clock",
     "expectedClock": "Exp. Clock Dmg",
     "avgRefresh": "Avg. Refresh",
-    "avgLevelUp": "Avg. Level-Up"
+    "avgLevelUp": "Avg. Level-Up",
+    "steps": {
+      "direct":           "Direct Damage",
+      "cancel":           "Cancel Follow-up",
+      "bottom_flip":      "Bottom Flip X-CX Dmg",
+      "bottom_flip_any":  "Bottom Flip if CX",
+      "bottom_flip_count":"Bottom Flip CX Count",
+      "top_remove_cx":    "Top X Remove CX",
+      "cancel_return":    "Cancel X Non-CX Return",
+      "return_cx":        "Shuffle X Non-CX Back"
+    },
+    "stepDesc": {
+      "mainDmg":        "Main",
+      "pts":            "pts",
+      "cancelThen":     "Cancel follow-up",
+      "times":          "times",
+      "flipBottom":     "Flip bottom",
+      "cards":          "cards",
+      "perCx":          "CX each",
+      "dealDmg":        "deal",
+      "dmgPts":         "dmg",
+      "ifCx":           "if CX deal",
+      "singleCxDmg":    "Deal damage = CX count",
+      "lookTop":        "Look at top",
+      "sendCxToGrave":  "CX to grave, non-CX back",
+      "returnNonCx":    "On cancel return",
+      "notEnough":      "non-CX to deck (all if fewer)",
+      "fromGrave":      "Shuffle",
+      "backToDeck":     "non-CX back to deck (all if fewer)"
+    },
+    "calculate":   "Calculate Kill Rate",
+    "calculating": "Calculating…",
+    "killRate":    "Kill Rate",
+    "sequence":    "Damage Sequence",
+    "clearAll":    "Clear",
+    "emptyHint":   "Click above to add damage steps",
+    "result":      "Results",
+    "distribution":"Damage Distribution"
+  },
+  "cardMaker": {
+    "title":    "Card Maker",
+    "subtitle": "Create a custom WS card and export as PNG",
+    "sectionBasic": "Basic",
+    "sectionStats": "Stats",
+    "sectionText":  "Text",
+    "sectionArt":   "Card Art",
+    "labelType":    "Type",
+    "labelSide":    "Side",
+    "labelColor":   "Color",
+    "labelLevel":   "Level",
+    "labelCost":    "Cost",
+    "labelPower":   "Power",
+    "labelSouls":   "Soul",
+    "labelTrigger": "Trigger",
+    "labelTrigger2":"Trigger 2",
+    "labelBackup":  "Ability Badge",
+    "labelCardName":"Card Name",
+    "labelTrait1":  "Trait 1",
+    "labelTrait2":  "Trait 2",
+    "labelEffect":  "Effect Text",
+    "labelFlavor":  "Flavor Text",
+    "labelSerial":  "Card No.",
+    "labelArtist":  "Artist",
+    "exportPng":    "Export PNG",
+    "exportRes":    "Export: {{w}}×{{h}}px",
+    "artHint":      "Click or drag an image here",
+    "artFormats":   "JPG / PNG / WebP supported",
+    "artReplace":   "Replace",
+    "types": { "character": "Character", "event": "Event", "climax": "Climax" },
+    "sides": { "weiss": "Weiß", "schwarz": "Schwarz", "both": "Both" },
+    "colors": { "yellow": "Y", "green": "G", "red": "R", "blue": "B", "purple": "P" },
+    "none":   "None",
+    "namePlaceholder":   "e.g. Shining Smile Kasugano Sora",
+    "trait1Placeholder": "e.g. Magic",
+    "trait2Placeholder": "e.g. Music",
+    "effectPlaceholder": "e.g. [AUTO] When this card is placed on Stage from hand, you may choose one of your Hand cards and put it in Waiting Room.",
+    "flavorPlaceholder": "e.g. \"Today I'll give it my all too!\"",
+    "serialPlaceholder": "e.g. SAO/S65-001",
+    "artistPlaceholder": "e.g. Taro"
+  },
+  "simulator": {
+    "presets": {
+      "classic":    "Classic Box",
+      "classicSub": "Pre-2024 · 16 packs × 8 cards",
+      "en2024":     "EN 2024+ Box",
+      "en2024Sub":  "From NIKKE Vol.2 · 16×9 · No HR guarantee",
+      "jp2026":     "JP 2026+ Box",
+      "jp2026Sub":  "From Summer Pockets TV · 10×8",
+      "custom":     "Custom",
+      "customSub":  "Fill in all parameters manually"
+    },
+    "sectionPresets": "Box Format"
+  },
+  "dice": {
+    "labelFaces": "Faces",
+    "labelCount": "Count",
+    "labelTotal": "Total"
+  },
+  "shuffle": {
+    "statGroups": "Groups",
+    "statTotal":  "Total pts",
+    "emptyHint":  "Click \"Generate\" to start"
+  },
+  "pickPacks": {
+    "unitPack":      "packs",
+    "selectedLabel": "Selected:"
+  },
+  "record": {
+    "weekdays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "addButton": "Add",
+    "exportModules": {
+      "overview":   "Win/Loss Overview",
+      "streak":     "Current Streak",
+      "bestStreak": "Best Win Streak",
+      "goesFirst":  "First/Second Win Rate",
+      "topDecks":   "Top 3 Decks",
+      "bestDeck":   "Best Win Rate Deck",
+      "hardest":    "Hardest/Easiest Opponent",
+      "tagStats":   "Top 3 Tag Records",
+      "hardestOpp": "Hardest Opponent",
+      "easiestOpp": "Easiest Opponent",
+      "topTags":    "Top 3 Tag Records",
+      "trend":      "Recent Win Trend"
+    },
+    "cardLabels": {
+      "overview":   "Win/Loss Overview",
+      "bestStreak": "Best Win Streak",
+      "goesFirst":  "First/Second Win Rate",
+      "first":      "First",
+      "second":     "Second"
+    }
   }
 }

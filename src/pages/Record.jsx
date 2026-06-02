@@ -204,7 +204,7 @@ function DateRangePicker({ startDate, endDate, onStartChange, onEndChange, t }) 
 							captionLayout="label"
 							formatters={{
 								formatCaption: (date) => `${date.getFullYear()}年${date.getMonth() + 1}月`,
-								formatWeekdayName: (d) => ["日", "一", "二", "三", "四", "五", "六"][d.getDay()],
+								formatWeekdayName: (d) => { const w = t("record.weekdays"); return Array.isArray(w) ? w[d.getDay()] : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]; },
 							}}
 							classNames={DAY_PICKER_CLASS}
 						/>
@@ -224,6 +224,7 @@ DateRangePicker.propTypes = {
 };
 
 function TagSelector({ selected, available, onChange }) {
+	const { t } = useLocale();
 	const [open, setOpen] = useState(false);
 	const unselected = available.filter((t) => !selected.includes(t));
 
@@ -242,7 +243,7 @@ function TagSelector({ selected, available, onChange }) {
 				{unselected.length > 0 && (
 					<button type="button" onClick={() => setOpen((v) => !v)}
 						className="flex items-center gap-0.5 px-2 py-0.5 rounded-full border border-dashed border-[var(--border)] text-[11px] text-[var(--text-muted)] hover:bg-[var(--card-background)] transition-colors">
-						<Plus size={10} /> 添加
+						<Plus size={10} /> {t("record.addButton")}
 					</button>
 				)}
 			</div>
@@ -271,18 +272,19 @@ TagSelector.propTypes = {
 
 // ── Stats Card Export ─────────────────────────────────────────────────────────
 
-const EXPORT_MODULES = [
-	{ id: "overview",    label: "总战绩",          type: "half" },
-	{ id: "streak",      label: "当前连胜/连败",   type: "half" },
-	{ id: "bestStreak",  label: "历史最长连胜",    type: "half" },
-	{ id: "goesFirst",   label: "先手/後手胜率",   type: "half" },
-	{ id: "topDecks",    label: "最常用卡组 Top3", type: "half" },
-	{ id: "bestDeck",    label: "胜率最高卡组",    type: "half" },
-	{ id: "hardestOpp",  label: "最难对手系列",    type: "half" },
-	{ id: "easiestOpp",  label: "最容易对手系列",  type: "half" },
-	{ id: "topTags",     label: "标签战绩 Top3",   type: "half" },
-	{ id: "trend",       label: "近期胜率走势",    type: "full" },
+const EXPORT_MODULE_IDS = [
+	{ id: "overview",   type: "half" },
+	{ id: "streak",     type: "half" },
+	{ id: "bestStreak", type: "half" },
+	{ id: "goesFirst",  type: "half" },
+	{ id: "topDecks",   type: "half" },
+	{ id: "bestDeck",   type: "half" },
+	{ id: "hardestOpp", type: "half" },
+	{ id: "easiestOpp", type: "half" },
+	{ id: "topTags",    type: "half" },
+	{ id: "trend",      type: "full" },
 ];
+// Labels injected from t() inside the component via getExportModules(t)
 
 
 // ── Stats Card (HTML → PNG via html-to-image) ────────────────────────────────
@@ -350,6 +352,7 @@ function CardTrendChart({ data }) {
 /* eslint-enable react/prop-types */
 
 function StatModule({ id, stats }) {
+	const { t } = useLocale();
 	const box = { background: S.mod, border: S.bdr, borderRadius: S.radius,
 		padding: S.pad, marginBottom: S.mb };
 	const noData = (msg = "暂无数据") =>
@@ -357,7 +360,7 @@ function StatModule({ id, stats }) {
 
 	if (id === "overview") return (
 		<div style={box}>
-			<CardLabel>总战绩</CardLabel>
+			<CardLabel>{t("record.cardLabels.overview")}</CardLabel>
 			<div style={{ display: "flex" }}>
 				{[{ v: stats.total, l: "总场数" }, { v: stats.wins, l: "胜" },
 				  { v: stats.losses, l: "负" }, { v: stats.winRate + "%", l: "胜率" }]
@@ -386,7 +389,7 @@ function StatModule({ id, stats }) {
 
 	if (id === "bestStreak") return (
 		<div style={box}>
-			<CardLabel>历史最长连胜</CardLabel>
+			<CardLabel>{t("record.cardLabels.bestStreak")}</CardLabel>
 			<div style={{ fontSize: 26, fontWeight: 700, color: S.text }}>
 				{stats.longestWinStreak} <span style={{ fontSize: 14, color: S.muted }}>场</span>
 			</div>
@@ -395,12 +398,12 @@ function StatModule({ id, stats }) {
 
 	if (id === "goesFirst") {
 		const sides = [
-			{ l: "先手", rate: stats.goesFirst.firstRate,  total: stats.goesFirst.firstTotal },
+			{ l: t("record.cardLabels.first"), rate: stats.goesFirst.firstRate,  total: stats.goesFirst.firstTotal },
 			{ l: "後手", rate: stats.goesFirst.secondRate, total: stats.goesFirst.secondTotal },
 		];
 		return (
 			<div style={box}>
-				<CardLabel>先手/後手胜率</CardLabel>
+				<CardLabel>{t("record.cardLabels.goesFirst")}</CardLabel>
 				<div style={{ display: "flex" }}>
 					{sides.map((s, i) => (
 						<div key={i} style={{ flex: 1, textAlign: "center",
@@ -419,7 +422,7 @@ function StatModule({ id, stats }) {
 
 	if (id === "topDecks") return (
 		<div style={box}>
-			<CardLabel>最常用卡组 Top 3</CardLabel>
+			<CardLabel>{t("record.exportModules.topDecks")}</CardLabel>
 			{!stats.topDecks.length ? noData() : stats.topDecks.slice(0, 3).map((d, i) => (
 				<div key={i} style={{ display: "flex", justifyContent: "space-between",
 					alignItems: "flex-start", marginBottom: i < 2 ? 10 : 0 }}>
@@ -437,7 +440,7 @@ function StatModule({ id, stats }) {
 
 	if (id === "bestDeck") return (
 		<div style={box}>
-			<CardLabel>胜率最高卡组</CardLabel>
+			<CardLabel>{t("record.cardLabels.bestDeck")}</CardLabel>
 			{!stats.bestDeck ? noData("暂无数据（需 ≥3 场）") : (
 				<>
 					<div style={{ fontSize: 28, fontWeight: 700, color: S.text, marginBottom: 8 }}>
@@ -506,7 +509,9 @@ function StatModule({ id, stats }) {
 StatModule.propTypes = { id: PropTypes.string.isRequired, stats: PropTypes.object.isRequired };
 
 function StatsCardView({ selectedIds, stats, username, dateLabel, cardRef }) {
-	const ordered = EXPORT_MODULES.filter((m) => selectedIds.includes(m.id));
+	const { t } = useLocale();
+	const exportModulesLocal = EXPORT_MODULE_IDS.map(m => ({ ...m, label: t(`record.exportModules.${m.id}`) || m.id }));
+	const ordered = exportModulesLocal.filter((m) => selectedIds.includes(m.id));
 	return (
 		<div ref={cardRef} style={{
 			width: 480, background: S.bg, padding: 24,
@@ -548,6 +553,11 @@ StatsCardView.propTypes = {
 const Record = () => {
 	const { t } = useLocale();
 	const { user } = useAuth();
+
+	const EXPORT_MODULES = EXPORT_MODULE_IDS.map(m => ({
+		...m,
+		label: t(`record.exportModules.${m.id}`) || m.id,
+	}));
 
 	const [rawRecords, setRawRecords] = useState([]);
 	const [loading, setLoading] = useState(true);

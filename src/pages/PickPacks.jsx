@@ -186,7 +186,7 @@ export default function PickPacksV2() {
 							<span className="text-4xl font-black text-[var(--text-muted)]">{openNum}</span>
 							<span className="text-lg text-[var(--text-muted)] font-bold">/</span>
 							<span className="text-2xl font-black text-[var(--text-secondary)]">{totalNum}</span>
-							<span className="text-sm text-[var(--text-muted)] ml-1">包</span>
+							<span className="text-sm text-[var(--text-muted)] ml-1">{t("pickPacks.unitPack")}</span>
 						</div>
 					)}
 					<div className="flex gap-3">
@@ -265,7 +265,7 @@ export default function PickPacksV2() {
 						{/* Selected pill list */}
 						{results.length > 0 && (
 							<div className="mt-5 pt-4 border-t border-[var(--border)] flex flex-wrap items-center gap-2">
-								<span className="text-xs font-bold text-[var(--text-muted)]">选中：</span>
+								<span className="text-xs font-bold text-[var(--text-muted)]">{t("pickPacks.selectedLabel")}</span>
 								{results.map((pack) => (
 									<span key={pack}
 										className="text-xs font-black px-2.5 py-1 rounded-full bg-[var(--text-muted)] text-white">

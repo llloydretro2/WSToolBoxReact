@@ -128,7 +128,7 @@ export default function NavBar() {
 
 	const currentSection = getSectionByPath(location.pathname);
 	const section = currentSection?.key ?? "hub";
-	const sectionNav = currentSection?.nav ?? [];
+	const sectionNav = React.useMemo(() => currentSection?.nav ?? [], [currentSection]);
 
 	// Close mobile menu on navigation
 	useEffect(() => { setMobileMenuOpen(false); }, [location.pathname]);

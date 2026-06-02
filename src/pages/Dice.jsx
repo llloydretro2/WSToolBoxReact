@@ -35,6 +35,7 @@ function Stepper({ value, onChange, min, max, label }) {
 }
 
 function DiceRow({ input, index, onChange, onRemove, canRemove }) {
+	const { t } = useLocale();
 	return (
 		<div className="border border-[var(--border)] rounded-2xl p-4 bg-white/70 backdrop-blur-md flex flex-col gap-3">
 			<div className="flex items-center justify-between">
@@ -71,13 +72,13 @@ function DiceRow({ input, index, onChange, onRemove, canRemove }) {
 			{/* Steppers */}
 			<div className="flex gap-6 justify-center">
 				<Stepper
-					label="面数"
+					label={t("dice.labelFaces")}
 					value={input.sides}
 					onChange={(v) => onChange("sides", v)}
 					min={2}
 				/>
 				<Stepper
-					label="数量"
+					label={t("dice.labelCount")}
 					value={input.count}
 					onChange={(v) => onChange("count", v)}
 					min={1}
@@ -247,7 +248,7 @@ export default function DiceV2() {
 						</span>
 						<div className="flex-1 border-t border-[var(--border)]" />
 						<span className="text-sm font-black text-[var(--text)]">{total}</span>
-						<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">总计</span>
+						<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">{t("dice.labelTotal")}</span>
 					</div>
 
 					{/* Per-group results */}
