@@ -1548,6 +1548,11 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
 - **移动端 NavBar 实机校验**：代码层面无明显 bug。唯一风险是极小屏下 "Weiss Schwarz" 副标题可能截断（`max-w-[9rem]`）。按需处理，发现真机问题再修。
 
+- **桌面端 NavBar WS 分区项目过多**：WS 分区目前有 8 个 nav 项（查卡/EN查卡/选包/模拟开包/随机洗牌/伤害计算/卡片制作/对战记录），全部平铺在桌面版 pill 导航中，导致布局溢出或过度拥挤。移动端折叠菜单无问题（垂直列表可容纳多条目）。
+  - **根本原因**：桌面端 `renderDesktopNav()` 对每个 `type: "link"` 项都渲染为 `NavBtn`，没有分组或折叠机制
+  - **候选方案**：① 将 WS 工具拆成子 group（如「查卡」「工具」各一个 dropdown）；② 超出宽度时自动 overflow 隐藏 + 「更多」按钮；③ 精简 WS pill 只显示最常用 3-4 项，其余移入 dropdown
+  - **触发条件**：下次调整 NavBar 时一并处理，不单独为此开 session
+
 - **JPCardList / ENCardList 共享组件抽取**（触发条件：新增第三个卡牌列表页面时再做）：
 
   两文件约 85% 代码完全相同，可共享约 1200 行。分析如下：
