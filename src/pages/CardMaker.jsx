@@ -15,8 +15,9 @@ const DEFAULT_CARD = {
   cost:    0,
   power:   5000,
   souls:   1,
-  trigger: "none",
-  backup:  "none",
+  trigger:  "none",
+  trigger2: "none",
+  backup:   "none",
   name:    "",
   trait1:  "",
   trait2:  "",
@@ -283,6 +284,23 @@ export default function CardMaker() {
                   ))}
                 </select>
               </div>
+
+              {/* Trigger 2 — climax only */}
+              {isClimax && (
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">Trigger 2</label>
+                  <select
+                    value={card.trigger2}
+                    onChange={e => update("trigger2", e.target.value)}
+                    className="w-full border border-solid border-[var(--border)] rounded-lg px-2 py-1.5
+                               text-sm text-[var(--text)] bg-white focus:outline-none focus:border-[var(--text-muted)]
+                               transition-colors">
+                    {TRIGGER_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Backup (character/event only) */}
               {!isClimax && (

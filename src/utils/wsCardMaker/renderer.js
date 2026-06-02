@@ -178,19 +178,23 @@ async function drawStatIcons(ctx, data, layout) {
   }
 }
 
-// Draws climax two-trigger slots
+// Draws climax trigger slot(s).
+// Standard climax cards have one trigger; trigger2 only shows when explicitly set.
 async function drawClimaxTriggers(ctx, data, layout) {
-  const { trigger } = data;
-  const hasTrigger = !!trigger && trigger !== 'none';
-  if (!hasTrigger) return;
-  const src = getTriggerPath(trigger);
-  if (!src) return;
-  try {
-    const img = await loadImg(src);
-    for (const slot of [layout.trigger, layout.trigger2]) {
-      if (slot) ctx.drawImage(img, slot.x, slot.y, slot.w, slot.h);
-    }
-  } catch { /* ignore */ }
+  const { trigger, trigger2 } = data;
+
+  async function drawSlot(triggerType, el) {
+    if (!triggerType || triggerType === 'none' || !el) return;
+    const src = getTriggerPath(triggerType);
+    if (!src) return;
+    try {
+      const img = await loadImg(src);
+      ctx.drawImage(img, el.x, el.y, el.w, el.h);
+    } catch { /* ignore */ }
+  }
+
+  await drawSlot(trigger,  layout.trigger);
+  await drawSlot(trigger2, layout.trigger2);
 }
 
 // Trait borders (character only)
