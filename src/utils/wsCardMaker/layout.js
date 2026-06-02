@@ -129,10 +129,12 @@ export const LAYOUT = {
     serial:   { x: 20,  y: 430, w: 90,  h: 10 },
     // Artist: just above serial
     artist:   { x: 20,  y: 417, w: 180, h: 12 },
-    // Effect text in the art area, full-width, bottom-anchored just above the bar
-    rulesText:  { x: 14, bottomY: 382, w: 598 },
-    flavorText: { x: 14, w: 598 },
-    whitebar:   { x: 12, w: 602 },
+    // Effect text: left portion only, lower-left quadrant of the art area
+    // Width limited to ~70% of card width; right side left for trigger icons / art
+    // topY sets the upper boundary (text cannot grow above this)
+    rulesText:  { x: 14, bottomY: 380, w: 440, topY: 240 },
+    flavorText: { x: 14, w: 440 },
+    whitebar:   { x: 12, w: 444 },
   },
 };
 

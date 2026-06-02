@@ -217,20 +217,42 @@ async function drawEffectText(ctx, data, layout) {
   const { effect = '', flavor = '', type, side } = data;
   if (!effect && !flavor) return;
 
-  const EFFECT_SIZE = 11;
-  const EFFECT_LINE = 14;
-  const FLAVOR_SIZE = 11;
-  const FLAVOR_LINE = 13;
   const FLAVOR_GAP  = 6;
-
   const ru = layout.rulesText;
   const fl = layout.flavorText;
   const wb = layout.whitebar;
+  // topY: upper boundary for the text area (optional, used by climax)
+  const topY = ru.topY ?? 0;
+  const maxTextH = ru.bottomY - topY;
 
-  // Measure effect lines
+  // Determine font sizes that fit within the available vertical space
+  let effectSize = 11, effectLine = 14;
+  let flavorSize = 11, flavorLine = 13;
+
+  if (effect || flavor) {
+    for (let attempt = 0; attempt < 6; attempt++) {
+      let totalH = 0;
+      if (effect) {
+        setupText(ctx, { size: effectSize, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
+        totalH += wrapText(ctx, effect, ru.w).length * effectLine;
+      }
+      if (flavor) {
+        setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
+        totalH += wrapText(ctx, flavor, fl.w).length * flavorLine;
+        if (effect) totalH += FLAVOR_GAP;
+      }
+      if (totalH <= maxTextH) break;
+      effectSize = Math.max(7, effectSize - 1);
+      effectLine = Math.round(effectSize * 1.27);
+      flavorSize = Math.max(7, flavorSize - 1);
+      flavorLine = Math.round(flavorSize * 1.18);
+    }
+  }
+
+  // Measure final effect lines
   let effectLines = [];
   if (effect) {
-    setupText(ctx, { size: EFFECT_SIZE, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
+    setupText(ctx, { size: effectSize, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
     effectLines = wrapText(ctx, effect, ru.w);
   }
 
@@ -239,12 +261,12 @@ async function drawEffectText(ctx, data, layout) {
     const whitebarImg = await loadImg('/assets/card-maker/bars/whitebar.png');
     const flavorLineCnt = flavor
       ? (() => {
-          setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
+          setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
           return wrapText(ctx, flavor, fl.w).length;
         })()
       : 0;
-    const effectH = effectLines.length * EFFECT_LINE;
-    const flavorH = flavorLineCnt * FLAVOR_LINE;
+    const effectH = effectLines.length * effectLine;
+    const flavorH = flavorLineCnt * flavorLine;
     const gapH    = (effectH > 0 && flavorH > 0) ? FLAVOR_GAP : 0;
     const barH    = Math.max(19, effectH + flavorH + gapH + 4);
     ctx.drawImage(whitebarImg, wb.x, ru.bottomY - barH, wb.w, barH);
@@ -252,29 +274,29 @@ async function drawEffectText(ctx, data, layout) {
 
   // Draw effect text
   if (effectLines.length > 0) {
-    setupText(ctx, { size: EFFECT_SIZE, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
+    setupText(ctx, { size: effectSize, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    let y = ru.bottomY - effectLines.length * EFFECT_LINE;
+    let y = ru.bottomY - effectLines.length * effectLine;
     for (const line of effectLines) {
       if (line) ctx.fillText(line, ru.x, y);
-      y += EFFECT_LINE;
+      y += effectLine;
     }
     clearShadow(ctx);
   }
 
   // Draw flavor text
   if (flavor) {
-    const effectH = effectLines.length * EFFECT_LINE;
+    const effectH = effectLines.length * effectLine;
     const flavorBottom = ru.bottomY - effectH - (effectLines.length > 0 ? FLAVOR_GAP : 0);
-    setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)', shadow: 'rgba(255,255,255,0.5)', shadowBlur: 4 });
+    setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)', shadow: 'rgba(255,255,255,0.5)', shadowBlur: 4 });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     const lines = wrapText(ctx, flavor, fl.w);
-    let y = flavorBottom - lines.length * FLAVOR_LINE;
+    let y = flavorBottom - lines.length * flavorLine;
     for (const line of lines) {
       if (line) ctx.fillText(line, fl.x + fl.w / 2, y);
-      y += FLAVOR_LINE;
+      y += flavorLine;
     }
     clearShadow(ctx);
   }
