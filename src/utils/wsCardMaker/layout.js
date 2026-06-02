@@ -130,10 +130,11 @@ export const LAYOUT = {
     // Artist: small, near serial
     artist:   { x: 196, y: 420, w: 173, h: 14 },
     // Effect text: lower-left white box (measured: x=22, w≈203, y=343-379)
-    // w=204 confirmed by style file; topY=343 is the measured upper boundary
     rulesText:  { x: 22, bottomY: 381, w: 204, topY: 343 },
-    flavorText: { x: 22, w: 204 },
     whitebar:   { x: 16, w: 216 },
+    // Flavor text: large standalone text in center-right art area (measured: canvas y≈255-313)
+    // NOT combined with effect text whitebar — rendered separately at larger size
+    flavorText: { x: 190, w: 370, centerY: 284, fontSize: 22, standalone: true },
   },
 };
 

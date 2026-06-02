@@ -212,10 +212,40 @@ async function drawTraitBorders(ctx, trait1, trait2, layout) {
   if (layout.trait2) await drawBorder(layout.trait2, !!trait2);
 }
 
+// Climax standalone flavor text — large centered text over art area (no whitebar)
+async function drawClimaxFlavor(ctx, flavor, layout) {
+  if (!flavor) return;
+  const fl = layout.flavorText;
+  if (!fl?.standalone) return;
+
+  const fontSize = fl.fontSize ?? 18;
+  const lineH    = Math.round(fontSize * 1.35);
+
+  setupText(ctx, {
+    size: fontSize, family: 'WSFlavor', weight: '400',
+    color: 'rgba(30,30,30,0.9)',
+    shadow: 'rgba(255,255,255,0.7)', shadowBlur: 3,
+  });
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  const lines   = wrapText(ctx, flavor, fl.w);
+  const totalH  = lines.length * lineH;
+  const startY  = (fl.centerY ?? 280) - totalH / 2;
+  const centerX = fl.x + fl.w / 2;
+
+  lines.forEach((line, i) => {
+    if (line) ctx.fillText(line, centerX, startY + i * lineH + lineH / 2);
+  });
+  clearShadow(ctx);
+}
+
 // Effect + flavor text with white bar background
 async function drawEffectText(ctx, data, layout) {
-  const { effect = '', flavor = '', type, side } = data;
-  if (!effect && !flavor) return;
+  const { effect = '', flavor = '' } = data;
+  // Climax: flavor is drawn separately by drawClimaxFlavor; skip it here
+  const flavorInBox = layout.flavorText?.standalone ? '' : flavor;
+  if (!effect && !flavorInBox) return;
 
   const FLAVOR_GAP  = 6;
   const ru = layout.rulesText;
@@ -229,16 +259,16 @@ async function drawEffectText(ctx, data, layout) {
   let effectSize = 11, effectLine = 14;
   let flavorSize = 11, flavorLine = 13;
 
-  if (effect || flavor) {
+  if (effect || flavorInBox) {
     for (let attempt = 0; attempt < 6; attempt++) {
       let totalH = 0;
       if (effect) {
         setupText(ctx, { size: effectSize, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
         totalH += wrapText(ctx, effect, ru.w).length * effectLine;
       }
-      if (flavor) {
+      if (flavorInBox) {
         setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
-        totalH += wrapText(ctx, flavor, fl.w).length * flavorLine;
+        totalH += wrapText(ctx, flavorInBox, fl.w).length * flavorLine;
         if (effect) totalH += FLAVOR_GAP;
       }
       if (totalH <= maxTextH) break;
@@ -259,10 +289,10 @@ async function drawEffectText(ctx, data, layout) {
   // White background bar
   try {
     const whitebarImg = await loadImg('/assets/card-maker/bars/whitebar.png');
-    const flavorLineCnt = flavor
+    const flavorLineCnt = flavorInBox
       ? (() => {
           setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
-          return wrapText(ctx, flavor, fl.w).length;
+          return wrapText(ctx, flavorInBox, fl.w).length;
         })()
       : 0;
     const effectH = effectLines.length * effectLine;
@@ -285,14 +315,14 @@ async function drawEffectText(ctx, data, layout) {
     clearShadow(ctx);
   }
 
-  // Draw flavor text
-  if (flavor) {
+  // Draw flavor text (in-box, non-climax only)
+  if (flavorInBox) {
     const effectH = effectLines.length * effectLine;
     const flavorBottom = ru.bottomY - effectH - (effectLines.length > 0 ? FLAVOR_GAP : 0);
     setupText(ctx, { size: flavorSize, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)', shadow: 'rgba(255,255,255,0.5)', shadowBlur: 4 });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const lines = wrapText(ctx, flavor, fl.w);
+    const lines = wrapText(ctx, flavorInBox, fl.w);
     let y = flavorBottom - lines.length * flavorLine;
     for (const line of lines) {
       if (line) ctx.fillText(line, fl.x + fl.w / 2, y);
@@ -397,8 +427,13 @@ export async function renderCard(canvas, data) {
     await drawTraitBorders(ctx, data.trait1, data.trait2, layout);
   }
 
-  // ⑥ Effect + flavor text with white bar background
+  // ⑥ Effect text with white bar background
   await drawEffectText(ctx, data, layout);
+
+  // ⑥b Climax standalone flavor text (large, center-right, no whitebar)
+  if (type === 'climax') {
+    await drawClimaxFlavor(ctx, data.flavor, layout);
+  }
 
   // ⑦ Other text labels
   drawLabels(ctx, data, layout);
