@@ -226,9 +226,9 @@ export default function DamageCalculator() {
 			{/* Title */}
 			<div className="mb-6">
 				<h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[var(--text)] leading-none mb-1">
-					伤害计算器
+					{t("damage.title")}
 				</h1>
-				<p className="text-sm text-[var(--text-secondary)]">输入对手状态和伤害序列，计算斩杀概率</p>
+				<p className="text-sm text-[var(--text-secondary)]">{t("damage.subtitle")}</p>
 			</div>
 
 			{/* ── Opponent State ─────────────────────────────────────────────── */}
@@ -237,16 +237,16 @@ export default function DamageCalculator() {
 				{/* Deck */}
 				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">
-						牌库状态
+						{t("damage.deckState")}
 					</p>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
 							<NumInput value={deckTotal} onChange={v => { setDeckTotal(v); setResult(null); }} max={60} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">张</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<NumInput value={deckCX} onChange={v => { setDeckCX(Math.min(v, deckTotal)); setResult(null); }} max={deckTotal} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">高潮</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
 						</div>
 					</div>
 				</div>
@@ -254,16 +254,16 @@ export default function DamageCalculator() {
 				{/* Rest */}
 				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">
-						弃牌堆状态
+						{t("damage.restState")}
 					</p>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
 							<NumInput value={restTotal} onChange={v => { setRestTotal(v); setResult(null); }} max={60} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">张</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<NumInput value={restCX} onChange={v => { setRestCX(Math.min(v, restTotal)); setResult(null); }} max={restTotal} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">高潮</span>
+							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
 						</div>
 					</div>
 				</div>
@@ -271,7 +271,7 @@ export default function DamageCalculator() {
 				{/* Level + Clock */}
 				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">
-						血量状态
+						{t("damage.healthState")}
 					</p>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
@@ -291,7 +291,7 @@ export default function DamageCalculator() {
 			<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5 mb-4">
 				<div className="flex items-center justify-between mb-3">
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-						伤害序列
+						{t("damage.sequence")}
 					</p>
 					{steps.length > 0 && (
 						<button onClick={clearSteps}
@@ -347,8 +347,8 @@ export default function DamageCalculator() {
 				           disabled:opacity-40 disabled:cursor-not-allowed
 				           flex items-center justify-center gap-2 mb-4">
 				{running
-					? <><Loader2 size={16} className="animate-spin" />计算中…</>
-					: <><Play size={16} />计算斩杀率</>
+					? <><Loader2 size={16} className="animate-spin" />{t("damage.calculating")}</>
+					: <><Play size={16} />{t("damage.calculate")}</>
 				}
 			</button>
 
@@ -363,13 +363,13 @@ export default function DamageCalculator() {
 			{result && (
 				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-5">
-						计算结果
+						{t("damage.result")}
 					</p>
 
 					{/* Kill rate — primary */}
 					<div className="text-center mb-6">
 						<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-2">
-							斩杀率
+							{t("damage.killRate")}
 						</p>
 						<p className={`text-6xl font-black leading-none ${killColor}`}>
 							{killRate.toFixed(1)}%
@@ -639,6 +639,7 @@ StepInput.propTypes = { value: PropTypes.number, onChange: PropTypes.func, min: 
 const LEVEL_THRESHOLDS = new Set([7, 14, 21]);
 
 function DistributionSection({ total }) {
+	const { t } = useLocale();
 	const max  = total.max;
 	const data = Array.from({ length: max + 1 }, (_, k) => ({
 		k,
@@ -701,7 +702,7 @@ function DistributionSection({ total }) {
 									? "bg-[var(--text-muted)] text-white font-bold"
 									: "text-[var(--text)]"
 							}`}>
-							<span>{k} 张</span>
+							<span>{t("damage.nCards").replace("{{n}}", String(k))}</span>
 							<span>{(p * 100).toFixed(1)}%</span>
 						</div>
 					);

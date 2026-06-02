@@ -53,7 +53,7 @@ const PRESETS = [
 	{
 		id: "en2024",
 		label: "",
-		sublabel: "NIKKE Vol.2起 · 16包×9张 · 无高稀有保底",
+		sublabel: "",
 		packsPerBox: 16,
 		cardsPerPack: 9,
 		getRarityCounts: (rarityMap) => {
@@ -74,8 +74,8 @@ const PRESETS = [
 	},
 	{
 		id: "jp2026",
-		label: "JP 2026+ 规格",
-		sublabel: "Summer Pockets TV起 · 10包×8张",
+		label: "",
+		sublabel: "",
 		packsPerBox: 10,
 		cardsPerPack: 8,
 		getRarityCounts: (rarityMap) => {
@@ -98,8 +98,8 @@ const PRESETS = [
 	},
 	{
 		id: "custom",
-		label: "自定义",
-		sublabel: "手动填写所有参数",
+		label: "",
+		sublabel: "",
 		packsPerBox: 16,
 		cardsPerPack: 8,
 		getRarityCounts: () => ({}),

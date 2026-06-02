@@ -343,7 +343,7 @@ export default function CardMaker() {
               )}
 
               <div>
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">效果文本</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelEffect")}</label>
                 <textarea
                   value={card.effect}
                   onChange={e => update("effect", e.target.value)}
@@ -357,7 +357,7 @@ export default function CardMaker() {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">风味文字</label>
+                <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">{t("cardMaker.labelFlavor")}</label>
                 <textarea
                   value={card.flavor}
                   onChange={e => update("flavor", e.target.value)}
