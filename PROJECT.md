@@ -470,6 +470,29 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### i18n 全站双语修复 & 最终检查 (2026-06-02 session 40 续)
+
+#### 严重硬编码修复（完全中文页面 → 接入 t()）
+- **CardMaker**: 所有 UI 文字（类型/阵营/颜色/标签/按钮/placeholder/区块标题）
+- **DamageCalculator**: 步骤类型标签 + StepCard 描述文字 + 主页标题/副标题/区块标题/单位标签/结果标题
+- **Simulator**: 4 种预设标签及 sublabel + 区块标题
+
+#### 中等硬编码修复
+- **Dice**: 面数/数量/总计
+- **RandomShuffle**: 组数/总点数/空状态提示
+- **PickPacks**: 包/选中
+- **Record**: 星期名/添加按钮/导出模块名/统计卡标签
+
+#### 新增 locale keys（zh.json + en.json）
+`damage.steps.*`, `damage.stepDesc.*`, `damage.title/subtitle/deckState/restState/healthState/unitCard/unitClimax/nCards/sequence/clearAll/distribution`, `cardMaker.*`（完整 UI），`simulator.presets.*`, `dice.label*`, `shuffle.stat*`, `pickPacks.*`, `record.weekdays/exportModules/cardLabels`
+
+#### 剩余可接受硬编码（不影响部署）
+- 麻将页面：内联 `locale === 'zh' ? ... : ...` 双语模式，有双语只是不走 locale 文件
+- WS 专业术语（Soul/Gate/Shot 等）：国际通用不需翻译
+- 代码注释：非用户可见
+
+---
+
 ### NavBar 横向滚动升级 & 杂项 (2026-06-02 session 40)
 
 - **桌面端导航横向滚动**：`NavBar.jsx` 中央 nav 区域改为 `overflow-x:auto`，CSS `mask-image` 渐变淡出边缘，`‹`/`›` 箭头仅在有溢出时出现，路由切换时激活项自动 `scrollIntoView`。对所有分区生效，溢出才激活，Mahjong/Tools 无感知。
