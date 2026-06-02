@@ -319,7 +319,7 @@ export default function NavBar() {
 									onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
 									className="border-0 bg-transparent cursor-pointer px-2 py-1 rounded-lg text-[12px] font-medium transition-all duration-150 opacity-50 hover:opacity-90 select-none"
 									style={{ fontFamily: "inherit", color: "var(--text)" }}>
-									{locale === "zh" ? "ZH" : "EN"}
+									{locale === "zh" ? "English" : "中文"}
 								</button>
 
 								{/* Mobile menu toggle — only in game sections */}
