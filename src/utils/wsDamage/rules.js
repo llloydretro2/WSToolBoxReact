@@ -1,7 +1,7 @@
 // WS Damage Simulator — Auto-Triggered Game Rules
 
 import { isClimax, matchesFilter } from './card.js';
-import { getZone, shuffle, shuffleZone, zoneIsEmpty, countNonClimax } from './state.js';
+import { getZone, shuffleZone, zoneIsEmpty } from './state.js';
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
 

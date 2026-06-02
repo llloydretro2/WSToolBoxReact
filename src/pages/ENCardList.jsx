@@ -547,7 +547,7 @@ const ENCardList = () => {
 		if (validPowers.length > 0 && powerRange === null) {
 			setPowerRange([validPowers[0], validPowers[validPowers.length - 1]]);
 		}
-	}, [validPowers.length, powerRange]);
+	}, [validPowers.length, powerRange]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Also widen levelRange/costRange if options show a larger max
 	useEffect(() => {
@@ -601,7 +601,7 @@ const ENCardList = () => {
 			if (pMax < validPowers[validPowers.length - 1])   params.set("power_max", pMax);
 		}
 		return params;
-	}, [maxLevel, maxCost, validPowers]);
+	}, [maxLevel, maxCost, validPowers]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// ── Search / Reset ─────────────────────────────────────────────────────────
 	const handleSearch = useCallback(() => {

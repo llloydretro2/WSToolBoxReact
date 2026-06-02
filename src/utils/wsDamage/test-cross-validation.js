@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* global process */
 // WS Damage Simulator — Cross-Validation Runner
 // Compares our engine against the existing WS-DamageSim project.
 // Run: node src/utils/wsDamage/test-cross-validation.js

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Plus, Trash2, ChevronUp, ChevronDown, Play, Loader2, Copy } from "lucide-react";
 import { simulate } from "../utils/wsDamage/simulator.js";
 import { buildSimpleDeck, makeCharacter } from "../utils/wsDamage/card.js";
@@ -394,6 +395,17 @@ export default function DamageCalculator() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+const stepShape = PropTypes.shape({
+	id: PropTypes.number,
+	type: PropTypes.string,
+	n: PropTypes.number,
+	m: PropTypes.number,
+	y: PropTypes.number,
+	times: PropTypes.number,
+	dmg: PropTypes.number,
+	perClimax: PropTypes.number,
+});
+
 function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate }) {
 	const cfg = STEP_TYPES.find(t => t.id === step.type);
 
@@ -534,13 +546,26 @@ function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate })
 	);
 }
 
+StepCard.propTypes = {
+	step: stepShape.isRequired,
+	idx: PropTypes.number.isRequired,
+	total: PropTypes.number.isRequired,
+	onUpdate: PropTypes.func.isRequired,
+	onRemove: PropTypes.func.isRequired,
+	onMove: PropTypes.func.isRequired,
+	onDuplicate: PropTypes.func.isRequired,
+};
+
 // Tiny layout helpers
 function Row({ children }) {
 	return <div className="flex items-center gap-1.5">{children}</div>;
 }
+Row.propTypes = { children: PropTypes.node };
+
 function L({ children }) {
 	return <span className="text-xs text-[var(--text-muted)]">{children}</span>;
 }
+L.propTypes = { children: PropTypes.node };
 
 function NumInput({ value, onChange, min = 0, max = 99 }) {
 	return (
@@ -598,6 +623,8 @@ function StepInput({ value, onChange, min = 1, max = 20 }) {
 		</div>
 	);
 }
+NumInput.propTypes  = { value: PropTypes.number, onChange: PropTypes.func, min: PropTypes.number, max: PropTypes.number };
+StepInput.propTypes = { value: PropTypes.number, onChange: PropTypes.func, min: PropTypes.number, max: PropTypes.number };
 
 // ── Distribution Section ───────────────────────────────────────────────────────
 
@@ -675,3 +702,4 @@ function DistributionSection({ total }) {
 		</div>
 	);
 }
+DistributionSection.propTypes = { total: PropTypes.shape({ max: PropTypes.number, distribution: PropTypes.object }) };

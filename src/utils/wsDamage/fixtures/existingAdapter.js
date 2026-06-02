@@ -1,3 +1,4 @@
+/* eslint-disable */
 let simulationResults = [];
 let refreshCounts = [];
 let levelUpCounts = [];

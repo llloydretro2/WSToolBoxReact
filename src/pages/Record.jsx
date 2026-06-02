@@ -681,7 +681,7 @@ const Record = () => {
 		}
 		// 清理已废弃的 tournamentName localStorage key
 		try { localStorage.removeItem(`${storagePrefix}tournamentName`); } catch (e) { void e; }
-	}, []);
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 	const [deleteDialog, setDeleteDialog] = useState({ open: false, record: null });
 	const [resetDialogOpen, setResetDialogOpen] = useState(false);
 	const [exportDialog, setExportDialog] = useState({ open: false, step: "select", selected: EXPORT_MODULES.map((m) => m.id) });
@@ -690,7 +690,7 @@ const Record = () => {
 	const [endDate, setEndDate] = useState(null);
 
 	// 挂载时加载标签库（创建表单 Tab 0 也需要）
-	useEffect(() => { fetchTags(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect(() => { fetchTags(); }, []); // mount-only
 
 	// 自定义日期变更时自动向服务器重新请求
 	useEffect(() => {
@@ -889,7 +889,7 @@ const Record = () => {
 	}, [filteredRecords, searchQuery]);
 
 	// 用户主动改变过滤条件时重置分页（不包含 records，避免编辑/创建/删除误触发）
-	useEffect(() => { setVisibleCount(20); }, [tagFilter, deckFilter, searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+	useEffect(() => { setVisibleCount(20); }, [tagFilter, deckFilter, searchQuery]);
 
 	const totalMatches = searchedRecords.length;
 
@@ -923,7 +923,7 @@ const Record = () => {
 				winRate: s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) : "0.0",
 			}))
 			.sort((a, b) => b.total - a.total);
-	}, [searchedRecords, t]);
+	}, [searchedRecords, t]); // eslint-disable-line react-hooks/exhaustive-deps -- intentionally uses full records for analysis
 
 	const opponentSeriesWinRate = useMemo(() => {
 		const unknownLabel = t("record.display.unknownSeries");

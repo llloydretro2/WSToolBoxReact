@@ -124,7 +124,6 @@ export function takeIntoWindow(state, zoneAccess) {
  * Build a queryable view over a window (WindowCard[]).
  */
 export function buildWindowView(windowCards) {
-  const cards   = windowCards.map(w => w.card);
   const byType  = {};
   const byColor = {};
   const byLevel = {};

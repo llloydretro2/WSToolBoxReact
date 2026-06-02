@@ -336,7 +336,7 @@ async function drawEffectText(ctx, data, layout) {
 
 // All text labels (name, power, traits, serial, artist)
 function drawLabels(ctx, data, layout) {
-  const { name, power, trait1, trait2, serial, artist, type, side } = data;
+  const { name, power, trait1, trait2, serial, artist, side } = data;
 
   if (name && layout.cardname) {
     drawFitText(ctx, name, layout.cardname,
@@ -384,11 +384,8 @@ export async function renderCard(canvas, data) {
     type    = 'character',
     side    = 'both',
     color   = 'green',
-    level   = 1,
-    cost    = 0,
     souls   = 1,
     trigger = 'none',
-    backup  = 'none',
     art     = null,
     artTransform,
   } = data;

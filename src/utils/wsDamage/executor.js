@@ -4,7 +4,6 @@ import { OpType, EmptyPolicy } from './types.js';
 import { isClimax, matchesFilter } from './card.js';
 import {
   getZone, zoneIsEmpty, insertCards, shuffleZone,
-  takeTop, takeBottom, takeRandom,
 } from './state.js';
 import { takeIntoWindow, buildWindowView, applyActSpec } from './window.js';
 import { ensureDeck, doRefresh, checkLevelUp, checkLoss } from './rules.js';
@@ -148,7 +147,7 @@ function executeTrueDamage(op, state, config) {
 
 // ── Mill (top → rest, no cancel) ─────────────────────────────────────────────
 
-function executeMill(op, state, config) {
+function executeMill(op, state, _config) {
   const n    = op.n ?? 0;
   const from = op.from ?? 'top';
 
@@ -234,7 +233,7 @@ function executeMove(op, state, config) {
 
 // ── Search ────────────────────────────────────────────────────────────────────
 
-function executeSearch(op, state, config) {
+function executeSearch(op, state, _config) {
   const { zone, filter, count, destination, insertAt, afterSearch } = op;
   const zoneArr = getZone(state, zone);
   const toFind  = count ?? { type: 'exact', n: 1 };
@@ -256,7 +255,7 @@ function executeSearch(op, state, config) {
 
 // ── Fx (Reverse Wash) ─────────────────────────────────────────────────────────
 
-function executeFx(op, state, config) {
+function executeFx(op, state, _config) {
   const n      = op.n ?? 0;
   const filter = op.filter ?? { type: 'non_climax' };
   const rest   = getZone(state, 'rest');
@@ -283,7 +282,7 @@ function executeShuffleOp(op, state) {
 
 // ── Reorder ───────────────────────────────────────────────────────────────────
 
-function executeReorder(op, state, config) {
+function executeReorder(op, state, _config) {
   const windowCards = takeIntoWindow(state, op.source);
   const { newOrder, destination } = op;
 
@@ -348,7 +347,7 @@ function executeConditional(op, state, config) {
 
 // ── Explicit Refresh ──────────────────────────────────────────────────────────
 
-function executeRefreshOp(op, state, config) {
+function executeRefreshOp(op, state, _config) {
   doRefresh(state);
   checkLoss(state);
 }

@@ -113,7 +113,7 @@ export default function CardMaker() {
       }
     }, 120);
     return () => clearTimeout(renderTimer.current);
-  }, [card, artURL]);
+  }, [card, artURL]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup object URL on unmount
   useEffect(() => () => { if (artURL) URL.revokeObjectURL(artURL); }, [artURL]);
@@ -132,8 +132,7 @@ export default function CardMaker() {
       }
     }, 50);
     return () => clearTimeout(renderTimer.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artTransform]);
+  }, [artTransform]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleExport = () => {
     if (!canvasRef.current) return;
@@ -150,7 +149,6 @@ export default function CardMaker() {
   const hasStats    = isCharacter || isEvent;  // level / cost
   const hasTraits   = isCharacter;
   const hasSouls    = isCharacter;
-  const hasTrigger  = !isClimax || true;       // all types can have triggers
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
@@ -455,7 +453,7 @@ export default function CardMaker() {
 
 NumberField.propTypes = { label: PropTypes.string, value: PropTypes.number, min: PropTypes.number, max: PropTypes.number, step: PropTypes.number, onChange: PropTypes.func, wide: PropTypes.bool };
 TextField.propTypes   = { label: PropTypes.string, value: PropTypes.string, onChange: PropTypes.func, placeholder: PropTypes.string };
-ArtEditor.propTypes   = { artURL: PropTypes.string, transform: PropTypes.object, onTransformChange: PropTypes.func, onClear: PropTypes.func, onReplace: PropTypes.func };
+ArtEditor.propTypes   = { artURL: PropTypes.string, transform: PropTypes.object, onTransformChange: PropTypes.func, onClear: PropTypes.func, onReplace: PropTypes.func, cardW: PropTypes.number, cardH: PropTypes.number };
 
 // ── Art Editor (drag to pan, scroll/buttons to zoom) ──────────────────────────
 

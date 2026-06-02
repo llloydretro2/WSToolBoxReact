@@ -1,9 +1,11 @@
+/* eslint-env node */
+/* global process */
 // WS Damage Simulator — Engine Validation Tests
 // Run: node src/utils/wsDamage/test-engine.js
 
 import {
   simulate, analyticalNoCancel, analyticalExpectedDamage,
-  makeClimax, makeCharacter, makeEvent, buildSimpleDeck,
+  makeClimax, makeCharacter, buildSimpleDeck,
   OpType, ZoneId, CardType, Color,
 } from './index.js';
 
@@ -34,7 +36,7 @@ function expectBool(description, got, expected) {
 }
 
 // Standard deck: 50 cards, 8 climax
-function standardDeck() {
+function _standardDeck() {
   return buildSimpleDeck({ characters: 34, events: 8, climaxes: 8 });
 }
 

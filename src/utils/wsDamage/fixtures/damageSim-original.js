@@ -1,3 +1,4 @@
+/* eslint-disable */
 // Weiß Schwarz伤害模拟计算器 - Web版
 // 作者: NoFaMe
 // 完全修复了对 DT>RS4:C+zj(2) 的解析，与Python版本完全兼容

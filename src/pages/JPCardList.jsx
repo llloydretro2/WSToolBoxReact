@@ -614,7 +614,7 @@ const JPCardList = () => {
 	useEffect(() => {
 		if (validPowers.length > 0 && powerRange === null)
 			setPowerRange([validPowers[0], validPowers[validPowers.length - 1]]);
-	}, [validPowers.length, powerRange]);
+	}, [validPowers.length, powerRange]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
 		if (maxLevel > 3) setLevelRange((prev) => [prev[0], maxLevel]);
