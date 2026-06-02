@@ -1,9 +1,10 @@
 // WS Card Maker — Canvas Rendering Engine
 
 import {
-  CARD_W, CARD_H,
+  getCanvasSize,
   getFramePath, getMaskPath, getLevelPath, getCostPath, getTriggerPath, getBackupPath,
-  ELEMENTS,
+  getTraitBorderPaths,
+  LAYOUT,
 } from './layout.js';
 
 // ── Image cache ────────────────────────────────────────────────────────────────
@@ -25,13 +26,13 @@ function loadImg(src) {
 let fontsReady = false;
 
 const FONT_DEFS = [
-  { family: 'WSCardName', file: 'agfa rotis semi serif.ttf',  weight: '400' },
-  { family: 'WSEffect',   file: 'vagabond-regular.ttf',       weight: '400' },
-  { family: 'WSEffect',   file: 'vagabond-bold.ttf',          weight: '700' },
-  { family: 'WSPower',    file: 'warnockpro-semibold.otf',    weight: '600' },
-  { family: 'WSFlavor',   file: 'souvenir lt.ttf',            weight: '400' },
-  { family: 'WSMeta',     file: 'opensans-regular.ttf',       weight: '400' },
-  { family: 'WSMeta',     file: 'opensans-bold.ttf',          weight: '700' },
+  { family: 'WSCardName', file: 'agfa rotis semi serif.ttf', weight: '400' },
+  { family: 'WSEffect',   file: 'vagabond-regular.ttf',      weight: '400' },
+  { family: 'WSEffect',   file: 'vagabond-bold.ttf',         weight: '700' },
+  { family: 'WSPower',    file: 'warnockpro-semibold.otf',   weight: '600' },
+  { family: 'WSFlavor',   file: 'souvenir lt.ttf',           weight: '400' },
+  { family: 'WSMeta',     file: 'opensans-regular.ttf',      weight: '400' },
+  { family: 'WSMeta',     file: 'opensans-bold.ttf',         weight: '700' },
 ];
 
 export async function ensureFonts() {
@@ -39,46 +40,43 @@ export async function ensureFonts() {
   await Promise.allSettled(FONT_DEFS.map(async ({ family, file, weight }) => {
     const url = `/assets/card-maker/font/${encodeURIComponent(file)}`;
     const face = new FontFace(family, `url("${url}")`, { weight });
-    const loaded = await face.load();
-    document.fonts.add(loaded);
+    document.fonts.add(await face.load());
   }));
   fontsReady = true;
 }
 
-// ── Drawing helpers ────────────────────────────────────────────────────────────
+// ── Canvas drawing primitives ──────────────────────────────────────────────────
 
 function clearShadow(ctx) {
   ctx.shadowColor = 'transparent';
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = ctx.shadowOffsetY = ctx.shadowBlur = 0;
 }
 
 function setupText(ctx, { size, family, weight = '400', color, shadow = null, shadowBlur = 0 }) {
-  const weightStr = weight === '700' ? 'bold ' : weight === '600' ? '600 ' : '';
-  ctx.font = `${weightStr}${size}px ${family}, sans-serif`;
+  ctx.font = `${weight === '700' ? 'bold ' : weight === '600' ? '600 ' : ''}${size}px ${family}, sans-serif`;
   ctx.fillStyle = color;
   if (shadow) {
     ctx.shadowColor = shadow;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
+    ctx.shadowOffsetX = ctx.shadowOffsetY = 1;
     ctx.shadowBlur = shadowBlur;
   } else {
     clearShadow(ctx);
   }
 }
 
-// Draws text centered in a box; scales horizontally if too wide
-function drawFitText(ctx, text, cx, cy, maxW, opts) {
-  if (!text) return;
+// Center text in a box; scales horizontally if too wide
+function drawFitText(ctx, text, el, opts) {
+  if (!text || !el) return;
   setupText(ctx, opts);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const cx = el.x + el.w / 2;
+  const cy = el.y + el.h / 2;
   const measured = ctx.measureText(text).width;
-  if (measured > maxW) {
+  if (measured > el.w) {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.scale(maxW / measured, 1);
+    ctx.scale(el.w / measured, 1);
     ctx.fillText(text, 0, 0);
     ctx.restore();
   } else {
@@ -87,8 +85,7 @@ function drawFitText(ctx, text, cx, cy, maxW, opts) {
   clearShadow(ctx);
 }
 
-// Wraps text into lines respecting explicit \n and maxWidth.
-// Uses character-level wrapping so CJK text (no spaces) breaks correctly.
+// Character-level word wrap (supports CJK and mixed text)
 function wrapText(ctx, text, maxWidth) {
   const lines = [];
   for (const para of text.split('\n')) {
@@ -108,38 +105,36 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-// ── Mask-based art compositing ─────────────────────────────────────────────────
+// ── Masked art compositing ─────────────────────────────────────────────────────
 
-async function drawMaskedArt(ctx, artSrc, maskSrc, transform = {}) {
-  const { scale = 1, offsetX = 0, offsetY = 0 } = transform;
-
+async function drawMaskedArt(ctx, artSrc, maskSrc, transform, W, H) {
+  const { scale = 1, offsetX = 0, offsetY = 0 } = transform ?? {};
   const [artImg, maskImg] = await Promise.all([loadImg(artSrc), loadImg(maskSrc)]);
 
   const tmp = document.createElement('canvas');
-  tmp.width = CARD_W;
-  tmp.height = CARD_H;
+  tmp.width = W; tmp.height = H;
   const tCtx = tmp.getContext('2d');
 
-  // Cover scale: fill entire card while maintaining aspect ratio
   const imgW = artImg.naturalWidth  || artImg.width;
   const imgH = artImg.naturalHeight || artImg.height;
-  const coverScale = Math.max(CARD_W / imgW, CARD_H / imgH);
+  if (!imgW || !imgH) return;
+
+  const coverScale = Math.max(W / imgW, H / imgH);
   const finalScale = coverScale * scale;
   const drawW = imgW * finalScale;
   const drawH = imgH * finalScale;
-  const drawX = (CARD_W - drawW) / 2 + offsetX;
-  const drawY = (CARD_H - drawH) / 2 + offsetY;
+  const drawX = (W - drawW) / 2 + offsetX;
+  const drawY = (H - drawH) / 2 + offsetY;
 
   tCtx.drawImage(artImg, drawX, drawY, drawW, drawH);
 
-  // Apply mask: convert mask RGB luminance → art alpha channel
-  const artData = tCtx.getImageData(0, 0, CARD_W, CARD_H);
-  const maskTmp = document.createElement('canvas');
-  maskTmp.width = CARD_W; maskTmp.height = CARD_H;
-  const mCtx = maskTmp.getContext('2d');
-  mCtx.drawImage(maskImg, 0, 0, CARD_W, CARD_H);
-  const maskData = mCtx.getImageData(0, 0, CARD_W, CARD_H);
-
+  // Apply mask: luminance → alpha
+  const artData  = tCtx.getImageData(0, 0, W, H);
+  const maskTmp  = document.createElement('canvas');
+  maskTmp.width  = W; maskTmp.height = H;
+  const mCtx    = maskTmp.getContext('2d');
+  mCtx.drawImage(maskImg, 0, 0, W, H);
+  const maskData = mCtx.getImageData(0, 0, W, H);
   const ap = artData.data;
   const mp = maskData.data;
   for (let i = 0; i < ap.length; i += 4) {
@@ -149,78 +144,74 @@ async function drawMaskedArt(ctx, artSrc, maskSrc, transform = {}) {
   ctx.drawImage(tmp, 0, 0);
 }
 
-// ── Trait borders ──────────────────────────────────────────────────────────────
+// ── Shared layer renderers ─────────────────────────────────────────────────────
 
-async function drawTraitBorders(ctx, trait1, trait2) {
-  const [onL, onM, onR, offL, offM, offR] = await Promise.all([
-    loadImg('/assets/card-maker/traits/trait_border_on_left.png'),
-    loadImg('/assets/card-maker/traits/trait_border_on_middle.png'),
-    loadImg('/assets/card-maker/traits/trait_border_on_right.png'),
-    loadImg('/assets/card-maker/traits/trait_border_off_left.png'),
-    loadImg('/assets/card-maker/traits/trait_border_off_middle.png'),
-    loadImg('/assets/card-maker/traits/trait_border_off_right.png'),
-  ]);
+// Draws level + cost + backup + trigger overlays (character & event only)
+async function drawStatIcons(ctx, data, layout) {
+  const { color, level, cost, backup, trigger } = data;
+  const hasTrigger = !!trigger && trigger !== 'none';
 
-  function drawBorder(el, hasValue) {
-    const { x, y, w, h } = el;
-    const bH = 18;
-    const bY = y + h - bH + 3;
-    const [l, m, r] = hasValue ? [onL, onM, onR] : [offL, offM, offR];
-    ctx.drawImage(l, x - 8,    bY, 8, bH);
-    ctx.drawImage(m, x,        bY, w, bH);
-    ctx.drawImage(r, x + w,    bY, 8, bH);
+  if (layout.level) {
+    const img = await loadImg(getLevelPath(color, level));
+    const el = layout.level;
+    ctx.drawImage(img, el.x, el.y, el.w, el.h);
   }
-
-  drawBorder(ELEMENTS.trait1, !!trait1);
-  drawBorder(ELEMENTS.trait2, !!trait2);
+  if (layout.cost) {
+    const img = await loadImg(getCostPath(cost));
+    const el = layout.cost;
+    ctx.drawImage(img, el.x, el.y, el.w, el.h);
+  }
+  if (layout.backup1 && backup && backup !== 'none') {
+    const img = await loadImg(getBackupPath(backup));
+    const el = layout.backup1;
+    ctx.drawImage(img, el.x, el.y, el.w, el.h);
+  }
+  if (layout.trigger && hasTrigger) {
+    const src = getTriggerPath(trigger);
+    if (src) {
+      try {
+        const img = await loadImg(src);
+        const el = layout.trigger;
+        ctx.drawImage(img, el.x, el.y, el.w, el.h);
+      } catch { /* ignore missing trigger icon */ }
+    }
+  }
 }
 
-// ── Text rendering ─────────────────────────────────────────────────────────────
-
-async function drawTextLayers(ctx, data) {
-  const { type, power, name, trait1, trait2, effect, flavor, serial, artist } = data;
-  const nameEl  = ELEMENTS.cardname[type]  ?? ELEMENTS.cardname.character;
-  const rulesEl = ELEMENTS.rulesText[type] ?? ELEMENTS.rulesText.character;
-  const flavEl  = ELEMENTS.flavorText[type]?? ELEMENTS.flavorText.character;
-
-  // Card name
-  if (name) {
-    drawFitText(ctx, name,
-      nameEl.x + nameEl.w / 2, nameEl.y + nameEl.h / 2,
-      nameEl.w,
-      { size: 16, family: 'WSCardName', weight: '400', color: 'rgb(255,255,255)', shadow: 'rgb(0,0,0)' }
-    );
-  }
-
-  // Power (character only)
-  if (type === 'character' && power != null) {
-    const pe = ELEMENTS.power;
-    drawFitText(ctx, String(power),
-      pe.x + pe.w / 2, pe.y + pe.h / 2,
-      pe.w,
-      { size: 21, family: 'WSPower', weight: '600', color: 'rgb(255,255,255)' }
-    );
-  }
-
-  // Traits (character only)
-  if (type === 'character') {
-    if (trait1) {
-      const te = ELEMENTS.trait1;
-      drawFitText(ctx, trait1,
-        te.x + te.w / 2, te.y + te.h / 2,
-        te.w,
-        { size: 9, family: 'WSEffect', weight: '700', color: 'rgb(0,0,0)' }
-      );
+// Draws climax two-trigger slots
+async function drawClimaxTriggers(ctx, data, layout) {
+  const { trigger } = data;
+  const hasTrigger = !!trigger && trigger !== 'none';
+  if (!hasTrigger) return;
+  const src = getTriggerPath(trigger);
+  if (!src) return;
+  try {
+    const img = await loadImg(src);
+    for (const slot of [layout.trigger, layout.trigger2]) {
+      if (slot) ctx.drawImage(img, slot.x, slot.y, slot.w, slot.h);
     }
-    if (trait2) {
-      const te = ELEMENTS.trait2;
-      drawFitText(ctx, trait2,
-        te.x + te.w / 2, te.y + te.h / 2,
-        te.w,
-        { size: 9, family: 'WSEffect', weight: '700', color: 'rgb(0,0,0)' }
-      );
-    }
+  } catch { /* ignore */ }
+}
+
+// Trait borders (character only)
+async function drawTraitBorders(ctx, trait1, trait2, layout) {
+  async function drawBorder(el, hasValue) {
+    const { l: lSrc, m: mSrc, r: rSrc } = getTraitBorderPaths(hasValue);
+    const [lImg, mImg, rImg] = await Promise.all([loadImg(lSrc), loadImg(mSrc), loadImg(rSrc)]);
+    const bH = 18;
+    const bY = el.y + el.h - bH + 3;
+    ctx.drawImage(lImg, el.x - 8, bY, 8, bH);
+    ctx.drawImage(mImg, el.x,     bY, el.w, bH);
+    ctx.drawImage(rImg, el.x + el.w, bY, 8, bH);
   }
+  if (layout.trait1) await drawBorder(layout.trait1, !!trait1);
+  if (layout.trait2) await drawBorder(layout.trait2, !!trait2);
+}
+
+// Effect + flavor text with white bar background
+async function drawEffectText(ctx, data, layout) {
+  const { effect = '', flavor = '', type, side } = data;
+  if (!effect && !flavor) return;
 
   const EFFECT_SIZE = 11;
   const EFFECT_LINE = 14;
@@ -228,82 +219,99 @@ async function drawTextLayers(ctx, data) {
   const FLAVOR_LINE = 13;
   const FLAVOR_GAP  = 6;
 
-  // Measure final effect lines
+  const ru = layout.rulesText;
+  const fl = layout.flavorText;
+  const wb = layout.whitebar;
+
+  // Measure effect lines
   let effectLines = [];
   if (effect) {
     setupText(ctx, { size: EFFECT_SIZE, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
-    effectLines = wrapText(ctx, effect, rulesEl.w);
+    effectLines = wrapText(ctx, effect, ru.w);
   }
 
-  // White background bar — drawn before text (z-index 13, behind text z-index 16)
-  // whitebar.png is 406×1px semi-transparent white, stretched vertically to text height
-  if (effectLines.length > 0 || flavor) {
-    try {
-      const whitebarImg = await loadImg('/assets/card-maker/bars/whitebar.png');
-      const flavorLines = flavor
-        ? (() => {
-            setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
-            return wrapText(ctx, flavor, flavEl.w);
-          })()
-        : [];
-      const effectH  = effectLines.length * EFFECT_LINE;
-      const flavorH  = flavorLines.length * FLAVOR_LINE;
-      const gapH     = (effectH > 0 && flavorH > 0) ? FLAVOR_GAP : 0;
-      const barH     = Math.max(19, effectH + flavorH + gapH + 4);
-      // x=20 (left - 6), width=406 (width + 12), anchored at bottom=543
-      ctx.drawImage(whitebarImg, 20, rulesEl.bottomY - barH, 406, barH);
-    } catch { /* skip if image unavailable */ }
-  }
+  // White background bar
+  try {
+    const whitebarImg = await loadImg('/assets/card-maker/bars/whitebar.png');
+    const flavorLineCnt = flavor
+      ? (() => {
+          setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
+          return wrapText(ctx, flavor, fl.w).length;
+        })()
+      : 0;
+    const effectH = effectLines.length * EFFECT_LINE;
+    const flavorH = flavorLineCnt * FLAVOR_LINE;
+    const gapH    = (effectH > 0 && flavorH > 0) ? FLAVOR_GAP : 0;
+    const barH    = Math.max(19, effectH + flavorH + gapH + 4);
+    ctx.drawImage(whitebarImg, wb.x, ru.bottomY - barH, wb.w, barH);
+  } catch { /* skip if missing */ }
 
-  // Effect text — bottom-anchored, grows upward
+  // Draw effect text
   if (effectLines.length > 0) {
     setupText(ctx, { size: EFFECT_SIZE, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    const totalH = effectLines.length * EFFECT_LINE;
-    let y = rulesEl.bottomY - totalH;
+    let y = ru.bottomY - effectLines.length * EFFECT_LINE;
     for (const line of effectLines) {
-      if (line) ctx.fillText(line, rulesEl.x, y);
+      if (line) ctx.fillText(line, ru.x, y);
       y += EFFECT_LINE;
     }
     clearShadow(ctx);
   }
 
-  // Flavor text — above effect text
+  // Draw flavor text
   if (flavor) {
     const effectH = effectLines.length * EFFECT_LINE;
-    const flavorBottom = rulesEl.bottomY - effectH - (effectLines.length > 0 ? FLAVOR_GAP : 0);
-
+    const flavorBottom = ru.bottomY - effectH - (effectLines.length > 0 ? FLAVOR_GAP : 0);
     setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)', shadow: 'rgba(255,255,255,0.5)', shadowBlur: 4 });
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const lines = wrapText(ctx, flavor, flavEl.w);
-    const totalH = lines.length * FLAVOR_LINE;
-    let y = flavorBottom - totalH;
+    const lines = wrapText(ctx, flavor, fl.w);
+    let y = flavorBottom - lines.length * FLAVOR_LINE;
     for (const line of lines) {
-      if (line) ctx.fillText(line, flavEl.x + flavEl.w / 2, y);
+      if (line) ctx.fillText(line, fl.x + fl.w / 2, y);
       y += FLAVOR_LINE;
     }
     clearShadow(ctx);
   }
+}
 
-  // Serial number
-  if (serial) {
-    const se = ELEMENTS.serial[type] ?? ELEMENTS.serial.character;
+// All text labels (name, power, traits, serial, artist)
+function drawLabels(ctx, data, layout) {
+  const { name, power, trait1, trait2, serial, artist, type, side } = data;
+
+  if (name && layout.cardname) {
+    drawFitText(ctx, name, layout.cardname,
+      { size: 16, family: 'WSCardName', weight: '400', color: 'rgb(255,255,255)', shadow: 'rgb(0,0,0)' }
+    );
+  }
+  if (power != null && layout.power) {
+    drawFitText(ctx, String(power), layout.power,
+      { size: 21, family: 'WSPower', weight: '600', color: 'rgb(255,255,255)' }
+    );
+  }
+  if (trait1 && layout.trait1) {
+    drawFitText(ctx, trait1, layout.trait1,
+      { size: 9, family: 'WSEffect', weight: '700', color: 'rgb(0,0,0)' }
+    );
+  }
+  if (trait2 && layout.trait2) {
+    drawFitText(ctx, trait2, layout.trait2,
+      { size: 9, family: 'WSEffect', weight: '700', color: 'rgb(0,0,0)' }
+    );
+  }
+  if (serial && layout.serial) {
     setupText(ctx, { size: 6.1, family: 'WSMeta', weight: '400', color: 'rgb(0,0,0)' });
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const se = layout.serial;
     ctx.fillText(serial, se.x + se.w / 2, se.y + se.h / 2);
     clearShadow(ctx);
   }
-
-  // Artist name
-  if (artist) {
-    const ae = ELEMENTS.artist[type] ?? ELEMENTS.artist.character;
-    const sideColor = data.side === 'weiss' ? 'rgb(122,122,39)' : 'rgb(244,244,0)';
+  if (artist && layout.artist) {
+    const sideColor = side === 'weiss' ? 'rgb(122,122,39)' : 'rgb(244,244,0)';
     setupText(ctx, { size: 6, family: 'WSMeta', weight: '700', color: sideColor });
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const ae = layout.artist;
     ctx.fillText(artist, ae.x + ae.w / 2, ae.y + ae.h / 2);
     clearShadow(ctx);
   }
@@ -324,72 +332,54 @@ export async function renderCard(canvas, data) {
     trigger = 'none',
     backup  = 'none',
     art     = null,
+    artTransform,
   } = data;
 
-  const ctx = canvas.getContext('2d');
-  canvas.width  = CARD_W;
-  canvas.height = CARD_H;
-
-  // White base — fills transparent corners left by the frame's rounded edge design
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, CARD_W, CARD_H);
-
+  const { w: W, h: H } = getCanvasSize(type);
+  const layout = LAYOUT[type] ?? LAYOUT.character;
   const hasTrigger = !!trigger && trigger !== 'none';
 
-  // ① Masked art
+  const ctx = canvas.getContext('2d');
+  canvas.width  = W;
+  canvas.height = H;
+
+  // ① White base
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  // ② Masked art
   if (art) {
     try {
-      await drawMaskedArt(ctx, art, getMaskPath(type), data.artTransform);
-    } catch {
-      // Art load failed — continue without art
-    }
+      await drawMaskedArt(ctx, art, getMaskPath(type), artTransform, W, H);
+    } catch { /* continue without art */ }
   }
 
-  // ② Frame
+  // ③ Frame
   const frameImg = await loadImg(getFramePath(type, side, color, souls, hasTrigger));
-  ctx.drawImage(frameImg, 0, 0, CARD_W, CARD_H);
+  ctx.drawImage(frameImg, 0, 0, W, H);
 
-  // ③ Level + Cost (not on climax)
+  // ④ Stat icons (character & event)
   if (type !== 'climax') {
-    const levelImg = await loadImg(getLevelPath(color, level));
-    const el = ELEMENTS.level;
-    ctx.drawImage(levelImg, el.x, el.y, el.w, el.h);
-
-    const costImg = await loadImg(getCostPath(cost));
-    const ec = ELEMENTS.cost;
-    ctx.drawImage(costImg, ec.x, ec.y, ec.w, ec.h);
+    await drawStatIcons(ctx, data, layout);
+  } else {
+    // ④b Climax two triggers
+    await drawClimaxTriggers(ctx, data, layout);
   }
 
-  // ④ Backup badge (character/event only)
-  if (type !== 'climax' && backup && backup !== 'none') {
-    const b1Img = await loadImg(getBackupPath(backup));
-    const eb = ELEMENTS.backup1;
-    ctx.drawImage(b1Img, eb.x, eb.y, eb.w, eb.h);
-  }
-
-  // ⑤ Trigger icon
-  if (hasTrigger) {
-    const triggerSrc = getTriggerPath(trigger);
-    if (triggerSrc) {
-      try {
-        const tImg = await loadImg(triggerSrc);
-        const et = type === 'climax' ? ELEMENTS.trigger2 : ELEMENTS.trigger;
-        ctx.drawImage(tImg, et.x, et.y, et.w, et.h);
-      } catch { /* trigger image missing, skip */ }
-    }
-  }
-
-  // ⑥ Trait borders (character only)
+  // ⑤ Trait borders (character only)
   if (type === 'character') {
-    await drawTraitBorders(ctx, data.trait1, data.trait2);
+    await drawTraitBorders(ctx, data.trait1, data.trait2, layout);
   }
 
-  // ⑦ Text layers
-  await drawTextLayers(ctx, { ...data, type, side });
+  // ⑥ Effect + flavor text with white bar background
+  await drawEffectText(ctx, data, layout);
+
+  // ⑦ Other text labels
+  drawLabels(ctx, data, layout);
 
   // ⑧ Clear overlay
   try {
     const clearImg = await loadImg('/assets/card-maker/clear/clear.png');
-    ctx.drawImage(clearImg, 0, 0, CARD_W, CARD_H);
-  } catch { /* optional overlay */ }
+    ctx.drawImage(clearImg, 0, 0, W, H);
+  } catch { /* optional */ }
 }

@@ -1,13 +1,23 @@
 // WS Card Maker — Layout constants and asset path helpers
-// Canvas size: 448×626 (character/event), 626×448 (climax, rotated 270°)
-// All coordinates extracted from public/assets/card-maker/style (MSE plugin layout file)
+// Coordinates extracted from public/assets/card-maker/style (MSE plugin)
+// Climax coordinates derived via 90° CW rotation: (x_p, y_p) → (625-y_p, x_p)
 
-export const CARD_W = 448;
-export const CARD_H = 626;
+// ── Canvas dimensions ──────────────────────────────────────────────────────────
+
+export const DIMS = {
+  character: { w: 448, h: 626 },
+  event:     { w: 448, h: 626 },
+  climax:    { w: 626, h: 448 },
+};
+
+export function getCanvasSize(type) {
+  return DIMS[type] ?? DIMS.character;
+}
+
+// ── Asset path builders ────────────────────────────────────────────────────────
 
 const COLOR_CODE = { yellow: 'y', green: 'g', red: 'r', blue: 'b', purple: 'p' };
 
-// Maps DB trigger names → trigger PNG filenames
 const TRIGGER_FILE = {
   'soul+1':    'soul',
   'soul+2':    'goldbar',
@@ -25,16 +35,12 @@ const TRIGGER_FILE = {
   'focus':     'focus',
 };
 
-// ── Path builders ──────────────────────────────────────────────────────────────
-
 export function getFramePath(type, side, color, souls, hasTrigger) {
   const c = COLOR_CODE[color] ?? 'y';
   const s = ['weiss', 'schwarz', 'both'].includes(side) ? side : 'both';
-
   if (type === 'character') {
     if (souls === 0) return `/assets/card-maker/character/${s}/${c}0s.png`;
-    const t = hasTrigger ? 1 : 0;
-    return `/assets/card-maker/character/${s}/${c}${souls}s${t}t.png`;
+    return `/assets/card-maker/character/${s}/${c}${souls}s${hasTrigger ? 1 : 0}t.png`;
   }
   if (type === 'event')  return `/assets/card-maker/event/${s}/${color}.png`;
   if (type === 'climax') return `/assets/card-maker/climax/${s}/${color}.png`;
@@ -51,8 +57,7 @@ export function getLevelPath(color, level) {
 }
 
 export function getCostPath(cost) {
-  const safe = Math.max(0, Math.min(cost, 15));
-  return `/assets/card-maker/cost/c${safe}.png`;
+  return `/assets/card-maker/cost/c${Math.max(0, Math.min(cost, 15))}.png`;
 }
 
 export function getTriggerPath(trigger) {
@@ -66,51 +71,81 @@ export function getBackupPath(type) {
   return '/assets/card-maker/backup/nobackup.png';
 }
 
-// ── Element coordinates (all in 448×626 canvas) ────────────────────────────────
+// ── Layout configs per card type ───────────────────────────────────────────────
+// All coordinates are in the card's OWN canvas space.
+// Character/Event use 448×626 (portrait).
+// Climax uses 626×448 (landscape), derived via 90° CW from portrait values.
+//
+// Shared helpers for text rendering:
+//   rulesText:  { x, bottomY, w }   — text grows UPWARD from bottomY
+//   flavorText: { x, w }            — positioned above rulesText, same direction
+//   whitebar:   { x, w }            — semi-transparent bg behind effect+flavor text
 
-export const ELEMENTS = {
-  // Image overlays
-  level:    { x: 16,  y: 13,  w: 50, h: 60 },
-  cost:     { x: 16,  y: 73,  w: 50, h: 42 },
-  backup1:  { x: 23,  y: 118, w: 38, h: 38 },
-  backup2:  { x: 23,  y: 156, w: 38, h: 38 },
-  trigger:  { x: 385, y: 14,  w: 51, h: 58 },  // character / event
-  trigger2: { x: 333, y: 14,  w: 51, h: 58 },  // climax second trigger slot
-
-  // Text fields — cardname.top is Y of top edge; centered within the box
-  cardname: {
-    character: { x: 152, y: 557, w: 204, h: 24 },
-    event:     { x: 152, y: 573, w: 204, h: 24 },
-    climax:    { x: 54,  y: 377, w: 204, h: 24 },
+export const LAYOUT = {
+  character: {
+    // Image overlays
+    level:    { x: 16,  y: 13,  w: 50, h: 60 },
+    cost:     { x: 16,  y: 73,  w: 50, h: 42 },
+    backup1:  { x: 23,  y: 118, w: 38, h: 38 },
+    trigger:  { x: 385, y: 14,  w: 51, h: 58 },
+    // Text fields
+    cardname: { x: 152, y: 557, w: 204, h: 24, angle: 0 },
+    power:    { x: 32,  y: 574, w: 90,  h: 25 },
+    trait1:   { x: 212, y: 587, w: 90,  h: 14 },
+    trait2:   { x: 314, y: 587, w: 90,  h: 14 },
+    serial:   { x: 44,  y: 553, w: 77,  h: 10 },
+    artist:   { x: 61,  y: 608, w: 323, h: 18 },
+    rulesText:  { x: 26, bottomY: 543, w: 394 },
+    flavorText: { x: 20, w: 406 },
+    whitebar:   { x: 20, w: 406 },
   },
 
-  power:  { x: 32,  y: 574, w: 90, h: 25 },
-
-  // Traits — regular style (2 traits)
-  trait1: { x: 212, y: 587, w: 90, h: 14 },
-  trait2: { x: 314, y: 587, w: 90, h: 14 },
-
-  // Small text
-  serial: {
-    character: { x: 44, y: 553, w: 77, h: 10 },
-    event:     { x: 42, y: 578, w: 77, h: 10 },
-    climax:    { x: 48, y: 268, w: 77, h: 10 },
-  },
-  artist: {
-    character: { x: 61, y: 608, w: 323, h: 18 },
-    event:     { x: 61, y: 608, w: 323, h: 18 },
-    climax:    { x: 19, y: 260, w: 323, h: 18 },
+  event: {
+    // Image overlays (same x/y as character)
+    level:    { x: 16,  y: 13,  w: 50, h: 60 },
+    cost:     { x: 16,  y: 73,  w: 50, h: 42 },
+    backup1:  { x: 23,  y: 118, w: 38, h: 38 },
+    trigger:  { x: 385, y: 14,  w: 51, h: 58 },
+    // Text fields — event has no power/traits, name and text positions differ
+    cardname: { x: 152, y: 573, w: 204, h: 24, angle: 0 },
+    serial:   { x: 42,  y: 578, w: 77,  h: 10 },
+    artist:   { x: 61,  y: 608, w: 323, h: 18 },
+    rulesText:  { x: 26, bottomY: 557, w: 394 },
+    flavorText: { x: 20, w: 406 },
+    whitebar:   { x: 20, w: 406 },
   },
 
-  // Dynamic text areas (bottomY = Y coordinate of bottom edge, text grows upward)
-  rulesText: {
-    character: { x: 26, bottomY: 543, w: 394 },
-    event:     { x: 26, bottomY: 557, w: 394 },
-    climax:    { x: 17, bottomY: 208, w: 204 },
-  },
-  flavorText: {
-    character: { x: 20, w: 406 },
-    event:     { x: 20, w: 406 },
-    climax:    { x: 65, w: 398 },
+  // Climax canvas: 626×448.
+  // All positions derived from portrait (448×626) via 90° CW: (x_p,y_p) → (625-y_p, x_p)
+  // Elements with portrait angle:270 appear upright in landscape (rotation cancels out).
+  climax: {
+    // Two trigger icons stacked vertically on right side
+    // portrait trigger  (left=385,top=14,w=51,h=58) → landscape (553,385,58,51)
+    // portrait trigger2 (left=333,top=14,w=51,h=58) → landscape (553,333,58,51)
+    trigger:  { x: 553, y: 383, w: 58, h: 51 },
+    trigger2: { x: 553, y: 332, w: 58, h: 51 },
+    // Card name — portrait (left=54,top=377,w=204,h=24) → landscape center (236,156), w=204, h=24
+    cardname: { x: 134, y: 144, w: 204, h: 24, angle: 0 },
+    // Serial — portrait (left=48,top=268,w=77,h=10) → landscape (347,48,10,77)
+    // Drawn as horizontal text at the top area
+    serial:   { x: 48,  y: 258, w: 77,  h: 10 },
+    // Artist — small text, positioned near serial in landscape
+    artist:   { x: 19,  y: 260, w: 323, h: 18 },
+    // Effect text fills the art area horizontally in landscape
+    // Art area: x=0-625, y=0-390; leave margin
+    rulesText:  { x: 20, bottomY: 375, w: 520 },
+    flavorText: { x: 20, w: 520 },
+    whitebar:   { x: 18, w: 524 },
   },
 };
+
+// ── Trait border helpers ───────────────────────────────────────────────────────
+// Returns the three border image paths (left, middle, right) for a trait box
+export function getTraitBorderPaths(hasValue) {
+  const state = hasValue ? 'on' : 'off';
+  return {
+    l: `/assets/card-maker/traits/trait_border_${state}_left.png`,
+    m: `/assets/card-maker/traits/trait_border_${state}_middle.png`,
+    r: `/assets/card-maker/traits/trait_border_${state}_right.png`,
+  };
+}

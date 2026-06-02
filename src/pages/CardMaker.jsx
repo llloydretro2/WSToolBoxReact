@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { useLocale } from "../contexts/LocaleContext.jsx";
 import { Upload, Download, RefreshCw, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { renderCard, ensureFonts } from "../utils/wsCardMaker/renderer.js";
-import { CARD_W, CARD_H } from "../utils/wsCardMaker/layout.js";
+import { getCanvasSize } from "../utils/wsCardMaker/layout.js";
 
 // ── Default card data ──────────────────────────────────────────────────────────
 
@@ -144,6 +144,12 @@ export default function CardMaker() {
 
   const isCharacter = card.type === "character";
   const isClimax    = card.type === "climax";
+  const isEvent     = card.type === "event";
+  const { w: cardW, h: cardH } = getCanvasSize(card.type);
+  const hasStats    = isCharacter || isEvent;  // level / cost
+  const hasTraits   = isCharacter;
+  const hasSouls    = isCharacter;
+  const hasTrigger  = !isClimax || true;       // all types can have triggers
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:py-10">
@@ -232,11 +238,11 @@ export default function CardMaker() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-              {!isClimax && (
+              {hasStats && (
                 <NumberField label="等级" value={card.level} min={0} max={3}
                   onChange={v => update("level", v)} />
               )}
-              {!isClimax && (
+              {hasStats && (
                 <NumberField label="费用" value={card.cost} min={0} max={9}
                   onChange={v => update("cost", v)} />
               )}
@@ -244,7 +250,7 @@ export default function CardMaker() {
                 <NumberField label="攻击力" value={card.power} min={0} max={99999} step={500}
                   onChange={v => update("power", v)} wide />
               )}
-              {isCharacter && (
+              {hasSouls && (
                 <div>
                   <label className="text-[11px] font-bold text-[var(--text-secondary)] mb-1 block">魂数</label>
                   <div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
@@ -307,7 +313,7 @@ export default function CardMaker() {
               <TextField label="卡名" value={card.name}
                 onChange={v => update("name", v)} placeholder="例：輝く笑顔 春日野穹" />
 
-              {isCharacter && (
+              {hasTraits && (
                 <div className="grid grid-cols-2 gap-3">
                   <TextField label="特征1" value={card.trait1}
                     onChange={v => update("trait1", v)} placeholder="例：魔法" />
@@ -368,6 +374,8 @@ export default function CardMaker() {
                 onTransformChange={setArtTransform}
                 onClear={clearArt}
                 onReplace={() => fileRef.current.click()}
+                cardW={cardW}
+                cardH={cardH}
               />
             ) : (
               <div
@@ -391,11 +399,11 @@ export default function CardMaker() {
 
           {/* Canvas preview */}
           <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-white/70 backdrop-blur-md p-3">
-            <div className="relative" style={{ width: 224, height: Math.round(224 * CARD_H / CARD_W) }}>
+            <div className="relative" style={{ width: 224, height: Math.round(224 * cardH / cardW) }}>
               <canvas
                 ref={canvasRef}
-                width={CARD_W}
-                height={CARD_H}
+                width={cardW}
+                height={cardH}
                 className="w-full h-full rounded-xl"
               />
               {rendering && (
@@ -417,7 +425,7 @@ export default function CardMaker() {
           </button>
 
           <p className="text-[10px] text-[var(--text-muted)] text-center">
-            导出分辨率：{CARD_W}×{CARD_H}px
+            导出分辨率：{cardW}×{cardH}px
           </p>
         </div>
       </div>
@@ -433,10 +441,14 @@ ArtEditor.propTypes   = { artURL: PropTypes.string, transform: PropTypes.object,
 
 // ── Art Editor (drag to pan, scroll/buttons to zoom) ──────────────────────────
 
-const PREVIEW_W = 200;
-const PREVIEW_H = Math.round(PREVIEW_W * CARD_H / CARD_W); // 280px
+const PREVIEW_MAX = 200;
 
-function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace }) {
+function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace, cardW = 448, cardH = 626 }) {
+  // Scale preview to fit in PREVIEW_MAX on the longer side
+  const ratio   = cardW / cardH;
+  const PREVIEW_W = ratio >= 1 ? PREVIEW_MAX : Math.round(PREVIEW_MAX * ratio);
+  const PREVIEW_H = ratio >= 1 ? Math.round(PREVIEW_MAX / ratio) : PREVIEW_MAX;
+
   const { scale, offsetX, offsetY } = transform;
   const [imgSize, setImgSize] = useState({ w: 1, h: 1 });
   const dragRef = useRef(null);
@@ -446,8 +458,7 @@ function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace })
   const dispScale  = coverScale * scale;
   const dispW = imgSize.w * dispScale;
   const dispH = imgSize.h * dispScale;
-  // offset is stored in canvas-space (448×626); convert to preview-space
-  const previewRatio = PREVIEW_W / CARD_W;
+  const previewRatio = PREVIEW_W / cardW;
   const dispX = (PREVIEW_W - dispW) / 2 + offsetX * previewRatio;
   const dispY = (PREVIEW_H - dispH) / 2 + offsetY * previewRatio;
 
