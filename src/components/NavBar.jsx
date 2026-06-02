@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocale } from "../contexts/LocaleContext";
@@ -6,7 +6,7 @@ import Avatar from "@mui/material/Avatar";
 import { Snackbar, Badge, Tooltip } from "@mui/material";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
-import { ChevronLeft, ChevronDown, Menu as MenuIcon, X as CloseIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Menu as MenuIcon, X as CloseIcon } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { getSectionByPath, getSectionToolItems } from "../config/siteStructure";
@@ -31,6 +31,7 @@ function NavBtn({ label, isActive, onClick }) {
 	return (
 		<button
 			onClick={onClick}
+			data-active={isActive ? "true" : undefined}
 			className={[
 				"px-3.5 py-1.5 rounded-full text-[13px] border-0 cursor-pointer select-none",
 				"transition-all duration-150 whitespace-nowrap",
@@ -159,6 +160,51 @@ export default function NavBar() {
 			window.history.replaceState({}, document.title);
 		}
 	}, [location]);
+
+	// ── Desktop nav scroll (horizontal overflow with fade + arrows) ─────────────
+
+	const navScrollRef = useRef(null);
+	const [navScroll, setNavScroll] = useState({ canLeft: false, canRight: false });
+
+	const updateNavScroll = useCallback(() => {
+		const el = navScrollRef.current;
+		if (!el) return;
+		setNavScroll({
+			canLeft:  el.scrollLeft > 2,
+			canRight: el.scrollLeft < el.scrollWidth - el.clientWidth - 2,
+		});
+	}, []);
+
+	useEffect(() => {
+		const el = navScrollRef.current;
+		if (!el) return;
+		updateNavScroll();
+		el.addEventListener('scroll', updateNavScroll, { passive: true });
+		const ro = new ResizeObserver(updateNavScroll);
+		ro.observe(el);
+		return () => { el.removeEventListener('scroll', updateNavScroll); ro.disconnect(); };
+	}, [updateNavScroll, sectionNav]);
+
+	// Scroll active item into view on route change
+	useEffect(() => {
+		const el = navScrollRef.current;
+		if (!el) return;
+		const active = el.querySelector('[data-active="true"]');
+		if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+	}, [location.pathname]);
+
+	const scrollNav = (dir) => {
+		navScrollRef.current?.scrollBy({ left: dir * 160, behavior: 'smooth' });
+	};
+
+	const navMaskStyle = () => {
+		const { canLeft, canRight } = navScroll;
+		if (!canLeft && !canRight) return undefined;
+		if (canLeft && canRight)
+			return 'linear-gradient(to right, transparent, white 22px, white calc(100% - 22px), transparent)';
+		if (canLeft)  return 'linear-gradient(to right, transparent, white 22px)';
+		if (canRight) return 'linear-gradient(to right, white calc(100% - 22px), transparent)';
+	};
 
 	// ── Mobile nav items (flat) ──────────────────────────────────────────────────
 
@@ -307,10 +353,42 @@ export default function NavBar() {
 								)}
 							</div>
 
-							{/* CENTER: desktop nav */}
-							<nav className="hidden md:flex items-center justify-center gap-0.5">
-								{renderDesktopNav()}
-							</nav>
+							{/* CENTER: desktop nav — horizontal scroll with fade + arrows */}
+							<div className="hidden md:flex items-center relative min-w-0">
+								{/* Left scroll arrow */}
+								<button
+									type="button"
+									onClick={() => scrollNav(-1)}
+									className={`absolute left-0 z-10 h-full w-5 flex items-center justify-center
+									            transition-opacity duration-150 shrink-0
+									            ${navScroll.canLeft ? 'opacity-50 hover:opacity-90' : 'opacity-0 pointer-events-none'}`}
+									style={{ color: 'var(--text)' }}>
+									<ChevronLeft size={13} />
+								</button>
+
+								{/* Scrollable nav */}
+								<nav
+									ref={navScrollRef}
+									style={{
+										WebkitMaskImage: navMaskStyle(),
+										maskImage: navMaskStyle(),
+									}}
+									className="flex items-center gap-0.5 overflow-x-auto scroll-smooth
+									           [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-5">
+									{renderDesktopNav()}
+								</nav>
+
+								{/* Right scroll arrow */}
+								<button
+									type="button"
+									onClick={() => scrollNav(1)}
+									className={`absolute right-0 z-10 h-full w-5 flex items-center justify-center
+									            transition-opacity duration-150 shrink-0
+									            ${navScroll.canRight ? 'opacity-50 hover:opacity-90' : 'opacity-0 pointer-events-none'}`}
+									style={{ color: 'var(--text)' }}>
+									<ChevronRight size={13} />
+								</button>
+							</div>
 
 							{/* RIGHT: language + mobile menu toggle + auth */}
 							<div className="flex items-center justify-end gap-1.5 md:gap-2">
