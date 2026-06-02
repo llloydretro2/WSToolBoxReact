@@ -470,6 +470,15 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### NavBar 横向滚动升级 & 杂项 (2026-06-02 session 40)
+
+- **桌面端导航横向滚动**：`NavBar.jsx` 中央 nav 区域改为 `overflow-x:auto`，CSS `mask-image` 渐变淡出边缘，`‹`/`›` 箭头仅在有溢出时出现，路由切换时激活项自动 `scrollIntoView`。对所有分区生效，溢出才激活，Mahjong/Tools 无感知。
+- **语言切换按钮改为 B 方案**：显示目标语言（中文界面显示 English，英文界面显示 中文），更直觉。
+- **全站 lint 清零**：94 errors / 8 warnings → 0，涉及 PropTypes 补全、unused import/vars、eslint-disable 修正、测试文件 node globals。
+- **已记录待处理问题**：桌面端 NavBar WS 分区工具过多（现横向滚动已解决）、高潮卡文字 Y 坐标偏差（已记录待校正）。
+
+---
+
 ### 伤害计算器 UI 完善 & 首页组件拆分 (2026-06-01 session 39)
 
 #### 伤害计算器
@@ -1548,10 +1557,7 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
 - **移动端 NavBar 实机校验**：代码层面无明显 bug。唯一风险是极小屏下 "Weiss Schwarz" 副标题可能截断（`max-w-[9rem]`）。按需处理，发现真机问题再修。
 
-- **桌面端 NavBar WS 分区项目过多**：WS 分区目前有 8 个 nav 项（查卡/EN查卡/选包/模拟开包/随机洗牌/伤害计算/卡片制作/对战记录），全部平铺在桌面版 pill 导航中，导致布局溢出或过度拥挤。移动端折叠菜单无问题（垂直列表可容纳多条目）。
-  - **根本原因**：桌面端 `renderDesktopNav()` 对每个 `type: "link"` 项都渲染为 `NavBtn`，没有分组或折叠机制
-  - **候选方案**：① 将 WS 工具拆成子 group（如「查卡」「工具」各一个 dropdown）；② 超出宽度时自动 overflow 隐藏 + 「更多」按钮；③ 精简 WS pill 只显示最常用 3-4 项，其余移入 dropdown
-  - **触发条件**：下次调整 NavBar 时一并处理，不单独为此开 session
+- ~~**桌面端 NavBar WS 分区项目过多**~~：✅ 已解决（2026-06-02）。采用横向滚动 + CSS 渐变淡出 + 箭头指示方案，对所有分区自动生效，溢出时才激活。
 
 - **JPCardList / ENCardList 共享组件抽取**（触发条件：新增第三个卡牌列表页面时再做）：
 
