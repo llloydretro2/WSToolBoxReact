@@ -119,21 +119,21 @@ export const LAYOUT = {
   // Frame analysis: art area y=0-390, mechanics bar y=392-447.
   // Bar contains: CX label (left), name strip (x=240-355), two asterisk trigger slots (x≈355 and x≈580).
   climax: {
-    // Two trigger icons at upper-right, side by side (mirrors character card convention)
-    // Main trigger at right edge, extra trigger 52px to its left
-    trigger:  { x: 563, y: 11, w: 51, h: 58 },    // rightmost trigger
-    trigger2: { x: 503, y: 11, w: 51, h: 58 },    // second trigger, 60px left of main
-    // Card name in the name strip of the bar (lighter green area x=240-355)
-    cardname: { x: 240, y: 396, w: 112, h: 22, angle: 0 },
-    // Serial: small text bottom-left of bar
-    serial:   { x: 20,  y: 430, w: 90,  h: 10 },
-    // Artist: just above serial
-    artist:   { x: 20,  y: 417, w: 180, h: 12 },
-    // Effect text: lower-left only, matching style file (width=204, left=17)
-    // topY caps the upward growth of the text box
-    rulesText:  { x: 17, bottomY: 380, w: 204, topY: 230 },
-    flavorText: { x: 17, w: 204 },
-    whitebar:   { x: 11, w: 216 },
+    // Trigger icons at upper-LEFT corner (measured from real card 5HY/W101-021)
+    // trigger2 placed to the right of trigger1 when used
+    trigger:  { x: 9,  y: 9, w: 56, h: 56 },
+    trigger2: { x: 70, y: 9, w: 56, h: 56 },
+    // Card name: right portion of bar (measured: x≈375-611, y≈392-417)
+    cardname: { x: 375, y: 394, w: 236, h: 25, angle: 0 },
+    // Serial/card number: center of bar (measured: x≈196, y≈392-413)
+    serial:   { x: 196, y: 398, w: 173, h: 18 },
+    // Artist: small, near serial
+    artist:   { x: 196, y: 420, w: 173, h: 14 },
+    // Effect text: lower-left white box (measured: x=22, w≈203, y=343-379)
+    // w=204 confirmed by style file; topY=343 is the measured upper boundary
+    rulesText:  { x: 22, bottomY: 381, w: 204, topY: 343 },
+    flavorText: { x: 22, w: 204 },
+    whitebar:   { x: 16, w: 216 },
   },
 };
 
