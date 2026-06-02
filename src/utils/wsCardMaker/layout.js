@@ -119,23 +119,27 @@ export const LAYOUT = {
   // Frame analysis: art area y=0-390, mechanics bar y=392-447.
   // Bar contains: CX label (left), name strip (x=240-355), two asterisk trigger slots (x≈355 and x≈580).
   climax: {
-    // Trigger icons at upper-LEFT corner (measured from 50-card scan)
-    // trigger2 stacked BELOW trigger1 vertically (confirmed on multi-trigger cards)
-    trigger:  { x: 9, y:  9, w: 56, h: 56 },
-    trigger2: { x: 9, y: 70, w: 56, h: 56 },
-    // Card name: right portion of bar (canvas x≈415-610, y≈394-419)
-    cardname: { x: 415, y: 394, w: 195, h: 25, angle: 0 },
-    // Serial: center of bar
-    serial:   { x: 196, y: 398, w: 173, h: 18 },
-    // Artist
-    artist:   { x: 196, y: 420, w: 173, h: 14 },
-    // Effect text: lower-left white box
-    // measured: x=8-207, y=286-386 canvas → topY=310 as upper cap
-    rulesText:  { x: 22, bottomY: 381, w: 204, topY: 310 },
-    whitebar:   { x: 16, w: 216 },
-    // Flavor text: large standalone, right area, BOTTOM-ANCHORED at y≈320
-    // x=200-575, measured bottom at canvas y≈310-325 across 25 cards
-    flavorText: { x: 200, w: 375, bottomY: 320, fontSize: 22, standalone: true },
+    // ── Derived from style file via 90°CCW formula: ──────────────────────────
+    // landscape_x = top, landscape_y_bot = 447 - left, landscape_y_top = 447 - (left+h)
+    //
+    // Trigger icons: top=14, left=385, w=51, h=58
+    trigger:  { x: 14, y:  4, w: 51, h: 58 },
+    // Extra trigger: top=14, left=333, w=51, h=58 (stacked below trigger1)
+    trigger2: { x: 14, y: 56, w: 51, h: 58 },
+    // Card name: top=377, left=54, w=204, h=24  → landscape(377, 369, 204, 24)
+    cardname: { x: 377, y: 369, w: 204, h: 24, angle: 0 },
+    // Serial: top=268, left=48, w=77, h=10  → landscape(268, 389, 77, 10)
+    serial:   { x: 268, y: 389, w: 77,  h: 10 },
+    // Artist: top=260, left=19, w=323, h=18  → landscape(260, 410, 323, 18)
+    artist:   { x: 260, y: 410, w: 323, h: 18 },
+    // ── Text areas (empirical bottomY, x from style bottom= value) ───────────
+    // Effect text: style bottom=19, left=17, width=204  → x=19, w=204
+    // topY empirically capped at y=310 (matches card images)
+    rulesText:  { x: 19, bottomY: 381, w: 204, topY: 310 },
+    whitebar:   { x: 13, w: 216 },
+    // Flavor text: style bottom=227, left=65, width=398  → x=227, w=398
+    // bottomY empirically ~320 (above effect text, style_left=65 hints bar-relative)
+    flavorText: { x: 227, w: 398, bottomY: 320, fontSize: 22, standalone: true },
   },
 };
 
