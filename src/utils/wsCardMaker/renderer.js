@@ -87,18 +87,18 @@ function drawFitText(ctx, text, cx, cy, maxW, opts) {
   clearShadow(ctx);
 }
 
-// Wraps text into lines respecting explicit \n and maxWidth
+// Wraps text into lines respecting explicit \n and maxWidth.
+// Uses character-level wrapping so CJK text (no spaces) breaks correctly.
 function wrapText(ctx, text, maxWidth) {
   const lines = [];
   for (const para of text.split('\n')) {
     if (!para.trim()) { lines.push(''); continue; }
-    const words = para.split(' ');
     let cur = '';
-    for (const word of words) {
-      const test = cur ? cur + ' ' + word : word;
+    for (const char of para) {
+      const test = cur + char;
       if (ctx.measureText(test).width > maxWidth && cur) {
         lines.push(cur);
-        cur = word;
+        cur = char;
       } else {
         cur = test;
       }
@@ -110,7 +110,9 @@ function wrapText(ctx, text, maxWidth) {
 
 // ── Mask-based art compositing ─────────────────────────────────────────────────
 
-async function drawMaskedArt(ctx, artSrc, maskSrc) {
+async function drawMaskedArt(ctx, artSrc, maskSrc, transform = {}) {
+  const { scale = 1, offsetX = 0, offsetY = 0 } = transform;
+
   const [artImg, maskImg] = await Promise.all([loadImg(artSrc), loadImg(maskSrc)]);
 
   const tmp = document.createElement('canvas');
@@ -118,14 +120,22 @@ async function drawMaskedArt(ctx, artSrc, maskSrc) {
   tmp.height = CARD_H;
   const tCtx = tmp.getContext('2d');
 
-  // Draw scaled art
-  tCtx.drawImage(artImg, 0, 0, CARD_W, CARD_H);
+  // Cover scale: fill entire card while maintaining aspect ratio
+  const imgW = artImg.naturalWidth  || artImg.width;
+  const imgH = artImg.naturalHeight || artImg.height;
+  const coverScale = Math.max(CARD_W / imgW, CARD_H / imgH);
+  const finalScale = coverScale * scale;
+  const drawW = imgW * finalScale;
+  const drawH = imgH * finalScale;
+  const drawX = (CARD_W - drawW) / 2 + offsetX;
+  const drawY = (CARD_H - drawH) / 2 + offsetY;
+
+  tCtx.drawImage(artImg, drawX, drawY, drawW, drawH);
 
   // Apply mask: convert mask RGB luminance → art alpha channel
-  const artData  = tCtx.getImageData(0, 0, CARD_W, CARD_H);
-  const maskTmp  = document.createElement('canvas');
-  maskTmp.width  = CARD_W;
-  maskTmp.height = CARD_H;
+  const artData = tCtx.getImageData(0, 0, CARD_W, CARD_H);
+  const maskTmp = document.createElement('canvas');
+  maskTmp.width = CARD_W; maskTmp.height = CARD_H;
   const mCtx = maskTmp.getContext('2d');
   mCtx.drawImage(maskImg, 0, 0, CARD_W, CARD_H);
   const maskData = mCtx.getImageData(0, 0, CARD_W, CARD_H);
@@ -133,7 +143,6 @@ async function drawMaskedArt(ctx, artSrc, maskSrc) {
   const ap = artData.data;
   const mp = maskData.data;
   for (let i = 0; i < ap.length; i += 4) {
-    // Luminance: white=255 (show art), black=0 (hide art)
     ap[i + 3] = Math.round(mp[i] * 0.299 + mp[i + 1] * 0.587 + mp[i + 2] * 0.114);
   }
   tCtx.putImageData(artData, 0, 0);
@@ -168,7 +177,7 @@ async function drawTraitBorders(ctx, trait1, trait2) {
 
 // ── Text rendering ─────────────────────────────────────────────────────────────
 
-function drawTextLayers(ctx, data) {
+async function drawTextLayers(ctx, data) {
   const { type, power, name, trait1, trait2, effect, flavor, serial, artist } = data;
   const nameEl  = ELEMENTS.cardname[type]  ?? ELEMENTS.cardname.character;
   const rulesEl = ELEMENTS.rulesText[type] ?? ELEMENTS.rulesText.character;
@@ -213,16 +222,37 @@ function drawTextLayers(ctx, data) {
     }
   }
 
-  const EFFECT_SIZE  = 11;
-  const EFFECT_LINE  = 14;
-  const FLAVOR_SIZE  = 11;
-  const FLAVOR_LINE  = 13;
+  const EFFECT_SIZE = 11;
+  const EFFECT_LINE = 14;
+  const FLAVOR_SIZE = 11;
+  const FLAVOR_LINE = 13;
+  const FLAVOR_GAP  = 6;
 
-  // Measure effect text lines first (needed to position flavor text)
+  // Measure final effect lines
   let effectLines = [];
   if (effect) {
     setupText(ctx, { size: EFFECT_SIZE, family: 'WSEffect', weight: '400', color: 'rgb(20,20,20)' });
     effectLines = wrapText(ctx, effect, rulesEl.w);
+  }
+
+  // White background bar — drawn before text (z-index 13, behind text z-index 16)
+  // whitebar.png is 406×1px semi-transparent white, stretched vertically to text height
+  if (effectLines.length > 0 || flavor) {
+    try {
+      const whitebarImg = await loadImg('/assets/card-maker/bars/whitebar.png');
+      const flavorLines = flavor
+        ? (() => {
+            setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)' });
+            return wrapText(ctx, flavor, flavEl.w);
+          })()
+        : [];
+      const effectH  = effectLines.length * EFFECT_LINE;
+      const flavorH  = flavorLines.length * FLAVOR_LINE;
+      const gapH     = (effectH > 0 && flavorH > 0) ? FLAVOR_GAP : 0;
+      const barH     = Math.max(19, effectH + flavorH + gapH + 4);
+      // x=20 (left - 6), width=406 (width + 12), anchored at bottom=543
+      ctx.drawImage(whitebarImg, 20, rulesEl.bottomY - barH, 406, barH);
+    } catch { /* skip if image unavailable */ }
   }
 
   // Effect text — bottom-anchored, grows upward
@@ -242,7 +272,7 @@ function drawTextLayers(ctx, data) {
   // Flavor text — above effect text
   if (flavor) {
     const effectH = effectLines.length * EFFECT_LINE;
-    const flavorBottom = rulesEl.bottomY - effectH - (effectLines.length > 0 ? 6 : 0);
+    const flavorBottom = rulesEl.bottomY - effectH - (effectLines.length > 0 ? FLAVOR_GAP : 0);
 
     setupText(ctx, { size: FLAVOR_SIZE, family: 'WSFlavor', weight: '400', color: 'rgb(20,20,20)', shadow: 'rgba(255,255,255,0.5)', shadowBlur: 4 });
     ctx.textAlign = 'center';
@@ -299,14 +329,17 @@ export async function renderCard(canvas, data) {
   const ctx = canvas.getContext('2d');
   canvas.width  = CARD_W;
   canvas.height = CARD_H;
-  ctx.clearRect(0, 0, CARD_W, CARD_H);
+
+  // White base — fills transparent corners left by the frame's rounded edge design
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, CARD_W, CARD_H);
 
   const hasTrigger = !!trigger && trigger !== 'none';
 
   // ① Masked art
   if (art) {
     try {
-      await drawMaskedArt(ctx, art, getMaskPath(type));
+      await drawMaskedArt(ctx, art, getMaskPath(type), data.artTransform);
     } catch {
       // Art load failed — continue without art
     }
@@ -352,7 +385,7 @@ export async function renderCard(canvas, data) {
   }
 
   // ⑦ Text layers
-  drawTextLayers(ctx, { ...data, type, side });
+  await drawTextLayers(ctx, { ...data, type, side });
 
   // ⑧ Clear overlay
   try {

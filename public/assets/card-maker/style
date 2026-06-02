@@ -1,0 +1,2195 @@
+﻿mse version: 2.1.2
+full name: All Card Types
+short name: Standard
+icon: icon.png
+position hint: 1
+version: 2023-10-20
+game: weiss2
+
+depends on:
+	package: weiss2.mse-game
+depends on: 
+	package: weiss2-symbols.mse-symbol-font
+depends on:
+	package: weiss2-symbols-sp.mse-symbol-font
+
+card width: 448
+card height: 626
+card dpi: 178
+	
+init script:
+	rules_text_font_color := rgba(20,20,20,250)
+	rules_text_italic_font_color := rgba(88,88,88,250)
+
+	min_height := # (field input)
+	{
+		result := 999
+		for each line in input.layout.lines do (
+			if (result > line.height) then
+				result := line.height
+		)
+		result
+	}
+	layout_height := # (field input)
+	{
+		length(input.layout.lines) * min_height(input)
+	}
+	card_rules_height :=
+	{
+		if (card.rules_text != "") then 
+			max(19, ceil(layout_height(card_style.rules_text))) + 4
+		else 0
+	}
+	card_rules_height_2 :=
+	{
+		layout_height(card_style.rules_text) + 4
+	}
+	card_flavor_height :=
+	{
+		ceil(layout_height(card_style.flavor_text))
+	}
+	replay_text_height :=
+	{
+	#	card_style.replay_text.content_height or else set.stylesheet.card_style.replay_text.content_height
+	#	ceil(card_style.replay_text.content_lines * line_height)
+		if styling.show_replay then
+			ceil(layout_height(card_style.replay_text))
+		else
+			0
+	}
+	replay_text_width :=
+	{
+		if styling.show_replay then
+			(card_style.replay_text.width or else set.stylesheet.card_style.replay_text.width) - 2
+		else
+			0
+	}
+	replay_box_height :=
+	{
+		replay_box_height_v2(top_only: false)
+	}
+	replay_box_height_v2 := 
+	{
+		if set.stylesheet.extra_card_style.replay_bar_1.visible == true then (
+			half := 3 + 1 + 4
+			second_half := 3 + 1 + 3
+			if (top_only == true) then
+				replay_text_height() + half
+			else
+				replay_text_height() + half + second_half
+			# 3 = internal margin ; 2 = width of the box
+			# 7 is the padding 4 at top and 3 at bottom
+		) else
+			0
+	}
+
+	other_name_bar_height := {
+		if card.replay_text != "" and card.card_type != "climax" then
+			0
+		else if styling.card_meta_type == "JP/EN import" then
+			other_name_bar_locations[card.card_type].height
+		else
+			0
+	}
+	sp_specs := [
+		color: rgba(255,255,255,125)
+		shadow_color: rgba(255,255,255,255)
+		width: 1
+		is_enabled: {
+			if (styling.nuke_sp_effect == "yes") then
+				false
+			else
+				get_actual_version() == "v2" or using_sp_override()				
+		}
+	]
+	trait_box_locations := [
+		regular: [ [left: 212, width: 90], [left: 314, width: 90], [left: 200, width: 10] ],
+		long_trait: [ [left: 199, width: 66], [left: 279, width: 146], [left: 189, width: 10] ],
+		triple_trait: [ [left: 199, width: 66], [left: 279, width: 66], [left: 359, width: 66] ]
+	]
+	other_name_bar_locations := [
+		climax: [type: "climax", left: 63, bottom: 250, width: 350, height: 25, name_bottom: 360, name_left: 69, name_width: 130],
+		event: [type: "other", left: 35, bottom: 570, width: 378, height: 21, name_bottom: 565, name_left: 130, name_width: 238],
+		character: [type: "other", left: 35, bottom: 555, width: 378, height: 21, name_bottom: 550, name_left: 130, name_width: 238]
+	]
+	rules_text_computations := [
+		default_style: [
+			character: [
+				top: { 548 }
+				bottom: { 543 - replay_box_height() - (other_name_bar_height() / 2) },
+				left: { 26 },
+				width: { 394 }
+			],
+			event: [
+				top: { 562 }
+				bottom: { 557 - replay_box_height() - (other_name_bar_height() / 2) },
+				left: { 26 },
+				width: { 394 }
+			],
+			climax: [
+				top: { 228 }
+				bottom: { 19 },
+				left: { 17 + replay_box_height() },
+				width: { 204 }
+			],
+			height: { max(19, ceil(lines_height)) + 4 } # lines_height should always be computed in the field itself or it will be unoptimized
+		],
+		top_style: [
+			character: [
+				top: { 18 },
+				bottom: { 18 
+					+ rules_text_computations.top_style.height(lines_height: layout_height(card_style.rules_text)) 
+				},
+				left: { 76 },
+				width: { 294 }
+			],
+			event: [
+				top: { 18 },
+				bottom: { 18 + rules_text_computations.top_style.height(lines_height: layout_height(card_style.rules_text)) }
+				left: { 76 },
+				width: { 294 }
+			],
+			climax: [
+				top: { 228 }
+				bottom: { 19 },
+				left: { 17 + replay_box_height() },
+				width: { 204 }
+			],
+			height: { max(19, ceil(lines_height)) + 4 } # lines_height should always be computed in the field itself or it will be unoptimized
+		]
+	]
+	replay_text_computations := [
+		default_style: [
+			character: [
+				top: { 543 },
+				bottom: { 543 - (if card.replay_text != "" then 8) },
+				left: { 26 + 6 },
+				width: { 394 - 14 + 2}
+			],
+			event: [
+				top: { 557 },
+				bottom: { 557 - (if card.replay_text != "" then 8) }
+				left: { 26 + 6 },
+				width: { 394 - 14 + 2 }
+			],
+			climax: [
+				top: { 19 },
+				bottom: { 19 - (if card.replay_text != "" then -6) },
+				left: { 17 + 8 },
+				width: { 204 - 14 + 2 }
+			]
+			height: { max(19, ceil(lines_height)) + 4 } # lines_height should always be computed in the field itself or it will be unoptimized
+		],
+		top_style: [
+			character: [
+				top: {
+					style_ref := rules_text_computations["top_style"]["character"]
+					style_ref.bottom()
+				},
+				bottom: {
+					style_ref := rules_text_computations["top_style"]["character"]
+					style_ref.bottom() + replay_text_computations["top_style"].height(lines_height: layout_height(card_style.replay_text))
+				},
+				left: { 76 + 6 },
+				width: { 294 - 14 + 2 }
+			],
+			event: [
+				top: {
+					style_ref := rules_text_computations["top_style"]["event"]
+					style_ref.bottom()
+				},
+				bottom: {
+					style_ref := rules_text_computations["top_style"]["event"]
+					style_ref.bottom() + replay_text_computations["top_style"].height(lines_height: layout_height(card_style.replay_text))
+				},
+				left: { 76 + 6 },
+				width: { 294 - 14 + 2 }
+			],
+			climax: [
+				top: { 19 },
+				bottom: { 19 - (if card.replay_text != "" then -6) },
+				left: { 17 + 8 },
+				width: { 204 - 14 + 2 }
+			]
+			height: { max(19, ceil(lines_height)) + 4 } # lines_height should always be computed in the field itself or it will be unoptimized
+		]
+	]
+	flavor_text_computations := [
+		white: [
+			font_color: { rgba(20,20,20,250) },
+			font_shadow_color: { rgba(255,255,255,120) },
+			flavor_bar: { "bars/flavorbar.png" }
+		],
+		black: [
+			font_color: { rgba(255,255,255,250) },
+			font_shadow_color: { rgba(0,0,0,120) },
+			flavor_bar: { "bars/flavorbar_black.png" }
+		]
+	]
+	get_trait_box_style := {
+		if card.trait_three == "" then
+			replace(styling.trait_box_style, match: " ", replace: "_")
+		else
+			"triple_trait"
+	}
+	get_rules_box_style := {
+		if (styling.rules_box_style == "top") then
+			"top_style"
+		else
+			"default_style"
+	}
+	get_actual_version := {
+		if (using_sp_override() or is_foil(x: card)) then
+			styling.foil_version
+		else
+			"v1"
+	}
+	foil_version_path := {
+		if (get_actual_version() == "v2") then
+			"foil/v2/"
+		else
+			""
+	}
+	first_artist_name := {
+		result := ""
+		__first_card_id := first_card_id()
+		for each c in filter_list(set, filter: { card_id_ns(card: input) == __first_card_id }) do
+			result := c.artist_name
+	}
+	first_logo := {
+		result := "clear\\c-clear.png"
+		__first_card_id := first_card_id()
+		for each c in filter_list(set, filter: { card_id_ns(card: input) == __first_card_id }) do
+			result := c.logo		
+	}
+	card_image_compute := [
+		top: 0,
+		left: {
+			if card.card_type == "character" or card.card_type == "event" then 0
+			else if card.card_type == "climax" then 448
+			else 448
+		},
+		width: {
+			if card.card_type == "character" or card.card_type == "event" then 448
+			else if card.card_type == "climax" then 626
+			else 626
+		},
+		height: {
+			if card.card_type == "character" or card.card_type == "event" then 626
+			else if card.card_type == "climax" then 448
+			else 448
+		},
+		angle: {
+			if card.card_type == "character" or card.card_type == "event" then 0
+			else if card.card_type == "climax" then 270
+			else 270
+		},
+		soul: {
+			soul_pair := split_text(card.soul, match: " - ")
+			fixed_soul := soul_pair[0]
+			position(of: [fixed_soul], in: english_numbers)
+		},
+		soul_image: {
+				__soul := card_image_compute.soul()
+				if (__soul != 0) then
+					"souls/{__soul}s.png"
+				else
+					""
+		},
+		soul_image_mask: {
+				__soul := card_image_compute.soul()
+				if (__soul != 0) then
+					"souls/{__soul}s_mask.png"
+				else
+					""
+		}
+	]
+	artist_name_compute := [
+		top: {
+			if card.card_type == "character" then 608
+			else if card.card_type == "event" then 608
+			else if card.card_type == "climax" then 260
+			else 260
+		},
+		left: {
+			if card.card_type == "character" or card.card_type == "event" then (
+				if get_actual_version() == "v2" then 65
+				else 61
+			)
+			else if card.card_type == "climax" then 19
+			else 19
+		},
+		width: {
+			if (get_actual_version() == "v2") then 318
+			else 323
+		}
+		angle: {
+			if card.card_type == "character" or card.card_type == "event" then 0
+			else if card.card_type == "climax" then 270
+			else 270
+		}
+	]
+	card_align_utils := [
+		shift_top: [ # input
+			top: { # input (the value on top) ; top: top shift value
+				if (card.card_type == "climax") then
+					input
+				else
+					input + top
+			},
+			bottom: { # input (the value on bottom) ; top: top shift value
+				if (card.card_type == "climax") then
+					input
+				else
+					input + top
+			},
+			left: { # input (the value on left) ; top: top shift value
+				if (card.card_type == "climax") then
+					input - top
+				else
+					input
+			}
+		],
+		shift_left: [
+			top: { # input (the value on top) ; left: left shift value
+				if (card.card_type == "climax") then
+					input + left
+				else
+					input
+			},
+			bottom: { # input (the value on bottom) ; left: left shift value
+				if (card.card_type == "climax") then
+					input + left
+				else
+					input
+			},
+			left: { # input (the value on left) ; left: left shift value
+				if (card.card_type == "climax") then
+					input
+				else
+					input + left
+			}
+		]
+	]
+	card_image_utils := [
+		add_mask: { # input: image; mask: additional image mask; result: image  
+			combine_blend(
+				image1: input,
+				image2: mask,
+				combine: "shadow"
+			)
+		}
+	]
+
+styling field:
+	type: boolean
+	name: sp override
+	description: Override default SP behavior and treat this card's display as an SP/SSP card.
+	initial: no
+styling field:
+	type: text
+	name: rarity override
+	description: Override the default rarity display (not behavior) and input a custom rarity.
+styling field:
+	type: text
+	name: foil shortcut override
+	description: Override the default rarity display (not behavior) and input a custom foil shortcut.
+styling field:
+	type: text
+	name: alt art override
+	description: Override the default algorithm for determining the alternate art number to use and just use the one on the specified number. (Useful for when you have multiple cards with diff. effects but same name.)
+styling field:
+	type: text
+	name: serial override
+	description: Override the serial sort for this card with your own sorting value. Put empty to continue on using the default serial sort.
+styling field:
+	type: text
+	name: legacy card image override
+	description: Override the the default setting of having legacy card images on in the set settings (true or false). Put empty or an invalid value to continue on using the default serial sort.
+styling field:
+	type: text
+	name: bond targets
+	description: Displays the bond targets that should be displayed when you use bonds! keyword
+styling field:
+	type: text
+	name: set override
+	description: Override the set id for this card (normally set via the set properties) with your own value. Used for collab sets like Bunko sets.	
+styling field:
+	type: choice
+	name: side override
+	choice: default
+	choice: weiss
+	choice: schwarz
+	choice: both
+	initial: default
+	description: Provides an override for the side that should be displayed for this card.
+styling field:
+	type: text
+	name: wave id
+	description: Only applies in a Trial Deck or a PR. The default value is "00000" (5 digits). Assigns an ID for which this Trial Deck card or wave of PR it should belong to. Helps in sets with multiple Trial Decks and/or PR waves.
+styling field:
+	type: choice
+	name: trait box style
+	choice: regular
+	choice: long trait
+	choice: triple trait
+	description: Determines the style of the trait boxes. Do note that, for long trait style, the IMS format is used instead of the Fubuki format. Note that entering any trait in the third trait locks you to triple trait style, regardless of this value.
+styling field:
+	type: choice
+	name: rules box style
+	choice: default
+	choice: top
+	initial: default
+	description: Determines the style and positioning of the rule boxes (includes the replay box).
+styling field:
+	type: choice
+	name: flavor box style
+	choice: white
+	choice: black
+	initial: white
+	description: Determines the style of the flavor text; white indicates what's been said, while black is the actor's thoughts.
+styling field:
+	type: boolean
+	name: show replay
+	description: Show the replay text box
+	initial: yes
+styling field:
+	type: choice
+	name: card meta type
+	description: Determines the type of card this card is supposed to be; if it's an English/Japanese original, JP import, or EN import.
+	choice: original
+	choice: JP/EN import
+	initial: original
+styling field:
+	type: choice
+	name: foil version
+	description: Determines the version of the foil. This will only apply for foil rarities, such as SR, RRR, SP, and SSP, rarities that are treated like SP (via SP override), and PR.
+	initial: v1
+	choice: v1
+	choice: v2
+styling field:
+	type: info
+	name: debug info
+styling field:
+	type: boolean
+	name: nuke sp effect
+	description: Ignore everything and do not display the extra effects due to SP foiling, in case you wanted a more responsive using
+	initial: no
+	save value: false
+styling field:
+	type: info
+	name: destructive info
+styling field:
+	type: boolean
+	name: nuke magic text
+	description: Nuke all magic text in the card text; note that toggling this causes permanent changes in the card text.
+	initial: no
+	save value: false
+
+card style:
+	color:
+		top: 0
+		left:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 448
+			}
+		width: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 448
+				else if card.card_type == "climax" then 626
+			}
+		height:  
+			{
+				if card.card_type == "character" or card.card_type == "event" then 626
+				else if card.card_type == "climax" then 448
+			}
+		render style: image
+		z index: 0
+		popup style: in place
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		choice images:
+			yellow: { climax_and_character_colored_card(soul: card.soul, color: "yellow", type: card.card_type) }
+			green: { climax_and_character_colored_card(soul: card.soul, color: "green", type: card.card_type) }
+			red: { climax_and_character_colored_card(soul: card.soul, color: "red", type: card.card_type) }
+			blue: { climax_and_character_colored_card(soul: card.soul, color: "blue", type: card.card_type) }
+			purple: { climax_and_character_colored_card(soul: card.soul, color: "purple", type: card.card_type) }
+
+	image:
+		top: 0
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 448
+			}
+		width: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 448
+				else if card.card_type == "climax" then 626
+			}
+		height:  
+			{
+				if is_using_legacy_card_image(card) or get_actual_version() == "v2" then (
+					if card.card_type == "character" or card.card_type == "event" then 626
+					else if card.card_type == "climax" then 448
+				) else (
+					if card.card_type == "character" then 569
+					else if card.card_type == "event" then 578
+					else if card.card_type == "climax" then 407
+				)
+			}
+		mask:
+			{
+				if (get_actual_version() == "v1") then (
+					card.card_type 
+					+ "/" 
+					+ (
+						if (is_using_legacy_card_image(card)) then "mask"
+						else "mask2"
+					) 
+					+ (
+						if (set.rule_of_thirds == "yes") then "_ro3"
+					) 
+					+ ".png"
+				) else (
+					({ input }
+					+ {
+						if (card.card_type == "character") then 
+							card_image_utils.add_mask(input, mask: card_image_compute.soul_image_mask())
+						else
+							input
+					}
+					+ {
+						if (set.rule_of_thirds == "yes") then
+							card_image_utils.add_mask(input, mask: "{foil_version_path()}ro3_mask.png")
+						else
+							input
+					})("{foil_version_path()}{card.card_type}/mask.png")
+				)
+			}
+		z index: 1
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+	logo:
+		top:
+			{
+				if card.card_type == "character" then 557
+				else if card.card_type == "event" then 573
+				else if card.card_type == "climax" then 515
+			}
+		left:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 368
+				else if card.card_type == "climax" then 430
+			}
+		height: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 24
+				else if card.card_type == "climax" then 36
+			}
+		width: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 60
+				else if card.card_type == "climax" then 90
+			}
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		default: { first_logo() }
+	level:
+		top: 13
+		left: 16
+		width: 50
+		height: 60
+		z index: 2
+		render style: image
+		visible:
+			{
+				if card.card_type == "character" or card.card_type == "event" then true
+				else if card.card_type == "climax" then false
+			}
+		choice images:
+			zero: { card_colored_level(level: 0, color: card.color) }
+			one: { card_colored_level(level: 1, color: card.color) }
+			two: { card_colored_level(level: 2, color: card.color) }
+			three: { card_colored_level(level: 3, color: card.color) }
+	cost:
+		top: 73
+		left: 16
+		width: 50
+		height: 42
+		z index: 3
+		render style: image
+		visible:
+			{
+				if card.card_type == "character" or card.card_type == "event" then true
+				else if card.card_type == "climax" then false
+			}
+		choice images:
+			zero: cost\c0.png
+			one: cost\c1.png
+			two: cost\c2.png
+			three: cost\c3.png
+			four: cost\c4.png
+			five: cost\c5.png
+			six: cost\c6.png
+			seven: cost\c7.png
+			eight: cost\c8.png
+			nine: cost\c9.png
+			ten: cost\c10.png
+			eleven: cost\c11.png
+			twelve: cost\c12.png
+			thirteen: cost\c13.png
+			fourteen: cost\c14.png
+			fifteen: cost\c15.png
+			twenty: cost\c20.png
+	backup:
+		top: 118
+		left: 23
+		width: 38
+		height: 38
+		z index: 15
+		render style: image
+		visible:
+			{
+				if card.card_type == "character" or card.card_type == "event" then true
+				else if card.card_type == "climax" then false
+			}
+		choice images:
+			no: backup\nobackup.png
+			backup: backup\back.png
+			clockshift: backup\clock.png
+	backup2:
+		top: 156
+		left: 23
+		width: 38
+		height: 38
+		z index: 15
+		render style: image
+		visible:
+			{
+				if card.card_type == "character" or card.card_type == "event" then true
+				else if card.card_type == "climax" then false
+			}
+		choice images:
+			no: backup\nobackup.png
+			backup: backup\back.png
+			clockshift: backup\clock.png
+	soul:
+		top: 584
+		left: 127
+		width: 46
+		height: 20
+		render style: hidden
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		z index: 4
+	cardname:
+		top: 
+			{
+				if card.card_type == "character" then result := 557	+ card_name_sizing(card).top_adjustment
+				else if card.card_type == "event" then result := 573 + card_name_sizing(card).top_adjustment - 1
+				else if card.card_type == "climax" then result := 377
+				if (get_actual_version() == "v2") then
+					result := (
+						{ input } 
+						+ card_align_utils.shift_left.top@(left: -7)
+					)(result)	
+				result
+			}
+		left:
+			{
+				if card.card_type == "character" or card.card_type == "event" then result := 152
+				else if card.card_type == "climax" then result := 54 - card_name_sizing(card).top_adjustment
+				if (get_actual_version() == "v2") then
+					result := (
+						{ input } 
+						+ card_align_utils.shift_left.left@(left: -7)
+					)(result)
+				result
+			}
+		height: 24
+		width:
+			{
+				204
+				+ ( # adjusted because climax in foil v2 is larger for some reason
+					if (card.card_type == "climax" and get_actual_version() == "v2") then
+						17
+					else
+						0
+				)
+			}
+		z index: 5
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Agfa Rotis Semi Serif
+			size: 
+				{
+					card_name_sizing(card).size
+				}
+			weight: bold
+			color: rgb(255,255,255)
+			shadow color: rgb(0, 0, 0)
+			shadow displacement x: 1
+			shadow displacement y: 1
+			shadow blur: 0
+	trait one:
+		top: 587
+		left: { trait_box_locations[get_trait_box_style()][0].left }
+		width: { trait_box_locations[get_trait_box_style()][0].width }
+		height: 14
+		z index: 6
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 09
+			weight: bold
+			color: rgb(0,0,0)
+	furitrait one:
+		top: 581
+		left: { trait_box_locations[get_trait_box_style()][0].left }
+		width: { trait_box_locations[get_trait_box_style()][0].width }
+		height: 9
+		z index: 7
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 05
+			max stretch: 0.3
+			shadow color: rgba(255,255,255,100)
+			shadow displacement x: 1
+			shadow displacement y: 1
+			weight: regular
+			color: rgb(5,5,5)
+	trait two:
+		top: 587
+		left: { trait_box_locations[get_trait_box_style()][1].left }
+		width: { trait_box_locations[get_trait_box_style()][1].width }
+		height: 14
+		z index: 6
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 09
+			weight: bold
+			color: rgb(0,0,0)
+	furitrait two:
+		top: 581
+		left: { trait_box_locations[get_trait_box_style()][1].left }
+		width: { trait_box_locations[get_trait_box_style()][1].width }
+		height: 9
+		z index: 7
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 05
+			max stretch: 0.3
+			shadow color: rgba(255,255,255,100)
+			shadow displacement x: 1
+			shadow displacement y: 1
+			weight: regular
+			color: rgb(5,5,5)
+	trait three:
+		top: 587
+		left: { trait_box_locations[get_trait_box_style()][2].left }
+		width: { trait_box_locations[get_trait_box_style()][2].width }
+		height: 14
+		z index: 6
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 09
+			weight: bold
+			color: rgb(0,0,0)
+	furitrait three:
+		top: 581
+		left: { trait_box_locations[get_trait_box_style()][2].left }
+		width: { trait_box_locations[get_trait_box_style()][2].width }
+		height: 9
+		z index: 7
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Vagabond
+			size: 05
+			max stretch: 0.3
+			shadow color: rgba(255,255,255,100)
+			shadow displacement x: 1
+			shadow displacement y: 1
+			weight: regular
+			color: rgb(5,5,5)
+	power:
+		top: 574
+		#top: 573
+		left: 32
+		width: 90
+		height: 25
+		z index: 8
+		visible:
+			{
+				if card.card_type == "character" then true
+				else if card.card_type == "climax" or card.card_type == "event" then false
+			}
+		alignment: middle center
+		font:
+		#	name: Plantagenet Cherokee
+			name: Warnock Pro SmBd
+			weight: bold
+			size: 23
+			color: rgb(255,255,255)
+	serial:
+		top:
+			{
+				if card.card_type == "character" then 553
+				else if card.card_type == "event" then 578
+				else if card.card_type == "climax" then 268
+			}
+		left: 
+			{
+				if card.card_type == "character" then 44
+				else if card.card_type == "event" then 42
+				else if card.card_type == "climax" then 48
+			}
+		width: 77
+		height: 10
+		z index: 9
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: top center stretch if-overflow
+		font:
+			name: Open Sans
+			size: 6.1
+			weight: normal
+			color: rgb(0,0,0)
+		symbol font:
+			name: weiss2-symbols
+			size: 13
+	rarity:
+		top: 
+			{
+				if card.card_type == "character" then 554
+				else if card.card_type == "event" then 579
+				else if card.card_type == "climax" then 331
+			}
+		left: 
+			{
+				if card.card_type == "character" then 109
+				else if card.card_type == "event" then 103
+				else if card.card_type == "climax" then 47
+			}
+		width: 15
+		height: 10
+		render style: hidden
+		z index: 18
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+	flavor text:
+		bottom: 
+			{
+				box_style := get_rules_box_style()
+				if (box_style == "top_style" and card.card_type != "climax") then
+					flavor_bottom(height: other_name_bar_height() / 2, rules: styling.card_meta_type != "original", event: card.card_type == "event")
+				else if card.card_type == "character" or card.card_type == "event" then
+					flavor_bottom(height: card_rules_height() + replay_box_height() + (other_name_bar_height() / 2), rules: card.rules_text != "" or card.replay_text != "", event: card.card_type == "event")
+				else if card.card_type == "climax" then 227
+			}
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 20
+				else if card.card_type == "climax" then (65 + other_name_bar_height())
+			}
+		width: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 406
+				else if card.card_type == "climax" then 398
+			}
+		height: { max(19, card_flavor_height()) }
+		z index: 17
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: bottom center
+		font:
+			name: Souvenir LT
+			size: 11
+			weight: normal
+			color: { flavor_text_computations[styling.flavor_box_style].font_color() }
+			shadow color: { flavor_text_computations[styling.flavor_box_style].font_shadow_color() }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 5
+	rules text:
+		bottom: { rules_text_computations[get_rules_box_style()][card.card_type].bottom() }
+		left: { rules_text_computations[get_rules_box_style()][card.card_type].left() }
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: { rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text)) }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color: { rules_text_font_color }
+		symbol font:
+			name: weiss2-symbols
+			size: 12
+	replay text:
+		bottom:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].bottom()
+			}
+		left:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].left()
+			}
+		width: 
+			{
+				if not styling.show_replay then 0
+				else replay_text_computations[get_rules_box_style()][card.card_type].width()
+			}
+		height: { max(10, replay_text_height()) }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color: { rules_text_font_color }
+		symbol font:
+			name: weiss2-symbols
+			size: 12
+	export cardname:
+		bottom: 
+			{
+				if (styling.card_meta_type == "JP/EN import") then
+					other_name_bar_locations[card.card_type].name_bottom
+				else
+					-10
+			}
+		left: { other_name_bar_locations[card.card_type].name_left }
+		width: { other_name_bar_locations[card.card_type].name_width }
+		height: 12
+		z index: 18
+		angle: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		visible: { styling.card_meta_type == "JP/EN import" }
+		alignment: top center stretch if-overflow
+		font:
+			name: Agfa Rotis Semi Serif
+			size: 9
+			weight: bold
+			color: rgb(0,0,0)
+	trigger:
+		top: 14
+		left: 385
+		width: 51
+		height: 58
+		z index: 17
+		render style: image
+		choice images:
+			none: triggers\none.png
+			soul: triggers\soul.png
+			goldbar: triggers\goldbar.png
+			gate: triggers\gate.png
+			book: triggers\book.png
+			shot: triggers\shot.png
+			bag: triggers\goldbag.png
+			bounce: triggers\bounce.png
+			door: triggers\door.png
+			c-soul: triggers\climaxsoul.png
+			standby: triggers\standby.png
+			choice: triggers\choice.png
+			discover: triggers\discover.png
+			focus: triggers\focus.png
+			chance: triggers\chance.png
+			magnify: triggers\magnify.png
+			bank: triggers\bank.png
+			anchor: triggers\anchor.png
+			ticket: triggers\ticket.png
+			wheel: triggers\wheel.png
+
+	extra trigger:
+		top: 14
+		left: 333
+		width: 51
+		height: 58
+		z index: 18
+		visible:
+			{
+				if card.card_type == "character" or card.card_type == "event" then false
+				else if card.card_type == "climax" then true
+			}
+		render style: image
+		choice images:
+			off: backup\nobackup.png
+			none: triggers\none.png
+			soul: triggers\soul.png
+			goldbar: triggers\goldbar.png
+			gate: triggers\gate.png
+			book: triggers\book.png
+			shot: triggers\shot.png
+			bag: triggers\goldbag.png
+			bounce: triggers\bounce.png
+			door: triggers\door.png
+			c-soul: triggers\climaxsoul.png
+			standby: triggers\standby.png
+			choice: triggers\choice.png
+			discover: triggers\discover.png
+			chance: triggers\chance.png
+			focus: triggers\focus.png
+			magnify: triggers\magnify.png
+			bank: triggers\bank.png
+			anchor: triggers\anchor.png
+			ticket: triggers\ticket.png
+			wheel: triggers\wheel.png
+	card type:
+		top: 
+			{
+				if card.card_type == "character" then 553
+				else if card.card_type == "event" then 579
+				else if card.card_type == "climax" then 247
+			}
+		left: 
+			{
+				if card.card_type == "character" then 23
+				else if card.card_type == "event" then 20
+				else if card.card_type == "climax" then 47
+			}
+		width: 19
+		height: 10
+		z index: 19
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: hidden
+	artist name:
+		top: { artist_name_compute.top() }
+		left: { artist_name_compute.left() }
+		height: 18
+		width: { artist_name_compute.width() }
+		z index: 20
+		angle: { artist_name_compute.angle() }
+		alignment: top center stretch if-overflow
+		font:
+			name: Open Sans Condensed
+			size: 6
+			weight: bold
+			color:
+				{
+					if get_side() == "weiss" then rgb(122,122,39)
+					else if get_side() == "schwarz" then rgb(244,244,0)
+					else rgb(244,244,0)
+				}
+extra card field:
+	type: choice
+	name: copyright bar
+	editable: false
+	choice: default
+extra card field:
+	type: choice
+	name: bottom bar
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: top bar
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: white bar
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: flavor bar
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: replay bar 1
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: replay bar 2
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: replay bar 3
+	editable: false
+	choice:	default
+extra card field:
+	type: choice
+	name: replay bar 4
+	editable: false
+	choice:	default
+# Benitez Fork Import
+extra card field:
+	type: choice
+	name: japbar
+	editable: false
+	save value: false
+	initial: default
+	choice: Yellow
+	choice: Green
+	choice: Red
+	choice: Blue
+	choice: Purple
+	choice: default
+extra card field:
+	type: choice
+	name: series
+	editable: false
+	save value: false
+	choice: default
+# # Test Rules Text # #
+extra card field:
+	type: text
+	name: editable rules text
+	multi line: true
+	editable: true
+	save value: false
+	description: Combination of both the rules text and replay text (if it exists)
+	script:
+		if (styling.show_replay == "no") then
+			forward_editor(field: card.rules_text)
+		else (
+			result := combined_editor(field1: card.rules_text, separator: "\n<margin:0:0:7><size-auto:0>\n</size-auto:0></margin:0:0:8>", field2: card.replay_text, suffix: "<atom-nothing></atom-nothing>", hide_when_empty: true)
+			(
+				{ input }
+				#+ remove_tag@("<margin-auto")
+				+ remove_tag@(tag: "<color-auto")
+				+ remove_tag@(tag: "<color")
+				# Add margins to the result, the components will remove them automatically
+				+ replace@(
+					match: "(</sep>)",
+					replace: {
+						if (get_rules_box_style() == "top_style") then
+							"</sep><margin:66:66:0><margin:0:66:0>"
+						else
+							"</sep><margin:55:55:0><margin:0:55:0>"
+					}
+				) 
+				+ replace@(
+					match: "(<suffix>)"
+					replace: "</margin></margin><suffix>"
+				)
+			)(result)
+		)
+# # Traits # #
+extra card field:
+	type: choice
+	name: trait bar left 1
+	editable: false
+	script:	if card.trait_one != "" then "default" else "none"
+	choice: default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar 1
+	editable: false
+	script:	if card.trait_one != "" then "default" else "none"
+	choice: default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar right 1
+	editable: false
+	script:	if card.trait_one != "" then "default" else "none"
+	choice: default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar left 2
+	script:	if card.trait_two != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar 2
+	script:	if card.trait_two != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar right 2
+	script:	if card.trait_two != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar left 3
+	script:	if card.trait_three != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar 3
+	script:	if card.trait_three != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+extra card field:
+	type: choice
+	name: trait bar right 3
+	editable: false
+	script:	if card.trait_three != "" then "default" else "none"
+	editable: false
+	choice:	default
+	choice: none
+# # SP # #
+extra card field:
+	type: text
+	multi line: true
+	name: rules text copy1
+	script:	card.api_sp_rules_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: rules text copy2
+	script:	card.api_sp_rules_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: rules text copy3
+	script:	card.api_sp_rules_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: rules text copy4
+	script:	card.api_sp_rules_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: replay text copy1
+	script:	card.api_sp_replay_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: replay text copy2
+	script:	card.api_sp_replay_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: replay text copy3
+	script:	card.api_sp_replay_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	multi line: true
+	name: replay text copy4
+	script:	card.api_sp_replay_text
+	editable: false
+	save value: false
+extra card field:
+	type: text
+	name: default artist name
+	multi line: false
+	editable: false
+	save value: false
+	script: first_artist_name()
+# # #
+extra card style:
+	editable rules text:
+		bottom: 
+			{
+				if styling.show_replay == "no" then
+					9999
+				else 
+					(
+						{ input }
+						+ card_align_utils.shift_top.bottom@(
+							top: (if card.replay_text == "" then 0 else replay_box_height_v2(top_only: true))
+								+ (	if (card.replay_text == "") then 14 else 0 )
+						)
+					)(rules_text_computations[get_rules_box_style()][card.card_type].bottom())
+			}
+		left: 
+			{
+				(
+					{ input }
+					+ card_align_utils.shift_top.left@(
+							top: (if card.replay_text == "" then 0 else replay_box_height_v2(top_only: true))
+								+ (	if (card.replay_text == "") then 14 else 0 )
+					)
+					#+ card_align_utils.shift_top.left@(
+					#	top: -7
+					#		+ (if card.card_type == "climax" then 5 else 0)
+					#		+ (if card.replay_text != "" and card.card_type == "climax" then -4 else 0)
+					#		+ (if card.replay_text != "" then 10 else 0)
+					#		+ layout_height(card_style.replay_text)
+					#)
+				)(rules_text_computations[get_rules_box_style()][card.card_type].left())
+			}
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: 
+			{
+				rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text))
+				+ replay_box_height_v2(top_only: true)
+				+ (	if (card.replay_text == "") then 13 else 0 )
+				#+ 15
+				#+ (
+				#	layout_height(card_style.replay_text) # replay_text_height()
+				#)	
+			}
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		visible: { styling.show_replay }
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color: { rgba(0,0,0,0) }
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	copyright bar:
+		left: 
+			{ 
+				(
+					{ input }
+					+ card_align_utils.shift_left.left@(left: 0)
+					+ card_align_utils.shift_top.left@(top: -1)
+				)(artist_name_compute.left())
+			}
+		top: 
+			{
+				(
+					{ input }
+					+ card_align_utils.shift_left.top@(left: 0)
+					+ card_align_utils.shift_top.top@(top: -1)
+				)(artist_name_compute.top())
+			}
+		angle: { artist_name_compute.angle() }
+		width: 318
+		height: 14
+		z index: 2
+		render style: image
+		visible: { get_actual_version() == "v2" }
+		choice images:
+			default: { "foil/v2/copyright/{get_side()}.png" }
+	bottom bar:
+		left: 
+			{
+				if (card.card_type == "character" or card.card_type == "event") then
+					452 - rules_text_computations[get_rules_box_style()][card.card_type].left()
+				else
+					rules_text_computations[get_rules_box_style()][card.card_type].left() - 5 - replay_box_height()
+			}
+		top: 
+			{
+				box_style := get_rules_box_style()
+				if (box_style == "top_style") then
+					rules_text_computations[box_style][card.card_type].top()
+					+ card_rules_height()
+					+ replay_box_height()
+					+ 5
+				else
+					rules_text_computations[box_style][card.card_type].bottom() 
+					+ (
+						if (card.card_type == "climax") then
+							rules_text_computations[box_style][card.card_type].width() + 2
+						else
+							0
+					)
+					+ 4
+			}
+		width: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].width() + 12
+				#				if card.card_type == "character" or card.card_type == "event" then 406
+				#				else if card.card_type == "climax" then 216
+			}
+		height: 5
+		z index: 11
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 180
+				else if card.card_type == "climax" then 90
+			}
+		render style: image
+		visible: { get_actual_version() == "v1" and (card.rules_text != "" or card.replay_text != "") }
+		choice images:
+			default: { card_color_bar() }
+	top bar:
+		left: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].left() 
+				+ (
+				   if (card.card_type == "climax") then
+					   4 + card_rules_height()
+				   else
+					   -6
+			   )
+			}
+		top : 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].top() 
+				- (
+					if (get_rules_box_style() == "default_style") then
+						if (card.card_type == "character" or card.card_type == "event") then
+							card_rules_height() + replay_box_height() + (other_name_bar_height() / 2) + 6
+						else
+							rules_text_computations[get_rules_box_style()][card.card_type].width() + 6
+					else
+						0
+				)
+				- 4			
+			}
+		width: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].width() + 12
+			}
+		height: 5
+		z index: 12
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { get_actual_version() == "v1" and (card.rules_text != "" or card.replay_text != "") }
+		choice images:
+			default: { card_color_bar() }
+	white bar:
+		left: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].left() 
+				 + (
+					if (card.card_type == "climax") then
+						-1 - replay_box_height()
+					else
+						-6
+				)
+			}
+		bottom: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].bottom()
+				+ (
+					if (card.card_type == "climax") then
+						-6 - replay_box_height()
+					else
+						0
+				)
+				+ replay_box_height()
+			}
+		width: 
+			{
+				rules_text_computations[get_rules_box_style()][card.card_type].width() + 12
+			}
+		height:
+			script:
+				if card.rules_text != "" or card.replay_text != "" then
+					max(19, card_rules_height() + replay_box_height()) 
+				else 0
+		z index: 13
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { get_actual_version() == "v1" and (card.rules_text != "" or card.replay_text != "") }
+		choice images:
+			default: { white_color_bar() }
+	flavor bar:
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then 20
+				else if card.card_type == "climax" then (65 + other_name_bar_height())
+			}
+		bottom: 
+			{
+				box_style := get_rules_box_style()
+				if (box_style == "top_style" and card.card_type != "climax") then				
+					flavor_bottom(height: other_name_bar_height() / 2, rules: styling.card_meta_type != "original", event: card.card_type == "event")
+				else if (card.card_type == "character" or card.card_type == "event") then
+					flavor_bottom(height: card_rules_height() + replay_box_height() + (other_name_bar_height() / 2), rules: card.rules_text != "" or card.replay_text != "", event: card.card_type == "event")
+				else if card.card_type == "climax" then 227
+			}
+		width:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 406
+				else if card.card_type == "climax" then 398
+			}
+		height: 
+			script:
+				if card.flavor_text != "" then max(19, card_flavor_height())
+				else 0
+		z index: 14
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		image: {  flavor_text_computations[styling.flavor_box_style].flavor_bar() }
+	# Traits
+	trait bar left 1:
+		left: 
+			{
+				card_style.trait_one.left - 8
+			}
+		bottom: 
+			{
+				card_style.trait_one.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_left.png
+			none: traits\trait_border_off_left.png
+	trait bar right 1:
+		left: 
+			{
+				card_style.trait_one.left + card_style.trait_one.width
+			}
+		bottom: 
+			{
+				card_style.trait_one.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_right.png
+			none: traits\trait_border_off_right.png
+	trait bar 1:
+		left: 
+			{
+				card_style.trait_one.left
+			}
+		bottom: 
+			{
+				card_style.trait_one.bottom + 3
+			}
+		width: { card_style.trait_one.width }
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_middle.png
+			none: traits\trait_border_off_middle.png
+	trait bar left 2:
+		left: 
+			{
+				card_style.trait_two.left - 8
+			}
+		bottom: 
+			{
+				card_style.trait_two.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_left.png
+			none: traits\trait_border_off_left.png
+	trait bar right 2:
+		left: 
+			{
+				card_style.trait_two.left + card_style.trait_two.width
+			}
+		bottom: 
+			{
+				card_style.trait_two.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_right.png
+			none: traits\trait_border_off_right.png
+	trait bar 2:
+		left: 
+			{
+				card_style.trait_two.left
+			}
+		bottom: 
+			{
+				card_style.trait_two.bottom + 3
+			}
+		width: { card_style.trait_two.width }
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_middle.png
+			none: traits\trait_border_off_middle.png
+	trait bar left 3:
+		left: 
+			{
+				card_style.trait_three.left - 8
+			}
+		bottom: 
+			{
+				card_style.trait_three.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" and get_trait_box_style() == "triple_trait" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_left.png
+			none: traits\trait_border_off_left.png
+	trait bar right 3:
+		left: 
+			{
+				card_style.trait_three.left + card_style.trait_three.width
+			}
+		bottom: 
+			{
+				card_style.trait_three.bottom + 3
+			}
+		width: 8
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" and get_trait_box_style() == "triple_trait" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_right.png
+			none: traits\trait_border_off_right.png
+	trait bar 3:
+		left: 
+			{
+				card_style.trait_three.left
+			}
+		bottom: 
+			{
+				card_style.trait_three.bottom + 3
+			}
+		width: { card_style.trait_three.width }
+		height: 18
+		z index: 5
+		angle: 0
+		visible: { card.card_type == "character" and get_trait_box_style() == "triple_trait" }
+		render style: image
+		choice images:
+			default: traits\trait_border_on_middle.png
+			none: traits\trait_border_off_middle.png
+	## Replay Box ##
+	replay bar 1:
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.left - 7
+				else set.stylesheet.card_style.replay_text.left - 3 - 2 - replay_text_height()
+			}
+		bottom:
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.bottom + 3 + 2
+				else set.stylesheet.card_style.replay_text.bottom - 7
+			}
+		width: 2
+		height: { replay_text_height() + 6 + 2 }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { styling.show_replay and card.replay_text != "" }
+		choice images:
+			default: bars\replay_border.png
+	replay bar 2:
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.left + replay_text_width() + 7
+				else set.stylesheet.card_style.replay_text.left - 3 - 2 - replay_text_height()
+			}
+		bottom:
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.bottom + 3 + 2
+				else set.stylesheet.card_style.replay_text.bottom + replay_text_width() + 7
+			}
+		width: 2
+		height: { replay_text_height() + 6 + 2 }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { styling.show_replay and card.replay_text != "" }
+		choice images:
+			default: bars\replay_border.png
+	replay bar 3:
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.left - 7
+				else set.stylesheet.card_style.replay_text.left - 3 - 2 - replay_text_height()
+			}
+		bottom: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then  set.stylesheet.card_style.replay_text.bottom + 3 + 2
+				else set.stylesheet.card_style.replay_text.bottom - 7
+			}
+		width: { replay_text_width() + 14 + 2 }
+		height: 2
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { styling.show_replay and card.replay_text != "" }
+		choice images:
+			default: bars\replay_border.png
+	replay bar 4:
+		left: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then set.stylesheet.card_style.replay_text.left - 7
+				else set.stylesheet.card_style.replay_text.left + 3
+			}
+		bottom: 
+			{
+				if card.card_type == "character" or card.card_type == "event" then  set.stylesheet.card_style.replay_text.bottom - replay_text_height() - 3
+				else set.stylesheet.card_style.replay_text.bottom - 7
+			}
+		width: { replay_text_width() + 14 + 2 }
+		height: 2
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { styling.show_replay and card.replay_text != "" }
+		choice images:
+			default: bars\replay_border.png
+	## ## ## ## ## ##
+	# SP Rules Text
+	## ## ## ## ## ##
+	rules text copy1:
+		bottom: { rules_text_computations[get_rules_box_style()][card.card_type].bottom() + sp_specs.width }
+		left: { rules_text_computations[get_rules_box_style()][card.card_type].left() + sp_specs.width }
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: { rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text)) }
+		z index: 15
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		visible: { sp_specs.is_enabled() }
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 1
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	rules text copy2:
+		bottom: { rules_text_computations[get_rules_box_style()][card.card_type].bottom() - sp_specs.width }
+		left: { rules_text_computations[get_rules_box_style()][card.card_type].left() - sp_specs.width }
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: { rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text)) }
+		z index: 15
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		visible: { sp_specs.is_enabled() }
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 1
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	rules text copy3:
+		bottom: { rules_text_computations[get_rules_box_style()][card.card_type].bottom() + sp_specs.width }
+		left: { rules_text_computations[get_rules_box_style()][card.card_type].left() - sp_specs.width }
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: { rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text)) }
+		z index: 15
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		visible: { sp_specs.is_enabled() }
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	rules text copy4:
+		bottom: { rules_text_computations[get_rules_box_style()][card.card_type].bottom() - sp_specs.width }
+		left: { rules_text_computations[get_rules_box_style()][card.card_type].left() + sp_specs.width }
+		width: { rules_text_computations[get_rules_box_style()][card.card_type].width() }
+		height: { rules_text_computations[get_rules_box_style()].height(lines_height: layout_height(card_style.rules_text)) }
+		z index: 15
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		visible: { sp_specs.is_enabled() }
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	## ## ## ## ## ##
+	# SP Replay Text
+	## ## ## ## ## ##
+	replay text copy1:
+		bottom:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].bottom() 	+ sp_specs.width
+			}
+		left:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].left() 		+ sp_specs.width
+			}
+		width: 
+			{
+				if not styling.show_replay then 0
+				else replay_text_computations[get_rules_box_style()][card.card_type].width()
+			}
+		height: { max(10, replay_text_height()) }
+		visible: { sp_specs.is_enabled() }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	replay text copy2:
+		bottom:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].bottom() 	- sp_specs.width
+			}
+		left:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].left() 		- sp_specs.width
+			}
+		width: 
+			{
+				if not styling.show_replay then 0
+				else replay_text_computations[get_rules_box_style()][card.card_type].width()
+			}
+		height: { max(10, replay_text_height()) }
+		visible: { sp_specs.is_enabled() }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	replay text copy3:
+		bottom:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].bottom() 	+ sp_specs.width
+			}
+		left:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].left() 		- sp_specs.width
+			}
+		width: 
+			{
+				if not styling.show_replay then 0
+				else replay_text_computations[get_rules_box_style()][card.card_type].width()
+			}
+		height: { max(10, replay_text_height()) }
+		visible: { sp_specs.is_enabled() }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	replay text copy4:
+		bottom:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].bottom() 	- sp_specs.width
+			}
+		left:
+			{
+				replay_text_computations[get_rules_box_style()][card.card_type].left() 		+ sp_specs.width
+			}
+		width: 
+			{
+				if not styling.show_replay then 0
+				else replay_text_computations[get_rules_box_style()][card.card_type].width()
+			}
+		height: { max(10, replay_text_height()) }
+		visible: { sp_specs.is_enabled() }
+		z index: 16
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		alignment: middle left justify
+		font:
+			name: Vagabond
+			italic name: Vagabond Condensed Italic
+			size: { card_font_size }
+			weight: normal
+			color:
+				script:
+					sp_specs.color
+			shadow color: { sp_specs.shadow_color }
+			shadow displacement x: 0
+			shadow displacement y: 0
+			shadow blur: 3
+		symbol font:
+			name: weiss2-symbols-sp
+			size: 12
+	default artist name:
+		top: { artist_name_compute.top() }
+		left: { artist_name_compute.left() }
+		height: 18
+		width: { artist_name_compute.width() }
+		z index: 20
+		visible: { card.artist_name == "" }
+		angle: { artist_name_compute.angle() }
+		alignment: top center stretch if-overflow
+		font:
+			name: Open Sans Condensed
+			size: 6
+			weight: bold
+			color:
+				{
+					if get_side() == "weiss" then rgb(122,122,39)
+					else if get_side() == "schwarz" then rgb(244,244,0)
+					else rgb(244,244,0)
+				}
+	# JP Name Bar
+	japbar:
+		left: { other_name_bar_locations[card.card_type].left }
+		bottom: { other_name_bar_locations[card.card_type].bottom }
+		width: { other_name_bar_locations[card.card_type].width }
+		height: { other_name_bar_locations[card.card_type].height }
+		z index: 17
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		angle:
+			{
+				if card.card_type == "character" or card.card_type == "event" then 0
+				else if card.card_type == "climax" then 270
+			}
+		render style: image
+		visible: { styling.card_meta_type == "JP/EN import" }
+		choice images:
+			Yellow: bars\jp_name_bar\other\yellow.png
+			Blue: bars\jp_name_bar\other\blue.png
+			Red: bars\jp_name_bar\other\red.png
+			Green: bars\jp_name_bar\other\green.png
+			Purple: bars\jp_name_bar\other\purple.png
+			default: { card_jp_name_color_bar(bar_type: other_name_bar_locations[card.card_type].type) }

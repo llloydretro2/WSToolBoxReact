@@ -1454,17 +1454,38 @@ Match Schema 变更：移除 `tournamentName`，新增 `goesFirst: Boolean`、`t
 
   ### 实现计划
 
-  **Phase 1 — 角色卡渲染（核心）**
-  - 文件：`src/pages/CardMaker.jsx` + `src/utils/wsCardMaker/renderer.js` + `src/utils/wsCardMaker/layout.js`
-  - 卡片数据模型：type / side / color / level / cost / power / souls / trigger / backup / name / trait1 / trait2 / effect / flavor / art(dataURL)
-  - 字体通过 `@font-face` 加载 `public/assets/card-maker/font/` 中的 TTF/OTF
-  - 效果文本内联符号：解析 `{ACT}` 等标记 → 从 `symbolMap.json` 查路径 → Canvas `drawImage` 嵌入行内
-  - UI：左栏输入（选择器 + 数值 + 文字域 + 卡图上传拖拽）/ 右栏 Canvas 实时预览 / 底部导出 PNG 按钮
+  ### 当前实现状态（2026-06-01，Phase 1 完成）
 
-  **Phase 2 — 事件卡 / 高潮卡**
-  - 框架已有，逻辑比角色卡简单（事件卡无魂/trigger 变体；高潮卡旋转 + 无等级/费用/攻击力）
+  **文件**
+  - `src/pages/CardMaker.jsx` — 页面 UI
+  - `src/utils/wsCardMaker/renderer.js` — Canvas 渲染引擎
+  - `src/utils/wsCardMaker/layout.js` — 坐标常量 + 路径生成器
 
-  **暂不实现**：SP/foil 闪卡效果、卡背、卡序号印刷风格
+  **已实现功能**
+
+  | 模块 | 状态 |
+  |------|------|
+  | 角色卡框架渲染（weiss/schwarz/both × 5色 × 魂数 × trigger变体） | ✅ |
+  | 卡图上传 + 遮罩裁剪（mask2.png 亮度转 alpha） | ✅ |
+  | 卡图拖拽平移（鼠标 + 单指触摸） | ✅ |
+  | 卡图捏合/滚轮缩放（+− 按钮 + 双指捏合 + 滚轮） | ✅ |
+  | 等级/费用/Trigger/Backup 图标叠加 | ✅ |
+  | 特征边框（on/off 三段式） | ✅ |
+  | 效果文本背景（whitebar.png 垂直拉伸） | ✅ |
+  | 效果文本渲染（字符级换行，支持中文） | ✅ |
+  | 风味文字渲染（Souvenir LT，效果文本上方） | ✅ |
+  | 卡名/攻击力/特征/卡号/画师名文字 | ✅ |
+  | FontFace 加载（Agfa Rotis / Vagabond / Warnock Pro / Open Sans） | ✅ |
+  | 白色底层（填充框架圆角透明区域） | ✅ |
+  | PNG 导出（448×626px） | ✅ |
+
+  **Canvas 图层顺序**：白底 → 遮罩卡图 → 框架 → 等级/费用/Backup/Trigger → 特征边框 → 文字背景（whitebar）→ 效果/风味文字 → 其他文字 → 保护层
+
+  **已知待优化（暂缓）**
+  - 效果文本内联符号（`{ACT}` `{AUTO}` 等→小图标）
+  - 事件卡 / 高潮卡（Phase 2，框架素材已备）
+  - 文字区域精细调校（底部坐标、各文字间距）
+  - SP/foil 闪卡效果（暂不做）
 
 - ~~**首页组件拆分**~~：✅ 完成（2026-06-01）。`SectionCard` / `RecentUpdates` 已抽离至 `src/components/home/`，`Home.jsx` 从 368 行缩减至 ~90 行。
 - **`siteStructure.js` 约束强化**：继续把 `src/config/siteStructure.js` 作为单一数据源。下一步可补充轻量校验或更清晰的 helper/JSDoc，检查 nav item 是否有 `labelKey/path`、legacy redirect 目标是否仍存在、auth-only 工具是否被 Home/NavBar 正确过滤。目标是减少”移动一个工具但漏改首页/导航/跳转”的风险。

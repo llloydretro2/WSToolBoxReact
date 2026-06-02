@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useLocale } from "../contexts/LocaleContext.jsx";
-import { Upload, Download, RefreshCw, X } from "lucide-react";
+import { Upload, Download, RefreshCw, X, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { renderCard, ensureFonts } from "../utils/wsCardMaker/renderer.js";
 import { CARD_W, CARD_H } from "../utils/wsCardMaker/layout.js";
 
@@ -70,9 +70,10 @@ const BACKUP_OPTIONS = [
 
 export default function CardMaker() {
   useLocale();
-  const [card, setCard]         = useState(DEFAULT_CARD);
+  const [card, setCard]           = useState(DEFAULT_CARD);
   const [rendering, setRendering] = useState(false);
-  const [artURL, setArtURL]     = useState(null);
+  const [artURL, setArtURL]       = useState(null);
+  const [artTransform, setArtTransform] = useState({ scale: 1, offsetX: 0, offsetY: 0 });
   const canvasRef  = useRef(null);
   const fileRef    = useRef(null);
   const renderTimer = useRef(null);
@@ -88,6 +89,7 @@ export default function CardMaker() {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
     });
+    setArtTransform({ scale: 1, offsetX: 0, offsetY: 0 });
   }, []);
 
   const clearArt = useCallback(() => {
@@ -104,7 +106,7 @@ export default function CardMaker() {
       if (!canvasRef.current) return;
       setRendering(true);
       try {
-        await renderCard(canvasRef.current, { ...card, art: artURL });
+        await renderCard(canvasRef.current, { ...card, art: artURL, artTransform });
       } finally {
         setRendering(false);
       }
@@ -114,6 +116,23 @@ export default function CardMaker() {
 
   // Cleanup object URL on unmount
   useEffect(() => () => { if (artURL) URL.revokeObjectURL(artURL); }, [artURL]);
+
+  // Re-render when transform changes
+  useEffect(() => {
+    if (!artURL) return;
+    clearTimeout(renderTimer.current);
+    renderTimer.current = setTimeout(async () => {
+      if (!canvasRef.current) return;
+      setRendering(true);
+      try {
+        await renderCard(canvasRef.current, { ...card, art: artURL, artTransform });
+      } finally {
+        setRendering(false);
+      }
+    }, 50);
+    return () => clearTimeout(renderTimer.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [artTransform]);
 
   const handleExport = () => {
     if (!canvasRef.current) return;
@@ -343,15 +362,13 @@ export default function CardMaker() {
               onChange={e => handleArtFile(e.target.files[0])} />
 
             {artURL ? (
-              <div className="relative">
-                <img src={artURL} alt="卡图预览"
-                  className="w-full max-h-48 object-cover rounded-xl border border-[var(--border)]" />
-                <button onClick={clearArt}
-                  className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white
-                             flex items-center justify-center hover:bg-black/80 transition-colors">
-                  <X size={12} />
-                </button>
-              </div>
+              <ArtEditor
+                artURL={artURL}
+                transform={artTransform}
+                onTransformChange={setArtTransform}
+                onClear={clearArt}
+                onReplace={() => fileRef.current.click()}
+              />
             ) : (
               <div
                 onDrop={e => { e.preventDefault(); handleArtFile(e.dataTransfer.files[0]); }}
@@ -412,6 +429,166 @@ export default function CardMaker() {
 
 NumberField.propTypes = { label: PropTypes.string, value: PropTypes.number, min: PropTypes.number, max: PropTypes.number, step: PropTypes.number, onChange: PropTypes.func, wide: PropTypes.bool };
 TextField.propTypes   = { label: PropTypes.string, value: PropTypes.string, onChange: PropTypes.func, placeholder: PropTypes.string };
+ArtEditor.propTypes   = { artURL: PropTypes.string, transform: PropTypes.object, onTransformChange: PropTypes.func, onClear: PropTypes.func, onReplace: PropTypes.func };
+
+// ── Art Editor (drag to pan, scroll/buttons to zoom) ──────────────────────────
+
+const PREVIEW_W = 200;
+const PREVIEW_H = Math.round(PREVIEW_W * CARD_H / CARD_W); // 280px
+
+function ArtEditor({ artURL, transform, onTransformChange, onClear, onReplace }) {
+  const { scale, offsetX, offsetY } = transform;
+  const [imgSize, setImgSize] = useState({ w: 1, h: 1 });
+  const dragRef = useRef(null);
+
+  // Compute display transform matching canvas cover logic
+  const coverScale = Math.max(PREVIEW_W / imgSize.w, PREVIEW_H / imgSize.h);
+  const dispScale  = coverScale * scale;
+  const dispW = imgSize.w * dispScale;
+  const dispH = imgSize.h * dispScale;
+  // offset is stored in canvas-space (448×626); convert to preview-space
+  const previewRatio = PREVIEW_W / CARD_W;
+  const dispX = (PREVIEW_W - dispW) / 2 + offsetX * previewRatio;
+  const dispY = (PREVIEW_H - dispH) / 2 + offsetY * previewRatio;
+
+  const zoom = useCallback((delta) => {
+    onTransformChange(prev => ({ ...prev, scale: Math.max(0.3, Math.min(8, prev.scale + delta)) }));
+  }, [onTransformChange]);
+
+  // Mouse: scroll to zoom
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    zoom(e.deltaY < 0 ? 0.1 : -0.1);
+  }, [zoom]);
+
+  // Mouse: drag to pan
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, ox: offsetX, oy: offsetY };
+
+    const onMove = (ev) => {
+      const dx = (ev.clientX - dragRef.current.startX) / previewRatio;
+      const dy = (ev.clientY - dragRef.current.startY) / previewRatio;
+      onTransformChange(prev => ({ ...prev,
+        offsetX: dragRef.current.ox + dx,
+        offsetY: dragRef.current.oy + dy,
+      }));
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [offsetX, offsetY, onTransformChange, previewRatio]);
+
+  // Touch: single finger pan, two finger pinch-zoom
+  const handleTouchStart = useCallback((e) => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      dragRef.current = { type: 'pan', startX: t.clientX, startY: t.clientY, ox: offsetX, oy: offsetY };
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      dragRef.current = { type: 'pinch', startDist: Math.hypot(dx, dy), startScale: scale };
+    }
+  }, [offsetX, offsetY, scale]);
+
+  const handleTouchMove = useCallback((e) => {
+    e.preventDefault();
+    if (!dragRef.current) return;
+    if (dragRef.current.type === 'pan' && e.touches.length === 1) {
+      const t = e.touches[0];
+      const dx = (t.clientX - dragRef.current.startX) / previewRatio;
+      const dy = (t.clientY - dragRef.current.startY) / previewRatio;
+      onTransformChange(prev => ({ ...prev,
+        offsetX: dragRef.current.ox + dx,
+        offsetY: dragRef.current.oy + dy,
+      }));
+    } else if (dragRef.current.type === 'pinch' && e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.hypot(dx, dy);
+      const newScale = Math.max(0.3, Math.min(8, dragRef.current.startScale * (dist / dragRef.current.startDist)));
+      onTransformChange(prev => ({ ...prev, scale: newScale }));
+    }
+  }, [onTransformChange, previewRatio]);
+
+  const handleTouchEnd = useCallback(() => {
+    dragRef.current = null;
+  }, []);
+
+  // Attach non-passive touch listeners directly (React synthetic events can't preventDefault on passive handlers)
+  const previewRef = useRef(null);
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    el.addEventListener('touchstart', handleTouchStart, { passive: false });
+    el.addEventListener('touchmove',  handleTouchMove,  { passive: false });
+    el.addEventListener('touchend',   handleTouchEnd,   { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart);
+      el.removeEventListener('touchmove',  handleTouchMove);
+      el.removeEventListener('touchend',   handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
+
+  return (
+    <div className="flex flex-col gap-2">
+      {/* Preview + interaction area */}
+      <div
+        ref={previewRef}
+        className="relative overflow-hidden rounded-xl border border-[var(--border)] cursor-grab active:cursor-grabbing select-none"
+        style={{ width: PREVIEW_W, height: PREVIEW_H }}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}>
+        <img
+          src={artURL}
+          alt="卡图"
+          onLoad={e => setImgSize({ w: e.target.naturalWidth, h: e.target.naturalHeight })}
+          draggable={false}
+          style={{
+            position: 'absolute',
+            width: dispW, height: dispH,
+            left: dispX, top: dispY,
+            pointerEvents: 'none',
+          }}
+        />
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => zoom(0.15)}
+          className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)]
+                     hover:bg-[var(--card-background)] hover:text-[var(--text)] transition-colors">
+          <ZoomIn size={14} />
+        </button>
+        <button type="button" onClick={() => zoom(-0.15)}
+          className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)]
+                     hover:bg-[var(--card-background)] hover:text-[var(--text)] transition-colors">
+          <ZoomOut size={14} />
+        </button>
+        <button type="button"
+          onClick={() => onTransformChange({ scale: 1, offsetX: 0, offsetY: 0 })}
+          className="p-1.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)]
+                     hover:bg-[var(--card-background)] hover:text-[var(--text)] transition-colors">
+          <RotateCcw size={14} />
+        </button>
+        <span className="text-[11px] text-[var(--text-muted)] ml-1">{Math.round(scale * 100)}%</span>
+        <div className="flex-1" />
+        <button type="button" onClick={onReplace}
+          className="text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors">
+          换图
+        </button>
+        <button type="button" onClick={onClear}
+          className="p-1 text-[var(--text-muted)] hover:text-red-500 transition-colors">
+          <X size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function NumberField({ label, value, min, max, step = 1, onChange, wide }) {
   return (
