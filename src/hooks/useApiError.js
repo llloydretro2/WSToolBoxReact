@@ -1,29 +1,29 @@
 import { useState, useCallback } from "react";
 import { useAuth } from "../contexts/auth.jsx";
+import { useLocale } from "../contexts/LocaleContext";
 
 export const useApiError = () => {
 	const [error, setError] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const { logout } = useAuth();
+	const { t } = useLocale();
 
 	const handleError = useCallback(
 		(error) => {
 			console.error("API Error:", error);
 
-			// 如果是认证错误，自动登出
 			if (
 				error.message.includes("认证已过期") ||
 				error.message.includes("401")
 			) {
 				logout();
-				setError("登录已过期，请重新登录");
+				setError(t("errors.authExpired"));
 				return;
 			}
 
-			// 设置错误消息
-			setError(error.message || "操作失败，请重试");
+			setError(error.message || t("errors.requestFailed"));
 		},
-		[logout]
+		[logout, t]
 	);
 
 	const clearError = useCallback(() => {

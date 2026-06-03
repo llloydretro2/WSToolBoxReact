@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useRef, useState } from "r
 import PropTypes from "prop-types";
 import { useLocation } from "react-router-dom";
 import { apiRequest } from "../utils/api";
+import { useLocale } from "./LocaleContext";
 
 const EMPTY_PRODUCT_LIST = {};
 const EMPTY_TRANSLATION_MAP = {};
@@ -28,6 +29,7 @@ const INITIAL_STATE = {
 
 export const OptionsProvider = ({ children }) => {
 	const { pathname } = useLocation();
+	const { t } = useLocale();
 	const hasFetchedRef = useRef(false);
 
 	const [productList, setProductList] = useState(INITIAL_STATE.productList);
@@ -63,8 +65,8 @@ export const OptionsProvider = ({ children }) => {
 				hasFetchedRef.current = true;
 			} catch (err) {
 				if (!active) return;
-				console.error("加载后台选项数据失败", err);
-				setOptionsError(err.message || "加载下拉数据失败");
+				console.error("OptionsContext fetch failed", err);
+				setOptionsError(err.message || t("errors.optionsLoadFailed"));
 			} finally {
 				if (active) setOptionsLoading(false);
 			}
@@ -74,7 +76,7 @@ export const OptionsProvider = ({ children }) => {
 		return () => {
 			active = false;
 		};
-	}, [isWsRoute]);
+	}, [isWsRoute, t]);
 
 	return (
 		<OptionsContext.Provider

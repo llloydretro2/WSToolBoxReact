@@ -30,7 +30,13 @@
     "language": {
       "zh": "Chinese",
       "en": "English"
-    }
+    },
+    "loading": "Loading…"
+  },
+  "errors": {
+    "authExpired": "Session expired, please log in again",
+    "requestFailed": "Request failed, please try again",
+    "optionsLoadFailed": "Failed to load options"
   },
   "navbar": {
     "avatarTooltip": "Open profile menu",
@@ -66,7 +72,8 @@
       "tools": {
         "name": "General Tools",
         "desc": "Reusable helpers for tabletop and match play."
-      }
+      },
+      "toolCount": "{{count}} tools"
     },
     "firstSecond": {
       "title": "First/Second",
@@ -204,9 +211,15 @@
     }
   },
   "dice": {
+    "title": "Dice",
+    "subtitle": "Roll multiple dice groups at once and see results instantly",
     "labelFaces": "Faces",
     "labelCount": "Count",
-    "labelTotal": "Total"
+    "labelTotal": "Total",
+    "rollButton": "Roll",
+    "addButton": "Add Dice",
+    "resetButton": "Reset",
+    "resultsTitle": "Roll Results"
   },
   "chessClock": {
     "title": "Chess Clock",
@@ -228,11 +241,19 @@
     "dialogConfirm": "Reset Now"
   },
   "shuffle": {
+    "title": "Random Shuffle",
+    "subtitle": "Generate randomised deck groups — total pips always sum to 50",
+    "generateButton": "Generate",
+    "clearButton": "Clear",
+    "decreaseButton": "Each −1",
+    "summaryEmpty": "No deck generated yet",
+    "cardCaption": "cards",
     "statGroups": "Groups",
     "statTotal": "Total pts",
     "emptyHint": "Click \"Generate\" to start"
   },
   "record": {
+    "title": "Match Records",
     "weekdays": [
       "Sun",
       "Mon",
@@ -243,6 +264,171 @@
       "Sat"
     ],
     "addButton": "Add",
+    "resetMyInfo": "Reset my info",
+    "resetOpponentInfo": "Reset opponent info",
+    "tabs": {
+      "create": "Create",
+      "query": "History"
+    },
+    "form": {
+      "myInfo": "My Side",
+      "myDeckName": "My Deck Name",
+      "mySeries": "My Series",
+      "opponentInfo": "Opponent",
+      "opponentDeckName": "Opponent Deck Name",
+      "opponentSeries": "Opponent Series",
+      "resultLabel": "Result",
+      "result": {
+        "win": "Win",
+        "lose": "Lose",
+        "doubleLose": "Double Loss"
+      },
+      "goesFirst": {
+        "label": "Turn Order",
+        "first": "First",
+        "second": "Second",
+        "unset": "Unset"
+      },
+      "tagsLabel": "Tags",
+      "notes": "Notes",
+      "submitButton": "Submit",
+      "resetButton": "Reset form",
+      "refreshButton": "Refresh",
+      "startDate": "Start date",
+      "endDate": "End date"
+    },
+    "filter": {
+      "all": "All",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "custom": "Custom"
+    },
+    "search": {
+      "placeholder": "Search deck, series, notes, tags…"
+    },
+    "display": {
+      "noRecords": "No match records yet",
+      "startFirst": "Create your first record above",
+      "noFilterResults": "No matching records",
+      "clearFilter": "Clear filter",
+      "loadMore": "Load more ({{current}} / {{total}})",
+      "myDeck": "My Deck",
+      "opponentDeck": "Opponent Deck",
+      "unknownDeck": "Unknown",
+      "unknownSeries": "Unknown Series",
+      "notesLabel": "Note: ",
+      "deleteTooltip": "Delete"
+    },
+    "stats": {
+      "totalLabel": "Total",
+      "winsLabel": "Wins",
+      "lossesLabel": "Losses",
+      "winRateLabel": "Win Rate",
+      "analysisLabel": "Analysis",
+      "analysisTitle": "Match Analysis",
+      "tabForm": "Form",
+      "tabMySeries": "My Side",
+      "tabOpponentSeries": "Opponent",
+      "tabMatchup": "Matrix",
+      "tabTags": "Tags",
+      "tabDeck": "Decks",
+      "recentFormTitle": "Recent Form",
+      "recentFormDesc": "Last 15 match results (left = earliest, right = latest)",
+      "streakWin": "{{count}}-game win streak",
+      "streakLose": "{{count}}-game losing streak",
+      "streakDraw": "{{count}}-game draw streak",
+      "longestStreak": "Best streak: {{count}} wins",
+      "basicSection": "Basic Stats",
+      "trendTitle": "Win Rate Trend",
+      "trendMonth": "Monthly",
+      "trendWeek": "Weekly",
+      "trendNotEnough": "Not enough data — at least 2 time periods required",
+      "goesFirstTitle": "First / Second Win Rate",
+      "matchesUnit": "games",
+      "mySeriesDesc": "Win rate breakdown by my series",
+      "opponentSeriesDesc": "Win rate breakdown by opponent series",
+      "tagsDesc": "Win rate breakdown by tag",
+      "deckDesc": "Breakdown by my series + deck name — click to filter",
+      "seriesBreakdownTitle": "Breakdown",
+      "sortByTotal": "Games",
+      "sortByWinRateDesc": "Win Rate↓",
+      "sortByWinRateAsc": "Win Rate↑",
+      "sortByWinsDesc": "Wins↓",
+      "sortByWinsAsc": "Wins↑",
+      "matchupTitle": "Matchup Matrix",
+      "matchupDesc": "Row: my series · Column: opponent series · Cell shows win rate",
+      "matchupLegend": "Low",
+      "exportPNG": "Export PNG",
+      "deckFilterLabel": "Deck Filter",
+      "gamesCount": "{{count}}g",
+      "close": "Close"
+    },
+    "edit": {
+      "title": "Edit Record",
+      "cancel": "Cancel",
+      "confirm": "Save",
+      "button": "Edit",
+      "success": "Record updated",
+      "error": "Update failed"
+    },
+    "deleteDialog": {
+      "title": "Delete Record",
+      "content": "This action cannot be undone. Are you sure you want to delete this record?",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    },
+    "resetDialog": {
+      "title": "Reset Form",
+      "content": "Are you sure you want to clear all fields?",
+      "cancel": "Cancel",
+      "confirm": "Reset"
+    },
+    "rename": {
+      "button": "Bulk Rename",
+      "title": "Bulk Rename",
+      "subtitle": "Replace all matching records with a new value",
+      "field": "Field",
+      "fields": {
+        "playerDeckName": "My Deck",
+        "opponentDeckName": "Opponent Deck",
+        "playerSeries": "My Series",
+        "opponentSeries": "Opponent Series"
+      },
+      "oldValue": "Old Value",
+      "oldPlaceholder": "Current value to replace",
+      "newValue": "New Value",
+      "newPlaceholder": "New replacement value",
+      "cancel": "Cancel",
+      "confirm": "Apply",
+      "success": "{{count}} records updated",
+      "error": "Bulk rename failed"
+    },
+    "tags": {
+      "panelButton": "Manage Tags",
+      "panelTitle": "Tags",
+      "inputPlaceholder": "New tag name",
+      "empty": "No tags yet",
+      "yes": "Confirm",
+      "no": "Cancel",
+      "confirmDelete": "Delete \"{{name}}\"?",
+      "existsError": "Tag already exists",
+      "createError": "Failed to create tag",
+      "deleteSuccess": "Tag deleted",
+      "deleteError": "Failed to delete tag",
+      "renameSuccess": "Tag renamed",
+      "renameError": "Rename failed"
+    },
+    "export": {
+      "button": "Export Stats Card",
+      "title": "Select Export Modules",
+      "cancel": "Cancel",
+      "preview": "Preview",
+      "back": "Back",
+      "save": "Save Image"
+    },
+    "charts": {
+      "noData": "No data available"
+    },
     "exportModules": {
       "overview": "Win/Loss Overview",
       "streak": "Current Streak",
@@ -260,6 +446,7 @@
     "cardLabels": {
       "overview": "Win/Loss Overview",
       "bestStreak": "Best Win Streak",
+      "bestDeck": "Best Win Rate Deck",
       "goesFirst": "First/Second Win Rate",
       "first": "First",
       "second": "Second"
@@ -408,7 +595,9 @@
   },
   "pickPacks": {
     "unitPack": "packs",
-    "selectedLabel": "Selected:"
+    "selectedLabel": "Selected:",
+    "selectionStatus": "{{count}} packs selected",
+    "waitingSelection": "Pending"
   },
   "enCardList": {
     "title": "EN Card Search",
@@ -479,7 +668,8 @@
       "bottom_flip_count": "Bottom Flip CX Count",
       "top_remove_cx": "Top X Remove CX",
       "cancel_return": "Cancel X Non-CX Return",
-      "return_cx": "Shuffle X Non-CX Back"
+      "return_cx": "Shuffle X Non-CX Back",
+      "attack": "Attack"
     },
     "stepDesc": {
       "mainDmg": "Main",
@@ -498,11 +688,17 @@
       "returnNonCx": "On cancel return",
       "notEnough": "non-CX to deck (all if fewer)",
       "fromGrave": "Shuffle",
-      "backToDeck": "non-CX back to deck (all if fewer)"
+      "backToDeck": "non-CX back to deck (all if fewer)",
+      "baseDmg": "Base",
+      "triggerRate": "Trigger",
+      "triggerBonus": "% → +"
     },
     "calculate": "Calculate Kill Rate",
     "calculating": "Calculating…",
     "killRate": "Kill Rate",
+    "killRateDesc": "Probability opponent reaches Level 4 this turn",
+    "expectedDmg": "Expected Damage",
+    "expectedDmgUnit": "cards into clock",
     "sequence": "Damage Sequence",
     "clearAll": "Clear",
     "emptyHint": "Click above to add damage steps",
@@ -515,7 +711,39 @@
     "healthState": "Health",
     "unitCard": "cards",
     "unitClimax": "CX",
-    "nCards": "{{n}} cards"
+    "nCards": "{{n}} cards",
+    "modeSingle": "Single Sequence",
+    "modePerm": "Order Analysis",
+    "modeVar": "Variable Search",
+    "calcError": "Calculation error",
+    "var": {
+      "title": "Variable Definitions",
+      "addVar": "Add Variable",
+      "noVars": "Click the button to add a variable",
+      "range": "Range",
+      "to": "to",
+      "analyze": "Find Optimal",
+      "analyzing": "Searching…",
+      "simCount": "{{n}} simulations",
+      "resultTitle": "Variable Search Results",
+      "best": "Best Solution",
+      "showAll": "Show all {{n}}",
+      "emptyHint": "Define variables, reference them in steps, and add steps to at least one group"
+    },
+    "perm": {
+      "group": "Group {{label}}",
+      "groupEmpty": "Click above to add steps for this group",
+      "clearGroup": "Clear",
+      "addGroup": "Add Group",
+      "analyze": "Analyze All Orderings",
+      "analyzing": "Analyzing…",
+      "resultTitle": "Order Analysis Results",
+      "best": "Best Order",
+      "permCount": "{{n}} orderings",
+      "emptyHint": "Add at least one step to any group",
+      "vsWorst": "better than worst"
+    },
+    "unitTimes": "×"
   },
   "cardMaker": {
     "title": "Card Maker",
@@ -583,6 +811,23 @@
       "custom": "Custom",
       "customSub": "Fill in all parameters manually"
     },
-    "sectionPresets": "Box Format"
+    "sectionPresets": "Box Format",
+    "noMatch": "No results",
+    "cardsLoaded": "{{count}} cards loaded",
+    "rarityCount": "{{count}} rarities",
+    "boxCount": "Boxes to Simulate",
+    "simSummary": "{{packs}} packs · {{cards}} cards simulated",
+    "standardRarity": "Standard Rarities (per box)",
+    "highRarity": "High Rarity",
+    "highRarityHint": "Enter frequency — e.g. 1 per 2 boxes or 2 per 1 box. Leave blank to exclude from simulation.",
+    "colRarity": "Rarity",
+    "colCardsPerBox": "Per Box",
+    "colTypeCount": "Types",
+    "typeCountUnit": "{{count}} types",
+    "perBoxHeader": "X cards per X boxes",
+    "unitPer": "per",
+    "unitBox": "box",
+    "unitCard": "",
+    "packCountSuffix": " ({{count}} packs)"
   }
 }

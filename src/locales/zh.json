@@ -30,7 +30,13 @@
     "language": {
       "zh": "中文",
       "en": "English"
-    }
+    },
+    "loading": "正在加载…"
+  },
+  "errors": {
+    "authExpired": "登录已过期，请重新登录",
+    "requestFailed": "操作失败，请重试",
+    "optionsLoadFailed": "加载选项数据失败"
   },
   "navbar": {
     "avatarTooltip": "打开个人菜单",
@@ -66,7 +72,8 @@
       "tools": {
         "name": "通用工具",
         "desc": "适合多种桌游和对战场景的辅助工具。"
-      }
+      },
+      "toolCount": "{{count}} 个工具"
     },
     "firstSecond": {
       "title": "先后攻",
@@ -204,9 +211,15 @@
     }
   },
   "dice": {
+    "title": "骰子",
+    "subtitle": "多组骰子同时投掷，结果即时显示",
     "labelFaces": "面数",
     "labelCount": "数量",
-    "labelTotal": "总计"
+    "labelTotal": "总计",
+    "rollButton": "投骰",
+    "addButton": "添加骰子",
+    "resetButton": "重置",
+    "resultsTitle": "投骰结果"
   },
   "chessClock": {
     "title": "棋钟",
@@ -228,11 +241,19 @@
     "dialogConfirm": "立即重置"
   },
   "shuffle": {
+    "title": "随机洗牌",
+    "subtitle": "生成随机牌堆分组，每次生成总点数固定为50",
+    "generateButton": "生成牌堆",
+    "clearButton": "清除",
+    "decreaseButton": "每组 -1",
+    "summaryEmpty": "暂无牌堆",
+    "cardCaption": "张",
     "statGroups": "组数",
     "statTotal": "总点数",
     "emptyHint": "点击「生成牌堆」开始"
   },
   "record": {
+    "title": "对战记录",
     "weekdays": [
       "日",
       "一",
@@ -243,6 +264,172 @@
       "六"
     ],
     "addButton": "添加",
+    "resetMyInfo": "重置我方信息",
+    "resetOpponentInfo": "重置对手信息",
+    "tabs": {
+      "create": "创建",
+      "query": "查询"
+    },
+    "form": {
+      "myInfo": "我方",
+      "myDeckName": "我方卡组名",
+      "mySeries": "我方系列",
+      "opponentInfo": "对手",
+      "opponentDeckName": "对手卡组名",
+      "opponentSeries": "对手系列",
+      "resultLabel": "对战结果",
+      "result": {
+        "win": "胜",
+        "lose": "败",
+        "doubleLose": "双败"
+      },
+      "goesFirst": {
+        "label": "先後攻",
+        "first": "先攻",
+        "second": "後攻",
+        "unset": "未设置"
+      },
+      "tagsLabel": "标签",
+      "notes": "备注",
+      "submitButton": "提交记录",
+      "resetButton": "重置表单",
+      "refreshButton": "刷新",
+      "startDate": "开始日期",
+      "endDate": "结束日期"
+    },
+    "filter": {
+      "all": "全部",
+      "last7": "近7天",
+      "last30": "近30天",
+      "custom": "自定义"
+    },
+    "search": {
+      "placeholder": "搜索卡组名、系列、备注、标签…"
+    },
+    "display": {
+      "noRecords": "暂无对战记录",
+      "startFirst": "先去创建一条记录吧",
+      "noFilterResults": "没有匹配的记录",
+      "clearFilter": "清除筛选",
+      "loadMore": "加载更多（{{current}} / {{total}}）",
+      "myDeck": "我方卡组",
+      "opponentDeck": "对手卡组",
+      "unknownDeck": "未填写",
+      "unknownSeries": "未知系列",
+      "notesLabel": "备注：",
+      "deleteTooltip": "删除"
+    },
+    "stats": {
+      "totalLabel": "总场数",
+      "winsLabel": "胜",
+      "lossesLabel": "败",
+      "winRateLabel": "胜率",
+      "analysisLabel": "分析",
+      "analysisTitle": "战绩分析",
+      "tabForm": "走势",
+      "tabMySeries": "我方",
+      "tabOpponentSeries": "对手",
+      "tabMatchup": "矩阵",
+      "tabTags": "赛事",
+      "tabDeck": "卡组",
+      "recentFormTitle": "近期状态",
+      "recentFormDesc": "最近15场对战结果（从左到右：最早 → 最新）",
+      "streakWin": "{{count}} 连胜",
+      "streakLose": "{{count}} 连败",
+      "streakDraw": "{{count}} 连平",
+      "longestStreak": "历史最长 {{count}} 连胜",
+      "basicSection": "基础统计",
+      "trendTitle": "胜率走势",
+      "trendMonth": "月",
+      "trendWeek": "周",
+      "trendNotEnough": "数据不足，至少需要2个时间段",
+      "goesFirstTitle": "先後攻胜率",
+      "matchesUnit": "场",
+      "mySeriesDesc": "按我方系列分组的胜率统计",
+      "opponentSeriesDesc": "按对手系列分组的胜率统计",
+      "tagsDesc": "按标签分组的胜率统计",
+      "deckDesc": "按我方系列+卡组名分组，点击可筛选",
+      "seriesBreakdownTitle": "分类统计",
+      "sortByTotal": "场数",
+      "sortByWinRateDesc": "胜率↓",
+      "sortByWinRateAsc": "胜率↑",
+      "sortByWinsDesc": "胜场↓",
+      "sortByWinsAsc": "胜场↑",
+      "matchupTitle": "对阵矩阵",
+      "matchupDesc": "行：我方系列 · 列：对手系列 · 格内显示胜率",
+      "matchupLegend": "低胜率",
+      "exportPNG": "导出 PNG",
+      "deckFilterLabel": "卡组筛选",
+      "gamesCount": "{{count}}场",
+      "close": "关闭",
+      "longestStreak": "最长 {{count}} 连胜"
+    },
+    "edit": {
+      "title": "编辑记录",
+      "cancel": "取消",
+      "confirm": "保存",
+      "button": "编辑",
+      "success": "记录已更新",
+      "error": "更新失败"
+    },
+    "deleteDialog": {
+      "title": "确认删除",
+      "content": "此操作不可撤销，确定要删除这条记录吗？",
+      "cancel": "取消",
+      "confirm": "删除"
+    },
+    "resetDialog": {
+      "title": "重置表单",
+      "content": "确定要清空所有已填写的内容吗？",
+      "cancel": "取消",
+      "confirm": "确认重置"
+    },
+    "rename": {
+      "button": "批量重命名",
+      "title": "批量重命名",
+      "subtitle": "将所有匹配旧值的记录统一替换为新值",
+      "field": "字段",
+      "fields": {
+        "playerDeckName": "我方卡组",
+        "opponentDeckName": "对手卡组",
+        "playerSeries": "我方系列",
+        "opponentSeries": "对手系列"
+      },
+      "oldValue": "旧值",
+      "oldPlaceholder": "要替换的原始值",
+      "newValue": "新值",
+      "newPlaceholder": "替换后的新值",
+      "cancel": "取消",
+      "confirm": "确认替换",
+      "success": "已更新 {{count}} 条记录",
+      "error": "批量重命名失败"
+    },
+    "tags": {
+      "panelButton": "标签管理",
+      "panelTitle": "标签",
+      "inputPlaceholder": "新标签名称",
+      "empty": "暂无标签",
+      "yes": "确认",
+      "no": "取消",
+      "confirmDelete": "确认删除「{{name}}」？",
+      "existsError": "标签已存在",
+      "createError": "创建标签失败",
+      "deleteSuccess": "标签已删除",
+      "deleteError": "删除标签失败",
+      "renameSuccess": "标签已重命名",
+      "renameError": "重命名失败"
+    },
+    "export": {
+      "button": "导出战绩卡片",
+      "title": "选择导出模块",
+      "cancel": "取消",
+      "preview": "预览",
+      "back": "返回",
+      "save": "保存图片"
+    },
+    "charts": {
+      "noData": "暂无数据"
+    },
     "exportModules": {
       "overview": "总战绩",
       "streak": "当前连胜/连败",
@@ -252,11 +439,15 @@
       "bestDeck": "胜率最高卡组",
       "hardest": "最难/最容易对手",
       "tagStats": "标签战绩 Top3",
+      "hardestOpp": "最难对手",
+      "easiestOpp": "最容易对手",
+      "topTags": "标签战绩 Top3",
       "trend": "近期走势图"
     },
     "cardLabels": {
       "overview": "总战绩",
       "bestStreak": "历史最长连胜",
+      "bestDeck": "胜率最高卡组",
       "goesFirst": "先手/後手胜率",
       "first": "先手",
       "second": "後手"
@@ -405,7 +596,9 @@
   },
   "pickPacks": {
     "unitPack": "包",
-    "selectedLabel": "选中："
+    "selectedLabel": "选中：",
+    "selectionStatus": "已选中 {{count}} 包",
+    "waitingSelection": "待选择"
   },
   "enCardList": {
     "title": "EN 卡牌查询",
@@ -476,7 +669,8 @@
       "bottom_flip_count": "翻底潮数单伤",
       "top_remove_cx": "看X顶送潮入墓",
       "cancel_return": "取消后X洗回卡组",
-      "return_cx": "洗X非潮回卡组"
+      "return_cx": "洗X非潮回卡组",
+      "attack": "攻击"
     },
     "stepDesc": {
       "mainDmg": "主伤",
@@ -495,11 +689,17 @@
       "returnNonCx": "取消后从休息室回",
       "notEnough": "张非潮入库（不足取全部）",
       "fromGrave": "从休息室洗",
-      "backToDeck": "张非潮回卡组（不足取全部）"
+      "backToDeck": "张非潮回卡组（不足取全部）",
+      "baseDmg": "基础",
+      "triggerRate": "触发率",
+      "triggerBonus": "% 时伤害 +"
     },
     "calculate": "计算斩杀率",
     "calculating": "计算中…",
     "killRate": "斩杀率",
+    "killRateDesc": "对手本回合升至 Level 4 的概率",
+    "expectedDmg": "期望伤害",
+    "expectedDmgUnit": "张进入血量",
     "sequence": "伤害序列",
     "clearAll": "清空",
     "emptyHint": "点击上方按钮添加伤害步骤",
@@ -512,7 +712,39 @@
     "healthState": "血量状态",
     "unitCard": "张",
     "unitClimax": "高潮",
-    "nCards": "{{n}} 张"
+    "nCards": "{{n}} 张",
+    "modeSingle": "单序列",
+    "modePerm": "排列分析",
+    "modeVar": "变量推算",
+    "calcError": "计算出错",
+    "var": {
+      "title": "变量定义",
+      "addVar": "添加变量",
+      "noVars": "点击右侧按钮添加变量",
+      "range": "范围",
+      "to": "到",
+      "analyze": "推算最优解",
+      "analyzing": "推算中…",
+      "simCount": "共 {{n}} 次模拟",
+      "resultTitle": "变量推算结果",
+      "best": "最优解",
+      "showAll": "显示全部 {{n}} 条",
+      "emptyHint": "请先定义变量并在步骤中引用，然后至少为一个组添加步骤"
+    },
+    "perm": {
+      "group": "组 {{label}}",
+      "groupEmpty": "点击上方添加此组的伤害步骤",
+      "clearGroup": "清空",
+      "addGroup": "添加组",
+      "analyze": "分析所有排列",
+      "analyzing": "分析中…",
+      "resultTitle": "排列分析结果",
+      "best": "最优顺序",
+      "permCount": "共 {{n}} 种排列",
+      "emptyHint": "请至少为一个组添加伤害步骤",
+      "vsWorst": "优于最差排列"
+    },
+    "unitTimes": "次"
   },
   "cardMaker": {
     "title": "卡片制作",
@@ -580,6 +812,23 @@
       "custom": "自定义",
       "customSub": "手动填写所有参数"
     },
-    "sectionPresets": "版本规格"
+    "sectionPresets": "版本规格",
+    "noMatch": "无匹配结果",
+    "cardsLoaded": "已加载 {{count}} 张",
+    "rarityCount": "{{count}} 种稀有度",
+    "boxCount": "模拟箱数",
+    "simSummary": "共模拟 {{packs}} 包 · {{cards}} 张",
+    "standardRarity": "标配稀有度（每箱张数）",
+    "highRarity": "高稀有度",
+    "highRarityHint": "填写出现频率——例如「每 2 箱 1 张」或「每 1 箱 2 张」，不填则不计入模拟。",
+    "colRarity": "稀有度",
+    "colCardsPerBox": "每箱张数",
+    "colTypeCount": "种类数",
+    "typeCountUnit": "{{count}} 种",
+    "perBoxHeader": "每 X 箱 X 张",
+    "unitPer": "每",
+    "unitBox": "箱",
+    "unitCard": "张",
+    "packCountSuffix": "（{{count}} 包）"
   }
 }

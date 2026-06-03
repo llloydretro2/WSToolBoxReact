@@ -493,6 +493,42 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### 伤害计算器大幅扩展 (2026-06-03 session 41)
+
+全部改动集中在 `src/pages/DamageCalculator.jsx` + locale 文件，**引擎零改动**。
+
+#### 新增：排列分析模式（第一 tab）
+
+用户定义 N 个伤害组（默认 3 组，最多 5 组），每组可含多个步骤。系统枚举所有 N! 排列，每种排列调用 `simulate()`，按斩杀率降序排名。
+
+- **GroupPanel**：复用同一组件，各组独立步骤管理
+- **结果区**：最优顺序摘要（斩杀率大字 + 期望伤害）+ 排名列表（顺序 / 期望张数 / 差值 / 斩杀率）
+- `useGroupState()` 自定义 hook 提取，排列/变量模式各自实例化，互不干扰
+
+#### 新增：变量推算模式（第二 tab）
+
+在排列分析基础上引入命名变量，枚举 **变量值笛卡尔积 × 所有排列** 的全组合，找出全局最优（变量值 + 出手顺序）。
+
+- **变量定义区（VariableDefPanel）**：最多 5 个变量，各有名称（如 X）+ 范围 [min, max]
+- **StepInput 变量 chip**：变量定义后，每个数值输入旁出现对应变量名 chip；点击 chip 切换为变量引用（显示彩色徽章），再次点击复原为数字
+- **计算层**：`cartesianProduct()` 枚举变量值组合，`resolveStep()` 在每次 trial 前替换变量引用；自适应 trials：`max(20k, min(100k, 3M / 总模拟次数))`
+- **结果区（VariableResultPanel）**：最优解摘要（变量值 + 顺序 + 斩杀率 + 期望伤害）+ 排名列表，超 20 条折叠
+
+#### 新增：攻击步骤模板
+
+`attack`：基础 n 点 + 触发率 X% 时伤害 +Y 点。引擎层用 `VARIABLE_DAMAGE`（`nFn: () => Math.random() < prob ? base + bonusDmg : base`），每次 trial 独立随机，走正常取消判定。
+
+#### 结果区改善
+
+- 斩杀率和期望伤害并排为两个大数字卡片，斩杀率下方加说明文字（"对手本回合升至 Level 4 的概率"）
+- 排列分析 / 变量推算的每行结果均展示期望伤害
+
+#### 进度条
+
+排列分析和变量推算模式的同步单循环改为**递归 `setTimeout` 异步分块**：每完成一次 `simulate()` 调用后 yield 给 UI，更新 `progress` state（0→100%），`ProgressBar` 组件实时渲染进度条 + 百分比。单序列模式不变（1次调用，无需进度条）。
+
+---
+
 ### NavBar 横向滚动升级 & 杂项 (2026-06-02 session 40)
 
 - **桌面端导航横向滚动**：`NavBar.jsx` 中央 nav 区域改为 `overflow-x:auto`，CSS `mask-image` 渐变淡出边缘，`‹`/`›` 箭头仅在有溢出时出现，路由切换时激活项自动 `scrollIntoView`。对所有分区生效，溢出才激活，Mahjong/Tools 无感知。

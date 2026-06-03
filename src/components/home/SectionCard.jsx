@@ -1,11 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-export default function SectionCard({ section, t, locale, onNavigate }) {
+export default function SectionCard({ section, t, locale: _locale, onNavigate }) {
 	const { Icon, accent, path, toolItems, homeImage } = section;
-	const toolCountLabel = locale === "zh"
-		? `${toolItems.length} 个工具`
-		: `${toolItems.length} tool${toolItems.length !== 1 ? "s" : ""}`;
+	const toolCountLabel = t("pages.home.toolCount").replace("{{count}}", toolItems.length);
 
 	return (
 		<div

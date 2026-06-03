@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect } from "react";
+import { useLocale } from "./contexts/LocaleContext";
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -37,11 +38,14 @@ const MahjongEfficiency = lazy(() => import("./pages/MahjongEfficiency.jsx"));
 const MahjongCentrepiece = lazy(() => import("./pages/MahjongCentrepiece.jsx"));
 
 
-const LoadingFallback = () => (
-	<div className="flex items-center justify-center min-h-[40vh] text-base font-semibold text-[var(--text-muted)]">
-		正在加载…
-	</div>
-);
+const LoadingFallback = () => {
+	const { t } = useLocale();
+	return (
+		<div className="flex items-center justify-center min-h-[40vh] text-base font-semibold text-[var(--text-muted)]">
+			{t("common.loading")}
+		</div>
+	);
+};
 
 const withPageTransition = (Component) => (
 	<PageTransition>

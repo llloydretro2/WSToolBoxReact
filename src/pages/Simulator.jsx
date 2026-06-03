@@ -109,6 +109,7 @@ const PRESETS = [
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function ProductCombobox({ value, onChange, options, placeholder }) {
+	const { t } = useLocale();
 	const [query, setQuery] = useState("");
 	const filtered = query === "" ? options : options.filter((o) => o.toLowerCase().includes(query.toLowerCase()));
 	return (
@@ -134,7 +135,7 @@ function ProductCombobox({ value, onChange, options, placeholder }) {
 				<Combobox.Options anchor={{ to: "bottom start", gap: 4 }}
 					className="z-[9999] w-[var(--input-width)] border border-[var(--border)] rounded-xl bg-white shadow-lg max-h-64 overflow-auto">
 					{filtered.length === 0 ? (
-						<div className="px-3 py-2 text-sm text-[var(--text-muted)]">无匹配结果</div>
+						<div className="px-3 py-2 text-sm text-[var(--text-muted)]">{t("simulator.noMatch")}</div>
 					) : filtered.map((opt) => (
 						<Combobox.Option key={opt} value={opt}
 							className={({ active, selected }) =>
@@ -185,7 +186,7 @@ function CardDetailModal({ card, onClose, t }) {
 				<div className="px-5 pb-4 flex justify-end">
 					<button onClick={onClose}
 						className="px-4 py-2 rounded-xl text-sm font-bold bg-[var(--text-muted)] text-white hover:bg-[var(--text-secondary)] transition-colors">
-						关闭
+						{t("close")}
 					</button>
 				</div>
 			</div>
@@ -421,8 +422,8 @@ export default function SimulatorV2() {
 							<>
 								<span className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]" />
 								<span className="text-xs text-[var(--text-secondary)]">
-									已加载 <strong className="text-[var(--text)]">{cards.length}</strong> 张
-									{Object.keys(rarityMap).length > 0 && <> · <strong className="text-[var(--text)]">{Object.keys(rarityMap).length}</strong> 种稀有度</>}
+									{t("simulator.cardsLoaded").replace("{{count}}", cards.length)}
+									{Object.keys(rarityMap).length > 0 && <> · {t("simulator.rarityCount").replace("{{count}}", Object.keys(rarityMap).length)}</>}
 								</span>
 							</>
 						)}
@@ -463,7 +464,7 @@ export default function SimulatorV2() {
 						</div>
 					))}
 					<div className="flex flex-col gap-1">
-						<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">模拟箱数</span>
+						<span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wide">{t("simulator.boxCount")}</span>
 						<div className="flex items-center border border-[var(--border)] rounded-lg overflow-hidden">
 							<button type="button" onClick={() => setNumBoxes(Math.max(1, numBoxes - 1))}
 								className="w-8 h-8 flex items-center justify-center text-[var(--text-secondary)] hover:bg-[var(--card-background)] transition-colors font-bold text-lg">−</button>
@@ -474,21 +475,21 @@ export default function SimulatorV2() {
 					</div>
 				</div>
 				<p className="text-[11px] text-[var(--text-muted)]">
-					共模拟 <strong className="text-[var(--text)]">{numBoxes * packsPerBox}</strong> 包 · <strong className="text-[var(--text)]">{numBoxes * packsPerBox * cardsPerPack}</strong> 张
+					{t("simulator.simSummary").replace("{{packs}}", numBoxes * packsPerBox).replace("{{cards}}", numBoxes * packsPerBox * cardsPerPack)}
 				</p>
 			</div>
 
 			{/* Panel 3: Standard rarity counts */}
 			{standardRarities.length > 0 && (
 				<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md mb-4">
-					<SectionEyebrow label="标配稀有度（每箱张数）" />
+					<SectionEyebrow label={t("simulator.standardRarity")} />
 					<div className="overflow-x-auto">
 						<table className="w-full text-sm">
 							<thead>
 								<tr className="border-b border-[var(--border)]">
-									<th className="text-left text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 pr-4">稀有度</th>
-									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-center">每箱张数</th>
-									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-left">种类数</th>
+									<th className="text-left text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 pr-4">{t("simulator.colRarity")}</th>
+									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-center">{t("simulator.colCardsPerBox")}</th>
+									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-left">{t("simulator.colTypeCount")}</th>
 									<th className="pb-2 w-8" />
 								</tr>
 							</thead>
@@ -503,7 +504,7 @@ export default function SimulatorV2() {
 												className="w-16 text-center bg-transparent border border-[var(--border)] rounded-lg px-2 py-1 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
 											/>
 										</td>
-										<td className="py-2 px-2 text-xs text-[var(--text-muted)]">{rarityMap[rarity]?.length ?? 0} 种</td>
+										<td className="py-2 px-2 text-xs text-[var(--text-muted)]">{t("simulator.typeCountUnit").replace("{{count}}", rarityMap[rarity]?.length ?? 0)}</td>
 										<td className="py-2 pl-2">
 											<button type="button" onClick={() => setBoxCounts((p) => ({ ...p, [rarity]: "" }))}
 												className="text-[var(--text-muted)] hover:text-[var(--reset)] transition-colors">
@@ -521,17 +522,17 @@ export default function SimulatorV2() {
 			{/* Panel 4: Ultra-rare rates */}
 			{ultraRarities.length > 0 && (
 				<div className="border border-[var(--border)] rounded-2xl p-5 bg-white/70 backdrop-blur-md mb-4">
-					<SectionEyebrow label="高稀有度" />
+					<SectionEyebrow label={t("simulator.highRarity")} />
 					<p className="text-xs text-[var(--text-muted)] mb-4">
-						填写出现频率——例如「每 2 箱 1 张」或「每 1 箱 2 张」，不填则不计入模拟。
+						{t("simulator.highRarityHint")}
 					</p>
 					<div className="overflow-x-auto">
 						<table className="w-full text-sm">
 							<thead>
 								<tr className="border-b border-[var(--border)]">
-									<th className="text-left text-[10px] font-black tracking-widests uppercase text-[var(--text-muted)] pb-2 pr-4">稀有度</th>
-									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-center" colSpan={3}>每 X 箱 X 张</th>
-									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-left">种类数</th>
+									<th className="text-left text-[10px] font-black tracking-widests uppercase text-[var(--text-muted)] pb-2 pr-4">{t("simulator.colRarity")}</th>
+									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-center" colSpan={3}>{t("simulator.perBoxHeader")}</th>
+									<th className="text-[10px] font-black tracking-widest uppercase text-[var(--text-muted)] pb-2 px-2 text-left">{t("simulator.colTypeCount")}</th>
 									<th className="pb-2 w-8" />
 								</tr>
 							</thead>
@@ -541,7 +542,7 @@ export default function SimulatorV2() {
 									return (
 										<tr key={rarity} className="border-b border-[var(--border)] last:border-0">
 											<td className="py-2 pr-4 font-bold text-[var(--text)] whitespace-nowrap">{rarity}</td>
-											<td className="py-2 pl-2 pr-1 text-xs text-[var(--text-muted)] whitespace-nowrap">每</td>
+											<td className="py-2 pl-2 pr-1 text-xs text-[var(--text-muted)] whitespace-nowrap">{t("simulator.unitPer")}</td>
 											<td className="py-2 px-1">
 												<input type="number" min={1} placeholder="—"
 													value={rate.boxes ?? ""}
@@ -551,16 +552,16 @@ export default function SimulatorV2() {
 											</td>
 											<td className="py-2 px-1">
 												<div className="flex items-center gap-1">
-													<span className="text-xs text-[var(--text-muted)] whitespace-nowrap">箱</span>
+													<span className="text-xs text-[var(--text-muted)] whitespace-nowrap">{t("simulator.unitBox")}</span>
 													<input type="number" min={1} placeholder="—"
 														value={rate.count ?? ""}
 														onChange={(e) => setUltraRates((p) => ({ ...p, [rarity]: { ...p[rarity], count: e.target.value } }))}
 														className="w-14 text-center bg-transparent border border-[var(--border)] rounded-lg px-2 py-1 text-sm text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--text-muted)] transition-colors"
 													/>
-													<span className="text-xs text-[var(--text-muted)]">张</span>
+													<span className="text-xs text-[var(--text-muted)]">{t("simulator.unitCard")}</span>
 												</div>
 											</td>
-											<td className="py-2 px-2 text-xs text-[var(--text-muted)]">{rarityMap[rarity]?.length ?? 0} 种</td>
+											<td className="py-2 px-2 text-xs text-[var(--text-muted)]">{t("simulator.typeCountUnit").replace("{{count}}", rarityMap[rarity]?.length ?? 0)}</td>
 											<td className="py-2 pl-2">
 												<button type="button"
 													onClick={() => setUltraRates((p) => ({ ...p, [rarity]: { boxes: "", count: "" } }))}
@@ -611,7 +612,7 @@ export default function SimulatorV2() {
 								return (
 									<div key={rarity}>
 										<p className="text-xs font-black text-[var(--text-secondary)] mb-2">
-											{rarity} <span className="text-[var(--text-muted)] font-medium">({rarityCards.length} 张)</span>
+											{rarity} <span className="text-[var(--text-muted)] font-medium">({rarityCards.length}{t("simulator.unitCard") ? " " + t("simulator.unitCard") : ""})</span>
 										</p>
 										<div className="flex flex-wrap gap-2">
 											{grouped.map(({ card, count }, i) => (
@@ -637,7 +638,7 @@ export default function SimulatorV2() {
 						<button type="button" onClick={() => setPackDetailOpen((v) => !v)}
 							className="w-full flex items-center justify-between px-5 py-4 hover:bg-[var(--card-background)] transition-colors">
 							<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-								{t("pages.simulator.detailedResults")}（{simulatedPacks.length} 包）
+								{t("pages.simulator.detailedResults")}{t("simulator.packCountSuffix").replace("{{count}}", simulatedPacks.length)}
 							</span>
 							<ChevronDown size={14} className={`text-[var(--text-muted)] transition-transform duration-200 ${packDetailOpen ? "rotate-180" : ""}`} />
 						</button>

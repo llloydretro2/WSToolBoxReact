@@ -509,7 +509,33 @@ const { t } = useLocale();
 t("deck.cardCount", { count: 50 })
 ```
 
-When adding UI text, add keys to **both** locale files.
+### 硬编码中文禁止规则
+
+**实现或修复任何页面时，不得在 JSX / JS 中硬编码中文字符串。** 所有用户可见的文字必须通过 `t()` 访问，并在两个 locale 文件中同时添加对应键值。
+
+```jsx
+// ❌ 禁止
+<button>确认</button>
+setError("操作失败，请重试");
+
+// ✅ 正确
+<button>{t("common.confirm")}</button>
+setError(t("errors.requestFailed"));
+```
+
+**新增 locale 键的流程：**
+1. 在 `zh.json` 添加中文值
+2. 在 `en.json` 添加对应英文值（两个文件必须保持键结构完全一致）
+3. 在组件中使用 `t("key")`
+
+**例外（不需要走 locale）：**
+- 麻将页面已有的 `locale === 'zh' ? ... : ...` 内联双语模式（历史遗留，新增内容也建议改用 `t()`）
+- WS 专有术语（Soul、Gate、Shot 等国际通用词）
+- `alt=""` 等纯辅助属性（对最终用户不可见）
+- `console.log` / `console.error` 等开发调试输出
+- `throw new Error(...)` 中的内部错误标识符（不直接渲染到 UI）
+
+**When adding UI text, add keys to **both** locale files.**
 
 ## Mobile / Capacitor
 
