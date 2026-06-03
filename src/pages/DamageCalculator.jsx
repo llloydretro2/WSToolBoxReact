@@ -510,11 +510,11 @@ export default function DamageCalculator() {
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">{t("damage.deckState")}</p>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
-							<NumInput value={deckTotal} onChange={v => { setDeckTotal(v); clearAll(); }} max={60} />
+							<NumInput value={deckTotal} onChange={v => { setDeckTotal(v); clearAll(); }} max={50} />
 							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<NumInput value={deckCX} onChange={v => { setDeckCX(Math.min(v, deckTotal)); clearAll(); }} max={deckTotal} />
+							<NumInput value={deckCX} onChange={v => { setDeckCX(Math.min(v, deckTotal, 8)); clearAll(); }} max={Math.min(deckTotal, 8)} />
 							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
 						</div>
 					</div>
@@ -523,11 +523,11 @@ export default function DamageCalculator() {
 					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">{t("damage.restState")}</p>
 					<div className="flex flex-col gap-2">
 						<div className="flex items-center gap-2">
-							<NumInput value={restTotal} onChange={v => { setRestTotal(v); clearAll(); }} max={60} />
+							<NumInput value={restTotal} onChange={v => { setRestTotal(v); clearAll(); }} max={50} />
 							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<NumInput value={restCX} onChange={v => { setRestCX(Math.min(v, restTotal)); clearAll(); }} max={restTotal} />
+							<NumInput value={restCX} onChange={v => { setRestCX(Math.min(v, restTotal, 8)); clearAll(); }} max={Math.min(restTotal, 8)} />
 							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
 						</div>
 					</div>
@@ -1168,12 +1168,29 @@ function L({ children }) { return <span className="text-xs text-[var(--text-mute
 L.propTypes = { children: PropTypes.node };
 
 function NumInput({ value, onChange, min = 0, max = 99 }) {
+	const [draft, setDraft] = useState(String(value));
+
+	useEffect(() => { setDraft(String(value)); }, [value]);
+
+	const commit = (raw) => {
+		const n = parseInt(raw, 10);
+		const clamped = isNaN(n) ? min : Math.max(min, Math.min(max, n));
+		setDraft(String(clamped));
+		if (clamped !== value) onChange(clamped);
+	};
+
 	return (
-		<input type="number" value={value} min={min} max={max}
-			onChange={e => onChange(Math.max(min, Math.min(max, parseInt(e.target.value) || 0)))}
+		<input
+			type="text"
+			inputMode="numeric"
+			value={draft}
+			onChange={e => setDraft(e.target.value)}
+			onBlur={e => commit(e.target.value)}
+			onKeyDown={e => { if (e.key === "Enter") commit(e.target.value); }}
 			className="w-full border border-solid border-[var(--border)] rounded-lg px-2 py-1.5
 			           text-sm text-[var(--text)] bg-transparent focus:outline-none
-			           focus:border-[var(--text-muted)] transition-colors text-center" />
+			           focus:border-[var(--text-muted)] transition-colors text-center"
+		/>
 	);
 }
 NumInput.propTypes = { value: PropTypes.number, onChange: PropTypes.func, min: PropTypes.number, max: PropTypes.number };

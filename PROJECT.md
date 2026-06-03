@@ -527,6 +527,18 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 排列分析和变量推算模式的同步单循环改为**递归 `setTimeout` 异步分块**：每完成一次 `simulate()` 调用后 yield 给 UI，更新 `progress` state（0→100%），`ProgressBar` 组件实时渲染进度条 + 百分比。单序列模式不变（1次调用，无需进度条）。
 
+#### 输入体验 & 字段上限
+
+- **NumInput draft 模式**：对手状态区数值输入改为 draft 本地态，blur / Enter 时才 validate（parse + clamp），用户可自由清空后重新输入，不再因实时 clamp 卡死
+- **字段上限**：牌库/弃牌堆张数 max=50，高潮 max=min(总张数, 8)，血量 max=6，等级 max=3
+
+#### i18n 补全（全站）
+
+- 修复 record / dice / shuffle / pickPacks 等 150+ 缺失 locale key
+- 消除 App.jsx、SectionCard、useApiError、OptionsContext、Simulator 硬编码中文，改用 `t()`
+- zh / en 两文件键结构完全对称（各 665 key，零差异）
+- CLAUDE.md 新增"硬编码中文禁止"规范及例外清单
+
 ---
 
 ### NavBar 横向滚动升级 & 杂项 (2026-06-02 session 40)
