@@ -541,6 +541,42 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 
 ---
 
+### 伤害计算器 UI 深度迭代 (2026-06-04 session 42)
+
+全部改动集中在 `src/pages/DamageCalculator.jsx` + locale 文件，引擎零改动。
+
+#### 步骤卡片排版规范化
+
+- 提取 `Lbl`（行首标签）/ `Sub`（静态说明副文字）两个 layout helper
+- 纯文字说明行（`top_remove_cx`、`bottom_flip_count`）改为 `<Sub>` 副标题
+- `return_cx` / `cancel_return` 长尾文字截短，`<Sub>不足则取全部</Sub>` 单独一行
+- `bottom_flip` 行二前置标签 "张" 改为语义正确的 "每"
+- `attack` 触发率行拆为两行：触发率 % + 触发时 + bonus
+- 行首标签统一改用 `<Lbl>`；相关 locale keys 更新（`triggerBonus`、`triggerThen`、`every` 等）
+
+#### 变量下拉菜单重设计
+
+- 废弃内联 chip（随变量数膨胀破坏布局）
+- 改为 `VarDropdown`：`fx ▾` 触发按钮 + 自定义下拉面板
+- **关键**：用 `createPortal` 渲染到 `document.body` + `position: fixed` + `getBoundingClientRect()`，完全绕过 `backdrop-blur-md` / `overflow-hidden` stacking context 裁剪问题
+- CLAUDE.md 写入约定：禁止原生 `<select>`，含 backdrop-filter 祖先时必须用 portal
+
+#### 变量功能扩展
+
+- 变量上限 5 → **10**
+- `triggerRate`、`times` 加入变量支持（全部步骤数值字段均可绑定变量）
+- 对手状态 6 个字段（牌库张数/高潮、休息室张数/高潮、等级、血量）在变量模式下支持 `fx` 绑定
+- `buildInitial(varValues)` 支持变量值解析，变量模式下每组合独立重建初始状态
+
+#### 对手状态区重构
+
+- 布局演进：3 高卡片 → 单卡 6 字段网格 → **最终：3 个独立容器 `grid-cols-3`**（牌库 / 休息室 / 血量状态）
+- "弃墓" / "弃牌堆" 全面改为 **"休息室"**（zh.json + en.json 同步）
+- 字段标签在组内上下文中简化：数量 / 高潮
+- `StateField` 新 helper 组件：小标题 + `NumInput` + 单位 inline
+
+---
+
 ### NavBar 横向滚动升级 & 杂项 (2026-06-02 session 40)
 
 - **桌面端导航横向滚动**：`NavBar.jsx` 中央 nav 区域改为 `overflow-x:auto`，CSS `mask-image` 渐变淡出边缘，`‹`/`›` 箭头仅在有溢出时出现，路由切换时激活项自动 `scrollIntoView`。对所有分区生效，溢出才激活，Mahjong/Tools 无感知。

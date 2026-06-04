@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { Plus, Trash2, ChevronUp, ChevronDown, Play, Loader2, Copy, X } from "lucide-react";
 import { simulate } from "../utils/wsDamage/simulator.js";
@@ -263,14 +264,23 @@ export default function DamageCalculator() {
 	const [error,    setError]    = useState(null);
 	const [progress, setProgress] = useState(0); // 0-100, only used in perm/var modes
 
-	const buildInitial = useCallback(() => {
-		const deckN = Math.max(0, deckTotal - deckCX);
-		const restN = Math.max(0, restTotal - restCX);
+	// varValues resolves string variable references in opponent state fields
+	const buildInitial = useCallback((varValues = {}) => {
+		const res = (v, fallback) =>
+			typeof v === "string" ? (varValues[v] ?? fallback) : (typeof v === "number" ? v : fallback);
+		const dt = res(deckTotal,  20);
+		const dc = res(deckCX,      3);
+		const rt = res(restTotal,  10);
+		const rc = res(restCX,      4);
+		const cc = res(clockCount,  0);
+		const ol = res(opLevel,     2);
+		const deckN = Math.max(0, dt - dc);
+		const restN = Math.max(0, rt - rc);
 		return {
-			deck:  buildSimpleDeck({ characters: deckN,  climaxes: deckCX }),
-			rest:  buildSimpleDeck({ characters: restN,  climaxes: restCX }),
-			clock: Array.from({ length: clockCount }, () => makeCharacter()),
-			level: Array.from({ length: opLevel   }, () => makeCharacter()),
+			deck:  buildSimpleDeck({ characters: deckN, climaxes: Math.min(dc, dt) }),
+			rest:  buildSimpleDeck({ characters: restN, climaxes: Math.min(rc, rt) }),
+			clock: Array.from({ length: Math.min(cc, 6) }, () => makeCharacter()),
+			level: Array.from({ length: Math.min(ol, 3) }, () => makeCharacter()),
 		};
 	}, [deckTotal, deckCX, restTotal, restCX, clockCount, opLevel]);
 
@@ -375,7 +385,7 @@ export default function DamageCalculator() {
 
 	const addVariable = useCallback(() => {
 		setVariables(prev => {
-			if (prev.length >= 5) return prev;
+			if (prev.length >= 10) return prev;
 			const defaultNames = ["X", "Y", "Z", "W", "V"];
 			const used = new Set(prev.map(v => v.name));
 			const name = defaultNames.find(n => !used.has(n)) ?? `V${prev.length + 1}`;
@@ -408,7 +418,6 @@ export default function DamageCalculator() {
 			setError(t("damage.var.emptyHint")); return;
 		}
 
-		const initial   = buildInitial();
 		const perms     = permutations(active.map((_, i) => i));
 		const varRanges = variables.map(v => {
 			const vals = [];
@@ -438,6 +447,8 @@ export default function DamageCalculator() {
 			}
 			try {
 				const { varValues, perm } = tasks[idx];
+				// Rebuild initial per combo to support opponent-state variables
+				const initial = buildInitial(varValues);
 				const sequence = perm.flatMap(gi =>
 					active[gi].steps.flatMap(s => stepToOps(resolveStep(s, varValues)))
 				);
@@ -505,45 +516,47 @@ export default function DamageCalculator() {
 			</div>
 
 			{/* ── Opponent State (shared) ─────────────────────────────────── */}
+			{/* ── Opponent State — 3 independent cards ── */}
 			<div className="grid grid-cols-3 gap-3 mb-4">
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">{t("damage.deckState")}</p>
-					<div className="flex flex-col gap-2">
-						<div className="flex items-center gap-2">
-							<NumInput value={deckTotal} onChange={v => { setDeckTotal(v); clearAll(); }} max={50} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
-						</div>
-						<div className="flex items-center gap-2">
-							<NumInput value={deckCX} onChange={v => { setDeckCX(Math.min(v, deckTotal, 8)); clearAll(); }} max={Math.min(deckTotal, 8)} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
-						</div>
-					</div>
+				{/* 牌库 */}
+				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
+					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+						{t("damage.deckState")}
+					</p>
+					<StateField label={t("damage.labelDeckCards")} value={deckTotal} max={50}
+						unit={t("damage.unitCard")}
+						onChange={v => { setDeckTotal(v); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
+					<StateField label={t("damage.labelDeckCX")} value={deckCX}
+						max={typeof deckTotal === "number" ? Math.min(deckTotal, 8) : 8}
+						onChange={v => { setDeckCX(typeof v === "string" ? v : Math.min(v, typeof deckTotal === "number" ? deckTotal : Infinity, 8)); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
 				</div>
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">{t("damage.restState")}</p>
-					<div className="flex flex-col gap-2">
-						<div className="flex items-center gap-2">
-							<NumInput value={restTotal} onChange={v => { setRestTotal(v); clearAll(); }} max={50} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitCard")}</span>
-						</div>
-						<div className="flex items-center gap-2">
-							<NumInput value={restCX} onChange={v => { setRestCX(Math.min(v, restTotal, 8)); clearAll(); }} max={Math.min(restTotal, 8)} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.unitClimax")}</span>
-						</div>
-					</div>
+				{/* 休息室 */}
+				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
+					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+						{t("damage.restState")}
+					</p>
+					<StateField label={t("damage.labelRestCards")} value={restTotal} max={50}
+						unit={t("damage.unitCard")}
+						onChange={v => { setRestTotal(v); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
+					<StateField label={t("damage.labelRestCX")} value={restCX}
+						max={typeof restTotal === "number" ? Math.min(restTotal, 8) : 8}
+						onChange={v => { setRestCX(typeof v === "string" ? v : Math.min(v, typeof restTotal === "number" ? restTotal : Infinity, 8)); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
 				</div>
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-3">{t("damage.healthState")}</p>
-					<div className="flex flex-col gap-2">
-						<div className="flex items-center gap-2">
-							<NumInput value={opLevel} onChange={v => { setOpLevel(Math.min(v, 3)); clearAll(); }} max={3} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.levelLabel")}</span>
-						</div>
-						<div className="flex items-center gap-2">
-							<NumInput value={clockCount} onChange={v => { setClockCount(Math.min(v, 6)); clearAll(); }} max={6} />
-							<span className="text-xs text-[var(--text-muted)] shrink-0">{t("damage.clockLabel")}</span>
-						</div>
-					</div>
+				{/* 血量状态 */}
+				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
+					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+						{t("damage.healthState")}
+					</p>
+					<StateField label={t("damage.levelLabel")} value={opLevel} max={3}
+						onChange={v => { setOpLevel(typeof v === "string" ? v : Math.min(v, 3)); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
+					<StateField label={t("damage.clockLabel")} value={clockCount} max={6}
+						onChange={v => { setClockCount(typeof v === "string" ? v : Math.min(v, 6)); clearAll(); }}
+						variables={mode === "variable" ? varNames : []} />
 				</div>
 			</div>
 
@@ -700,7 +713,7 @@ function VariableDefPanel({ variables, onAdd, onRemove, onUpdate, t }) {
 				<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
 					{t("damage.var.title")}
 				</p>
-				{variables.length < 5 && (
+				{variables.length < 10 && (
 					<button onClick={onAdd}
 						className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full
 						           border border-[var(--border)] text-[var(--text-secondary)]
@@ -1099,54 +1112,73 @@ function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate, s
 			</div>
 
 			<div className="flex flex-col gap-1.5 pl-6">
+
+				{/* 直接伤害 */}
 				{step.type === "direct" && (
-					<Row>{SI("n")}<L>{sd("dmgPts")}</L></Row>
+					<Row><Lbl>{sd("dealDmg")}</Lbl>{SI("n")}<L>{sd("pts")}</L></Row>
 				)}
+
+				{/* 取消追加 */}
 				{step.type === "cancel" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("mainDmg")}</span>{SI("n")}<L>{sd("pts")}</L></Row>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("cancelThen")}</span>{SI("m")}<L>{sd("pts")}</L>
-						<StepInput value={step.times ?? 1} onChange={v => onUpdate(step.id, "times", v)} max={8} /><L>{sd("times")}</L>
+					<Row><Lbl>{sd("mainDmg")}</Lbl>{SI("n")}<L>{sd("pts")}</L></Row>
+					<Row><Lbl>{sd("cancelThen")}</Lbl>{SI("m")}<L>{sd("pts")}</L>
+						<L>×</L><StepInput value={step.times ?? 1} onChange={v => onUpdate(step.id, "times", v)} max={8} variables={variables} /><L>{sd("times")}</L>
 					</Row>
 				</>)}
+
+				{/* 看X顶送潮入墓 */}
 				{step.type === "top_remove_cx" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("lookTop")}</span>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
-					<Row><L>{sd("sendCxToGrave")}</L></Row>
+					<Row><Lbl>{sd("lookTop")}</Lbl>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
+					<Sub>{sd("sendCxToGrave")}</Sub>
 				</>)}
+
+				{/* 翻底潮数单伤 */}
 				{step.type === "bottom_flip_count" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
-					<Row><L>{sd("singleCxDmg")}</L></Row>
+					<Row><Lbl>{sd("flipBottom")}</Lbl>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
+					<Sub>{sd("singleCxDmg")}</Sub>
 				</>)}
+
+				{/* 翻底有潮打X */}
 				{step.type === "bottom_flip_any" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("ifCx")}</span>{SI("dmg")}<L>{sd("dmgPts")}</L></Row>
+					<Row><Lbl>{sd("flipBottom")}</Lbl>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
+					<Row><Lbl>{sd("ifCx")}</Lbl>{SI("dmg")}<L>{sd("dmgPts")}</L></Row>
 				</>)}
-				{step.type === "return_cx" && (
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("fromGrave")}</span>{SI("n", { max: 8 })}<L>{sd("backToDeck")}</L></Row>
-				)}
+
+				{/* 洗X非潮回卡组 */}
+				{step.type === "return_cx" && (<>
+					<Row><Lbl>{sd("fromGrave")}</Lbl>{SI("n", { max: 8 })}<L>{sd("backToDeck")}</L></Row>
+					<Sub>{sd("takeFull")}</Sub>
+				</>)}
+
+				{/* 取消后X洗回卡组 */}
 				{step.type === "cancel_return" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("mainDmg")}</span>{SI("n")}<L>{sd("pts")}</L></Row>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("returnNonCx")}</span>{SI("y", { max: 20 })}<L>{sd("notEnough")}</L></Row>
+					<Row><Lbl>{sd("mainDmg")}</Lbl>{SI("n")}<L>{sd("pts")}</L></Row>
+					<Row><Lbl>{sd("returnNonCx")}</Lbl>{SI("y", { max: 20 })}<L>{sd("notEnough")}</L></Row>
+					<Sub>{sd("takeFull")}</Sub>
 				</>)}
+
+				{/* 翻底X潮次伤害 */}
 				{step.type === "bottom_flip" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("flipBottom")}</span>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("cards")}</span>
+					<Row><Lbl>{sd("flipBottom")}</Lbl>{SI("n", { max: 15 })}<L>{sd("cards")}</L></Row>
+					<Row><Lbl>{sd("every")}</Lbl>
 						<StepInput value={step.perClimax ?? 1} onChange={v => onUpdate(step.id, "perClimax", v)} max={typeof step.n === "number" ? step.n : 15} variables={variables} />
 						<L>{sd("perCx")}</L>
 					</Row>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("dealDmg")}</span>{SI("dmg")}<L>{sd("dmgPts")}</L>
-						<StepInput value={step.times ?? 1} onChange={v => onUpdate(step.id, "times", v)} max={8} /><L>{sd("times")}</L>
+					<Row><Lbl>{sd("dealDmg")}</Lbl>{SI("dmg")}<L>{sd("dmgPts")}</L>
+						<L>×</L><StepInput value={step.times ?? 1} onChange={v => onUpdate(step.id, "times", v)} max={8} variables={variables} /><L>{sd("times")}</L>
 					</Row>
 				</>)}
+
+				{/* 攻击 */}
 				{step.type === "attack" && (<>
-					<Row><span className="text-xs text-[var(--text-secondary)]">{sd("baseDmg")}</span>{SI("n")}<L>{sd("pts")}</L></Row>
-					<Row>
-						<span className="text-xs text-[var(--text-secondary)]">{sd("triggerRate")}</span>
-						<StepInput value={step.triggerRate ?? 50} onChange={v => onUpdate(step.id, "triggerRate", v)} min={1} max={100} />
+					<Row><Lbl>{sd("baseDmg")}</Lbl>{SI("n")}<L>{sd("pts")}</L></Row>
+					<Row><Lbl>{sd("triggerRate")}</Lbl>
+						<StepInput value={step.triggerRate ?? 50} onChange={v => onUpdate(step.id, "triggerRate", v)} min={1} max={100} variables={variables} />
 						<L>{sd("triggerBonus")}</L>
-						{SI("bonusDmg")}
-						<L>{sd("pts")}</L>
 					</Row>
+					<Row><Lbl>{sd("triggerThen")}</Lbl>{SI("bonusDmg")}<L>{sd("pts")}</L></Row>
 				</>)}
+
 			</div>
 		</div>
 	);
@@ -1161,16 +1193,50 @@ StepCard.propTypes = {
 
 // ── Layout helpers ─────────────────────────────────────────────────────────────
 
+// ── StateField — compact label + input cell for opponent state grid ───────────
+function StateField({ label, value, onChange, min = 0, max = 99, unit, variables = [] }) {
+	return (
+		<div className="flex flex-col gap-1.5">
+			<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+				{label}
+			</p>
+			<div className="flex items-center gap-1.5">
+				<NumInput value={value} onChange={onChange} min={min} max={max} variables={variables} />
+				{unit && <span className="text-xs text-[var(--text-muted)] shrink-0">{unit}</span>}
+			</div>
+		</div>
+	);
+}
+StateField.propTypes = {
+	label:     PropTypes.string.isRequired,
+	value:     PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	onChange:  PropTypes.func.isRequired,
+	min:       PropTypes.number,
+	max:       PropTypes.number,
+	unit:      PropTypes.string,
+	variables: PropTypes.arrayOf(PropTypes.string),
+};
+
 function Row({ children }) { return <div className="flex items-center gap-1.5">{children}</div>; }
 Row.propTypes = { children: PropTypes.node };
 
+// Muted unit text (张, 点, 次…)
 function L({ children }) { return <span className="text-xs text-[var(--text-muted)]">{children}</span>; }
 L.propTypes = { children: PropTypes.node };
 
-function NumInput({ value, onChange, min = 0, max = 99 }) {
-	const [draft, setDraft] = useState(String(value));
+// Row-leading label (主伤, 造成, 触发率…)
+function Lbl({ children }) { return <span className="text-xs text-[var(--text-secondary)] shrink-0">{children}</span>; }
+Lbl.propTypes = { children: PropTypes.node };
 
-	useEffect(() => { setDraft(String(value)); }, [value]);
+// Static description line — replaces info-only rows
+function Sub({ children }) { return <p className="text-[10px] text-[var(--text-muted)] leading-snug">{children}</p>; }
+Sub.propTypes = { children: PropTypes.node };
+
+function NumInput({ value, onChange, min = 0, max = 99, variables = [] }) {
+	const isVar = typeof value === "string";
+	const [draft, setDraft] = useState(isVar ? "" : String(value));
+
+	useEffect(() => { if (!isVar) setDraft(String(value)); }, [value, isVar]);
 
 	const commit = (raw) => {
 		const n = parseInt(raw, 10);
@@ -1179,21 +1245,139 @@ function NumInput({ value, onChange, min = 0, max = 99 }) {
 		if (clamped !== value) onChange(clamped);
 	};
 
+	// No variables — return plain input, same as before
+	if (variables.length === 0 && !isVar) {
+		return (
+			<input
+				type="text"
+				inputMode="numeric"
+				value={draft}
+				onChange={e => setDraft(e.target.value)}
+				onBlur={e => commit(e.target.value)}
+				onKeyDown={e => { if (e.key === "Enter") commit(e.target.value); }}
+				className="w-full border border-solid border-[var(--border)] rounded-lg px-2 py-1.5
+				           text-sm text-[var(--text)] bg-transparent focus:outline-none
+				           focus:border-[var(--text-muted)] transition-colors text-center"
+			/>
+		);
+	}
+
 	return (
-		<input
-			type="text"
-			inputMode="numeric"
-			value={draft}
-			onChange={e => setDraft(e.target.value)}
-			onBlur={e => commit(e.target.value)}
-			onKeyDown={e => { if (e.key === "Enter") commit(e.target.value); }}
-			className="w-full border border-solid border-[var(--border)] rounded-lg px-2 py-1.5
-			           text-sm text-[var(--text)] bg-transparent focus:outline-none
-			           focus:border-[var(--text-muted)] transition-colors text-center"
-		/>
+		<div className="flex items-center gap-1 flex-1 min-w-0">
+			{!isVar ? (
+				<input
+					type="text"
+					inputMode="numeric"
+					value={draft}
+					onChange={e => setDraft(e.target.value)}
+					onBlur={e => commit(e.target.value)}
+					onKeyDown={e => { if (e.key === "Enter") commit(e.target.value); }}
+					className="flex-1 min-w-0 border border-solid border-[var(--border)] rounded-lg px-2 py-1.5
+					           text-sm text-[var(--text)] bg-transparent focus:outline-none
+					           focus:border-[var(--text-muted)] transition-colors text-center"
+				/>
+			) : (
+				<div className="flex-1 min-w-0 text-center text-sm font-black rounded-lg px-2 py-1.5"
+					style={{ backgroundColor: "var(--text-muted)", color: "white" }}>
+					{value}
+				</div>
+			)}
+			{variables.length > 0 && (
+				<VarDropdown
+					selected={isVar ? value : null}
+					variables={variables}
+					onSelect={(name) => name ? onChange(name) : onChange(min)}
+				/>
+			)}
+		</div>
 	);
 }
-NumInput.propTypes = { value: PropTypes.number, onChange: PropTypes.func, min: PropTypes.number, max: PropTypes.number };
+NumInput.propTypes = {
+	value:     PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	onChange:  PropTypes.func,
+	min:       PropTypes.number,
+	max:       PropTypes.number,
+	variables: PropTypes.arrayOf(PropTypes.string),
+};
+
+// ── VarDropdown — 变量选择下拉菜单 ────────────────────────────────────────────
+
+// VarDropdown renders its panel via createPortal to escape backdrop-filter / overflow-hidden
+// stacking contexts in GroupPanel — otherwise the popup gets clipped or z-index-isolated.
+function VarDropdown({ selected, variables, onSelect }) {
+	const [open, setOpen]       = useState(false);
+	const [dropPos, setDropPos] = useState({ top: 0, left: 0 });
+	const triggerRef = useRef(null);
+	const panelRef   = useRef(null);
+
+	const handleToggle = () => {
+		if (!open && triggerRef.current) {
+			const rect = triggerRef.current.getBoundingClientRect();
+			setDropPos({ top: rect.bottom + 4, left: rect.left });
+		}
+		setOpen(o => !o);
+	};
+
+	useEffect(() => {
+		if (!open) return;
+		const handler = (e) => {
+			if (!triggerRef.current?.contains(e.target) && !panelRef.current?.contains(e.target)) {
+				setOpen(false);
+			}
+		};
+		document.addEventListener("mousedown", handler);
+		return () => document.removeEventListener("mousedown", handler);
+	}, [open]);
+
+	return (
+		<div className="relative inline-block">
+			{/* Trigger button */}
+			<button ref={triggerRef} type="button" onClick={handleToggle}
+				className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-md border transition-colors leading-none
+					${selected
+						? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
+						: "text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+					}`}>
+				{selected ?? "fx"}
+				<ChevronDown size={7} className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
+			</button>
+
+			{/* Panel — portaled to body to escape overflow-hidden / backdrop-filter stacking contexts */}
+			{open && createPortal(
+				<div ref={panelRef}
+					style={{ position: "fixed", top: dropPos.top, left: dropPos.left, zIndex: 9999 }}
+					className="bg-white border border-[var(--border)] rounded-xl shadow-lg p-1 flex flex-col gap-0.5 min-w-[44px]">
+					{/* 取消变量 */}
+					<button type="button" onClick={() => { onSelect(null); setOpen(false); }}
+						className={`text-[10px] font-bold px-2 py-1 rounded-lg text-center transition-colors
+							${!selected
+								? "bg-[var(--text-muted)] text-white"
+								: "text-[var(--text-muted)] hover:bg-[var(--card-background)]"
+							}`}>
+						—
+					</button>
+					{/* 变量列表 */}
+					{variables.map(name => (
+						<button key={name} type="button" onClick={() => { onSelect(name); setOpen(false); }}
+							className={`text-[10px] font-black px-2 py-1 rounded-lg text-center transition-colors
+								${selected === name
+									? "bg-[var(--text-muted)] text-white"
+									: "text-[var(--text)] hover:bg-[var(--card-background)]"
+								}`}>
+							{name}
+						</button>
+					))}
+				</div>,
+				document.body
+			)}
+		</div>
+	);
+}
+VarDropdown.propTypes = {
+	selected:  PropTypes.string,
+	variables: PropTypes.arrayOf(PropTypes.string).isRequired,
+	onSelect:  PropTypes.func.isRequired,
+};
 
 function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 	const isVar = typeof value === "string";
@@ -1210,7 +1394,7 @@ function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 
 	return (
 		<div className="inline-flex items-center gap-1">
-			{/* Number stepper — hidden when a variable is active */}
+			{/* 数字步进器 — 变量激活时隐藏 */}
 			{!isVar && (
 				<div className="inline-flex items-center border border-solid border-[var(--border)] rounded-md overflow-hidden">
 					<button type="button" onClick={() => onChange(Math.max(min, Number(value) - 1))} disabled={Number(value) <= min}
@@ -1229,27 +1413,22 @@ function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 				</div>
 			)}
 
-			{/* Variable chips — each independently toggleable */}
-			{variables.map(name => {
-				const isActive = value === name;
-				return (
-					<button key={name} type="button"
-						onClick={() => onChange(isActive ? min : name)}
-						className={`text-[9px] font-black px-1.5 py-0.5 rounded-md border transition-colors leading-none
-							${isActive
-								? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
-								: "text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-							}`}>
-						{name}
-					</button>
-				);
-			})}
+			{/* 变量下拉菜单 — 仅在变量模式下可用时显示 */}
+			{variables.length > 0 && (
+				<VarDropdown
+					selected={isVar ? value : null}
+					variables={variables}
+					onSelect={(name) => name ? onChange(name) : onChange(min)}
+				/>
+			)}
 		</div>
 	);
 }
 StepInput.propTypes = {
-	value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-	onChange: PropTypes.func, min: PropTypes.number, max: PropTypes.number,
+	value:     PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	onChange:  PropTypes.func,
+	min:       PropTypes.number,
+	max:       PropTypes.number,
 	variables: PropTypes.arrayOf(PropTypes.string),
 };
 

@@ -146,6 +146,25 @@ These conventions define the target style system for all Tailwind pages, derived
 - Never mix `className` and `sx` on the same element.
 - **`Autocomplete` → `@headlessui/react` `Combobox`**: use the `SeriesCombobox` pattern in `Record.jsx` as reference. Key points: `immediate` prop for open-on-focus, `anchor={{ to: "bottom start", gap: 4 }}` on `Combobox.Options` to portal the dropdown outside stacking contexts (`backdrop-filter` creates a stacking context that traps `z-index`).
 - **`Dialog` → native modal**: backdrop `fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm`, click-outside closes, inner card is `bg-white rounded-2xl shadow-xl p-6`. See the reset confirmation dialog in `Record.jsx` as reference.
+- **禁止使用原生 `<select>` 元素**作为用户可见的下拉选择 UI。所有下拉菜单须使用符合主题的自定义面板（`bg-white border border-[var(--border)] rounded-xl shadow-lg`），点击外部关闭（`mousedown` 事件监听 + `useRef`）。**关键约束**：当下拉面板的祖先元素含有 `backdrop-filter`（如 `backdrop-blur-md`）或 `overflow-hidden` 时，这两者均会创建新 stacking context 或裁剪绝对定位子元素，导致面板被隐藏或截断。此时必须使用 `createPortal` 将面板渲染到 `document.body`，并配合 `position: fixed` + `getBoundingClientRect()` 计算视口坐标定位。参考实现：`DamageCalculator.jsx` 中的 `VarDropdown` 组件。
+
+  ```jsx
+  // ✅ 正确：createPortal + fixed 定位，绕过所有 stacking context
+  {open && createPortal(
+    <div ref={panelRef}
+      style={{ position: "fixed", top: dropPos.top, left: dropPos.left, zIndex: 9999 }}
+      className="bg-white border border-[var(--border)] rounded-xl shadow-lg p-1">
+      {/* 选项列表 */}
+    </div>,
+    document.body
+  )}
+
+  // ❌ 错误：原生 select
+  <select className="...">...</select>
+
+  // ❌ 错误：absolute 定位在含 backdrop-filter 的祖先内
+  <div className="absolute top-full z-50 ...">...</div>
+  ```
 
 ### Color tokens in Tailwind
 
