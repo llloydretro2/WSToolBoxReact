@@ -6,6 +6,8 @@ import { simulate } from "../utils/wsDamage/simulator.js";
 import { buildSimpleDeck, makeCharacter } from "../utils/wsDamage/card.js";
 import { OpType, ZoneId } from "../utils/wsDamage/types.js";
 import { useLocale } from "../contexts/LocaleContext.jsx";
+import { buildPolicySequence } from "../utils/wsDamage/dp.js";
+import { groupsToSpecSequence, groupsToLabelSequence } from "../utils/wsDamage/stepSpecBuilder.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -17,23 +19,6 @@ function permutations(arr) {
 	});
 }
 
-function cartesianProduct(arrays) {
-	if (arrays.length === 0) return [[]];
-	const [first, ...rest] = arrays;
-	const restProd = cartesianProduct(rest);
-	return first.flatMap(item => restProd.map(p => [item, ...p]));
-}
-
-// Substitute variable name references in a step's numeric fields.
-function resolveStep(step, varValues) {
-	const out = { ...step };
-	for (const [field, val] of Object.entries(step)) {
-		if (typeof val === "string" && varValues[val] !== undefined) {
-			out[field] = varValues[val];
-		}
-	}
-	return out;
-}
 
 function killRateColor(rate) {
 	return rate >= 50 ? "text-green-600" : rate >= 20 ? "text-orange-500" : "text-red-500";
@@ -254,10 +239,20 @@ export default function DamageCalculator() {
 	const [permResult, setPermResult] = useState(null);
 	const [groups, permCbs] = useGroupState(setPermResult);
 
-	// Variable mode
-	const [varResult, setVarResult] = useState(null);
-	const [varGroups, varCbs] = useGroupState(setVarResult);
+	// Variable mode (DP analysis mode)
+	const [varResult,  setVarResult]  = useState(null);
+	const [varGroups,  varCbs]        = useGroupState(setVarResult);
+	const [dpSession,  setDpSession]  = useState(false); // show interactive session
+	// Named variables — outer enumeration loop (e.g. X: min=1, max=5)
 	const [variables, setVariables] = useState([]);
+
+	// DP / variable mode options
+	const [skipPermutation, setSkipPermutation] = useState(false);
+	const maxN = 15; // hard cap for auto fields with no custom nMax set
+	const [trialsPerSim,    setTrialsPerSim]    = useState(null); // null = auto (single/perm modes)
+	const [eta,             setEta]             = useState(null); // estimated seconds remaining
+	const cancelRef   = useRef(false);
+	const runStartRef = useRef(null);
 
 	// Shared
 	const [running,  setRunning]  = useState(false);
@@ -336,12 +331,12 @@ export default function DamageCalculator() {
 		setRunning(true); setResult(null); setError(null);
 		setTimeout(() => {
 			try {
-				const r = simulate({ sequence: steps.flatMap(stepToOps), initial: buildInitial(), config: { trials: 100_000 } });
+				const r = simulate({ sequence: steps.flatMap(stepToOps), initial: buildInitial(), config: { trials: trialsPerSim ?? 100_000 } });
 				setResult(r);
 			} catch (e) { setError(e.message); }
 			finally { setRunning(false); }
 		}, 0);
-	}, [steps, running, buildInitial]);
+	}, [steps, running, buildInitial, trialsPerSim]);
 
 	// ── Permutation run ────────────────────────────────────────────────────────
 
@@ -352,7 +347,7 @@ export default function DamageCalculator() {
 
 		const initial = buildInitial();
 		const perms   = permutations(active.map((_, i) => i));
-		const trials  = active.length >= 4 ? 50_000 : 100_000;
+		const trials  = trialsPerSim ?? (active.length >= 4 ? 50_000 : 100_000);
 		const results = [];
 		let idx = 0;
 
@@ -379,17 +374,16 @@ export default function DamageCalculator() {
 			}
 		}
 		setTimeout(step, 0);
-	}, [groups, running, buildInitial, t]);
+	}, [groups, running, buildInitial, t, trialsPerSim]);
 
-	// ── Variable mode: variable definition handlers ────────────────────────────
+	// ── Variable callbacks (named variables for outer enumeration) ────────────
 
 	const addVariable = useCallback(() => {
 		setVariables(prev => {
-			if (prev.length >= 10) return prev;
-			const defaultNames = ["X", "Y", "Z", "W", "V"];
+			if (prev.length >= 5) return prev;
 			const used = new Set(prev.map(v => v.name));
-			const name = defaultNames.find(n => !used.has(n)) ?? `V${prev.length + 1}`;
-			return [...prev, { id: Date.now(), name, min: 1, max: 3 }];
+			const name = ["X","Y","Z","W","V"].find(n => !used.has(n)) ?? `V${prev.length+1}`;
+			return [...prev, { id: Date.now(), name, min: 1, max: 5 }];
 		});
 		setVarResult(null);
 	}, []);
@@ -404,84 +398,111 @@ export default function DamageCalculator() {
 		setVarResult(null);
 	}, []);
 
-	// ── Variable run ───────────────────────────────────────────────────────────
+	// ── DP analysis run (replaces variable mode enumeration) ──────────────────
 
-	const runVariableAnalysis = useCallback(() => {
+	const runDPAnalysis = useCallback(() => {
 		if (running) return;
+		cancelRef.current   = false;
+		runStartRef.current = Date.now();
+
 		const active = varGroups.map((g, i) => ({ ...g, label: GROUP_LABELS[i] })).filter(g => g.steps.length > 0);
+		if (active.length === 0) { setError(t("damage.var.emptyHint")); return; }
 
-		const hasVarRef = active.some(g => g.steps.some(s =>
-			Object.values(s).some(v => typeof v === "string")
-		));
+		const d0 = deckTotal, c0 = deckCX, r0 = restTotal, rc0 = restCX, cl0 = clockCount, lv0 = opLevel;
+		const dpInitial = { d: d0, c: c0, r: r0, rc: rc0, cl: cl0, lv: lv0 };
 
-		if (active.length === 0 || (variables.length > 0 && !hasVarRef)) {
-			setError(t("damage.var.emptyHint")); return;
-		}
+		const perms = skipPermutation
+			? [active.map((_, i) => i)]
+			: permutations(active.map((_, i) => i));
 
-		const perms     = permutations(active.map((_, i) => i));
+		// Outer enumeration: cartesian product of named variable ranges
 		const varRanges = variables.map(v => {
 			const vals = [];
 			for (let i = v.min; i <= v.max; i++) vals.push({ name: v.name, value: i });
 			return vals;
 		});
-		const varCombos = varRanges.length > 0 ? cartesianProduct(varRanges) : [[]];
-		const totalSims = varCombos.length * perms.length;
-		const trials    = Math.max(20_000, Math.min(100_000, Math.floor(3_000_000 / totalSims)));
+		function cartesian(arrays) {
+			if (arrays.length === 0) return [{}];
+			const [first, ...rest] = arrays;
+			const restProd = cartesian(rest);
+			return first.flatMap(item => restProd.map(obj => ({ ...obj, [item.name]: item.value })));
+		}
+		const varCombos = cartesian(varRanges); // [{ X:1 }, { X:2 }, ...] or [{}] if no vars
 
-		// Flatten into a list of (varValues, perm) tasks
-		const tasks = varCombos.flatMap(combo => {
-			const varValues = Object.fromEntries(combo.map(v => [v.name, v.value]));
-			return perms.map(perm => ({ varValues, perm }));
-		});
+		// tasks = varCombos × perms
+		const tasks = varCombos.flatMap(varValues => perms.map(perm => ({ varValues, perm })));
 		const results = [];
-		let idx = 0;
+		let idx       = 0;
+		// Track best policy as we go — avoids a blocking re-run at the end
+		let bestPolSoFar    = null;
+		let bestSpecsSoFar  = null;
+		let bestLabelsSoFar = null;
+		let bestProbSoFar   = -1;
 
-		setRunning(true); setVarResult(null); setError(null); setProgress(0);
+		setRunning(true); setVarResult(null); setError(null); setProgress(0); setEta(null);
 
 		function step() {
+			if (cancelRef.current) { setRunning(false); setEta(null); return; }
 			if (idx >= tasks.length) {
-				results.sort((a, b) => b.killRate - a.killRate || b.meanClock - a.meanClock);
-				setVarResult({ results, totalSims, trials });
-				setRunning(false);
+				results.sort((a, b) => b.optProb - a.optProb);
+				setVarResult({
+					results,
+					taskCount:   tasks.length,
+					bestPolicy:  bestPolSoFar,
+					bestSpecs:   bestSpecsSoFar,
+					bestLabels:  bestLabelsSoFar,
+					dpInitial,
+				});
+				setRunning(false); setEta(null);
 				return;
 			}
 			try {
 				const { varValues, perm } = tasks[idx];
-				// Rebuild initial per combo to support opponent-state variables
-				const initial = buildInitial(varValues);
-				const sequence = perm.flatMap(gi =>
-					active[gi].steps.flatMap(s => stepToOps(resolveStep(s, varValues)))
-				);
-				const r = simulate({ sequence, initial, config: { trials } });
+				const specs = groupsToSpecSequence(active, perm, varValues);
+				const pol   = buildPolicySequence(dpInitial, specs, maxN);
 				results.push({
 					varValues,
-					order:     perm.map(gi => active[gi].label),
-					killRate:  r.lossRate * 100,
-					meanClock: r.total.mean,
+					order:      perm.map(gi => active[gi].label),
+					optProb:    pol.optProb,
+					stateCount: pol.stateCount,
+					firstN:     pol.getOptN(0, d0, c0, r0, rc0, cl0, lv0),
 				});
+				// Keep the policy for the best result seen so far
+				if (pol.optProb > bestProbSoFar) {
+					bestProbSoFar  = pol.optProb;
+					bestPolSoFar   = pol;
+					bestSpecsSoFar = specs;
+					bestLabelsSoFar = groupsToLabelSequence(active, perm);
+				}
 				idx++;
 				setProgress(Math.round(idx / tasks.length * 100));
+				const elapsed = Date.now() - runStartRef.current;
+				if (idx >= 2 && elapsed > 100) {
+					setEta(Math.ceil((elapsed / idx) * (tasks.length - idx) / 1000));
+				}
 				setTimeout(step, 0);
 			} catch (e) {
 				setError(e.message);
-				setRunning(false);
+				setRunning(false); setEta(null);
 			}
 		}
 		setTimeout(step, 0);
-	}, [varGroups, variables, running, buildInitial, t]);
+	}, [varGroups, variables, running, t, skipPermutation,
+	    deckTotal, deckCX, restTotal, restCX, clockCount, opLevel]);
 
 	// ── Derived ────────────────────────────────────────────────────────────────
 
-	const killRate       = result ? result.lossRate * 100 : null;
-	const activePermCnt  = groups.filter(g => g.steps.length > 0).length;
-	const permCnt        = activePermCnt > 1 ? factorialOf(activePermCnt) : activePermCnt;
+	const killRate      = result ? result.lossRate * 100 : null;
+	const activePermCnt = groups.filter(g => g.steps.length > 0).length;
+	const permCnt       = activePermCnt > 1 ? factorialOf(activePermCnt) : activePermCnt;
 
-	const activeVarCnt   = varGroups.filter(g => g.steps.length > 0).length;
-	const varComboCnt    = variables.reduce((acc, v) => acc * Math.max(1, v.max - v.min + 1), 1);
-	const varPermCnt     = activeVarCnt > 1 ? factorialOf(activeVarCnt) : activeVarCnt;
-	const totalVarSims   = varComboCnt * varPermCnt;
-
-	const varNames = variables.map(v => v.name);
+	const activeVarCnt = varGroups.filter(g => g.steps.length > 0).length;
+	const dpPermCnt    = skipPermutation
+		? (activeVarCnt > 0 ? 1 : 0)
+		: (activeVarCnt > 1 ? factorialOf(activeVarCnt) : activeVarCnt);
+	const varComboCnt  = variables.reduce((acc, v) => acc * Math.max(1, v.max - v.min + 1), 1);
+	const dpTaskCount  = varComboCnt * dpPermCnt;
+	const varNames     = variables.map(v => v.name);
 
 	// ── Render ─────────────────────────────────────────────────────────────────
 
@@ -515,48 +536,51 @@ export default function DamageCalculator() {
 				))}
 			</div>
 
-			{/* ── Opponent State (shared) ─────────────────────────────────── */}
-			{/* ── Opponent State — 3 independent cards ── */}
-			<div className="grid grid-cols-3 gap-3 mb-4">
-				{/* 牌库 */}
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-						{t("damage.deckState")}
-					</p>
-					<StateField label={t("damage.labelDeckCards")} value={deckTotal} max={50}
-						unit={t("damage.unitCard")}
-						onChange={v => { setDeckTotal(v); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
-					<StateField label={t("damage.labelDeckCX")} value={deckCX}
-						max={typeof deckTotal === "number" ? Math.min(deckTotal, 8) : 8}
-						onChange={v => { setDeckCX(typeof v === "string" ? v : Math.min(v, typeof deckTotal === "number" ? deckTotal : Infinity, 8)); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
-				</div>
-				{/* 休息室 */}
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-						{t("damage.restState")}
-					</p>
-					<StateField label={t("damage.labelRestCards")} value={restTotal} max={50}
-						unit={t("damage.unitCard")}
-						onChange={v => { setRestTotal(v); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
-					<StateField label={t("damage.labelRestCX")} value={restCX}
-						max={typeof restTotal === "number" ? Math.min(restTotal, 8) : 8}
-						onChange={v => { setRestCX(typeof v === "string" ? v : Math.min(v, typeof restTotal === "number" ? restTotal : Infinity, 8)); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
-				</div>
-				{/* 血量状态 */}
-				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 flex flex-col gap-2">
-					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-						{t("damage.healthState")}
-					</p>
-					<StateField label={t("damage.levelLabel")} value={opLevel} max={3}
-						onChange={v => { setOpLevel(typeof v === "string" ? v : Math.min(v, 3)); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
-					<StateField label={t("damage.clockLabel")} value={clockCount} max={6}
-						onChange={v => { setClockCount(typeof v === "string" ? v : Math.min(v, 6)); clearAll(); }}
-						variables={mode === "variable" ? varNames : []} />
+			{/* ── Opponent State ── */}
+			<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md mb-4 overflow-hidden">
+				<div className="grid grid-cols-1 sm:grid-cols-3">
+
+					{/* 牌库 */}
+					<div className="px-4 py-3 flex flex-col gap-2">
+						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("damage.deckState")}</p>
+						<div className="flex flex-row gap-2">
+							<div className="flex-1 min-w-0"><StateField label={t("damage.labelDeckCards")} value={deckTotal} max={50}
+								onChange={v => { setDeckTotal(v); clearAll(); }}
+								variables={[]} /></div>
+							<div className="flex-1 min-w-0"><StateField label={t("damage.labelDeckCX")} value={deckCX}
+								max={typeof deckTotal === "number" ? Math.min(deckTotal, 8) : 8}
+								onChange={v => { setDeckCX(typeof v === "string" ? v : Math.min(v, typeof deckTotal === "number" ? deckTotal : Infinity, 8)); clearAll(); }}
+								variables={[]} /></div>
+						</div>
+					</div>
+
+					{/* 休息室 */}
+					<div className="px-4 py-3 flex flex-col gap-2 border-t border-[var(--border)] sm:border-t-0 sm:border-l sm:border-[var(--border)]">
+						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("damage.restState")}</p>
+						<div className="flex flex-row gap-2">
+							<div className="flex-1 min-w-0"><StateField label={t("damage.labelRestCards")} value={restTotal} max={50}
+								onChange={v => { setRestTotal(v); clearAll(); }}
+								variables={[]} /></div>
+							<div className="flex-1 min-w-0"><StateField label={t("damage.labelRestCX")} value={restCX}
+								max={typeof restTotal === "number" ? Math.min(restTotal, 8) : 8}
+								onChange={v => { setRestCX(typeof v === "string" ? v : Math.min(v, typeof restTotal === "number" ? restTotal : Infinity, 8)); clearAll(); }}
+								variables={[]} /></div>
+						</div>
+					</div>
+
+					{/* 血量状态 */}
+					<div className="px-4 py-3 flex flex-col gap-2 border-t border-[var(--border)] sm:border-t-0 sm:border-l sm:border-[var(--border)]">
+						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-secondary)]">{t("damage.healthState")}</p>
+						<div className="flex flex-row gap-2">
+							<div className="flex-1 min-w-0"><StateField label={t("damage.levelLabel")} value={opLevel} max={3}
+								onChange={v => { setOpLevel(typeof v === "string" ? v : Math.min(v, 3)); clearAll(); }}
+								variables={[]} /></div>
+							<div className="flex-1 min-w-0"><StateField label={t("damage.clockLabel")} value={clockCount} max={6}
+								onChange={v => { setClockCount(typeof v === "string" ? v : Math.min(v, 6)); clearAll(); }}
+								variables={[]} /></div>
+						</div>
+					</div>
+
 				</div>
 			</div>
 
@@ -595,6 +619,7 @@ export default function DamageCalculator() {
 						</div>
 					)}
 				</div>
+				<TrialsSelector value={trialsPerSim} onChange={setTrialsPerSim} t={t} />
 				<button onClick={runSimulation} disabled={steps.length === 0 || running}
 					className="w-full py-3 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold
 					           hover:bg-[var(--text-secondary)] active:scale-95 transition-all shadow-sm
@@ -625,6 +650,7 @@ export default function DamageCalculator() {
 						<Plus size={12} />{t("damage.perm.addGroup")}
 					</button>
 				)}
+				<TrialsSelector value={trialsPerSim} onChange={setTrialsPerSim} t={t} />
 				<button onClick={runPermutation} disabled={activePermCnt === 0 || running}
 					className="w-full py-3 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold
 					           hover:bg-[var(--text-secondary)] active:scale-95 transition-all shadow-sm
@@ -645,13 +671,13 @@ export default function DamageCalculator() {
 			{permResult && <PermutationResultPanel results={permResult} t={t} />}
 			</>)}
 
-			{/* ── Variable Mode ─────────────────────────────────────────────── */}
+			{/* ── DP Analysis Mode ──────────────────────────────────────────── */}
 			{mode === "variable" && (<>
 
-				{/* Variable definitions */}
+				{/* Variable definitions — named vars are enumerated in outer loop */}
 				<VariableDefPanel variables={variables} onAdd={addVariable} onRemove={removeVariable} onUpdate={updateVariable} t={t} />
 
-				{/* Groups (variable-aware) */}
+				{/* Groups — "dp" = adaptive per state; variable name = shared enumerated constant */}
 				<div className="flex flex-col gap-4 mb-4">
 					{varGroups.map((group, i) => (
 						<GroupPanel key={group.id} group={group} groupIdx={i} groupCount={varGroups.length}
@@ -659,7 +685,7 @@ export default function DamageCalculator() {
 							onRemoveStep={varCbs.removeStep} onUpdateStep={varCbs.updateStep}
 							onMoveStep={varCbs.moveStep} onDuplicateStep={varCbs.duplicateStep}
 							onClearSteps={varCbs.clearSteps} stepTypes={STEP_TYPES} sd={sd}
-							variables={varNames} />
+							variables={["dp", ...varNames]} />
 					))}
 				</div>
 				{varGroups.length < 5 && (
@@ -672,26 +698,77 @@ export default function DamageCalculator() {
 					</button>
 				)}
 
-				{/* Analyze button */}
-				<button onClick={runVariableAnalysis} disabled={activeVarCnt === 0 || running}
-					className="w-full py-3 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold
-					           hover:bg-[var(--text-secondary)] active:scale-95 transition-all shadow-sm
-					           disabled:opacity-40 disabled:cursor-not-allowed
-					           flex items-center justify-center gap-2 mb-4">
-					{running ? (
-						<><Loader2 size={16} className="animate-spin" />{t("damage.var.analyzing")}</>
-					) : (<>
-						<Play size={16} />{t("damage.var.analyze")}
-						{totalVarSims > 1 && (
-							<span className="text-white/60 text-[11px] font-medium">
-								({t("damage.var.simCount").replace("{{n}}", String(totalVarSims))})
-							</span>
-						)}
-					</>)}
-				</button>
+				{/* ── DP Options ── */}
+				<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-4 mb-4 flex flex-col gap-3">
+					<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
+						{t("damage.var.optionsTitle")}
+					</p>
+					<p className="text-[10px] text-[var(--text-muted)] leading-snug">{t("damage.var.dpAutoHint")}</p>
 
-				{running && <ProgressBar progress={progress} />}
-			{varResult && <VariableResultPanel resultData={varResult} t={t} />}
+					{/* Permutation toggle */}
+					<div className="flex items-center justify-between gap-3">
+						<span className="text-xs text-[var(--text-secondary)] shrink-0">{t("damage.var.permLabel")}</span>
+						<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+							{[
+								{ val: false, label: t("damage.var.enumPerm") },
+								{ val: true,  label: t("damage.var.skipPerm") },
+							].map(({ val, label }) => (
+								<button key={String(val)} onClick={() => setSkipPermutation(val)}
+									className={`px-3 py-1.5 text-[11px] font-bold border-r border-[var(--border)] last:border-r-0 transition-colors
+										${skipPermutation === val
+											? "bg-[var(--text)] text-[var(--background)]"
+											: "bg-transparent text-[var(--text)] hover:bg-[var(--card-background)]"
+										}`}>
+									{label}
+								</button>
+							))}
+						</div>
+					</div>
+
+				</div>
+
+				{/* Run + Cancel */}
+				<div className="flex gap-2 mb-4">
+					<button onClick={runDPAnalysis} disabled={activeVarCnt === 0 || running}
+						className="flex-1 py-3 rounded-xl bg-[var(--text-muted)] text-white text-sm font-bold
+						           hover:bg-[var(--text-secondary)] active:scale-95 transition-all shadow-sm
+						           disabled:opacity-40 disabled:cursor-not-allowed
+						           flex items-center justify-center gap-2">
+						{running ? (
+							<><Loader2 size={16} className="animate-spin" />{t("damage.var.analyzing")}</>
+						) : (<>
+							<Play size={16} />{t("damage.var.analyze")}
+							{dpTaskCount > 1 && (
+								<span className="text-white/60 text-[11px] font-medium">
+									({dpTaskCount} {t("damage.var.tasks")})
+								</span>
+							)}
+						</>)}
+					</button>
+					{running && (
+						<button onClick={() => { cancelRef.current = true; }}
+							className="px-4 py-3 rounded-xl border border-[var(--border)] text-sm font-bold
+							           text-[var(--text)] hover:bg-red-50 hover:border-red-300 hover:text-red-600
+							           transition-colors shrink-0">
+							{t("damage.var.cancel")}
+						</button>
+					)}
+				</div>
+
+				{running && <ProgressBar progress={progress} eta={eta} t={t} />}
+			{varResult && (
+				<DPResultPanel resultData={varResult} t={t}
+					onStartSession={() => setDpSession(true)} />
+			)}
+			{dpSession && varResult?.bestPolicy && (
+				<InteractiveSession
+					policy={varResult.bestPolicy}
+					specs={varResult.bestSpecs}
+					labels={varResult.bestLabels}
+					init={varResult.dpInitial}
+					t={t}
+					onClose={() => setDpSession(false)} />
+			)}
 			</>)}
 
 			{/* Error */}
@@ -851,62 +928,67 @@ GroupPanel.propTypes = {
 	variables:       PropTypes.arrayOf(PropTypes.string),
 };
 
-// ── VariableResultPanel ────────────────────────────────────────────────────────
+// ── DPResultPanel ─────────────────────────────────────────────────────────────
 
-function VariableResultPanel({ resultData, t }) {
+function DPResultPanel({ resultData, t, onStartSession }) {
 	const [showAll, setShowAll] = useState(false);
 	if (!resultData) return null;
 
-	const { results, totalSims, trials } = resultData;
+	const { results, taskCount } = resultData;
+	const fmtVars = (varValues) =>
+		Object.keys(varValues ?? {}).length > 0
+			? Object.entries(varValues).map(([k, v]) => `${k}=${v}`).join(" ")
+			: null;
 	const best     = results[0];
 	const worst    = results[results.length - 1];
-	const gap      = best.killRate - worst.killRate;
+	const gap      = (best.optProb - worst.optProb) * 100;
 	const SHOW_MAX = 20;
 	const displayed = showAll ? results : results.slice(0, SHOW_MAX);
-
-	const fmtVars = (varValues) =>
-		Object.entries(varValues).map(([k, v]) => `${k}=${v}`).join("  ");
 
 	return (
 		<div className="border border-[var(--border)] rounded-2xl bg-white/70 backdrop-blur-md p-5">
 			{/* Eyebrow */}
 			<div className="flex items-center gap-3 mb-5">
 				<span className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)]">
-					{t("damage.var.resultTitle")}
+					{t("damage.var.dpResultTitle")}
 				</span>
 				<div className="flex-1 border-t border-[var(--border)]" />
 				<span className="text-[10px] text-[var(--text-muted)]">
-					{t("damage.var.simCount").replace("{{n}}", String(totalSims))}
-					{" · "}{(trials / 1000).toFixed(0)}k
+					{taskCount} {t("damage.var.tasks")} · DP
 				</span>
 			</div>
 
 			{/* Best summary */}
 			<div className="mb-5">
 				<p className="text-[10px] font-black tracking-widest uppercase text-[var(--text-secondary)] mb-2">
-					{t("damage.var.best")}
+					{t("damage.perm.best")}
 				</p>
+				{fmtVars(best.varValues) && (
+					<p className="text-sm font-mono text-blue-600 font-bold mb-1">{fmtVars(best.varValues)}</p>
+				)}
 				<p className="text-xl font-black text-[var(--text)] tracking-widest mb-1">
-					{fmtVars(best.varValues)}
-				</p>
-				<p className="text-sm font-bold text-[var(--text-secondary)] mb-3">
 					{best.order.join(" → ")}
+				</p>
+				<p className="text-sm text-[var(--text-secondary)] mb-3">
+					{t("damage.var.firstAttack")}
+					<span className="font-black text-[var(--text)] mx-1">{best.firstN}</span>
+					{t("damage.var.pts")}
 				</p>
 				<div className="grid grid-cols-2 gap-3">
 					<div className="border border-[var(--border)] rounded-xl p-4 text-center bg-[var(--card-background)]">
 						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">{t("damage.killRate")}</p>
-						<p className={`text-4xl font-black leading-none ${killRateColor(best.killRate)}`}>{best.killRate.toFixed(1)}%</p>
-						<p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">{t("damage.killRateDesc")}</p>
+						<p className={`text-4xl font-black leading-none ${killRateColor(best.optProb * 100)}`}>{(best.optProb * 100).toFixed(2)}%</p>
+						<p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">{t("damage.var.dpExact")}</p>
 					</div>
 					<div className="border border-[var(--border)] rounded-xl p-4 text-center bg-[var(--card-background)]">
-						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">{t("damage.expectedDmg")}</p>
-						<p className="text-4xl font-black leading-none text-[var(--text)]">{best.meanClock.toFixed(2)}</p>
-						<p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">{t("damage.expectedDmgUnit")}</p>
+						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-2">{t("damage.var.stateCount")}</p>
+						<p className="text-4xl font-black leading-none text-[var(--text)]">{best.stateCount.toLocaleString()}</p>
+						<p className="text-[10px] text-[var(--text-muted)] mt-2 leading-snug">{t("damage.var.dpStates")}</p>
 					</div>
 				</div>
-				{gap > 0.05 && (
+				{gap > 0.01 && (
 					<p className="text-[11px] text-[var(--text-muted)] mt-2 text-center">
-						+{gap.toFixed(1)}% {t("damage.perm.vsWorst")}
+						+{gap.toFixed(2)}% {t("damage.perm.vsWorst")}
 					</p>
 				)}
 			</div>
@@ -915,9 +997,9 @@ function VariableResultPanel({ resultData, t }) {
 			<div className="flex flex-col gap-1.5">
 				{displayed.map((r, i) => {
 					const isBest = i === 0;
-					const diff   = r.killRate - best.killRate;
+					const diff   = (r.optProb - best.optProb) * 100;
 					return (
-						<div key={`${fmtVars(r.varValues)}-${r.order.join("")}`}
+						<div key={`${fmtVars(r.varValues) ?? ""}-${r.order.join("")}`}
 							className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-colors
 								${isBest
 									? "bg-[var(--text-muted)] border-[var(--text-muted)]"
@@ -926,22 +1008,24 @@ function VariableResultPanel({ resultData, t }) {
 							<span className={`text-[10px] font-black w-4 text-center shrink-0 ${isBest ? "text-white/60" : "text-[var(--text-muted)]"}`}>
 								{i + 1}
 							</span>
-							<span className={`text-[11px] font-bold font-mono shrink-0 ${isBest ? "text-white" : "text-[var(--text-muted)]"}`}>
-								{fmtVars(r.varValues)}
-							</span>
+							{fmtVars(r.varValues) && (
+								<span className={`text-[10px] font-mono shrink-0 ${isBest ? "text-blue-200" : "text-blue-500"}`}>
+									{fmtVars(r.varValues)}
+								</span>
+							)}
 							<span className={`text-xs font-bold font-mono flex-1 ${isBest ? "text-white/80" : "text-[var(--text-secondary)]"}`}>
 								{r.order.join("→")}
 							</span>
 							<span className={`text-[11px] tabular-nums shrink-0 ${isBest ? "text-white/70" : "text-[var(--text-muted)]"}`}>
-								{r.meanClock.toFixed(2)} {t("damage.unitCard")}
+								{t("damage.var.firstAttack")} {r.firstN}pt
 							</span>
 							{!isBest && (
 								<span className="text-[11px] text-[var(--text-muted)] tabular-nums shrink-0">
-									{diff.toFixed(1)}%
+									{diff.toFixed(2)}%
 								</span>
 							)}
-							<span className={`text-sm font-black tabular-nums shrink-0 ${isBest ? "text-white" : killRateColor(r.killRate)}`}>
-								{r.killRate.toFixed(1)}%
+							<span className={`text-sm font-black tabular-nums shrink-0 ${isBest ? "text-white" : killRateColor(r.optProb * 100)}`}>
+								{(r.optProb * 100).toFixed(2)}%
 							</span>
 						</div>
 					);
@@ -955,17 +1039,182 @@ function VariableResultPanel({ resultData, t }) {
 					{t("damage.var.showAll").replace("{{n}}", String(results.length))}
 				</button>
 			)}
+
+			{/* Start interactive session for best result */}
+			{resultData.bestPolicy && (
+				<button onClick={onStartSession}
+					className="w-full mt-4 py-2.5 rounded-xl border-2 border-blue-400 text-blue-600
+					           text-sm font-bold hover:bg-blue-50 transition-colors flex items-center
+					           justify-center gap-2">
+					<Play size={14} />{t("damage.dp.session.start")}
+				</button>
+			)}
 		</div>
 	);
 }
 
-VariableResultPanel.propTypes = {
+DPResultPanel.propTypes = {
 	resultData: PropTypes.shape({
-		results:   PropTypes.array,
-		totalSims: PropTypes.number,
-		trials:    PropTypes.number,
+		results:    PropTypes.array,
+		taskCount:  PropTypes.number,
+		bestPolicy: PropTypes.object,
+		bestSpecs:  PropTypes.array,
+		dpInitial:  PropTypes.object,
 	}),
-	t: PropTypes.func.isRequired,
+	t:              PropTypes.func.isRequired,
+	onStartSession: PropTypes.func,
+};
+
+// ── InteractiveSession ─────────────────────────────────────────────────────────
+
+function applyLvUp(cl, lv, r) {
+	while (cl >= 7 && lv < 4) { lv++; cl -= 7; r += 6; }
+	return { cl, lv, r };
+}
+
+function InteractiveSession({ policy, specs, labels, init, t, onClose }) {
+	const [si,   setSi]   = useState(0);
+	const [d,    setD]    = useState(init.d);
+	const [c,    setC]    = useState(init.c);
+	const [r,    setR]    = useState(init.r);
+	const [rc,   setRC]   = useState(init.rc);
+	const [cl,   setCL]   = useState(init.cl);
+	const [lv,   setLV]   = useState(init.lv);
+	const [k,    setK]    = useState(1);
+	const [log,  setLog]  = useState([]);
+
+	const optN = (lv < 4 && si < specs.length && d > 0)
+		? (policy.getOptN(si, d, c, r, rc, cl, lv) ?? 1)
+		: null;
+
+	const pushLog = (msg) => setLog(prev => [...prev, msg]);
+
+	const handleHit = () => {
+		if (optN === null) return;
+		let nd = d - optN, nc = c, nr = r, nrc = rc;
+		let { cl: ncl, lv: nlv, r: nr2 } = applyLvUp(cl + optN, lv, nr);
+		nr = nr2;
+		// Auto-refresh if deck empty
+		if (nd <= 0 && nr > 0) {
+			const rf = applyLvUp(ncl + 1, nlv, 0);
+			pushLog(`${t("damage.dp.session.hit")} ${optN}pt → Refresh → Level ${rf.lv} Clock ${rf.cl}`);
+			setD(nr); setC(nrc); setR(rf.r); setRC(0); setCL(rf.cl); setLV(rf.lv);
+		} else {
+			pushLog(`${t("damage.dp.session.hit")} ${optN}pt → Level ${nlv} Clock ${ncl}`);
+			setD(nd); setC(nc); setR(nr); setRC(nrc); setCL(ncl); setLV(nlv);
+		}
+		setSi(si + 1);
+	};
+
+	const handleCancel = () => {
+		const kk = Math.max(1, Math.min(k, optN ?? 1));
+		pushLog(`${t("damage.dp.session.cancel")} k=${kk} → 牌库 ${d - kk}/${c - 1}`);
+		setD(d - kk); setC(c - 1); setR(r + kk); setRC(rc + 1);
+		setSi(si + 1);
+		setK(1);
+	};
+
+	const done  = lv >= 4;
+	const ended = si >= specs.length;
+
+	return (
+		<div className="border border-[var(--border)] border-t-[3px] border-t-blue-400 rounded-2xl bg-white/70 backdrop-blur-md p-5 mt-4">
+			<div className="flex items-center justify-between mb-4">
+				<p className="text-[10px] font-black tracking-widest uppercase text-blue-500">{t("damage.dp.session.title")}</p>
+				<div className="flex items-center gap-2">
+					<span className="text-[10px] text-[var(--text-muted)]">
+						{t("damage.dp.session.step")} {Math.min(si + 1, specs.length)} / {specs.length}
+					</span>
+					<button onClick={onClose} className="text-[var(--text-muted)] hover:text-red-500 transition-colors">
+						<X size={14} />
+					</button>
+				</div>
+			</div>
+
+			{/* Current state */}
+			<div className="grid grid-cols-3 gap-2 mb-4 text-center">
+				{[
+					{ label: t("damage.deckState"),   value: `${d}/${c}` },
+					{ label: t("damage.healthState"),  value: `Lv${lv} Cl${cl}` },
+					{ label: t("damage.restState"),    value: `${r}/${rc}` },
+				].map(({ label, value }) => (
+					<div key={label} className="border border-[var(--border)] rounded-xl p-2 bg-[var(--card-background)]">
+						<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-0.5">{label}</p>
+						<p className="text-sm font-black text-[var(--text)]">{value}</p>
+					</div>
+				))}
+			</div>
+
+			{done && (
+				<p className="text-center text-lg font-black text-green-600 py-4">{t("damage.dp.session.killed")}</p>
+			)}
+
+			{!done && ended && (
+				<p className="text-center text-sm text-[var(--text-muted)] py-4">{t("damage.dp.session.done")}</p>
+			)}
+
+			{!done && !ended && optN !== null && (
+				<div className="flex flex-col gap-3">
+					{/* Recommendation */}
+					<div className="border border-blue-200 rounded-xl p-4 bg-blue-50 text-center">
+						{labels?.[si] && (
+							<div className="flex items-center justify-center gap-1.5 mb-2">
+								<span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-500">
+									{t("damage.perm.group").replace("{{label}}", labels[si].groupLabel)}
+								</span>
+								<span className="text-[10px] text-blue-400">
+									{t(`damage.steps.${labels[si].stepType}`)}
+								</span>
+							</div>
+						)}
+						<p className="text-[10px] font-black tracking-widest uppercase text-blue-400 mb-1">{t("damage.dp.session.recommend")}</p>
+						<p className="text-4xl font-black text-blue-600 leading-none">{optN}</p>
+						<p className="text-[10px] text-blue-400 mt-1">{t("damage.var.pts")}</p>
+					</div>
+
+					{/* Settle buttons */}
+					<button onClick={handleHit}
+						className="w-full py-2.5 rounded-xl bg-green-600 text-white text-sm font-bold
+						           hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
+						{t("damage.dp.session.hit")} +{optN} Clock
+					</button>
+
+					<div className="flex items-center gap-2">
+						<button onClick={handleCancel}
+							className="flex-1 py-2.5 rounded-xl border border-red-200 text-red-600 text-sm font-bold
+							           hover:bg-red-50 transition-colors">
+							{t("damage.dp.session.cancel")} k=
+						</button>
+						<div className="inline-flex items-center border border-[var(--border)] rounded-lg overflow-hidden shrink-0">
+							<button onClick={() => setK(Math.max(1, k - 1))} className="px-2 py-2 text-[var(--text-muted)] hover:bg-[var(--card-background)] text-xs select-none">−</button>
+							<span className="w-8 text-center text-sm font-bold text-[var(--text)] select-none">{k}</span>
+							<button onClick={() => setK(Math.min(optN, k + 1))} className="px-2 py-2 text-[var(--text-muted)] hover:bg-[var(--card-background)] text-xs select-none">+</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* History log */}
+			{log.length > 0 && (
+				<div className="mt-4 flex flex-col gap-1">
+					<p className="text-[9px] font-black tracking-widest uppercase text-[var(--text-muted)] mb-1">{t("damage.dp.session.history")}</p>
+					{log.map((entry, i) => (
+						<p key={i} className="text-[11px] text-[var(--text-secondary)] font-mono">
+							{i + 1}. {entry}
+						</p>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+InteractiveSession.propTypes = {
+	policy:  PropTypes.object.isRequired,
+	specs:   PropTypes.array.isRequired,
+	labels:  PropTypes.array,
+	init:    PropTypes.object.isRequired,
+	t:       PropTypes.func.isRequired,
+	onClose: PropTypes.func.isRequired,
 };
 
 // ── PermutationResultPanel ─────────────────────────────────────────────────────
@@ -1088,7 +1337,11 @@ function StepCard({ step, idx, total, onUpdate, onRemove, onMove, onDuplicate, s
 	const cfg = stepTypes?.find(t => t.id === step.type);
 
 	const SI = (field, props = {}) => (
-		<StepInput value={step[field] ?? 1} onChange={v => onUpdate(step.id, field, v)} variables={variables} {...props} />
+		<StepInput value={step[field] ?? 1} onChange={v => onUpdate(step.id, field, v)} variables={variables}
+			nMin={step[`${field}Min`]} nMax={step[`${field}Max`]}
+			onChangeNMin={v => onUpdate(step.id, `${field}Min`, v)}
+			onChangeNMax={v => onUpdate(step.id, `${field}Max`, v)}
+			{...props} />
 	);
 
 	return (
@@ -1310,6 +1563,11 @@ function VarDropdown({ selected, variables, onSelect }) {
 	const triggerRef = useRef(null);
 	const panelRef   = useRef(null);
 
+	// "dp" is the special marker for DP-optimised fields
+	const isDp   = selected === "dp";
+	const isVar  = selected && !isDp;
+	const label  = isDp ? "自动" : (isVar ? selected : "fx");
+
 	const handleToggle = () => {
 		if (!open && triggerRef.current) {
 			const rect = triggerRef.current.getBoundingClientRect();
@@ -1334,11 +1592,13 @@ function VarDropdown({ selected, variables, onSelect }) {
 			{/* Trigger button */}
 			<button ref={triggerRef} type="button" onClick={handleToggle}
 				className={`inline-flex items-center gap-0.5 text-[9px] font-black px-1.5 py-0.5 rounded-md border transition-colors leading-none
-					${selected
-						? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
-						: "text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+					${isDp
+						? "bg-blue-500 text-white border-blue-500"
+						: isVar
+							? "bg-[var(--text-muted)] text-white border-[var(--text-muted)]"
+							: "text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)] hover:text-[var(--text-secondary)]"
 					}`}>
-				{selected ?? "fx"}
+				{label}
 				<ChevronDown size={7} className={`transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
 			</button>
 
@@ -1346,27 +1606,31 @@ function VarDropdown({ selected, variables, onSelect }) {
 			{open && createPortal(
 				<div ref={panelRef}
 					style={{ position: "fixed", top: dropPos.top, left: dropPos.left, zIndex: 9999 }}
-					className="bg-white border border-[var(--border)] rounded-xl shadow-lg p-1 flex flex-col gap-0.5 min-w-[44px]">
-					{/* 取消变量 */}
+					className="bg-white border border-[var(--border)] rounded-xl shadow-lg p-1 flex flex-col gap-0.5 min-w-[52px]">
+					{/* 取消 / 固定值 */}
 					<button type="button" onClick={() => { onSelect(null); setOpen(false); }}
 						className={`text-[10px] font-bold px-2 py-1 rounded-lg text-center transition-colors
 							${!selected
 								? "bg-[var(--text-muted)] text-white"
 								: "text-[var(--text-muted)] hover:bg-[var(--card-background)]"
 							}`}>
-						—
+						固定
 					</button>
-					{/* 变量列表 */}
-					{variables.map(name => (
-						<button key={name} type="button" onClick={() => { onSelect(name); setOpen(false); }}
-							className={`text-[10px] font-black px-2 py-1 rounded-lg text-center transition-colors
-								${selected === name
-									? "bg-[var(--text-muted)] text-white"
-									: "text-[var(--text)] hover:bg-[var(--card-background)]"
-								}`}>
-							{name}
-						</button>
-					))}
+					{/* 变量 / DP 选项 */}
+					{variables.map(name => {
+						const display = name === "dp" ? "自动" : name;
+						const isActive = selected === name;
+						return (
+							<button key={name} type="button" onClick={() => { onSelect(name); setOpen(false); }}
+								className={`text-[10px] font-black px-2 py-1 rounded-lg text-center transition-colors
+									${isActive
+										? name === "dp" ? "bg-blue-500 text-white" : "bg-[var(--text-muted)] text-white"
+										: "text-[var(--text)] hover:bg-[var(--card-background)]"
+									}`}>
+								{display}
+							</button>
+						);
+					})}
 				</div>,
 				document.body
 			)}
@@ -1379,8 +1643,10 @@ VarDropdown.propTypes = {
 	onSelect:  PropTypes.func.isRequired,
 };
 
-function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
+function StepInput({ value, onChange, min = 1, max = 20, variables = [],
+                     nMin, nMax, onChangeNMin, onChangeNMax }) {
 	const isVar = typeof value === "string";
+	const isDp  = value === "dp";
 	const [draft, setDraft] = useState(isVar ? "" : String(value));
 
 	useEffect(() => { if (!isVar) setDraft(String(value)); }, [value, isVar]);
@@ -1392,9 +1658,14 @@ function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 		if (clamped !== value) onChange(clamped);
 	};
 
+	const commitRange = (raw, setter, lo, hi) => {
+		const n = parseInt(raw, 10);
+		if (!isNaN(n)) setter(Math.max(lo, Math.min(hi, n)));
+	};
+
 	return (
 		<div className="inline-flex items-center gap-1">
-			{/* 数字步进器 — 变量激活时隐藏 */}
+			{/* 数字步进器 — dp 或变量激活时隐藏 */}
 			{!isVar && (
 				<div className="inline-flex items-center border border-solid border-[var(--border)] rounded-md overflow-hidden">
 					<button type="button" onClick={() => onChange(Math.max(min, Number(value) - 1))} disabled={Number(value) <= min}
@@ -1413,7 +1684,22 @@ function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 				</div>
 			)}
 
-			{/* 变量下拉菜单 — 仅在变量模式下可用时显示 */}
+			{/* 自动范围输入 — 仅在 dp 模式下显示 */}
+			{isDp && (
+				<div className="inline-flex items-center gap-1">
+					<input type="number" value={nMin ?? 1} min={1} max={nMax ?? max}
+						onChange={e => commitRange(e.target.value, onChangeNMin ?? (() => {}), 1, nMax ?? max)}
+						className="w-11 text-xs text-center border border-[var(--border)] rounded px-1 py-0.5
+						           text-[var(--text)] bg-transparent focus:outline-none focus:border-blue-400" />
+					<span className="text-[10px] text-[var(--text-muted)]">~</span>
+					<input type="number" value={nMax ?? max} min={nMin ?? 1} max={max}
+						onChange={e => commitRange(e.target.value, onChangeNMax ?? (() => {}), nMin ?? 1, max)}
+						className="w-11 text-xs text-center border border-[var(--border)] rounded px-1 py-0.5
+						           text-[var(--text)] bg-transparent focus:outline-none focus:border-blue-400" />
+				</div>
+			)}
+
+			{/* 变量 / DP 下拉菜单 */}
 			{variables.length > 0 && (
 				<VarDropdown
 					selected={isVar ? value : null}
@@ -1425,16 +1711,52 @@ function StepInput({ value, onChange, min = 1, max = 20, variables = [] }) {
 	);
 }
 StepInput.propTypes = {
-	value:     PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-	onChange:  PropTypes.func,
-	min:       PropTypes.number,
-	max:       PropTypes.number,
-	variables: PropTypes.arrayOf(PropTypes.string),
+	value:         PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+	onChange:      PropTypes.func,
+	min:           PropTypes.number,
+	max:           PropTypes.number,
+	variables:     PropTypes.arrayOf(PropTypes.string),
+	nMin:          PropTypes.number,
+	nMax:          PropTypes.number,
+	onChangeNMin:  PropTypes.func,
+	onChangeNMax:  PropTypes.func,
+};
+
+// ── TrialsSelector ────────────────────────────────────────────────────────────
+
+function TrialsSelector({ value, onChange, t }) {
+	return (
+		<div className="flex items-center justify-between mb-3">
+			<span className="text-xs text-[var(--text-secondary)]">{t("damage.var.trialsLabel")}</span>
+			<div className="inline-flex border border-[var(--border)] rounded-lg overflow-hidden">
+				{[
+					{ val: null,    label: t("damage.var.trialsAuto") },
+					{ val: 10_000,  label: "1万" },
+					{ val: 50_000,  label: "5万" },
+					{ val: 100_000, label: "10万" },
+				].map(({ val, label }) => (
+					<button key={String(val)} type="button" onClick={() => onChange(val)}
+						className={`px-3 py-1.5 text-[11px] font-bold border-r border-[var(--border)] last:border-r-0 transition-colors
+							${value === val
+								? "bg-[var(--text)] text-[var(--background)]"
+								: "bg-transparent text-[var(--text)] hover:bg-[var(--card-background)]"
+							}`}>
+						{label}
+					</button>
+				))}
+			</div>
+		</div>
+	);
+}
+TrialsSelector.propTypes = {
+	value:    PropTypes.number,
+	onChange: PropTypes.func.isRequired,
+	t:        PropTypes.func.isRequired,
 };
 
 // ── ProgressBar ───────────────────────────────────────────────────────────────
 
-function ProgressBar({ progress }) {
+function ProgressBar({ progress, eta, t }) {
 	return (
 		<div className="mb-4">
 			<div className="w-full h-1.5 bg-[var(--border)] rounded-full overflow-hidden">
@@ -1443,13 +1765,22 @@ function ProgressBar({ progress }) {
 					style={{ width: `${progress}%` }}
 				/>
 			</div>
-			<p className="text-[10px] text-[var(--text-muted)] text-right mt-1 tabular-nums">
-				{progress}%
-			</p>
+			<div className="flex items-center justify-between mt-1">
+				{eta != null ? (
+					<span className="text-[10px] text-[var(--text-muted)] tabular-nums">
+						{t("damage.var.etaLabel")} {eta}{t("damage.var.etaSeconds")}
+					</span>
+				) : <span />}
+				<span className="text-[10px] text-[var(--text-muted)] tabular-nums">{progress}%</span>
+			</div>
 		</div>
 	);
 }
-ProgressBar.propTypes = { progress: PropTypes.number.isRequired };
+ProgressBar.propTypes = {
+	progress: PropTypes.number.isRequired,
+	eta:      PropTypes.number,
+	t:        PropTypes.func,
+};
 
 // ── DistributionSection ────────────────────────────────────────────────────────
 

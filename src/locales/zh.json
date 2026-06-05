@@ -24,6 +24,7 @@
     "mahjongCentrepiece": "牌桌中枢",
     "enCardSearch": "EN卡片查询",
     "damage": "伤害计算",
+    "damageDP": "动态最优",
     "cardMaker": "卡片制作"
   },
   "common": {
@@ -655,6 +656,34 @@
       "Climax": "高潮"
     }
   },
+  "damageDP": {
+    "title": "动态策略推算",
+    "subtitle": "DP 计算 WS 伤害最优动态策略，MC 自适应验证两者吻合度",
+    "budget": "攻击轮数",
+    "maxN": "最大攻击点数",
+    "settingsNote": "轮数建议 ≤ 5，状态空间随轮数指数增长",
+    "run": "计算最优策略",
+    "computing": "DP 计算中…",
+    "optKillRate": "最优动态斩杀率",
+    "dpExact": "DP 精确值",
+    "stateCount": "计算状态数",
+    "statesComputed": "记忆化节点",
+    "decisionTree": "最优决策树（前两层）",
+    "treeDesc": "取消分支以「第1张即为鬼牌」为代表（最高频情形）",
+    "attack": "打",
+    "pts": "点",
+    "ifHit": "命中",
+    "ifCancel": "取消",
+    "killed": "已致死（Level 4）",
+    "deckLeft": "牌库",
+    "ghostLeft": "高潮剩",
+    "mcVerify": "MC 自适应验证",
+    "mcDesc": "每步查策略表决定攻击点数，50k trials，结果应与 DP 高度吻合",
+    "mcRun": "运行验证",
+    "mcRunning": "模拟中…",
+    "mcResult": "MC 斩杀率",
+    "mcDelta": "误差"
+  },
   "damage": {
     "levelLabel": "等级",
     "clockLabel": "血量",
@@ -662,7 +691,7 @@
     "avgRefresh": "平均刷新",
     "avgLevelUp": "平均升级",
     "steps": {
-      "direct": "直接伤害",
+      "direct": "直接伤害（可取消）",
       "cancel": "取消追加",
       "bottom_flip": "翻底X潮次伤害",
       "bottom_flip_any": "翻底有潮打X",
@@ -723,7 +752,7 @@
     "nCards": "{{n}} 张",
     "modeSingle": "单序列",
     "modePerm": "排列分析",
-    "modeVar": "变量推算",
+    "modeVar": "动态推算",
     "calcError": "计算出错",
     "var": {
       "title": "变量定义",
@@ -737,7 +766,38 @@
       "resultTitle": "变量推算结果",
       "best": "最优解",
       "showAll": "显示全部 {{n}} 条",
-      "emptyHint": "请先定义变量并在步骤中引用，然后至少为一个组添加步骤"
+      "emptyHint": "请至少为一个组添加步骤",
+      "cancel": "取消",
+      "optionsTitle": "推算选项",
+      "permLabel": "排列模式",
+      "enumPerm": "枚举排列",
+      "skipPerm": "固定顺序",
+      "maxNLabel": "最大攻击点数",
+      "dpAutoHint": "点击步骤字段旁的「fx」按钮 → 选「自动」，该字段将由 DP 在每个状态下选取最优值；保持固定则 DP 直接使用你填写的数字",
+      "trialsLabel": "每轮次数",
+      "trialsAuto": "自动",
+      "etaLabel": "预计剩余",
+      "etaSeconds": "秒",
+      "dpResultTitle": "DP 动态策略排名",
+      "tasks": "次任务",
+      "dpExact": "DP 精确值",
+      "stateCount": "计算状态数",
+      "dpStates": "记忆化节点",
+      "firstAttack": "首击",
+      "pts": "点"
+    },
+    "dp": {
+      "session": {
+        "title": "实时推演",
+        "start": "开始逐步推演",
+        "step": "当前步骤",
+        "recommend": "推荐攻击",
+        "hit": "命中",
+        "cancel": "取消于第",
+        "history": "历史记录",
+        "killed": "致死！对手升至 Level 4",
+        "done": "所有步骤完成"
+      }
     },
     "perm": {
       "group": "组 {{label}}",
@@ -753,6 +813,34 @@
       "vsWorst": "优于最差排列"
     },
     "unitTimes": "次"
+  },
+  "damageDP": {
+    "title": "动态最优推算",
+    "subtitle": "动态规划精确计算最优自适应攻击策略及斩杀概率",
+    "budget": "攻击轮数",
+    "maxN": "最大攻击点数",
+    "settingsNote": "搜索范围",
+    "settingsDesc": "最大攻击点数越大搜索越慢，通常设 10 即可",
+    "run": "运行 DP 推算",
+    "computing": "推算中…",
+    "optKillRate": "最优动态斩杀率",
+    "dpExact": "DP 精确值",
+    "stateCount": "计算状态数",
+    "statesComputed": "已遍历状态",
+    "policySnapshot": "策略快照（初始状态）",
+    "snapshotDesc": "固定当前初始状态，按剩余轮数查最优首次攻击点数",
+    "colBudget": "剩余轮数",
+    "colOptN": "最优攻击",
+    "colKillRate": "斩杀率",
+    "attacks": "轮",
+    "pts": "点",
+    "mcVerify": "Monte Carlo 验证",
+    "mcDesc": "用策略快照中的固定序列验证（非完整自适应模拟）",
+    "mcRun": "运行验证",
+    "mcRunning": "验证中…",
+    "mcResult": "MC 斩杀率",
+    "mcDelta": "与 DP 差值",
+    "mcNote": "MC 使用固定序列，差值来自自适应信息的损失"
   },
   "cardMaker": {
     "title": "卡片制作",

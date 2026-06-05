@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-06-01 (session 38)
+> Last updated: 2026-06-04 (session 43)
 
 ## Deployment
 
@@ -490,6 +490,55 @@ New page `/mahjong/efficiency` — full Tenhou 牌理 parity.
 - 麻将页面：内联 `locale === 'zh' ? ... : ...` 双语模式，有双语只是不走 locale 文件
 - WS 专业术语（Soul/Gate/Shot 等）：国际通用不需翻译
 - 代码注释：非用户可见
+
+---
+
+### 伤害计算器 DP 动态推算升级 (2026-06-04 session 43)
+
+#### 背景与核心结论
+
+朋友提出的概率讨论揭示了旧变量模式的根本局限：枚举常数 (X,Y,Z) 是「策略偏差」而非「样本误差」——无论加多少样本，固定序列最优 ≈17%，动态策略最优 ≈20.7%，差值 3.7pp 是数学上无法消除的结构性缺口。DP 求解的是马尔可夫决策过程（MDP），贝尔曼方程在每个状态给出最优决策。
+
+#### 新增/修改文件
+
+| 文件 | 变化 |
+|------|------|
+| `src/utils/wsDamage/dp.js` | 扩展：新增 `buildPolicySequence(initial, stepSpecs, maxN)` 支持全部 9 种步骤类型的 DP 转移函数（direct/cancel/bottom_flip 系列/top_remove_cx/cancel_return/return_cx/attack）；新增 `fixedN`/`nMin`/`nMax` per-step 范围控制 |
+| `src/utils/wsDamage/stepSpecBuilder.js` | 新建：`stepToSpec(step, varValues)`、`groupsToSpecSequence`、`groupsToLabelSequence`；三种字段模式：固定数字 / `"dp"`（自适应）/ 命名变量（外层枚举） |
+
+#### 动态推算模式（原「变量推算」tab 升级）
+
+**Tab 名称**：变量推算 → **动态推算**
+
+**三种字段模式**：
+- **固定数字**：步骤始终用该值，DP 不优化
+- **「自动」（蓝色）**：DP 在每个游戏状态下实时选最优值；字段旁显示 `[nMin] ~ [nMax]` 自定义范围输入框
+- **命名变量 X/Y/Z**：外层枚举变量值组合，同名字段强制使用相同常数（解决「xx攻击yy攻击」绑定需求）；变量面板定义各变量范围
+
+**计算架构（两层）**：
+```
+外层：枚举命名变量值组合 { X:1, X:2, ... }
+内层：buildPolicySequence — 对每种变量组合 × 每种排列跑一次 DP
+```
+在主循环中同步追踪最优 policy 对象（避免最后额外重算导致界面卡死）。
+
+**结果面板（DPResultPanel）**：
+- 显示 DP 精确斩杀率 + 首击推荐 + DP 计算状态数
+- 命名变量组合以蓝色 `X=5` 格式显示在排名行
+
+#### 实时推演（InteractiveSession）
+
+DP 推算完成后出现「开始逐步推演」按钮，点击进入交互面板：
+- 显示当前游戏状态（牌库/血量/休息室）及当前组/步骤标签
+- 推荐攻击点数（来自 DP 策略表查询）
+- **命中**按钮：自动更新 Clock + 升级判定，进入下一步
+- **取消于第 k 张**：选 k 值，更新牌库/休息室，进入下一步
+- 历史记录追踪每步结算结果
+- 对手升至 Level 4 时显示「致死」
+
+#### 测试页 `/ws/damage-dp`
+
+Session 中作为测试用的独立 DP 页面，session 结束时已移除（`DamageDP.jsx`、`simpleDamageDP.js` 均已删除，路由和导航项也已清理）。
 
 ---
 

@@ -24,6 +24,7 @@
     "mahjongCentrepiece": "Centrepiece",
     "enCardSearch": "EN Card Search",
     "damage": "Damage Calculator",
+    "damageDP": "DP Optimizer",
     "cardMaker": "Card Maker"
   },
   "common": {
@@ -654,6 +655,34 @@
       "Climax": "Climax"
     }
   },
+  "damageDP": {
+    "title": "Dynamic Strategy DP",
+    "subtitle": "DP finds the optimal adaptive WS attack policy; adaptive MC verifies the result",
+    "budget": "Attacks",
+    "maxN": "Max Attack Size",
+    "settingsNote": "Keep attacks ≤ 5 — state space grows exponentially",
+    "run": "Compute Optimal Policy",
+    "computing": "Computing DP…",
+    "optKillRate": "Optimal Kill Rate",
+    "dpExact": "DP exact value",
+    "stateCount": "States Computed",
+    "statesComputed": "memoised nodes",
+    "decisionTree": "Decision Tree (first 2 levels)",
+    "treeDesc": "Cancel branch uses ghost-on-card-1 as representative (most frequent scenario)",
+    "attack": "Attack",
+    "pts": "pts",
+    "ifHit": "Hit",
+    "ifCancel": "Cancel",
+    "killed": "Opponent loses (Level 4)",
+    "deckLeft": "deck",
+    "ghostLeft": "CX left",
+    "mcVerify": "Adaptive MC Verification",
+    "mcDesc": "Each step queries the policy table for the optimal attack — 50k trials. Should closely match DP.",
+    "mcRun": "Run MC",
+    "mcRunning": "Simulating…",
+    "mcResult": "MC Kill Rate",
+    "mcDelta": "Delta"
+  },
   "damage": {
     "levelLabel": "Level",
     "clockLabel": "Clock",
@@ -661,7 +690,7 @@
     "avgRefresh": "Avg. Refresh",
     "avgLevelUp": "Avg. Level-Up",
     "steps": {
-      "direct": "Direct Damage",
+      "direct": "Direct Damage (Cancellable)",
       "cancel": "Cancel Follow-up",
       "bottom_flip": "Bottom Flip X-CX Dmg",
       "bottom_flip_any": "Bottom Flip if CX",
@@ -722,7 +751,7 @@
     "nCards": "{{n}} cards",
     "modeSingle": "Single Sequence",
     "modePerm": "Order Analysis",
-    "modeVar": "Variable Search",
+    "modeVar": "Dynamic DP",
     "calcError": "Calculation error",
     "var": {
       "title": "Variable Definitions",
@@ -736,7 +765,38 @@
       "resultTitle": "Variable Search Results",
       "best": "Best Solution",
       "showAll": "Show all {{n}}",
-      "emptyHint": "Define variables, reference them in steps, and add steps to at least one group"
+      "emptyHint": "Add steps to at least one group",
+      "cancel": "Cancel",
+      "optionsTitle": "Options",
+      "permLabel": "Ordering",
+      "enumPerm": "All Permutations",
+      "skipPerm": "Fixed Order",
+      "maxNLabel": "Max Attack Size",
+      "dpAutoHint": "Click the 'fx' button next to a step field → select 'Auto' to let DP find the optimal value at runtime; leave it fixed to use your specified number",
+      "trialsLabel": "Trials/Sim",
+      "trialsAuto": "Auto",
+      "etaLabel": "Est.",
+      "etaSeconds": "s",
+      "dpResultTitle": "DP Dynamic Strategy Ranking",
+      "tasks": "tasks",
+      "dpExact": "DP exact value",
+      "stateCount": "States Computed",
+      "dpStates": "memoised nodes",
+      "firstAttack": "First attack",
+      "pts": "pts"
+    },
+    "dp": {
+      "session": {
+        "title": "Live Simulation",
+        "start": "Start Step-by-Step",
+        "step": "Step",
+        "recommend": "Recommended Attack",
+        "hit": "Hit",
+        "cancel": "Cancel at card",
+        "history": "History",
+        "killed": "Lethal! Opponent reaches Level 4",
+        "done": "All steps completed"
+      }
     },
     "perm": {
       "group": "Group {{label}}",
@@ -752,6 +812,34 @@
       "vsWorst": "better than worst"
     },
     "unitTimes": "×"
+  },
+  "damageDP": {
+    "title": "DP Optimizer",
+    "subtitle": "Exact optimal dynamic attack strategy via dynamic programming",
+    "budget": "Attacks",
+    "maxN": "Max Attack Pts",
+    "settingsNote": "Search range",
+    "settingsDesc": "Higher max attack points = slower; 10 is usually sufficient",
+    "run": "Run DP",
+    "computing": "Computing…",
+    "optKillRate": "Optimal Kill Rate",
+    "dpExact": "DP exact value",
+    "stateCount": "States Computed",
+    "statesComputed": "states explored",
+    "policySnapshot": "Policy Snapshot (initial state)",
+    "snapshotDesc": "Optimal first attack at current initial state for each budget",
+    "colBudget": "Budget",
+    "colOptN": "Optimal Attack",
+    "colKillRate": "Kill Rate",
+    "attacks": "atk",
+    "pts": "pts",
+    "mcVerify": "Monte Carlo Verification",
+    "mcDesc": "Uses the snapshot's fixed sequence (not full adaptive simulation)",
+    "mcRun": "Run MC",
+    "mcRunning": "Running…",
+    "mcResult": "MC Kill Rate",
+    "mcDelta": "vs DP",
+    "mcNote": "MC uses fixed sequence; gap reflects adaptive information value"
   },
   "cardMaker": {
     "title": "Card Maker",
