@@ -51,7 +51,7 @@ The app uses a **game hub model** with section-scoped URL namespaces:
 | Prefix | Section | Example routes |
 |--------|---------|----------------|
 | `/` | Hub (game selector) | `/` |
-| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/packs`, `/ws/simulator`, `/ws/record`, `/ws/shuffle` |
+| `/ws/*` | Weiss Schwarz | `/ws/cards`, `/ws/cards/en`, `/ws/packs`, `/ws/simulator`, `/ws/shuffle`, `/ws/damage`, `/ws/card-maker`, `/ws/record` |
 | `/mahjong/*` | Mahjong | `/mahjong/trainer`, `/mahjong/efficiency`, `/mahjong/centrepiece` |
 | `/tools/*` | General tools | `/tools/first-second`, `/tools/dice`, `/tools/clock`, `/tools/audio` |
 | `/login` | Auth | `/login` |
@@ -704,6 +704,54 @@ Implementation notes:
 - Keep the page background transparent and avoid visible panel backgrounds/borders, so the project route background can show through.
 - Current interactions are intentionally minimal: click hand to advance, click honba to increment, corner controls for dark mode, 3/4 players, game length, and reset.
 - Do not add scoring, riichi sticks, settlement flows, manual dealer assignment, or history unless explicitly requested; this page should stay closer to a centrepiece than a full score tracker.
+
+---
+
+## Damage Calculator Page (`/ws/damage`)
+
+WS combat/refresh damage simulator. Pure front-end (no backend); Monte-Carlo sampling plus a DP-derived policy sequence.
+
+| Item | Path |
+|------|------|
+| Page | `src/pages/DamageCalculator.jsx` |
+| Route | `/ws/damage` |
+| Engine | `src/utils/wsDamage/` |
+| NavBar entry | `menu.damage` in `src/config/siteStructure.js` |
+
+Engine layout (`src/utils/wsDamage/`):
+
+| File | Role |
+|------|------|
+| `types.js` | Frozen enums: `CardType`, `Color`, `TriggerType`, `ZoneId`, `OpType`; `ORDERED_ZONES` (deck/clock/level/stock) vs `UNORDERED_ZONES` (rest/memory/hand) |
+| `card.js` | `makeCharacter`, `buildSimpleDeck`, `buildRealisticDeck` |
+| `state.js` | `createState`; zone model with ordered vs unordered semantics + refresh |
+| `executor.js` | `executeSequence`, `executeOperation` — applies operations to state |
+| `window.js` | Trigger/damage window resolution (soul, cancel checks) |
+| `rules.js` | Refresh, cancel, and damage rules |
+| `simulator.js` | `simulate` (Monte-Carlo), `analyticalNoCancel`, `analyticalExpectedDamage` |
+| `dp.js` | `buildPolicySequence` — optimal attack ordering |
+| `stepSpecBuilder.js` | `groupsToSpecSequence`, `groupsToLabelSequence` — UI groups → engine specs |
+| `index.js` | Public API barrel |
+| `test-engine.js`, `test-cross-validation.js` | Self-tests / Monte-Carlo-vs-analytical cross validation |
+
+**Do not modify the engine files when making UI-only changes** (same rule as the Mahjong engine). The page consumes the engine via `simulate` / `buildPolicySequence` and the `stepSpecBuilder` adapters.
+
+---
+
+## Card Maker Page (`/ws/card-maker`)
+
+WS custom/proxy card image generator rendered to a `<canvas>`.
+
+| Item | Path |
+|------|------|
+| Page | `src/pages/CardMaker.jsx` |
+| Route | `/ws/card-maker` |
+| Renderer | `src/utils/wsCardMaker/` |
+| NavBar entry | `menu.cardMaker` in `src/config/siteStructure.js` |
+
+- `renderer.js` — `renderCard(ctx, cardData)` draws the full card; `ensureFonts()` must resolve before rendering so custom fonts are loaded.
+- `layout.js` — `getCanvasSize()` and layout geometry.
+- `DEFAULT_CARD` in `CardMaker.jsx` documents the editable fields (type/side/color/level/cost/power/souls/trigger/trigger2/backup/name/trait1/trait2/effect/flavor/serial/artist/art).
 
 ---
 
