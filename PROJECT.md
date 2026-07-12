@@ -1,6 +1,6 @@
 # CardToolBox Frontend — Project Status
 
-> Last updated: 2026-06-04 (session 43)
+> Last updated: 2026-07-12
 
 ## Deployment
 
@@ -647,6 +647,15 @@ Session 中作为测试用的独立 DP 页面，session 结束时已移除（`Da
 #### 首页组件拆分
 - `SectionCard` / `RecentUpdates` 抽离至 `src/components/home/`
 - `Home.jsx` 从 368 行缩减至 ~90 行，视觉和逻辑零改动
+
+---
+
+### 创建记录交互优化：结果/先后攻保存后清空 + 先后攻默认不预选 (2026-07-12)
+
+针对连续录入时容易忘记调整关键字段导致误录的问题（`src/pages/Record.jsx`）：
+
+- **先后攻默认不预选**：创建表单先后攻按钮组移除「未设置」选项，只保留「先攻 / 后攻」；`goesFirst` 初始 `null` 且不纳入 localStorage 恢复 → 打开页面两个按钮均不高亮。点击已选按钮仍可取消（回到 `null`），保留“不记录先后攻”的能力。
+- **保存后清空结果与先后攻**：POST 成功后将 `result` 置 `""`、`goesFirst` 置 `null`，并清除两者的 localStorage（防刷新后恢复）。其余字段（卡组/系列/标签/备注）保留，方便连续录入同一组对局。
 
 ---
 

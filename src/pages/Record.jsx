@@ -1447,6 +1447,11 @@ const Record = () => {
 							);
 							const newRecord = await res.json();
 							setRawRecords((prev) => [newRecord, ...prev]);
+							// 保存后清空「对战结果」与「先后攻」，避免下一条记录沿用上次的值导致误录；
+							// 其余字段（卡组/系列/标签等）保留以便连续录入同一组对局。
+							setFormState((prev) => ({ ...prev, result: "", goesFirst: null }));
+							try { localStorage.removeItem(`${storagePrefix}result`); } catch { /* ignore */ }
+							try { localStorage.removeItem(`${storagePrefix}goesFirst`); } catch { /* ignore */ }
 							setTabValue(1);
 							setLoading(true);
 							getHistory({ start: startDate, end: endDate });
@@ -1599,7 +1604,6 @@ const Record = () => {
 							{[
 								{ value: true,  label: t("record.form.goesFirst.first") },
 								{ value: false, label: t("record.form.goesFirst.second") },
-								{ value: null,  label: t("record.form.goesFirst.unset") },
 							].map(({ value, label }) => (
 								<button
 									key={String(value)}
