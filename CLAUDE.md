@@ -558,7 +558,9 @@ setError(t("errors.requestFailed"));
 
 ## Mobile / Capacitor
 
-Capacitor config (`capacitor.config.ts`) currently targets `webDir: 'build'`, while the default Vite build output remains `dist/`. If you are packaging for mobile, verify the copy/sync workflow before release instead of assuming the build directory matches automatically. Android project is in `android/`.
+Capacitor config (`capacitor.config.ts`) targets `webDir: 'dist'`, matching the Vite build output. Android project is in `android/`.
+
+The legacy `build/` directory is a stale Create React App artefact from before the Vite migration; it was removed from git tracking (it had been listed in `.gitignore` yet still tracked). Its `build/assets/character/**` frames use an obsolete `{color}{souls}s{trigger}t.png` naming scheme — the live Card Maker assets live in `public/assets/card-maker/` and follow the `{color}0s.png` / `{color}{souls}s{0|1}t.png` scheme that `layout.js:getFramePath` actually requests. Vite only ever serves `public/`, never `build/`. Do not re-add `build/` to the repo.
 
 ---
 
