@@ -46,10 +46,10 @@ export default defineConfig({
 			output: {
 				manualChunks: {
 					"react-vendor": ["react", "react-dom", "react-router-dom"],
+					// 仅 NavBar.jsx 与 PageTransition.jsx 还在用 MUI，
+					// 但两者都非懒加载，所以这个 chunk 仍在每次首屏的关键路径上
 					"mui-vendor": [
 						"@mui/material",
-						"@mui/icons-material",
-						"@mui/lab",
 						"@emotion/react",
 						"@emotion/styled",
 					],

@@ -142,7 +142,7 @@ These conventions define the target style system for all Tailwind pages, derived
 - Migrate **whole pages** at once, not partially. A page is either MUI or Tailwind — no mixing `sx` props and `className` at the same component level.
 - **MUI islands** are no longer needed in `Record.jsx`. `DatePicker` has been replaced with native `<input type="date">`. All pages that still use MUI may retain MUI islands where MUI components have no direct Tailwind replacement.
 - `ButtonVariants` and `AnimatedButton` have been deleted — all pages now use plain `<button>` with Tailwind classes.
-- Use **Lucide icons** (`lucide-react`) in all new Tailwind components. MUI icons only in components that still use MUI.
+- Use **Lucide icons** (`lucide-react`) for all icons. `@mui/icons-material` and `@mui/lab` have been uninstalled — do not reintroduce them. `@mui/material` remains only for the components listed under "NavBar architecture".
 - Never mix `className` and `sx` on the same element.
 - **`Autocomplete` → `@headlessui/react` `Combobox`**: use the `SeriesCombobox` pattern in `Record.jsx` as reference. Key points: `immediate` prop for open-on-focus, `anchor={{ to: "bottom start", gap: 4 }}` on `Combobox.Options` to portal the dropdown outside stacking contexts (`backdrop-filter` creates a stacking context that traps `z-index`).
 - **`Dialog` → native modal**: backdrop `fixed inset-0 z-[9998] flex items-center justify-center bg-black/30 backdrop-blur-sm`, click-outside closes, inner card is `bg-white rounded-2xl shadow-xl p-6`. See the reset confirmation dialog in `Record.jsx` as reference.
@@ -619,6 +619,12 @@ Exception: `/mahjong/centrepiece` follows the upstream `mahtools/riichi-centrepi
 
 **Test suite — run with `npm run test:mahjong`:**
 `test-shanten.js`(17) · `test-shanten-extended.js`(19) · `test-agari.js`(33) · `test-ukeire.js`(44) · `test-yaku.js`(54) · `test-yakuman.js`(33) · `test-fu.js`(20) · `test-scoring.js`(59) · `validate-ukeire.js`(Python reference comparison: 38 pass / 10 skip).
+
+`validate-ukeire.js` compares against `/tmp/ukeire-reference.json`, which `validate-ukeire.py` generates. **If that file is absent the script prints a skip notice and exits 0** rather than throwing, so `npm run test:mahjong` stays green end-to-end on a clean machine. To run the comparison for real:
+
+```bash
+python3 validate-ukeire.py > /tmp/ukeire-reference.json && node validate-ukeire.js
+```
 Data sourced from riichi.wiki, MahjongRepository/mahjong, and Tenhou-aligned ukeire reference checks.
 
 **Test coverage note:** yaku tests check "contains ID" not "exactly these IDs". Negative tests cover false-positives; unexpected extra yaku would not be caught.
