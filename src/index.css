@@ -99,6 +99,19 @@ code {
     --info: var(--spring-rain-500);
     --reset: #760f10;
     --reset-hover: #5c0f10;
+
+    /* 平局 / 双败 —— 胜负之外的第三种结果，介于 success 与 error 之间的中性色 */
+    --draw: #7b8fa1;
+
+    /* 浅底上做文字时，success / error / draw 本身对比度不够，用加深版 */
+    --success-strong: #3a9d6e;
+    --error-strong: #c94444;
+    --draw-strong: #5a6f80;
+
+    /* 状态胶囊的底色（同色系低透明度） */
+    --success-tint: rgba(82, 183, 136, 0.12);
+    --error-tint: rgba(224, 92, 92, 0.10);
+    --draw-tint: rgba(123, 143, 161, 0.10);
 }
 
 /* 全局背景和文本颜色 */
