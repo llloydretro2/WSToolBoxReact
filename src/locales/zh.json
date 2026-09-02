@@ -296,16 +296,28 @@
       "resetButton": "重置表单",
       "refreshButton": "刷新",
       "startDate": "开始日期",
-      "endDate": "结束日期"
+      "endDate": "结束日期",
+      "requiredMissing": "请先填写：{{field}}",
+      "dateShort": "{{month}}月{{day}}日",
+      "monthCaption": "{{year}}年{{month}}月",
+      "clearField": "清除",
+      "saved": "已保存",
+      "viewRecords": "查看记录"
     },
     "filter": {
       "all": "全部",
       "last7": "近7天",
       "last30": "近30天",
-      "custom": "自定义"
+      "custom": "自定义",
+      "dateLabel": "日期",
+      "searchLabel": "搜索",
+      "matchCount": "共 {{count}} 场",
+      "clearAll": "清除全部"
     },
     "search": {
-      "placeholder": "搜索卡组名、系列、备注、标签…"
+      "placeholder": "搜索卡组名、系列、备注、标签…",
+      "noMatch": "无匹配结果",
+      "noOptions": "暂无选项"
     },
     "display": {
       "noRecords": "暂无对战记录",
@@ -318,7 +330,10 @@
       "unknownDeck": "未填写",
       "unknownSeries": "未知系列",
       "notesLabel": "备注：",
-      "deleteTooltip": "删除"
+      "deleteTooltip": "删除",
+      "loadError": "加载失败，请检查网络后重试",
+      "retry": "重试",
+      "compactView": "紧凑视图"
     },
     "stats": {
       "totalLabel": "总场数",
@@ -338,7 +353,7 @@
       "streakWin": "{{count}} 连胜",
       "streakLose": "{{count}} 连败",
       "streakDraw": "{{count}} 连平",
-      "longestStreak": "历史最长 {{count}} 连胜",
+      "longestStreak": "最长 {{count}} 连胜",
       "basicSection": "基础统计",
       "trendTitle": "胜率走势",
       "trendMonth": "月",
@@ -363,7 +378,7 @@
       "deckFilterLabel": "卡组筛选",
       "gamesCount": "{{count}}场",
       "close": "关闭",
-      "longestStreak": "最长 {{count}} 连胜"
+      "recordSummary": "{{wins}}胜 / {{total}}局"
     },
     "edit": {
       "title": "编辑记录",
@@ -377,7 +392,8 @@
       "title": "确认删除",
       "content": "此操作不可撤销，确定要删除这条记录吗？",
       "cancel": "取消",
-      "confirm": "删除"
+      "confirm": "删除",
+      "summary": "{{player}} vs {{opponent}} · {{result}}"
     },
     "resetDialog": {
       "title": "重置表单",
@@ -426,7 +442,20 @@
       "cancel": "取消",
       "preview": "预览",
       "back": "返回",
-      "save": "保存图片"
+      "save": "保存图片",
+      "defaultTitle": "战绩卡片",
+      "csvButton": "导出 CSV",
+      "csvHeaders": {
+        "timestamp": "时间",
+        "result": "结果",
+        "goesFirst": "先後攻",
+        "playerSeries": "我方系列",
+        "playerDeckName": "我方卡组",
+        "opponentSeries": "对手系列",
+        "opponentDeckName": "对手卡组",
+        "tags": "标签",
+        "notes": "备注"
+      }
     },
     "charts": {
       "noData": "暂无数据"
@@ -451,7 +480,8 @@
       "bestDeck": "胜率最高卡组",
       "goesFirst": "先手/後手胜率",
       "first": "先手",
-      "second": "後手"
+      "second": "後手",
+      "noDataMinGames": "暂无数据（需 ≥3 场）"
     }
   },
   "mahjongCentrepiece": {
@@ -657,32 +687,32 @@
     }
   },
   "damageDP": {
-    "title": "动态策略推算",
-    "subtitle": "DP 计算 WS 伤害最优动态策略，MC 自适应验证两者吻合度",
+    "title": "动态最优推算",
+    "subtitle": "动态规划精确计算最优自适应攻击策略及斩杀概率",
     "budget": "攻击轮数",
     "maxN": "最大攻击点数",
-    "settingsNote": "轮数建议 ≤ 5，状态空间随轮数指数增长",
-    "run": "计算最优策略",
-    "computing": "DP 计算中…",
+    "settingsNote": "搜索范围",
+    "settingsDesc": "最大攻击点数越大搜索越慢，通常设 10 即可",
+    "run": "运行 DP 推算",
+    "computing": "推算中…",
     "optKillRate": "最优动态斩杀率",
     "dpExact": "DP 精确值",
     "stateCount": "计算状态数",
-    "statesComputed": "记忆化节点",
-    "decisionTree": "最优决策树（前两层）",
-    "treeDesc": "取消分支以「第1张即为鬼牌」为代表（最高频情形）",
-    "attack": "打",
+    "statesComputed": "已遍历状态",
+    "policySnapshot": "策略快照（初始状态）",
+    "snapshotDesc": "固定当前初始状态，按剩余轮数查最优首次攻击点数",
+    "colBudget": "剩余轮数",
+    "colOptN": "最优攻击",
+    "colKillRate": "斩杀率",
+    "attacks": "轮",
     "pts": "点",
-    "ifHit": "命中",
-    "ifCancel": "取消",
-    "killed": "已致死（Level 4）",
-    "deckLeft": "牌库",
-    "ghostLeft": "高潮剩",
-    "mcVerify": "MC 自适应验证",
-    "mcDesc": "每步查策略表决定攻击点数，50k trials，结果应与 DP 高度吻合",
+    "mcVerify": "Monte Carlo 验证",
+    "mcDesc": "用策略快照中的固定序列验证（非完整自适应模拟）",
     "mcRun": "运行验证",
-    "mcRunning": "模拟中…",
+    "mcRunning": "验证中…",
     "mcResult": "MC 斩杀率",
-    "mcDelta": "误差"
+    "mcDelta": "与 DP 差值",
+    "mcNote": "MC 使用固定序列，差值来自自适应信息的损失"
   },
   "damage": {
     "levelLabel": "等级",
@@ -813,34 +843,6 @@
       "vsWorst": "优于最差排列"
     },
     "unitTimes": "次"
-  },
-  "damageDP": {
-    "title": "动态最优推算",
-    "subtitle": "动态规划精确计算最优自适应攻击策略及斩杀概率",
-    "budget": "攻击轮数",
-    "maxN": "最大攻击点数",
-    "settingsNote": "搜索范围",
-    "settingsDesc": "最大攻击点数越大搜索越慢，通常设 10 即可",
-    "run": "运行 DP 推算",
-    "computing": "推算中…",
-    "optKillRate": "最优动态斩杀率",
-    "dpExact": "DP 精确值",
-    "stateCount": "计算状态数",
-    "statesComputed": "已遍历状态",
-    "policySnapshot": "策略快照（初始状态）",
-    "snapshotDesc": "固定当前初始状态，按剩余轮数查最优首次攻击点数",
-    "colBudget": "剩余轮数",
-    "colOptN": "最优攻击",
-    "colKillRate": "斩杀率",
-    "attacks": "轮",
-    "pts": "点",
-    "mcVerify": "Monte Carlo 验证",
-    "mcDesc": "用策略快照中的固定序列验证（非完整自适应模拟）",
-    "mcRun": "运行验证",
-    "mcRunning": "验证中…",
-    "mcResult": "MC 斩杀率",
-    "mcDelta": "与 DP 差值",
-    "mcNote": "MC 使用固定序列，差值来自自适应信息的损失"
   },
   "cardMaker": {
     "title": "卡片制作",

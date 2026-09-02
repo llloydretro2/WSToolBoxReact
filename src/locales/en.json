@@ -296,16 +296,28 @@
       "resetButton": "Reset form",
       "refreshButton": "Refresh",
       "startDate": "Start date",
-      "endDate": "End date"
+      "endDate": "End date",
+      "requiredMissing": "Please fill in: {{field}}",
+      "dateShort": "{{month}}/{{day}}",
+      "monthCaption": "{{month}}/{{year}}",
+      "clearField": "Clear",
+      "saved": "Saved",
+      "viewRecords": "View records"
     },
     "filter": {
       "all": "All",
       "last7": "Last 7 days",
       "last30": "Last 30 days",
-      "custom": "Custom"
+      "custom": "Custom",
+      "dateLabel": "Date",
+      "searchLabel": "Search",
+      "matchCount": "{{count}} matches",
+      "clearAll": "Clear all"
     },
     "search": {
-      "placeholder": "Search deck, series, notes, tags…"
+      "placeholder": "Search deck, series, notes, tags…",
+      "noMatch": "No matches",
+      "noOptions": "No options"
     },
     "display": {
       "noRecords": "No match records yet",
@@ -318,7 +330,10 @@
       "unknownDeck": "Unknown",
       "unknownSeries": "Unknown Series",
       "notesLabel": "Note: ",
-      "deleteTooltip": "Delete"
+      "deleteTooltip": "Delete",
+      "loadError": "Failed to load. Check your connection and try again.",
+      "retry": "Retry",
+      "compactView": "Compact view"
     },
     "stats": {
       "totalLabel": "Total",
@@ -362,7 +377,8 @@
       "exportPNG": "Export PNG",
       "deckFilterLabel": "Deck Filter",
       "gamesCount": "{{count}}g",
-      "close": "Close"
+      "close": "Close",
+      "recordSummary": "{{wins}}W / {{total}} games"
     },
     "edit": {
       "title": "Edit Record",
@@ -376,7 +392,8 @@
       "title": "Delete Record",
       "content": "This action cannot be undone. Are you sure you want to delete this record?",
       "cancel": "Cancel",
-      "confirm": "Delete"
+      "confirm": "Delete",
+      "summary": "{{player}} vs {{opponent}} · {{result}}"
     },
     "resetDialog": {
       "title": "Reset Form",
@@ -425,7 +442,20 @@
       "cancel": "Cancel",
       "preview": "Preview",
       "back": "Back",
-      "save": "Save Image"
+      "save": "Save Image",
+      "defaultTitle": "Match Record Card",
+      "csvButton": "Export CSV",
+      "csvHeaders": {
+        "timestamp": "Time",
+        "result": "Result",
+        "goesFirst": "First/Second",
+        "playerSeries": "My series",
+        "playerDeckName": "My deck",
+        "opponentSeries": "Opponent series",
+        "opponentDeckName": "Opponent deck",
+        "tags": "Tags",
+        "notes": "Notes"
+      }
     },
     "charts": {
       "noData": "No data available"
@@ -450,7 +480,8 @@
       "bestDeck": "Best Win Rate Deck",
       "goesFirst": "First/Second Win Rate",
       "first": "First",
-      "second": "Second"
+      "second": "Second",
+      "noDataMinGames": "No data (needs ≥3 games)"
     }
   },
   "mahjongCentrepiece": {
@@ -656,32 +687,32 @@
     }
   },
   "damageDP": {
-    "title": "Dynamic Strategy DP",
-    "subtitle": "DP finds the optimal adaptive WS attack policy; adaptive MC verifies the result",
+    "title": "DP Optimizer",
+    "subtitle": "Exact optimal dynamic attack strategy via dynamic programming",
     "budget": "Attacks",
-    "maxN": "Max Attack Size",
-    "settingsNote": "Keep attacks ≤ 5 — state space grows exponentially",
-    "run": "Compute Optimal Policy",
-    "computing": "Computing DP…",
+    "maxN": "Max Attack Pts",
+    "settingsNote": "Search range",
+    "settingsDesc": "Higher max attack points = slower; 10 is usually sufficient",
+    "run": "Run DP",
+    "computing": "Computing…",
     "optKillRate": "Optimal Kill Rate",
     "dpExact": "DP exact value",
     "stateCount": "States Computed",
-    "statesComputed": "memoised nodes",
-    "decisionTree": "Decision Tree (first 2 levels)",
-    "treeDesc": "Cancel branch uses ghost-on-card-1 as representative (most frequent scenario)",
-    "attack": "Attack",
+    "statesComputed": "states explored",
+    "policySnapshot": "Policy Snapshot (initial state)",
+    "snapshotDesc": "Optimal first attack at current initial state for each budget",
+    "colBudget": "Budget",
+    "colOptN": "Optimal Attack",
+    "colKillRate": "Kill Rate",
+    "attacks": "atk",
     "pts": "pts",
-    "ifHit": "Hit",
-    "ifCancel": "Cancel",
-    "killed": "Opponent loses (Level 4)",
-    "deckLeft": "deck",
-    "ghostLeft": "CX left",
-    "mcVerify": "Adaptive MC Verification",
-    "mcDesc": "Each step queries the policy table for the optimal attack — 50k trials. Should closely match DP.",
+    "mcVerify": "Monte Carlo Verification",
+    "mcDesc": "Uses the snapshot's fixed sequence (not full adaptive simulation)",
     "mcRun": "Run MC",
-    "mcRunning": "Simulating…",
+    "mcRunning": "Running…",
     "mcResult": "MC Kill Rate",
-    "mcDelta": "Delta"
+    "mcDelta": "vs DP",
+    "mcNote": "MC uses fixed sequence; gap reflects adaptive information value"
   },
   "damage": {
     "levelLabel": "Level",
@@ -812,34 +843,6 @@
       "vsWorst": "better than worst"
     },
     "unitTimes": "×"
-  },
-  "damageDP": {
-    "title": "DP Optimizer",
-    "subtitle": "Exact optimal dynamic attack strategy via dynamic programming",
-    "budget": "Attacks",
-    "maxN": "Max Attack Pts",
-    "settingsNote": "Search range",
-    "settingsDesc": "Higher max attack points = slower; 10 is usually sufficient",
-    "run": "Run DP",
-    "computing": "Computing…",
-    "optKillRate": "Optimal Kill Rate",
-    "dpExact": "DP exact value",
-    "stateCount": "States Computed",
-    "statesComputed": "states explored",
-    "policySnapshot": "Policy Snapshot (initial state)",
-    "snapshotDesc": "Optimal first attack at current initial state for each budget",
-    "colBudget": "Budget",
-    "colOptN": "Optimal Attack",
-    "colKillRate": "Kill Rate",
-    "attacks": "atk",
-    "pts": "pts",
-    "mcVerify": "Monte Carlo Verification",
-    "mcDesc": "Uses the snapshot's fixed sequence (not full adaptive simulation)",
-    "mcRun": "Run MC",
-    "mcRunning": "Running…",
-    "mcResult": "MC Kill Rate",
-    "mcDelta": "vs DP",
-    "mcNote": "MC uses fixed sequence; gap reflects adaptive information value"
   },
   "cardMaker": {
     "title": "Card Maker",
