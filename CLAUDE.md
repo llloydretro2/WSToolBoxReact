@@ -61,11 +61,117 @@ Legacy flat paths (e.g. `/cardlist`, `/mahjong`, `/dice`) redirect to the new pa
 **Note:** All deck management pages (DeckCreate, DeckSearch, Deck, DeckEdit) have been deleted. They are kept only in git history and historical session notes; there is no active route or page component left in `src/pages/`. `/ws/record` is protected by `ProtectedRoute` and redirects unauthenticated users to `/login`.
 
 **`/ws/record` feature summary:** Two-tab layout (创建 / 查询). The query tab includes:
-- Inline stats bar (total / wins / losses / win rate) computed from `filteredRecords`
-- Deck filter: set via the Deck analysis tab, clears with ×; `filteredRecords` is derived from `records + deckFilter`
+- Inline stats bar (total / wins / losses / win rate) computed from `searchedRecords`
+- Deck filter: set via the Deck analysis tab, clears with ×; `filteredRecords` is derived from `records + deckFilter + tagFilter`, `searchedRecords` further applies the search box
 - Analysis dialog (6 tabs): 走势 (recent form squares + SVG win-rate trend chart by week/month) · 我方 · 对手 · 矩阵 (matchup matrix with PNG export via Canvas API) · 赛事 · 卡组 (series/deck two-line layout with click-to-filter)
-- All analysis charts use full `records`; only the summary bar and card list respect `deckFilter`
 - Pure CSS stacked bars for W/D/L breakdown; pure SVG for trend chart; pure Canvas for PNG export — zero chart library dependencies
+
+> **统计口径：全部面板一律用 `searchedRecords`（= 已应用日期 + 卡组 + 标签 + 搜索的结果）。**
+> 曾经「我方系列胜率」和「先后攻」两个面板用的是未过滤的 `records`，同一个弹窗里两套口径，
+> 而且导出卡片的先后攻又取 `searchedRecords`，同一指标出现两个数字。新增面板别再引 `records`。
+
+#### 组件拆分（`src/components/record/`）
+
+Record.jsx 曾经是 2727 行的单文件（主组件占 2170 行）。现已拆为：
+
+| 文件 | 职责 |
+|---|---|
+| `CommittedField.jsx` | 卡组名的「胶囊 / 输入框」二态控件 |
+| `SeriesCombobox.jsx` | 系列选择器（Headless UI Combobox + 胶囊态） |
+| `FieldCapsule.jsx` | 两者共用的胶囊视觉 |
+| `RecordCard.jsx` | 单条记录卡，**`React.memo` 包裹** |
+| `TagSelector.jsx` / `DateRangePicker.jsx` | 标签选择 / 日期区间 |
+| `StatsCard.jsx` | 深色导出卡（HTML → PNG），导出 `EXPORT_CARD_BG` |
+| `exportModules.js` | 导出模块清单，Record 与 StatsCard 共用 |
+| `PortalDropdown.jsx` | **所有下拉面板的统一外壳**（见下方"下拉必须 portal"） |
+| `RecordDialog.jsx` | **所有弹窗的统一外壳**（Headless UI Dialog） |
+| `ActiveFilters.jsx` | 生效筛选条件摘要 |
+| `Highlight.jsx` | 搜索命中高亮（纯子串匹配，不走正则） |
+
+`src/utils/` 下另有两个纯函数模块，均可用 node 直接自测（`npm run test:record`，共 80 项）：
+`recordDraft.js`（草稿持久化）与 `recordCsv.js`（CSV 导出与转义）。
+
+#### 下拉必须 portal
+
+创建表单的卡片是 `bg-white/70 backdrop-blur-md`。**`backdrop-filter` 会创建 stacking context，
+把绝对定位的子元素困在卡片的层叠上下文里**——面板会被后面的兄弟卡片盖住或被裁切。
+
+所以卡组名补全、标签选择等下拉一律走 `PortalDropdown`（createPortal + `position: fixed` +
+`getBoundingClientRect()`）。它比 `DamageCalculator.jsx` 的 `VarDropdown` 多做一件事：
+**滚动与 resize 时重新定位**（fixed 面板不会跟着页面滚，不重算就会飘在原地）。
+滚动监听用捕获阶段挂在 window 上，这样弹窗内层 `overflow-auto` 容器的滚动也能收到。
+
+#### 弹窗一律走 RecordDialog
+
+页面里 7 个弹窗全部使用 `RecordDialog`（Headless UI `Dialog`），它自带 Esc 关闭、焦点陷阱与还原、
+背景滚动锁、`role="dialog"` / `aria-modal`。改造前这些全都没有，全文件 `aria-` 出现 0 次。
+
+保留了 `{cond && <RecordDialog open …>}` 的外层条件渲染，**不要改成只靠 `open={cond}`**：
+弹窗内容会读 `editDialog.record.xxx`、`deleteDialog.record.xxx`，JSX children 是即时求值的，
+record 为 null 时会直接抛错。
+
+> ⚠️ 导出预览是 `variant="fullscreen"`，而**供 `html-to-image` 读取的离屏卡片是它的兄弟节点、
+> 在 Dialog 之外**。改动这一块时要确认离屏层没有被 Dialog 标记成 `inert`（会影响截图）。
+
+`RecordCard` 的 `onEdit` / `onDelete` **必须用 `useCallback` 稳定引用**，否则 memo 每次被新函数引用击穿。
+搜索用 `useDeferredValue`（React 19 内置）而非手写 debounce——它推迟的是渲染调度，不是用户看到自己输入的时机。
+
+#### 输入胶囊化
+
+卡组名与系列录入完成后收起成胶囊。锁定时机：系列「选中即锁」，卡组名「失焦即锁（非空时），回车也锁」。
+
+**两者的 X 行为一致：清空该字段并回到输入态**（标签统一 `record.form.clearField`），
+和 `TagSelector` 里标签胶囊的 X 也是同一语义。这样每个字段都能单独清掉，
+不必动卡片右上角那个「我方/对手」整体重置（那个会把卡组名和系列一起清了）。
+
+> ⚠️ **两个必须遵守的约束**
+> 1. **不要给 `CommittedField` 的 input 加原生 `required`**。胶囊态下 input 不在 DOM 里，
+>    浏览器校验会静默失效，空字段能直接提交。必填校验统一走 `REQUIRED_FIELDS` +
+>    `fieldRefs[field].current.unlock()`（创建表单与编辑对话框各一套 ref）。
+> 2. **回车必须 `preventDefault()` 再锁定**。字段在 `<form>` 内，不拦截会直接触发提交。
+
+#### 卡组名历史补全
+
+卡组名是四个必填字段里唯一纯手打的，而 `deckData` 按 `${series}\x00${deck}` 字符串精确分组，
+打成「青黄」和「青黄扉」在统计里就是两套卡组、胜率被拆开。补全走 `GET /api/matches/deck-names`
+（后端 `$facet` 聚合，**刻意不支持日期过滤**——补全要的是历史全部值，不是当前筛选区间内的）。
+
+`CommittedField` 只按当前输入做子串过滤，**排序与「按已选系列联动过滤」都由 Record.jsx 决定**。
+
+> ⚠️ 建议项的 `onMouseDown` 必须 `preventDefault()`：否则 input 先失焦 → `commit()` 锁成胶囊
+> → 下拉随之卸载，click 根本落不到建议项上。
+
+#### 首屏体积
+
+`react-day-picker`（`DateRangePicker`，仅「自定义」日期用）走 `React.lazy` + `Suspense`；
+`html-to-image` 走 `handleExportCard` 内的动态 `import()`。两者都是低频路径，
+静态 import 会把它们压进每次进入战绩页的首包。Record chunk 因此从 163.6KB 降到 82.6KB
+（gzip 43.3 → 18.8KB）。**不要把这两个依赖改回顶层 import。**
+
+#### 草稿持久化（`src/utils/recordDraft.js`）
+
+创建表单的草稿与查询页的视图状态存在**两个** localStorage key，逻辑集中在 `recordDraft.js`（纯函数，不依赖 React）：
+
+| key | 内容 | 谁会清空它 |
+|---|---|---|
+| `record:draft` | 8 个表单字段（`DRAFT_FIELDS`） | 只有「重置表单」 |
+| `record:view` | `tabValue` / `datePreset` / `startDate` / `endDate` | 谁都不清，随用户操作更新 |
+
+**`DRAFT_FIELDS` 是字段名的单一数据源**，写入 / 恢复 / 清理三处共用。历史教训：这三处曾各自手写一份列表，`goesFirst` 和 `tags` 只出现在写入侧，于是被存进 localStorage 却从未读回——**新增表单字段时只需往 `DRAFT_FIELDS` 加一行**，不要再在别处复制列表。
+
+其余约定：
+
+- **恢复走各 state 的惰性初始化**（`loadPersisted()` 在 `useRef` 里只读一次），不是 `useEffect` + `setState`。首帧就是恢复后的值，所以挂载时的 `getHistory(boot.range)` 拿得到正确日期。旧实现在 effect 里恢复，`getHistory()` 读到的是尚未 flush 的 `null`，恢复自定义区间时会静默拉全量。
+- **判 `undefined` 而非真值**：`goesFirst === false`（後攻）是合法值且 falsy。`draftToFormState()` 已封装此逻辑，不要在外面重写。
+- **写入是 400ms debounce**，外加 `pagehide` / `visibilitychange` / 卸载三重 flush 兜底。不要退回逐字段同步 `setItem`（备注 textarea 上会逐字符阻塞主线程）。
+- **相对预设每次恢复重算**：`presetRange("7d")` 按当前时间算，不沿用存档里的旧区间；只有 `custom` 读存档日期。
+- **提交后清空 `CLEAR_ON_SUBMIT`（`result` + `goesFirst`）**，卡组名 / 系列 / 标签保留以便连续录入同一场比赛。
+- 旧的按字段散列格式（`record:playerDeckName` 等）会在挂载时自动迁移：**先写新 key 再删旧 key**，顺序反了会在中间窗口丢草稿。
+
+自测：`npm run test:record`（80 项 = 草稿 55 + CSV 25，覆盖 `goesFirst=false` 回归、孤儿 key 救回、
+旧格式迁移、localStorage 不可用容错，以及 CSV 的 RFC4180 转义与公式注入防护）。
+
+`record:view` 里除页签与日期外还存了 `compact`（紧凑视图开关）——新增视图状态往这个 blob 加字段即可。
 
 ### Key hooks
 
@@ -106,7 +212,16 @@ Light theme only. Colors are CSS variables defined in `src/index.css` (Spring Ra
 --text, --text-secondary, --text-muted
 --border, --divider
 --success, --error, --warning, --info, --reset, --reset-hover
+--draw, --draw-strong, --success-strong, --error-strong
+--success-tint, --error-tint, --draw-tint
 ```
+
+`--draw` 是「平局 / 双败」色（胜负之外的第三种结果）。`*-strong` 是浅底上做文字用的加深版
+（`--success` / `--error` 本身在白底上对比度不够），`*-tint` 是状态胶囊的同色系低透明底色。
+
+**唯一允许硬编码颜色的地方**：`components/record/StatsCard.jsx` 的 `S` 常量与 `EXPORT_CARD_BG`，
+以及导出 PNG 的画布底色。那是一张脱离站点主题、要分享出去的深色图片，跟随 Spring Rain 亮色主题反而不对。
+这些位置都有注释说明，**不要把它们「修正」成 CSS 变量**。
 
 **Never hardcode color values.** Always use `var(--primary)` etc. in `sx` props, CSS files, or Tailwind `style` props.
 
