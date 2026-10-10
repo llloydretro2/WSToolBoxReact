@@ -414,6 +414,18 @@ Disabled state (any button): append `disabled:opacity-40 disabled:cursor-not-all
 
 ### Form inputs
 
+> ⚠️ **表单控件在触摸设备上的字号由 `index.css` 统一强制为 16px，不要试图绕过。**
+> WebKit 在聚焦 `font-size < 16px` 的 input / textarea / select 时会自动放大页面，
+> 放大后布局视口变宽、页面不再是一屏宽且不会自动缩回。**iPhone 上的 Chrome / Edge
+> 同样中招**——苹果要求 iOS 浏览器一律用 WebKit。
+>
+> 所以这里写 `text-sm` 是给桌面端看的，`@media (hover: none) and (pointer: coarse)`
+> 会在触摸设备上把它覆盖成 16px。新加输入框照常写 `text-sm` 即可，但**不要给它设
+> 行内 style 的 font-size**（会盖过那条规则），也**不要**改用 viewport 的
+> `user-scalable=no` / `maximum-scale=1`：自 iOS 10 起 WebKit 为了无障碍故意忽略它们。
+>
+> 窄框（`w-8` / `w-11` / `w-14`）已实测在 16px 下仍放得下 2–3 位数字，无需额外加宽。
+
 Text input (replaces `TextField`):
 ```jsx
 <input

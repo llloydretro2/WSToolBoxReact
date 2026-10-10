@@ -21,6 +21,26 @@ select {
     box-sizing: border-box;
 }
 
+/* iOS 聚焦自动放大的唯一可靠解法。
+ *
+ * WebKit 在聚焦 font-size < 16px 的表单控件时会自动放大页面，放大后布局视口变宽、
+ * 页面不再是一屏宽，且不会自动缩回。iPhone 上的 Chrome / Edge 同样受影响——
+ * 苹果要求 iOS 浏览器一律使用 WebKit，它们和 Safari 是同一套行为。
+ *
+ * 不要改用 viewport 的 `user-scalable=no` / `maximum-scale=1`：自 iOS 10 起 WebKit
+ * 为了无障碍故意忽略它们，那条广为流传的「一行修复」在现代 iOS 上无效，
+ * 并且在被尊重的环境里会连带禁掉双指缩放。
+ *
+ * 只在触摸设备生效，桌面端视觉不变。必须 !important——项目用 Tailwind 的
+ * text-sm / text-xs 等工具类指定字号，类选择器的优先级高于元素选择器。 */
+@media (hover: none) and (pointer: coarse) {
+    input,
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
 button {
     background: none;
     border: none;
